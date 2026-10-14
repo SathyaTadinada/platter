@@ -27,6 +27,8 @@ export type SearchResult = {
   cover_image?: string
   uri: string // path on discogs.com
   user_data?: { in_wantlist: boolean; in_collection: boolean }
+  genre?: string[]
+  style?: string[]
 }
 
 export type SearchResponse = { pagination: Pagination; results: SearchResult[] }

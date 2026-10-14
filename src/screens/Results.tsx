@@ -1,12 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { SlidersHorizontal } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import type { SearchParams, SearchResult } from '../api/discogs/types'
 import { coverArtUrl, searchMbBarcode, type MbRelease } from '../api/musicbrainz'
-import { RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
+import { ResultFilterSheet } from '../components/ResultFilterSheet'
+import { RunoutButton, RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
 import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
-import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
+import { Button, buttonClass, Notice, Screen, Spinner } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -15,6 +17,7 @@ import { lookupBarcode, type LookupResult } from '../lib/lookup'
 import type { Ranked } from '../lib/runout'
 import { computeOwnership, type Ownership } from '../lib/ownership'
 import { rememberSearch } from '../lib/recent'
+import { activeResultFilters, filterResults, resultFacets, type ResultFilters } from '../lib/results'
 
 function describeQuery(p: URLSearchParams): string {
   if (p.get('barcode')) return p.get('barcode')!
@@ -29,6 +32,17 @@ export function Results() {
   const [, navigate] = useLocation()
   const [show, setShow] = useState<Show>('all')
   const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
+  const [runoutOpen, setRunoutOpen] = useState(false)
+  const [filters, setFilters] = useState<ResultFilters>({})
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [more, setMore] = useState<{ page: number; results: SearchResult[]; loading: boolean }>({ page: 1, results: [], loading: false })
+
+  // a new search starts from scratch
+  useEffect(() => {
+    setFilters({})
+    setShow('all')
+    setMore({ page: 1, results: [], loading: false })
+  }, [qs])
 
   useEffect(() => {
     const p = new URLSearchParams(qs)
@@ -38,18 +52,37 @@ export function Results() {
   }, [qs])
 
   const search = (p: SearchParams) => searchReleases(client, p).then((r) => r.results)
+  const catno = params.get('catno')
+  const searchParams: SearchParams = catno
+    ? { catno }
+    : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
 
-  const state = useAsync<LookupResult | { kind: 'search'; results: Awaited<ReturnType<typeof search>> }>(async () => {
+  const state = useAsync<LookupResult | { kind: 'search'; results: SearchResult[]; pages: number }>(async () => {
     const barcode = params.get('barcode')
     if (barcode) return lookupBarcode(barcode, { searchDiscogs: search, searchMb: (b) => searchMbBarcode(b) })
-    const catno = params.get('catno')
-    const p: SearchParams = catno
-      ? { catno }
-      : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
-    return { kind: 'search', results: await search(p) }
+    const r = await searchReleases(client, searchParams)
+    return { kind: 'search', results: r.results, pages: r.pagination?.pages ?? 1 }
   }, [qs, client])
 
-  const results = useMemo(() => (state.data && 'results' in state.data ? state.data.results : []), [state.data])
+  const pages = state.data?.kind === 'search' ? state.data.pages : 1
+  async function loadMore() {
+    const page = more.page + 1
+    setMore((m) => ({ ...m, loading: true }))
+    try {
+      const r = await searchReleases(client, searchParams, page)
+      setMore((m) => ({ page, results: [...m.results, ...r.results], loading: false }))
+    } catch {
+      setMore((m) => ({ ...m, loading: false }))
+    }
+  }
+
+  const loaded = useMemo(() => {
+    const base = state.data && 'results' in state.data ? state.data.results : []
+    const seen = new Set(base.map((r) => r.id))
+    return [...base, ...more.results.filter((r) => !seen.has(r.id))]
+  }, [state.data, more.results])
+  const facets = useMemo(() => resultFacets(loaded, filters), [loaded, filters])
+  const results = useMemo(() => filterResults(loaded, filters), [loaded, filters])
   const cards = useMemo(() => results.map(toCard), [results])
   const matchOf = useMemo(() => new Map(ranked?.map((r) => [r.item.id, r.result])), [ranked])
   // in runout order once something has been typed
@@ -64,7 +97,7 @@ export function Results() {
     if (!cards.length) return new Map()
     const [owned, wants] = await Promise.all([db.collection.toArray(), db.wants.toArray()])
     return new Map(cards.map((c) => [c.id, computeOwnership(c.id, c.masterId, owned, wants)]))
-  }, [state.data])
+  }, [state.data, loaded])
 
   return (
     <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/scan' : '/search'} width="wide">
@@ -76,10 +109,31 @@ export function Results() {
       {state.data?.kind === 'none' && <NothingFound barcode={state.data.barcode} mb={state.data.mb} />}
       {state.data?.kind === 'search' && !cards.length && <Notice tone="info">No results. Try fewer words or check the spelling.</Notice>}
 
-      {cards.length > 0 && (
+      {loaded.length > 0 && (
         <>
-          <p className="mb-3 text-sm text-stone-500">{resultsLine(cards.length, Boolean(params.get('barcode')))}</p>
-          {cards.length > 1 && <RunoutPanel candidates={results} onRanked={setRanked} />}
+          <p className="mb-3 text-sm text-stone-500">
+            {activeResultFilters(filters)
+              ? `${cards.length} of ${loaded.length} results`
+              : resultsLine(loaded.length, Boolean(params.get('barcode')))}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {loaded.length >= 4 && (
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className={`mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
+                  activeResultFilters(filters)
+                    ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                    : 'bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700'
+                }`}
+              >
+                <SlidersHorizontal size={16} aria-hidden />
+                Filters{activeResultFilters(filters) ? ` · ${activeResultFilters(filters)}` : ''}
+              </button>
+            )}
+            {cards.length > 1 && !runoutOpen && <RunoutButton onClick={() => setRunoutOpen(true)} />}
+          </div>
+          <RunoutPanel candidates={results} onRanked={setRanked} open={runoutOpen} onOpenChange={setRunoutOpen} />
           <ShowFilter cards={cards} own={own} value={show} onChange={setShow} />
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {ordered
@@ -94,10 +148,24 @@ export function Results() {
                 />
               ))}
           </ul>
+          {state.data?.kind === 'search' && more.page < pages && (
+            <Button variant="secondary" className="mt-4 w-full" disabled={more.loading} onClick={loadMore}>
+              {more.loading ? 'Loading…' : 'Show more results'}
+            </Button>
+          )}
           <p className="mt-4">
             <DiscogsCredit url={`https://www.discogs.com/search/?q=${encodeURIComponent(describeQuery(params))}&type=release`} />
           </p>
         </>
+      )}
+      {filtersOpen && (
+        <ResultFilterSheet
+          facets={facets}
+          filters={filters}
+          count={cards.length}
+          onChange={setFilters}
+          onClose={() => setFiltersOpen(false)}
+        />
       )}
     </Screen>
   )

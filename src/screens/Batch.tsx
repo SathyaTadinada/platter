@@ -105,7 +105,7 @@ export function Batch() {
 
   if (items && !items.length) {
     return (
-      <Screen title="Batch" back="/scan">
+      <Screen title="Batch" back="/scan" width="full">
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Disc3 size={48} className="text-stone-400" aria-hidden />
           <p className="text-lg font-semibold">Batch is empty</p>

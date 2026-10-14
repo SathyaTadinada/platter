@@ -2,7 +2,6 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Boxes,
   Check,
-  Heart,
   MonitorSmartphone,
   Moon,
   Radio,
@@ -139,7 +138,6 @@ export function Settings() {
                   </button>
                 }
               />
-              <Row icon={<Heart size={20} />} label="Wantlist" value={stats ? String(stats.wants) : undefined} href="/wantlist" />
               <Row icon={<Boxes size={20} />} label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
               <Row
                 icon={<ListChecks size={20} />}

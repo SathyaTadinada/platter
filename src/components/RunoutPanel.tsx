@@ -1,11 +1,11 @@
-import { Plus, X } from 'lucide-react'
+import { Disc3, Plus, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { getRelease } from '../api/discogs/endpoints'
 import type { Identifier, SearchResult } from '../api/discogs/types'
 import { useSignedIn } from '../hooks/session'
 import { confidence, rankByRunout, runoutCandidates, type Ranked, type RunoutResult } from '../lib/runout'
 import { ReadPhotoButton } from './ReadPhotoButton'
-import { Button, Card } from './ui'
+import { Card } from './ui'
 
 const SIDE_NAMES = ['Side A', 'Side B', 'Side C', 'Side D']
 
@@ -40,14 +40,24 @@ function useIdentifiers(ids: number[], enabled: boolean) {
 
 // Lets the user type (or photograph) the runout of each side and ranks the
 // candidates by how well Discogs' Matrix / Runout entries match.
+// The panel can be opened from outside (its button sitting in a toolbar), or show its own button
 export function RunoutPanel({
   candidates,
   onRanked,
+  open: openProp,
+  onOpenChange,
 }: {
   candidates: SearchResult[]
   onRanked: (r: Ranked<SearchResult>[] | null) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = (o: boolean) => {
+    setOpenState(o)
+    onOpenChange?.(o)
+  }
   const [sides, setSides] = useState(['', ''])
   const [suggestions, setSuggestions] = useState<string[] | null>(null)
   const ids = useMemo(() => candidates.map((c) => c.id), [candidates])
@@ -67,16 +77,7 @@ export function RunoutPanel({
       return i < 0 ? s.map((x, j) => (j === s.length - 1 ? v : x)) : s.map((x, j) => (j === i ? v : x))
     })
 
-  if (!open) {
-    return (
-      <Card className="mb-4 flex items-center justify-between gap-3 py-2.5">
-        <p className="text-sm font-medium">Which pressing?</p>
-        <Button variant="secondary" className="min-h-10" onClick={() => setOpen(true)}>
-          Match by runout
-        </Button>
-      </Card>
-    )
-  }
+  if (!open) return openProp === undefined ? <RunoutButton onClick={() => setOpen(true)} /> : null
 
   return (
     <Card className="mb-4 space-y-3">
@@ -171,5 +172,19 @@ export function RunoutMatch({ result }: { result: RunoutResult }) {
           </p>
         ))}
     </div>
+  )
+}
+
+export function RunoutButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Type or photograph what's etched near the label to find your pressing"
+      className="mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
+    >
+      <Disc3 size={16} aria-hidden />
+      Match by runout
+    </button>
   )
 }

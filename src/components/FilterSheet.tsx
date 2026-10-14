@@ -89,7 +89,7 @@ export function FilterSheet({ facets, filters, count, onChange, onClose }: Props
   )
 }
 
-function Group({
+export function Group({
   title,
   options,
   selected,

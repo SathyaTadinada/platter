@@ -68,13 +68,27 @@ export function RecordRow({
   )
 }
 
-export function MonthBars({ months, text }: { months: MonthTotal[]; text: (n: number) => string }) {
+// short: what fits over a bar, e.g. "$1.2K" or "4"
+export function MonthBars({
+  months,
+  text,
+  short = text,
+}: {
+  months: MonthTotal[]
+  text: (n: number) => string
+  short?: (n: number) => string
+}) {
   const most = Math.max(...months.map((m) => m.total))
   return (
     <>
-      <div className="flex h-28 items-end gap-1">
+      <div className="flex h-32 items-end gap-1">
         {months.map((m) => (
-          <div key={m.month} className="group flex h-full flex-1 flex-col justify-end" title={`${m.label}: ${text(m.total)}`}>
+          <div
+            key={m.month}
+            className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
+            title={`${m.label}: ${text(m.total)}`}
+          >
+            {m.total > 0 && <span className="text-[0.625rem] font-semibold whitespace-nowrap tabular-nums">{short(m.total)}</span>}
             <span
               className="w-full rounded-t-md bg-accent-500/80 group-hover:bg-accent-500"
               style={{ height: m.total ? pct(m.total, most) : 0 }}

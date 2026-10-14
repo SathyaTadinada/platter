@@ -112,7 +112,7 @@ export function ValueStats() {
           <PaidVsNow items={items} valued={valued} paidField={paidField} money={money} />
 
           <Section title="By month">
-            <Monthly items={items} paidField={paidField} dateField={dateField} money={money} />
+            <Monthly items={items} paidField={paidField} dateField={dateField} money={money} currency={currency} />
           </Section>
         </div>
 
@@ -376,7 +376,7 @@ function Breakdown({ valued, money }: { valued: Valued[]; money: Money }) {
 function BarList({ rows }: { rows: { label: string; amount: number; text: string }[] }) {
   const most = Math.max(...rows.map((r) => r.amount))
   return (
-    <Card className="space-y-2.5">
+    <div className="space-y-2.5">
       {rows.map((r) => (
         <div key={r.label} className="text-sm">
           <div className="mb-1 flex justify-between gap-3">
@@ -388,7 +388,7 @@ function BarList({ rows }: { rows: { label: string; amount: number; text: string
           </div>
         </div>
       ))}
-    </Card>
+    </div>
   )
 }
 
@@ -427,7 +427,19 @@ function GroupTotals({ valued, folders, money }: { valued: Valued[]; folders: Fo
 }
 
 // Money spent (purchase price by purchase date, or date added) or records added, per month
-function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[]; paidField?: number; dateField?: number; money: Money }) {
+function Monthly({
+  items,
+  paidField,
+  dateField,
+  money,
+  currency,
+}: {
+  items: LibraryItem[]
+  paidField?: number
+  dateField?: number
+  money: Money
+  currency: string
+}) {
   const canSpend = paidField !== undefined
   const [show, setShow] = useState<'spent' | 'added'>(canSpend ? 'spent' : 'added')
   const rows =
@@ -441,6 +453,10 @@ function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[];
   const months = byMonth(rows, 12)
   const sum = months.reduce((n, m) => n + m.total, 0)
   const text = (n: number) => (show === 'spent' ? money(n, true) : String(n))
+  const compact = (n: number) =>
+    n < 1000
+      ? money(n, true)
+      : new Intl.NumberFormat(undefined, { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(n)
   return (
     <Card>
       {canSpend && (
@@ -457,7 +473,7 @@ function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[];
         <span className="text-xl font-bold tabular-nums">{text(sum)}</span>{' '}
         <span className="text-stone-500">{show === 'spent' ? 'spent' : 'added'} in the last 12 months</span>
       </p>
-      <MonthBars months={months} text={text} />
+      <MonthBars months={months} text={text} short={show === 'spent' ? compact : String} />
     </Card>
   )
 }
