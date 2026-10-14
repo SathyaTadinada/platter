@@ -8,16 +8,26 @@ prepareZXingModule({
   },
 })
 
-const OPTIONS: ReaderOptions = {
+const BASE: ReaderOptions = {
   formats: ['EAN13', 'EAN8', 'UPCA', 'UPCE'],
   tryHarder: true,
-  tryRotate: false,
   maxNumberOfSymbols: 1,
 }
 
-export async function decodeFrame(img: ImageData): Promise<string | null> {
-  const [hit] = await readBarcodes(img, OPTIONS)
+export type Binarizer = 'LocalAverage' | 'GlobalHistogram'
+
+export async function decodeFrame(img: ImageData, binarizer: Binarizer = 'LocalAverage'): Promise<string | null> {
+  const [hit] = await readBarcodes(img, { ...BASE, binarizer, tryRotate: false })
   return hit?.isValid ? hit.text : null
+}
+
+// For still photos: slower settings are fine, it's one image
+export async function decodeImage(file: Blob): Promise<string | null> {
+  for (const binarizer of ['LocalAverage', 'GlobalHistogram'] as const) {
+    const [hit] = await readBarcodes(file, { ...BASE, binarizer, tryRotate: true, tryDownscale: true })
+    if (hit?.isValid) return hit.text
+  }
+  return null
 }
 
 // Load the module early so the first frame doesn't wait on it
