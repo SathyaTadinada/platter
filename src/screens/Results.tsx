@@ -62,7 +62,7 @@ export function Results() {
 
       {state.data?.kind === 'none' && <NothingFound barcode={state.data.barcode} mb={state.data.mb} />}
       {state.data?.kind === 'search' && !cards.length && (
-        <Notice tone="info">No releases matched. Try fewer words or a different spelling.</Notice>
+        <Notice tone="info">No results. Try fewer words or check the spelling.</Notice>
       )}
 
       {cards.length > 0 && (
@@ -98,8 +98,8 @@ function MbNotice({ mb }: { mb: MbRelease }) {
     <div className="mb-4 flex gap-3 rounded-2xl bg-stone-100 p-3 dark:bg-stone-900">
       <img src={coverArtUrl(mb.mbid)} alt="" className="size-16 shrink-0 rounded-lg object-cover" onError={(e) => (e.currentTarget.hidden = true)} />
       <p className="text-sm text-stone-700 dark:text-stone-300">
-        Discogs doesn't have this barcode. MusicBrainz says it's <b>{mb.artist}</b> – <b>{mb.title}</b>
-        {mb.date ? ` (${mb.date.slice(0, 4)})` : ''}, so these are Discogs results for that title.
+        This barcode isn't on Discogs. Showing results for <b>{mb.artist}</b> – <b>{mb.title}</b>
+        {mb.date ? ` (${mb.date.slice(0, 4)})` : ''} from MusicBrainz.
       </p>
     </div>
   )
@@ -111,10 +111,9 @@ function NothingFound({ barcode, mb }: { barcode: string; mb: MbRelease[] }) {
   return (
     <div className="space-y-4">
       <Notice tone="info">
-        Nothing on Discogs for barcode {barcode}
-        {guess ? `. MusicBrainz thinks it's ${guess.artist} – ${guess.title}, but Discogs had no match for that either.` : '.'}
+        No match on Discogs for {barcode}.{guess ? ` MusicBrainz lists it as ${guess.artist} – ${guess.title}, but that isn't on Discogs either.` : ''}
       </Notice>
-      <p className="text-sm text-stone-600 dark:text-stone-400">Older records often have no barcode on Discogs. The catalog number on the spine or label usually works.</p>
+      <p className="text-sm text-stone-600 dark:text-stone-400">Older records often aren't listed by barcode. Try the catalog number from the spine or label.</p>
       <div className="grid gap-2">
         <Link href="/search?mode=catno" className={buttonClass('primary')}>
           Search by catalog number

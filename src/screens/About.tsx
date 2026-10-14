@@ -7,25 +7,23 @@ export function About() {
     <Screen title="About Platter" back={session ? '/settings' : '/'}>
       <Section>
         <p className="text-stone-700 dark:text-stone-300">
-          Platter helps you get records into your Discogs collection quickly: scan, pick the right pressing, done. It's free and open
-          source.
+          Platter is a free, open-source app for adding records to your Discogs collection.
         </p>
       </Section>
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>There are no accounts, no analytics and no tracking. Platter has no database of its own.</p>
+          <p>No accounts, analytics or tracking.</p>
           <p>
-            Your Discogs sign-in and everything else Platter stores stay in this browser on this device. The app talks directly to
-            Discogs, and to MusicBrainz and the Cover Art Archive when Discogs can't identify a barcode.
+            Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs, and to
+            MusicBrainz when a barcode isn't on Discogs.
           </p>
           <p>
-            If you log in with Discogs, a small Platter server signs each request so Discogs knows it came from Platter. It sees which
-            Discogs address a request is for, but stores nothing and never sees what Discogs sends back. The request itself goes straight
-            from your device to Discogs.
+            When you log in with Discogs, a small Platter server adds a signature to each request. It doesn't store anything or see what
+            Discogs sends back.
           </p>
-          <p>Reading runouts and spines from photos happens on your device too. Photos aren't uploaded anywhere.</p>
-          <p>Signing out deletes everything Platter has stored on this device.</p>
+          <p>Photos used to read runouts and spines are processed on your device.</p>
+          <p>Signing out deletes everything Platter saved on this device.</p>
         </Card>
       </Section>
 

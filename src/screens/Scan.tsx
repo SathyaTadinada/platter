@@ -153,7 +153,7 @@ export function Scan() {
             {!on && !still && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-stone-300">
                 <ScanBarcode size={48} aria-hidden />
-                <p className="text-sm">Point your camera at the barcode on the back of the sleeve.</p>
+                <p className="text-sm">Point the camera at the barcode</p>
                 <button type="button" onClick={start} className={buttonClass('primary', 'bg-accent-500! text-stone-950!')}>
                   Start camera
                 </button>
@@ -187,8 +187,8 @@ export function Scan() {
                     </>
                   ) : (
                     <>
-                      <p className="font-medium">No barcode found in that image.</p>
-                      <p className="text-sm text-white/80">Fill the frame with the barcode and keep it sharp, or type the number in.</p>
+                      <p className="font-medium">Couldn't find a barcode</p>
+                      <p className="text-sm text-white/80">Get closer so it fills the frame, or type it in.</p>
                       <Button variant="secondary" onClick={() => setStill(null)}>
                         {on ? 'Back to camera' : 'OK'}
                       </Button>
@@ -236,10 +236,10 @@ export function Scan() {
               <div className="absolute inset-0 flex items-center p-4">
                 <Notice tone="warn">
                   {state === 'denied'
-                    ? 'Camera access is off. Allow it for this site in your browser settings, or choose a photo or type the barcode instead.'
+                    ? 'Camera access is blocked. Allow it in your browser settings, or use a photo or type the barcode.'
                     : state === 'error'
-                      ? 'The scanner stopped unexpectedly. Reload the page, or type the barcode instead.'
-                      : 'No camera available. Choose a photo or type the barcode instead.'}
+                      ? 'The scanner stopped. Reload the page or type the barcode.'
+                      : 'No camera found. Use a photo or type the barcode.'}
                 </Notice>
               </div>
             )}

@@ -10,6 +10,7 @@ import { db, getSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useAsync } from '../hooks/useAsync'
+import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { timeAgo } from '../lib/time'
@@ -24,6 +25,7 @@ export function Settings() {
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const install = useInstallPrompt()
+  const crates = useCollectionMeta().data?.folders.length
 
   const stats = useLiveQuery(async () => ({
     records: await db.collection.count(),
@@ -73,7 +75,7 @@ export function Settings() {
           </li>
           {confirming ? (
             <li className="space-y-3 px-4 py-3">
-              <p className="text-sm">Sign out and remove everything Platter keeps on this device? Your Discogs collection isn't touched.</p>
+              <p className="text-sm">Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected.</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="secondary" onClick={() => setConfirming(false)}>
                   Cancel
@@ -106,6 +108,7 @@ export function Settings() {
               </button>
             }
           />
+          <Row label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
           <Row label="Collection fields" value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.length} set up` : undefined} href="/setup" />
         </List>
         {sync.error && <Notice tone="error">{sync.error}</Notice>}
@@ -114,7 +117,7 @@ export function Settings() {
       <Section title="Import and backup">
         <List>
           <Row label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
-          <Row label="Export backup" detail="Settings as a JSON file. Your sign-in isn't included." onClick={doExport} />
+          <Row label="Export backup" onClick={doExport} />
           <Row label="Import backup" onClick={() => fileRef.current?.click()} />
         </List>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}

@@ -7,7 +7,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 ## What it does
 
 - Browse your collection: grid or list, search across artist, title, label, genre and your own notes, filter by crate (Discogs folders), format, genre, style, decade, rating or any custom field, sort and shuffle
-- Record pages with tracklist, rating, crate and editable custom fields, and a choice of cover from the release's other Discogs photos
+- Record pages with tracklist, rating, crate and editable custom fields (price, dates and play count get their own editors), and a choice of cover from the release's other Discogs photos
 - Condition, price, date, store, location and notes set while adding, saved to your custom fields in one go. Without purchase or location fields, those details go into Notes as a readable line instead. In a batch, store, date and location can be set once for every record
 - Export any filtered view as a CSV in the same columns Discogs uses
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
@@ -18,6 +18,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 - Reads catalog numbers off a photo of the spine
 
 Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.
+- Create, rename and delete crates
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
 - Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest

@@ -54,8 +54,8 @@ export function Import() {
     <Screen title="Import a CSV" back="/settings">
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
-          Add every record from a Discogs collection export to your collection, with crates, conditions, notes and ratings where they match yours. It
-          works with your own export or one someone shared with you.
+          Add records from a Discogs collection export, yours or someone else's. Crates, conditions, notes and ratings come along where they
+          match yours.
         </p>
         <p className="text-sm text-stone-500">
           To get one, open your <ExternalLink href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}>collection on Discogs</ExternalLink>{' '}
@@ -138,7 +138,7 @@ export function Import() {
             {toAdd === 0 ? 'Nothing new to add' : `Add ${plural(toAdd, 'record')} to the batch`}
           </Button>
           <p className="text-center text-xs text-stone-500">
-            You'll review them before anything is added to Discogs. Each record takes a few requests, so large files take a while.
+            You'll review them before anything is added. Large files take a while.
           </p>
         </div>
       )}

@@ -25,7 +25,7 @@ const demoFields = { fields: [...fields.fields, { id: 4, name: 'Location', type:
 const json = (data: unknown, status = 200) =>
   new Response(status === 204 ? null : JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 
-function route(url: string, method: string): Response {
+function route(url: string, method: string, body?: BodyInit | null): Response {
   if (url.includes('musicbrainz.org')) return json(mb)
   if (url.includes('/oauth/identity')) return json(identity)
   if (url.endsWith('/users/platter-test')) return json({ username: 'platter-test', uri: 'https://www.discogs.com/user/platter-test', curr_abbr: 'USD' })
@@ -36,6 +36,10 @@ function route(url: string, method: string): Response {
     return json(searchTitle)
   }
   // only one release is recorded; others report no data rather than borrowing its tracklist
+  if (method === 'POST' && /\/collection\/folders(\/\d+)?$/.test(url)) {
+    const { name } = JSON.parse(String(body ?? '{}')) as { name?: string }
+    return json({ id: Number(url.match(/folders\/(\d+)$/)?.[1] ?? Date.now() % 100000), name, count: 0 })
+  }
   if (method === 'GET' && /api\.discogs\.com\/releases\/\d+$/.test(url)) return url.endsWith(`/${release.id}`) ? json(release) : json({ message: 'Not in demo data' }, 404)
   if (method === 'POST' && /\/releases\/\d+$/.test(url)) return json({ instance_id: Date.now(), resource_url: url }, 201)
   if (method === 'POST' || method === 'DELETE') return json(null, 204)
@@ -55,6 +59,6 @@ export async function enableDemo() {
     const url = String(input instanceof Request ? input.url : input)
     if (!url.includes('api.discogs.com') && !url.includes('musicbrainz.org')) return real(input, init)
     await new Promise((r) => setTimeout(r, 300))
-    return route(url, (init?.method ?? 'GET').toUpperCase())
+    return route(url, (init?.method ?? 'GET').toUpperCase(), init?.body)
   }
 }

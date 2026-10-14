@@ -34,8 +34,8 @@ export function Setup() {
     <Screen title="Collection fields" back="/settings">
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
-          Platter saves things like price and shelf location in Discogs custom fields, so they sync wherever you use Discogs. Fields
-          have to be created on the Discogs website. Everything still works without them; Platter just skips what it can't save.
+          Platter saves details like price and location to your Discogs custom fields. Fields can only be added on the Discogs website.
+          Anything without a field goes into Notes.
         </p>
       </Section>
 
@@ -54,7 +54,7 @@ export function Setup() {
                   Open <ExternalLink href={FIELDS_SETTINGS_URL}>Discogs collection settings</ExternalLink>
                 </li>
                 <li>
-                  Use <b>Add Field</b> for each one below, with the exact name and type shown. Leave <b>Make Public</b> off.
+                  Use <b>Add Field</b> for each one below, with the name and type shown. Leave <b>Make Public</b> off.
                 </li>
                 <li>Save, then come back here and check again.</li>
               </ol>
@@ -64,7 +64,7 @@ export function Setup() {
             </Card>
           ) : (
             <div className="mb-6">
-              <Notice tone="success">All set. Every field Platter uses is connected.</Notice>
+              <Notice tone="success">All fields are set up.</Notice>
             </div>
           )}
 

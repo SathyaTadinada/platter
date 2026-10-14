@@ -7,6 +7,7 @@ import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
 import { hasMetadata, planFieldWrites, type Metadata } from '../lib/metadata'
+import { CrateSelect } from './CrateSelect'
 import { MetadataForm } from './MetadataForm'
 import { useProfile } from './Profile'
 import type { ReleaseCard } from '../lib/format'
@@ -190,7 +191,7 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
           <>
             {o?.exactCopies ? (
               <Notice tone="warn">
-                You already own this exact pressing{o.exactCopies > 1 ? ` (${o.exactCopies} copies)` : ''}. Adding it again creates another copy.
+                You already have this pressing{o.exactCopies > 1 ? ` (${o.exactCopies} copies)` : ''}. Adding it again creates another copy.
               </Notice>
             ) : null}
             {!o?.exactCopies && o?.otherPressings ? (
@@ -198,23 +199,19 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
                 You own {o.otherPressings === 1 ? 'another pressing' : `${o.otherPressings} other pressings`} of this release.
               </Notice>
             ) : null}
-            {o?.inWantlist && <Notice tone="success">This one is on your wantlist.</Notice>}
-            {!o?.inWantlist && o?.wantsOtherPressing && <Notice tone="info">A different pressing of this is on your wantlist.</Notice>}
+            {o?.inWantlist && <Notice tone="success">On your wantlist</Notice>}
+            {!o?.inWantlist && o?.wantsOtherPressing && <Notice tone="info">Another pressing is on your wantlist</Notice>}
 
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Crate</span>
-              <select
+              <CrateSelect
                 className="min-h-12 w-full rounded-xl border border-stone-300 bg-transparent px-3 dark:border-stone-700"
-                value={folderId ?? ''}
-                onChange={(e) => setFolderId(Number(e.target.value))}
+                value={folderId}
+                folders={folders.data ?? []}
+                onChange={setFolderId}
+                onCreated={folders.reload}
                 disabled={!folders.data}
-              >
-                {folders.data?.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
 
             <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} parts={['conditions']} />

@@ -14,6 +14,7 @@ import { SyncProvider } from './hooks/sync'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
 import { Batch } from './screens/Batch'
+import { Crates } from './screens/Crates'
 import { Import } from './screens/Import'
 import { Results } from './screens/Results'
 import { Collection } from './screens/Collection'
@@ -95,6 +96,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/results" component={Results} />
             <Route path="/setup" component={Setup} />
             <Route path="/settings" component={Settings} />
+            <Route path="/crates" component={Crates} />
             <Route path="/about" component={About} />
             <Route component={Collection} />
           </Switch>

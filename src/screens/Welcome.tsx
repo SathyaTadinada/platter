@@ -24,36 +24,35 @@ export function Welcome({ error }: { error?: string }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),2rem)] pb-8">
-      <div className="flex flex-1 flex-col justify-center gap-6">
-        <div className="space-y-3">
-          <Disc3 size={48} className="text-accent-500" aria-hidden />
-          <h1 className="text-4xl font-bold tracking-tight">Platter</h1>
-          <p className="text-lg text-stone-600 dark:text-stone-400">Scan the barcode on a record and add it to your Discogs collection in a couple of taps.</p>
+    <div className="flex min-h-dvh flex-col items-center px-6 pt-[max(env(safe-area-inset-top),1.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
+      <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center text-center">
+        <Disc3 size={56} strokeWidth={1.5} className="text-accent-500" aria-hidden />
+        <h1 className="mt-4 text-4xl font-bold tracking-tight">Platter</h1>
+        <p className="mt-2 text-stone-500">Scan your records into Discogs.</p>
+
+        <div className="mt-10 w-full space-y-3 text-left">
+          {(startError ?? error) && <Notice tone="error">{startError ?? error}</Notice>}
+          {useToken ? (
+            <TokenForm onCancel={() => setUseToken(false)} />
+          ) : (
+            <>
+              <Button className="w-full" onClick={logIn} disabled={starting}>
+                {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
+              </Button>
+              <button type="button" onClick={() => setUseToken(true)} className="block w-full py-2 text-center text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
+                Use a personal access token
+              </button>
+            </>
+          )}
         </div>
-
-        {(startError ?? error) && <Notice tone="error">{startError ?? error}</Notice>}
-
-        {useToken ? (
-          <TokenForm onCancel={() => setUseToken(false)} />
-        ) : (
-          <div className="space-y-3">
-            <Button className="w-full" onClick={logIn} disabled={starting}>
-              {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
-            </Button>
-            <Button variant="ghost" className="w-full" onClick={() => setUseToken(true)}>
-              Use a personal access token instead
-            </Button>
-          </div>
-        )}
-
-        <p className="text-sm text-stone-500">
-          Platter runs entirely on your device. Your sign-in is stored in this browser and is only ever sent to Discogs.{' '}
-          <Link href="/about" className="underline">
-            More about privacy
-          </Link>
-        </p>
       </div>
+
+      <p className="text-xs text-stone-500">
+        Free and open source ·{' '}
+        <Link href="/about" className="underline underline-offset-2">
+          Privacy
+        </Link>
+      </p>
     </div>
   )
 }
@@ -84,10 +83,10 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
     <Card className="space-y-4">
       <ol className="list-decimal space-y-2 pl-5 text-sm">
         <li>
-          Open your <ExternalLink href="https://www.discogs.com/settings/developers">Discogs developer settings</ExternalLink> and log in if asked.
+          Open <ExternalLink href="https://www.discogs.com/settings/developers">Discogs developer settings</ExternalLink>
         </li>
-        <li>Tick the box to agree to the API terms, then choose <b>Generate new token</b>.</li>
-        <li>Copy the long string next to "Current token" and paste it below.</li>
+        <li>Agree to the API terms and choose <b>Generate new token</b></li>
+        <li>Copy the token and paste it here</li>
       </ol>
       <form onSubmit={submit} className="space-y-3">
         <input
@@ -111,7 +110,7 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
           </Button>
         </div>
       </form>
-      <p className="text-xs text-stone-500">The token stays on this device. You can delete it on Discogs any time, which signs Platter out.</p>
+      <p className="text-xs text-stone-500">The token stays on this device. Deleting it on Discogs signs Platter out.</p>
     </Card>
   )
 }

@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'wouter'
+import { CrateSelect } from '../components/CrateSelect'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
 import { ResolveSheet } from '../components/ResolveSheet'
@@ -100,8 +101,8 @@ export function Batch() {
       <Screen title="Batch" back="/scan">
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Disc3 size={48} className="text-stone-400" aria-hidden />
-          <p className="text-lg font-semibold">Nothing in the batch</p>
-          <p className="max-w-xs text-stone-500">Switch the Scan tab to Batch and scan one record after another, or import a CSV from Discogs.</p>
+          <p className="text-lg font-semibold">Batch is empty</p>
+          <p className="max-w-xs text-stone-500">Switch Scan to Batch to scan several records in a row, or import a CSV.</p>
           <div className="mt-2 flex gap-2">
             <Link href="/scan" className={buttonClass('primary')}>
               Start scanning
@@ -119,7 +120,7 @@ export function Batch() {
     <Screen title="Batch" back="/scan" width="wide" actions={actions}>
       {confirmClear && (
         <div className="mb-4 space-y-3 rounded-2xl bg-red-50 p-4 dark:bg-red-950/40">
-          <p className="text-sm">Remove everything from the batch? Records already added to Discogs stay in your collection.</p>
+          <p className="text-sm">Clear the batch? Records already added stay in your collection.</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={() => setConfirmClear(false)}>
               Cancel
@@ -134,13 +135,13 @@ export function Batch() {
       {!online && groups.waiting.length > 0 && (
         <div className="mb-4">
           <Notice tone="info">
-            You're offline. {groups.waiting.length} scan{groups.waiting.length === 1 ? '' : 's'} will be looked up when you're back online.
+            Offline. {groups.waiting.length} scan{groups.waiting.length === 1 ? '' : 's'} will be looked up when you reconnect.
           </Notice>
         </div>
       )}
 
       {groups.attention.length > 0 && (
-        <Section title={`Needs you (${groups.attention.length})`}>
+        <Section title={`Check these (${groups.attention.length})`}>
           <List>
             {groups.attention.map((i) => (
               <Row key={i.id} item={i} dupe={dupes.has(i.barcode ?? '')} onResolve={() => setResolving(i)} onRemove={() => remove(i.id!)} onRetry={() => retryFailed().then(kick)} />
@@ -163,7 +164,7 @@ export function Batch() {
         <Section title={`Ready to add (${groups.ready.length})`}>
           {shared && groups.ready.some((i) => i.source !== 'csv') && (
             <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-              <p className="mb-3 font-semibold">Same for the whole batch</p>
+              <p className="mb-3 font-semibold">Same for every record</p>
               <MetadataForm
                 value={shared}
                 onChange={updateShared}
@@ -207,21 +208,16 @@ export function Batch() {
           <div className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
             <label className="flex items-center justify-between gap-3 text-sm">
               <span className="shrink-0 font-medium">Add to crate</span>
-              <select
-                value={folderId ?? ''}
-                onChange={(e) => setFolderId(Number(e.target.value))}
+              <CrateSelect
+                value={folderId}
+                folders={folders}
+                onChange={setFolderId}
                 disabled={adding || !folders.length}
                 className="min-h-10 min-w-0 rounded-lg border border-stone-300 bg-transparent px-2 dark:border-stone-700"
-              >
-                {folders.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
             {groups.ready.some((i) => i.source === 'csv' && i.folderId) && (
-              <p className="text-xs text-stone-500">Imported records go to the crate named in the file when you have one.</p>
+              <p className="text-xs text-stone-500">Imported records keep their crate from the file if you have one with that name.</p>
             )}
             {readyWanted > 0 && (
               <label className="flex items-center gap-2 text-sm">
@@ -334,11 +330,11 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
     case 'choose':
       status =
         item.via === 'musicbrainz'
-          ? `Not on Discogs by barcode. MusicBrainz says ${item.guess}; pick from ${item.candidates?.length} matches.`
-          : `${item.candidates?.length} releases have this barcode. Pick yours.`
+          ? `Not on Discogs by barcode. MusicBrainz lists it as ${item.guess}.`
+          : `${item.candidates?.length} releases have this barcode`
       break
     case 'notfound':
-      status = item.guess ? `Not on Discogs by barcode. MusicBrainz says ${item.guess}.` : 'No match on Discogs. Search for it instead.'
+      status = item.guess ? `Not on Discogs by barcode. MusicBrainz lists it as ${item.guess}.` : 'No match on Discogs'
       break
     case 'failed':
       status = <span className="text-red-600 dark:text-red-400">{item.error}</span>
@@ -457,7 +453,7 @@ function DetailsSheet({
           <p className="truncate text-sm text-stone-500">{item.release?.artist}</p>
         </div>
         <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} />
-        {sharedText && <p className="text-xs text-stone-500">Batch: {sharedText}. Anything filled in here wins.</p>}
+        {sharedText && <p className="text-xs text-stone-500">Batch values: {sharedText}. Anything entered here replaces them.</p>}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel

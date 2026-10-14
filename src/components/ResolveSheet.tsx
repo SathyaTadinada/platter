@@ -71,7 +71,7 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
         {busy && <Spinner label="Searching" />}
         {error && <Notice tone="error">{error}</Notice>}
         {!busy && results && !results.length && <Notice tone="info">Nothing found. Try fewer words.</Notice>}
-        {!busy && !results && !list.length && <p className="text-sm text-stone-500">Search for the record by artist and title, or the catalog number on the spine.</p>}
+        {!busy && !results && !list.length && <p className="text-sm text-stone-500">Search by artist and title, or catalog number.</p>}
         {!busy && !results && list.length > 1 && <RunoutPanel candidates={list} onRanked={setRanked} />}
         {!busy && list.length > 0 && (
           <ul className="grid grid-cols-1 gap-3">

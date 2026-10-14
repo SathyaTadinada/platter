@@ -3,7 +3,9 @@ import { ArrowDownUp, Check, Disc3, Download, FileUp, LayoutGrid, List as ListIc
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance } from '../api/discogs/endpoints'
+import type { Folder } from '../api/discogs/types'
 import { FilterSheet } from '../components/FilterSheet'
+import { CrateSelect } from '../components/CrateSelect'
 import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
 import { Stars } from '../components/Stars'
@@ -257,8 +259,8 @@ export function Collection() {
     body = (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <Disc3 size={48} className="text-stone-400" aria-hidden />
-        <p className="text-lg font-semibold">Nothing here yet</p>
-        <p className="max-w-xs text-stone-500">Records in your Discogs collection show up here. Scan one to get started.</p>
+        <p className="text-lg font-semibold">No records yet</p>
+        <p className="max-w-xs text-stone-500">Scan a record or import a CSV to get started.</p>
         <div className="mt-2 flex gap-2">
           <Link href="/scan" className={buttonClass('primary')}>
             Scan a record
@@ -273,7 +275,7 @@ export function Collection() {
     body = (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="text-lg font-semibold">No matches</p>
-        <p className="text-stone-500">Nothing in your collection matches that.</p>
+        <p className="text-stone-500">Try a different search or clear the filters.</p>
         <Button
           variant="secondary"
           onClick={() => {
@@ -484,7 +486,7 @@ function BulkBar({
   onRun,
 }: {
   count: number
-  folders: { id: number; name: string }[]
+  folders: Folder[]
   onRun: (kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) => Promise<void>
 }) {
   const [confirm, setConfirm] = useState(false)
@@ -508,7 +510,7 @@ function BulkBar({
           </p>
         ) : confirm ? (
           <div className="space-y-2">
-            <p className="text-sm">Remove {records} from your Discogs collection? Their field values go with them.</p>
+            <p className="text-sm">Remove {records} from your Discogs collection? Their notes and other details are deleted too.</p>
             <div className="grid grid-cols-2 gap-2">
               <Button variant="secondary" onClick={() => setConfirm(false)}>
                 Cancel
@@ -522,19 +524,14 @@ function BulkBar({
           <div className="grid grid-cols-2 gap-2">
             <label className="relative">
               <span className={buttonClass('secondary', 'w-full')}>Move to crate…</span>
-              <select
-                aria-label="Move to crate"
-                value=""
-                onChange={(e) => e.target.value && run('move', Number(e.target.value))}
+              <CrateSelect
+                ariaLabel="Move to crate"
+                value={undefined}
+                placeholder="Move to crate…"
+                folders={folders}
+                onChange={(id) => run('move', id)}
                 className="absolute inset-0 opacity-0"
-              >
-                <option value="">Move to crate…</option>
-                {folders.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
             <Button variant="danger" onClick={() => setConfirm(true)}>
               Remove

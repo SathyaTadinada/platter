@@ -88,7 +88,6 @@ export function RunoutPanel({ candidates, onRanked }: { candidates: SearchResult
           <X size={18} />
         </button>
       </div>
-      <p className="text-sm text-stone-600 dark:text-stone-400">What's etched in the dead wax on each side. Part of it is enough.</p>
       {sides.map((v, i) => (
         <label key={i} className="block">
           <span className="mb-1 block text-xs font-medium text-stone-500">{SIDE_NAMES[i]}</span>
@@ -112,7 +111,7 @@ export function RunoutPanel({ candidates, onRanked }: { candidates: SearchResult
       <ReadPhotoButton label="Read it from a photo" onText={(t) => setSuggestions(runoutCandidates(t))} />
       {suggestions && (
         <div className="space-y-1.5">
-          <p className="text-xs text-stone-500">{suggestions.length ? 'From the photo (check it before relying on it):' : 'No readable text in that photo. Try closer, with light across the grooves.'}</p>
+          <p className="text-xs text-stone-500">{suggestions.length ? 'Found in the photo. Tap one to use it:' : "Couldn't read any text. Try closer, with light across the grooves."}</p>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((s) => (
               <button key={s} type="button" onClick={() => fillNext(s)} className="rounded-full bg-stone-100 px-3 py-1 font-mono text-sm dark:bg-stone-800">

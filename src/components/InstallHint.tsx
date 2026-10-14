@@ -65,8 +65,8 @@ export function InstallHint() {
       {ios ? (
         <>
           <p className="text-sm text-stone-600 dark:text-stone-400">
-            Tap <Share className="inline align-text-bottom" size={16} aria-label="Share" />, then <b>Add to Home Screen</b>. iOS can clear data for sites
-            that aren't on the home screen and haven't been opened in a while, which would sign you out.
+            Tap <Share className="inline align-text-bottom" size={16} aria-label="Share" />, then <b>Add to Home Screen</b>. Otherwise iOS may clear
+            Platter's data if you don't open it for a while, which signs you out.
           </p>
         </>
       ) : (
