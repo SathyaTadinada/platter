@@ -55,7 +55,7 @@ export function DiscogsCredit({ url }: { url: string }) {
 
 export function ReleaseCardView({ card, own, onPick }: { card: ReleaseCard; own?: Ownership; onPick: () => void }) {
   return (
-    <li className="rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+    <li className="min-w-0 rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       <button type="button" onClick={onPick} className="flex w-full gap-3 p-3 text-left active:bg-stone-50 dark:active:bg-stone-800/50">
         <Cover src={card.thumb} />
         <div className="min-w-0 flex-1">

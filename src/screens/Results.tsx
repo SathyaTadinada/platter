@@ -47,7 +47,7 @@ export function Results() {
   }, [state.data])
 
   return (
-    <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/' : '/search'} width="wide">
+    <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/scan' : '/search'} width="wide">
       {state.loading && <Spinner label="Searching Discogs" />}
       {state.error && <Notice tone="error">{state.error.message}</Notice>}
 
@@ -60,10 +60,8 @@ export function Results() {
 
       {cards.length > 0 && (
         <>
-          <p className="mb-3 text-sm text-stone-500">
-            {cards.length === 1 ? '1 match' : `${cards.length} matches`}. Tap the one in your hands.
-          </p>
-          <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <p className="mb-3 text-sm text-stone-500">{resultsLine(cards.length, Boolean(params.get('barcode')))}</p>
+          <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
               <ReleaseCardView key={c.id} card={c} own={own?.get(c.id)} onPick={() => setPicked(c)} />
             ))}
@@ -71,9 +69,15 @@ export function Results() {
         </>
       )}
 
-      {picked && <AddSheet card={picked} onClose={() => setPicked(null)} onScanNext={() => navigate('/')} />}
+      {picked && <AddSheet card={picked} onClose={() => setPicked(null)} onScanNext={() => navigate('/scan')} />}
     </Screen>
   )
+}
+
+function resultsLine(n: number, barcode: boolean): string {
+  if (n === 1) return barcode ? 'One release has this barcode.' : '1 result'
+  // several pressings often share a barcode; label, catalog number and year tell them apart
+  return barcode ? `${n} releases share this barcode. Compare the label, catalog number and year with your copy.` : `${n} results`
 }
 
 function MbNotice({ mb }: { mb: MbRelease }) {
@@ -105,7 +109,7 @@ function NothingFound({ barcode, mb }: { barcode: string; mb: MbRelease[] }) {
         <Link href={`/search?${titleSearch}`} className={buttonClass('secondary')}>
           Search by artist and title
         </Link>
-        <Link href="/" className={buttonClass('ghost')}>
+        <Link href="/scan" className={buttonClass('ghost')}>
           Scan again
         </Link>
       </div>
