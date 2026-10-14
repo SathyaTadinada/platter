@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { SearchResult } from '../api/discogs/types'
 import type { Metadata } from '../lib/metadata'
+import type { PriceEntry, ValueSnapshot } from '../lib/value'
 
 export type Session = {
   id: 'current'
@@ -96,6 +97,8 @@ export class PlatterDB extends Dexie {
   settings!: EntityTable<Setting, 'key'>
   queue!: EntityTable<QueueItem, 'id'>
   covers!: EntityTable<CoverChoice, 'instanceId'>
+  prices!: EntityTable<PriceEntry, 'releaseId'>
+  valueHistory!: EntityTable<ValueSnapshot, 'date'>
 
   constructor(name = 'platter') {
     super(name)
@@ -115,6 +118,7 @@ export class PlatterDB extends Dexie {
       })
     this.version(3).stores({ queue: '++id, status, createdAt' })
     this.version(4).stores({ covers: 'instanceId' })
+    this.version(5).stores({ prices: 'releaseId, at', valueHistory: 'date' })
   }
 }
 

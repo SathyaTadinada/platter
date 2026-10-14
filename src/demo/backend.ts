@@ -44,7 +44,7 @@ const FIELDS: CollectionField[] = [
 ]
 
 function initialState(): State {
-  const items = (demo as unknown as { releases: CollectionItem[] }).releases
+  const items = structuredClone((demo as unknown as { releases: CollectionItem[] }).releases)
   return {
     folders: [
       { id: 1, name: 'Uncategorized' },
@@ -95,6 +95,12 @@ function basicInfo(r: Release) {
   }
 }
 
+const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+// A made-up but stable estimate, so the sample collection has a value
+export const demoValue = (releaseIds: number[]) => releaseIds.reduce((n, id) => n + 6 + ((id * 7919) % 4500) / 100, 0)
+export const currentDemoValue = async () => demoValue((await load()).items.map((i) => i.id))
+
 async function handle(realFetch: typeof fetch, url: URL, method: string, body: unknown): Promise<Response> {
   const path = url.pathname
   const s = await load()
@@ -103,6 +109,10 @@ async function handle(realFetch: typeof fetch, url: URL, method: string, body: u
   if (path === '/oauth/identity') return json({ id: 0, username: DEMO_USER })
   if (path === mine) return json({ username: DEMO_USER, uri: '', curr_abbr: 'USD' })
   if (path === `${mine}/collection/fields`) return json({ fields: FIELDS })
+  if (path === `${mine}/collection/value`) {
+    const median = demoValue(s.items.map((i) => i.id))
+    return json({ minimum: usd(median * 0.55), median: usd(median), maximum: usd(median * 1.6) })
+  }
 
   // crates
   if (path === `${mine}/collection/folders`) {

@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from '../components/Toaster'
+import { getProfile } from '../api/discogs/endpoints'
+import type { DiscogsClient } from '../api/discogs/client'
+import { recordCollectionValue, recordedToday } from '../lib/pricing'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
 import { useSession } from './session'
 
@@ -30,6 +33,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           await syncWants(client, session.username, (done, total) => setState((s) => ({ ...s, done, total })))
         }
         setState(idle)
+        recordValue(client, session.username)
       } catch (e) {
         const message = (e as Error).message
         setState({ ...idle, error: message })
@@ -60,4 +64,15 @@ export function useSync() {
   const ctx = useContext(SyncContext)
   if (!ctx) throw new Error('useSync outside SyncProvider')
   return ctx
+}
+
+// One reading of the collection's value a day, for the chart. Not worth bothering anyone if it fails.
+async function recordValue(client: DiscogsClient, username: string) {
+  try {
+    if (await recordedToday()) return
+    const profile = await getProfile(client, username)
+    await recordCollectionValue(client, username, profile.curr_abbr ?? 'USD')
+  } catch {
+    // try again next sync
+  }
 }

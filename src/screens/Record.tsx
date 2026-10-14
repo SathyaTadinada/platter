@@ -6,6 +6,7 @@ import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/
 import type { CollectionField, Release } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
 import { CoverSheet } from '../components/CoverSheet'
+import { MarketPrice } from '../components/MarketPrice'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
@@ -14,6 +15,7 @@ import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollect
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
+import { fieldFor } from '../lib/fields'
 import { discogsUrl } from '../lib/format'
 import { Cover } from './Collection'
 
@@ -26,6 +28,7 @@ export function Record({ id }: { id: string }) {
   const meta = useCollectionMeta()
   const matches = useFieldMatches()
   const currency = useProfile()?.curr_abbr ?? 'USD'
+  const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const release = useAsync(() => (item ? getRelease(client, item.releaseId) : Promise.resolve(undefined)), [item?.releaseId])
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -172,6 +175,10 @@ export function Record({ id }: { id: string }) {
               ) : (
                 <Spinner label="Loading your fields" />
               )}
+            </Section>
+
+            <Section title="Market">
+              <MarketPrice item={item} mediaCondition={mediaField !== undefined ? item.fields[mediaField] : undefined} />
             </Section>
 
             {related?.copies.length || related?.pressings.length ? (

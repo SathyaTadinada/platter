@@ -14,6 +14,7 @@ import {
   parseQuery,
   serializeQuery,
   sortItems,
+  type ValueLookup,
   sortName,
   toCsv,
   toLibraryItem,
@@ -119,6 +120,14 @@ describe('sortItems', () => {
     const withUnknown = [...items, { ...items[0], instanceId: 1, year: 0 }]
     expect(sortItems(withUnknown, 'year').at(-1)!.year).toBe(0)
     expect(sortItems(withUnknown, 'year-old').at(-1)!.year).toBe(0)
+  })
+
+  it('sorts by value, unpriced last', () => {
+    const [a, b, c] = items
+    const prices: ValueLookup = { value: (i) => ({ [a.instanceId]: 5, [b.instanceId]: 80 })[i.instanceId], money: (n) => `$${n}` }
+    const s = sortItems([a, b, c], 'value', prices)
+    expect(s.map((i) => i.instanceId)).toEqual([b.instanceId, a.instanceId, c.instanceId])
+    expect(groupItems(s, 'value', prices).map((g) => g.label)).toEqual(['$50 to $100', 'Under $10', 'No price yet'])
   })
 })
 

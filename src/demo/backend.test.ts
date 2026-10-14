@@ -31,6 +31,14 @@ describe('demo backend', () => {
     expect(folders.map((x: { name: string }) => x.name)).toEqual(['All', 'Uncategorized', 'Shelf'])
   })
 
+  it('has a collection value that follows the records', async () => {
+    const before = (await call(f, 'GET', '/users/demo/collection/value')).data
+    expect(before.median).toMatch(/^\$[\d,]+\.\d\d$/)
+    await call(f, 'POST', '/users/demo/collection/folders/1/releases/249504')
+    const after = (await call(f, 'GET', '/users/demo/collection/value')).data
+    expect(after.median).not.toBe(before.median)
+  })
+
   it('adds a record using real release details, then edits and removes it', async () => {
     const add = await call(f, 'POST', '/users/demo/collection/folders/1/releases/249504')
     expect(add.status).toBe(201)

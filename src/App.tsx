@@ -8,6 +8,7 @@ import { Toaster } from './components/Toaster'
 import { Spinner } from './components/ui'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
+import { stopPriceCheck } from './hooks/prices'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
@@ -23,6 +24,7 @@ import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
 import { Setup } from './screens/Setup'
+import { Value } from './screens/Value'
 import { Welcome } from './screens/Welcome'
 
 type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
@@ -105,6 +107,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/setup" component={Setup} />
             <Route path="/settings" component={Settings} />
             <Route path="/crates" component={Crates} />
+            <Route path="/value" component={Value} />
             <Route path="/about" component={About} />
             <Route component={Collection} />
           </Switch>
@@ -120,6 +123,7 @@ function DemoBar() {
   const [, navigate] = useLocation()
   if (session?.kind !== 'demo') return null
   async function leave() {
+    stopPriceCheck()
     await auth?.signOut()
     navigate('/', { replace: true })
     setSession(null)

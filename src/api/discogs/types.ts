@@ -117,9 +117,15 @@ export type WantsPage = { pagination: Pagination; wants: WantItem[] }
 export type AddResponse = { instance_id: number; resource_url: string }
 
 export type MarketplaceStats = {
-  num_for_sale: number
+  num_for_sale: number | null
   lowest_price: { value: number; currency: string } | null
   blocked_from_sale: boolean
 }
+
+// Formatted in the user's currency, e.g. "$1,546.30"
+export type CollectionValue = { minimum: string; median: string; maximum: string }
+
+// Keyed by media condition, e.g. "Very Good Plus (VG+)"
+export type PriceSuggestions = Record<string, { currency: string; value: number }>
 
 export type UserProfile = { username: string; name?: string; avatar_url?: string; uri: string; curr_abbr?: string }

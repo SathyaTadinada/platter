@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownUp,
+  ChartLine,
   Check,
   Disc3,
   Download,
@@ -28,6 +29,8 @@ import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
+import { useFieldMatches } from '../hooks/useFields'
+import { checkPrices, useCurrency, useFreshPrices, usePriceCheck } from '../hooks/prices'
 import {
   activeFilterCount,
   facets as buildFacets,
@@ -40,7 +43,10 @@ import {
   toCsv,
   type Filters,
   type LibraryQuery,
+  type ValueLookup,
 } from '../lib/library'
+import { fieldFor } from '../lib/fields'
+import { formatMoney, valueOf } from '../lib/value'
 import { runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 
@@ -93,14 +99,35 @@ export function Collection() {
 
   const folders = meta.data?.folders ?? []
   const fields = meta.data?.fields ?? []
-  const filtered = useMemo(() => (items ? sortItems(filterItems(items, query), query.sort) : []), [items, query])
+  // prices only matter when sorting by value
+  const byValue = query.sort === 'value'
+  const currency = useCurrency()
+  const prices = useFreshPrices(byValue ? currency : undefined)
+  const matches = useFieldMatches()
+  const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
+  const valueLookup = useMemo<ValueLookup | undefined>(
+    () =>
+      prices && currency
+        ? {
+            value: (i) => valueOf(prices.get(i.releaseId), mediaField ? i.fields[mediaField] : undefined)?.amount,
+            money: (n) => formatMoney(n, currency, { whole: true }),
+          }
+        : undefined,
+    [prices, currency, mediaField],
+  )
+  const priceOf = (i: LibraryItem) => {
+    const v = byValue ? valueLookup?.value(i) : undefined
+    return v === undefined || !currency ? undefined : formatMoney(v, currency)
+  }
+
+  const filtered = useMemo(() => (items ? sortItems(filterItems(items, query), query.sort, valueLookup) : []), [items, query, valueLookup])
   // headings only help when groups are reasonably full; sparse ones just break up the grid
   const groups = useMemo(() => {
     const shown = filtered.slice(0, limit)
-    const all = groupItems(filtered, query.sort)
+    const all = groupItems(filtered, query.sort, valueLookup)
     if (all.length < 2 || filtered.length / all.length < 3) return [{ key: 'all', label: '', items: shown }]
-    return groupItems(shown, query.sort)
-  }, [filtered, limit, query.sort])
+    return groupItems(shown, query.sort, valueLookup)
+  }, [filtered, limit, query.sort, valueLookup])
   const facets = useMemo(() => (items ? buildFacets(items, query, folders, fields) : null), [items, query, folders, fields])
 
   const fresh = syncedAt !== undefined && Date.now() - syncedAt < SYNC_MAX_AGE
@@ -261,6 +288,9 @@ export function Collection() {
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
       </IconButton>
       <span className="mx-1 hidden h-6 w-px bg-stone-200 lg:block dark:bg-stone-800" aria-hidden />
+      <button type="button" onClick={() => navigate('/value')} className={headerButton}>
+        <ChartLine size={18} aria-hidden /> Value
+      </button>
       <button type="button" onClick={() => navigate('/import')} className={headerButton}>
         <FileUp size={18} aria-hidden /> Import CSV
       </button>
@@ -277,6 +307,7 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
+            { label: 'Value', icon: <ChartLine size={18} />, onSelect: () => navigate('/value') },
             { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}
@@ -344,6 +375,7 @@ export function Collection() {
     body = (
       <>
         <ActiveFilters filters={query.filters} facets={facets} onChange={setFilters} />
+        {byValue && currency && prices && <PriceCoverage items={filtered} prices={prices} currency={currency} />}
         {groups.map((g) => (
           <section key={g.key} className="mb-6">
             {g.label && <h2 className="mb-2 text-sm font-semibold text-stone-500">{g.label}</h2>}
@@ -353,6 +385,7 @@ export function Collection() {
                   <GridTile
                     key={i.instanceId}
                     item={i}
+                    price={priceOf(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -364,6 +397,7 @@ export function Collection() {
                   <ListRow
                     key={i.instanceId}
                     item={i}
+                    price={priceOf(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -443,7 +477,7 @@ function Tick({ on }: { on?: boolean }) {
   )
 }
 
-function GridTile({ item, selected, onSelect }: { item: LibraryItem } & Selectable) {
+function GridTile({ item, price, selected, onSelect }: { item: LibraryItem; price?: string } & Selectable) {
   return (
     <li className="min-w-0">
       <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
@@ -460,12 +494,13 @@ function GridTile({ item, selected, onSelect }: { item: LibraryItem } & Selectab
         </div>
         <p className="mt-2 truncate text-sm font-semibold">{item.title}</p>
         <p className="truncate text-sm text-stone-500">{item.artist}</p>
+        {price && <p className="text-sm font-medium tabular-nums">{price}</p>}
       </Tap>
     </li>
   )
 }
 
-function ListRow({ item, selected, onSelect }: { item: LibraryItem } & Selectable) {
+function ListRow({ item, price, selected, onSelect }: { item: LibraryItem; price?: string } & Selectable) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
     <li>
@@ -482,10 +517,14 @@ function ListRow({ item, selected, onSelect }: { item: LibraryItem } & Selectabl
           <p className="truncate text-sm text-stone-600 dark:text-stone-400">{item.artist}</p>
           {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         </div>
-        {item.rating > 0 && (
-          <span className="shrink-0">
-            <Stars value={item.rating} size={12} />
-          </span>
+        {price ? (
+          <span className="shrink-0 text-sm font-semibold tabular-nums">{price}</span>
+        ) : (
+          item.rating > 0 && (
+            <span className="shrink-0">
+              <Stars value={item.rating} size={12} />
+            </span>
+          )
         )}
       </Tap>
     </li>
@@ -507,6 +546,34 @@ export function Cover({
   ) : (
     <div className={`flex items-center justify-center bg-stone-200 text-stone-400 dark:bg-stone-800 ${className}`}>
       <Disc3 size={small ? 20 : 40} aria-hidden />
+    </div>
+  )
+}
+
+// Sorting by value only works for records with a recent price
+function PriceCoverage({ items, prices, currency }: { items: LibraryItem[]; prices: Map<number, unknown>; currency: string }) {
+  const { client } = useSignedIn()
+  const check = usePriceCheck()
+  const ids = [...new Set(items.map((i) => i.releaseId))]
+  const priced = ids.filter((id) => prices.has(id)).length
+  if (!check.running && priced >= ids.length) return null
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-xl bg-stone-100 px-3 py-2 text-sm dark:bg-stone-900">
+      {check.running ? (
+        <>
+          <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent text-stone-500" />
+          <span className="tabular-nums">
+            Checking prices · {check.done} of {check.total}
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="min-w-0 flex-1">{priced ? `${priced} of ${ids.length} have prices.` : 'Nothing has a price yet.'}</span>
+          <button type="button" onClick={() => checkPrices(client, ids, currency)} className="shrink-0 font-semibold">
+            {priced ? 'Check the rest' : 'Check prices'}
+          </button>
+        </>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { DISCOGS_MAX_AGE } from '../../db/cache'
 import type { DiscogsClient } from './client'
 import type {
   AddResponse,
+  CollectionValue,
   CollectionPage,
   FieldsResponse,
   Folder,
@@ -9,6 +10,7 @@ import type {
   IdentityResponse,
   MarketplaceStats,
   MasterVersionsResponse,
+  PriceSuggestions,
   Release,
   SearchParams,
   SearchResponse,
@@ -56,8 +58,16 @@ export const setFieldValue = (c: DiscogsClient, username: string, target: Instan
 export const removeWant = (c: DiscogsClient, username: string, releaseId: number) =>
   c.request<null>('DELETE', `${u(username)}/wants/${releaseId}`)
 
-export const getMarketplaceStats = (c: DiscogsClient, releaseId: number) =>
-  c.get<MarketplaceStats>(`/marketplace/stats/${releaseId}`, undefined, DISCOGS_MAX_AGE)
+// Not cached here: the prices table keeps them, with the time they were fetched
+export const getMarketplaceStats = (c: DiscogsClient, releaseId: number, currency: string) =>
+  c.get<MarketplaceStats>(`/marketplace/stats/${releaseId}`, { curr_abbr: currency })
+
+// Needs seller settings filled in on Discogs; 404 otherwise
+export const getPriceSuggestions = (c: DiscogsClient, releaseId: number) =>
+  c.get<PriceSuggestions>(`/marketplace/price_suggestions/${releaseId}`)
+
+export const getCollectionValue = (c: DiscogsClient, username: string) =>
+  c.get<CollectionValue>(`${u(username)}/collection/value`, undefined, DISCOGS_MAX_AGE)
 
 export type InstanceTarget = { folderId: number; releaseId: number; instanceId: number }
 

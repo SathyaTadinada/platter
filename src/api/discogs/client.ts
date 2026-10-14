@@ -33,6 +33,10 @@ export class RateLimiter {
     private sleep: Sleep = realSleep,
   ) {}
 
+  get perMinute(): number {
+    return (this.limit * 60_000) / this.windowMs
+  }
+
   // ms until the next request is allowed
   delay(): number {
     const t = this.now()
@@ -84,6 +88,10 @@ export class DiscogsClient {
     private sleep: Sleep = realSleep,
     private now = () => Date.now(),
   ) {}
+
+  get requestsPerMinute(): number {
+    return this.limiter.perMinute
+  }
 
   get status(): ClientStatus {
     return this._status

@@ -1,6 +1,7 @@
 import type { CollectionField, CollectionItem, Folder, SearchResult } from '../api/discogs/types'
 import type { LibraryItem } from '../db/db'
 import { cleanArtist, describeFormats, splitTitle } from './format'
+import { valueBracket } from './value'
 
 // ---- building items ----
 
@@ -72,7 +73,7 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
 
 // ---- query ----
 
-export type SortKey = 'added' | 'added-old' | 'artist' | 'title' | 'year' | 'year-old' | 'rating'
+export type SortKey = 'added' | 'added-old' | 'artist' | 'title' | 'year' | 'year-old' | 'rating' | 'value'
 
 export const SORTS: { key: SortKey; label: string }[] = [
   { key: 'added', label: 'Recently added' },
@@ -82,6 +83,7 @@ export const SORTS: { key: SortKey; label: string }[] = [
   { key: 'year', label: 'Newest release' },
   { key: 'year-old', label: 'Oldest release' },
   { key: 'rating', label: 'Rating' },
+  { key: 'value', label: 'Value' },
 ]
 
 export type Filters = {
@@ -192,7 +194,10 @@ export const sortName = (s: string) => fold(s).replace(/^(the|a|an)\s+/, '')
 
 const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
 
-export function sortItems(items: LibraryItem[], sort: SortKey): LibraryItem[] {
+// Value sort and headings need prices, which live outside the library
+export type ValueLookup = { value: (i: LibraryItem) => number | undefined; money: (n: number) => string }
+
+export function sortItems(items: LibraryItem[], sort: SortKey, prices?: ValueLookup): LibraryItem[] {
   const out = [...items]
   const tie = (a: LibraryItem, b: LibraryItem) =>
     byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
@@ -205,6 +210,8 @@ export function sortItems(items: LibraryItem[], sort: SortKey): LibraryItem[] {
     year: (a, b) => (b.year || -1) - (a.year || -1) || tie(a, b),
     'year-old': (a, b) => (a.year || 9999) - (b.year || 9999) || tie(a, b),
     rating: (a, b) => b.rating - a.rating || tie(a, b),
+    // unpriced last
+    value: (a, b) => (prices?.value(b) ?? -1) - (prices?.value(a) ?? -1) || tie(a, b),
   }
   return out.sort(cmp[sort])
 }
@@ -216,7 +223,7 @@ const letter = (s: string) => {
   return /[A-Z]/.test(c) ? c : '#'
 }
 
-function groupLabel(i: LibraryItem, sort: SortKey): string {
+function groupLabel(i: LibraryItem, sort: SortKey, prices?: ValueLookup): string {
   switch (sort) {
     case 'added':
     case 'added-old': {
@@ -232,14 +239,16 @@ function groupLabel(i: LibraryItem, sort: SortKey): string {
       return i.year ? `${decadeOf(i.year)}s` : 'Year unknown'
     case 'rating':
       return i.rating ? `${'★'.repeat(i.rating)}` : 'Not rated'
+    case 'value':
+      return prices ? valueBracket(prices.value(i), prices.money) : ''
   }
 }
 
 // Items must already be sorted; consecutive items with the same label share a group
-export function groupItems(items: LibraryItem[], sort: SortKey): Group[] {
+export function groupItems(items: LibraryItem[], sort: SortKey, prices?: ValueLookup): Group[] {
   const groups: Group[] = []
   for (const i of items) {
-    const label = groupLabel(i, sort)
+    const label = groupLabel(i, sort, prices)
     const last = groups.at(-1)
     if (last?.label === label) last.items.push(i)
     else groups.push({ key: `${label}-${groups.length}`, label, items: [i] })
