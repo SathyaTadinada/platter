@@ -9,12 +9,12 @@ export function MarketPrice({ item, mediaCondition }: { item: LibraryItem; media
   const currency = useCurrency()
   const { price, loading, failed } = usePrice(item.releaseId, currency)
 
-  if (failed) return <p className="px-1 text-sm text-stone-500">Couldn't get prices from Discogs right now.</p>
+  if (failed) return <p className="px-1 text-sm text-stone-500">Couldn't load prices.</p>
   if (loading || !price || !currency) {
     return <div className="h-24 animate-pulse rounded-2xl bg-stone-200/60 dark:bg-stone-800/60" aria-label="Loading prices" />
   }
 
-  if (price.blocked) return <p className="px-1 text-sm text-stone-500">Discogs doesn't allow this release to be sold.</p>
+  if (price.blocked) return <p className="px-1 text-sm text-stone-500">This release can't be sold on Discogs.</p>
 
   const money = (n: number) => formatMoney(n, currency)
   const suggested = mediaCondition ? price.suggested?.[mediaCondition] : undefined
@@ -24,7 +24,7 @@ export function MarketPrice({ item, mediaCondition }: { item: LibraryItem; media
     rows.push(['Lowest listing', money(price.lowest)])
     rows.push(['For sale', `${price.forSale} cop${price.forSale === 1 ? 'y' : 'ies'}`])
   }
-  if (!rows.length) return <p className="px-1 text-sm text-stone-500">No copies for sale on Discogs right now.</p>
+  if (!rows.length) return <p className="px-1 text-sm text-stone-500">Nobody's selling a copy right now.</p>
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">

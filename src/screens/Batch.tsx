@@ -228,7 +228,7 @@ export function Batch() {
               />
             </label>
             {groups.ready.some((i) => i.source === 'csv' && i.folderId) && (
-              <p className="text-xs text-stone-500">Imported records keep their crate from the file if you have one with that name.</p>
+              <p className="text-xs text-stone-500">Imported records go to the crate named in the file, if you have one by that name.</p>
             )}
             {readyWanted > 0 && (
               <label className="flex items-center gap-2 text-sm">

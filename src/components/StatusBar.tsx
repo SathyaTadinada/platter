@@ -32,7 +32,7 @@ export function StatusBar() {
   let text = ''
   if (waiting) {
     const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
-    text = `Discogs rate limit, continuing in ${s}s`
+    text = `Waiting on Discogs (${s}s)`
   } else if (run) {
     text =
       run.kind === 'lookup'

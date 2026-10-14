@@ -40,7 +40,6 @@ export function ProfileLink({ detail, className = '', compact }: { detail?: stri
         <Avatar name="D" />
         <span className={compact ? 'sr-only' : 'min-w-0'}>
           <span className="block truncate font-medium">Demo</span>
-          {detail && <span className="block truncate text-sm text-stone-500">Sample collection</span>}
         </span>
       </span>
     )

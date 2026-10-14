@@ -131,7 +131,7 @@ function DemoBar() {
   return (
     <div className="flex shrink-0 items-center justify-center gap-3 bg-accent-500 px-4 pt-[env(safe-area-inset-top)] text-sm text-stone-950">
       <p className="py-1.5">
-        <b>Demo</b> · sample collection, nothing is saved to Discogs
+        <b>Demo</b>
       </p>
       <button type="button" onClick={leave} className="rounded-md bg-stone-950/10 px-2 py-0.5 font-medium hover:bg-stone-950/20">
         Exit
