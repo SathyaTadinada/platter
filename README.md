@@ -21,6 +21,8 @@ Two ways to sign in:
 - **Log in with Discogs** (OAuth 1.0a). Discogs requires every request to be signed with the app's consumer secret, which can't ship to the browser. A small Cloudflare Worker (`worker/`) holds the secret, runs the login handshake and signs requests. The browser then sends each signed request to Discogs itself, so the Worker never sees responses and Discogs rate limits stay per user.
 - **Personal access token**. Pasted in once, kept in IndexedDB, no Worker involved.
 
+The Worker rate-limits `/api/sign` and `/auth/start` per IP using Cloudflare's built-in rate limiting.
+
 Discogs counts rate limits per IP and doesn't expose its rate-limit headers to browsers, so the client throttles itself to 55 requests a minute and backs off on 429s. Cached Discogs data expires after 6 hours, per the Discogs API terms.
 
 ## Development
@@ -33,6 +35,8 @@ npm run typecheck
 ```
 
 `npm run dev` serves the app only, so log in with a personal access token locally. The OAuth routes (`/auth/*`, `/api/*`) only exist on the deployed Worker.
+
+Open `http://localhost:5173/?demo` to try the UI without a Discogs account. Demo mode signs in a fake user and answers API calls from the test fixtures. It only exists in dev builds.
 
 To re-record test fixtures, put a token in `.env` (see `.env.example`) and run `npm run fixtures`. Your username and collection are replaced with placeholders before anything is written.
 
