@@ -4,10 +4,31 @@
 
 import { plaintextHeader, signHmac } from './oauth'
 
+type RateLimiter = { limit(opts: { key: string }): Promise<{ success: boolean }> }
+
 interface Env {
   DISCOGS_CONSUMER_KEY: string
   DISCOGS_CONSUMER_SECRET: string
+  SIGN_LIMITER: RateLimiter
+  AUTH_LIMITER: RateLimiter
 }
+
+async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
+  if (!limiter) return true // not bound in local dev
+  const { success } = await limiter.limit({ key })
+  return success
+}
+
+const ipKey = (req: Request) => `ip:${req.headers.get('CF-Connecting-IP') ?? 'unknown'}`
+
+// Limit per signed-in user rather than per IP, so people sharing a network
+// don't slow each other down. The token is hashed so it isn't used as-is.
+async function userKey(token: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))
+  return 'user:' + [...new Uint8Array(digest).slice(0, 16)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+const tooMany = () => new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
 
 const UA = 'Platter/0.1 +https://platter.tadinada.com'
 const API = 'https://api.discogs.com'
@@ -94,6 +115,7 @@ async function sign(req: Request, env: Env): Promise<Response> {
   if (typeof token !== 'string' || typeof tokenSecret !== 'string' || !Array.isArray(requests) || requests.length > MAX_BATCH) {
     return new Response('Bad request', { status: 400 })
   }
+  if (!(await allowed(env.SIGN_LIMITER, await userKey(token)))) return tooMany()
   // only ever sign requests to the Discogs API
   if (!requests.every((r) => typeof r.url === 'string' && r.url.startsWith(API + '/') && typeof r.method === 'string')) {
     return new Response('Bad request', { status: 400 })
@@ -119,7 +141,7 @@ export default {
     const { pathname } = new URL(req.url)
     switch (pathname) {
       case '/auth/start':
-        return startSignIn(req, env)
+        return (await allowed(env.AUTH_LIMITER, ipKey(req))) ? startSignIn(req, env) : tooMany()
       case '/auth/callback':
         return finishSignIn(req, env)
       case '/api/sign':

@@ -29,6 +29,7 @@ export function oauthAuth(token: string, secret: string, identity: Identity, fet
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, tokenSecret: secret, requests: reqs }),
     })
+    if (res.status === 429) throw new AuthError('Too many requests from this network. Wait a minute and try again.')
     if (!res.ok) throw new AuthError(`Signing failed (${res.status})`)
     const { headers } = (await res.json()) as { headers: string[] }
     return headers.map((h) => ({ Authorization: h }))
