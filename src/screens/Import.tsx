@@ -54,8 +54,8 @@ export function Import() {
     <Screen title="Import a CSV" back="/settings">
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
-          Add records from a Discogs collection export, yours or someone else's. Crates, conditions, notes, and ratings come along where
-          they match yours.
+          Add records from a Discogs collection export, yours or someone else's. Crates, conditions, notes, and ratings are copied over if
+          you have matching ones.
         </p>
         <p className="text-sm text-stone-500">
           To get one, open your{' '}

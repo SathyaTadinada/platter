@@ -98,7 +98,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         }
         await setSetting(JOB_KEY, null)
         const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
-        if (r.failed) toast(`Added ${n(r.added)}. ${r.failed} didn't go through, see the batch.`, { tone: 'error' })
+        if (r.failed) toast(`Added ${n(r.added)}. ${r.failed} didn't go through. Check the batch.`, { tone: 'error' })
         else if (r.added) toast(`Added ${n(r.added)} to your collection.`, { tone: 'success' })
         // CSV rows have no search result to build collection entries from, so refresh
         if (hadCsv && r.added) sync(true)

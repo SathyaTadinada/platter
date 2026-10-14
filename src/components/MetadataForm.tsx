@@ -162,7 +162,7 @@ export function MetadataForm({ value, onChange, matches, parts = ['conditions', 
       </ul>
       {allPurchaseMissing && (
         <p className="px-1 text-xs text-stone-500">
-          {notes ? 'Purchase details are saved in Notes' : 'Purchase details have nowhere to go: no purchase fields or Notes on Discogs'}
+          {notes ? 'Purchase details are saved in Notes' : "You don't have purchase fields or Notes on Discogs, so these won't be saved"}
         </p>
       )}
     </div>

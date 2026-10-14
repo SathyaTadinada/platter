@@ -167,7 +167,7 @@ export function Settings() {
             <Appearance />
           </Section>
 
-          <Section title="Import and backup">
+          <Section title="Your data">
             <List>
               <Row icon={<FileUp size={20} />} label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
             </List>
@@ -192,7 +192,7 @@ export function Settings() {
           <Section>
             <List>
               {install && <Row icon={<MonitorDown size={20} />} label="Install Platter" onClick={install} />}
-              <Row icon={<Info size={20} />} label="About and privacy" href="/about" />
+              <Row icon={<Info size={20} />} label="About" href="/about" />
             </List>
           </Section>
         </div>

@@ -212,7 +212,7 @@ export function Release({ id }: { id: string }) {
             </Section>
 
             {(r.identifiers?.length ?? 0) > 0 && (
-              <Section title="Barcode and other identifiers">
+              <Section title="Identifiers">
                 <Identifiers identifiers={r.identifiers} />
               </Section>
             )}

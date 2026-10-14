@@ -1,6 +1,6 @@
 # Platter
 
-Catalog your records on Discogs: scan a barcode to add a record, see what your collection is worth, and keep track of what you play. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
+Catalog your records on Discogs. Point your phone at a barcode and Platter finds the release and adds it to your collection. It also keeps track of what the collection is worth and what you play. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
 
 Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](https://platter.tadinada.com/?demo).
 

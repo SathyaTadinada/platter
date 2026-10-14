@@ -105,7 +105,7 @@ export function ValueStats() {
         <p className="px-1 text-xs text-stone-500">
           {anySuggested
             ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
-            : "Going by the cheapest copy for sale on Discogs. Fill in your seller settings there and you'll get prices for your copy's condition instead."}
+            : "These are the cheapest copies for sale on Discogs. Fill in your seller settings on Discogs to get prices for your copy's condition."}
         </p>
       </Section>
     ),

@@ -225,7 +225,7 @@ export function Record({ id }: { id: string }) {
             ) : null}
 
             {r && (r.identifiers?.length ?? 0) > 0 && (
-              <Section title="Barcode and other identifiers">
+              <Section title="Identifiers">
                 <Identifiers identifiers={r.identifiers} />
               </Section>
             )}

@@ -7,14 +7,13 @@ export function About() {
     <Screen title="About Platter" back={session ? '/settings' : '/'}>
       <Section>
         <p className="text-stone-700 dark:text-stone-300">
-          Platter is a free, open-source app for keeping your records on Discogs: scan them in, see what they're worth, and keep track of
-          what you play.
+          Platter is a free, open-source app for cataloging your records on Discogs. Scan a barcode and the record is in your collection.
         </p>
       </Section>
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>No Platter accounts, analytics, or tracking.</p>
+          <p>Platter doesn't have accounts of its own and doesn't track you.</p>
           <p>Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs.</p>
           <p>
             Other services only hear from Platter when you use them: MusicBrainz and the Cover Art Archive when a barcode isn't on Discogs,
