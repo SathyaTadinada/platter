@@ -1,0 +1,9 @@
+{
+  "name": "platter",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "platter.tadinada.com", "custom_domain": true }]
+}

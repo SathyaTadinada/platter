@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Platter API check</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Platter API check</h1>
+      <p class="muted">
+        Runs each Discogs call Platter needs, straight from this browser. It adds one release to your
+        Uncategorized folder, sets two fields on it, then removes that copy. Records you already own
+        aren't touched.
+      </p>
+
+      <label for="token">Discogs personal access token</label>
+      <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" />
+
+      <label for="barcode">Barcode to search</label>
+      <input id="barcode" inputmode="numeric" value="075678164125" />
+
+      <button id="run" type="button">Run checks</button>
+
+      <img id="cover" alt="" hidden />
+      <ol id="results"></ol>
+
+      <button id="copy" type="button" hidden>Copy report</button>
+      <p id="copied" class="muted" hidden>Copied. The token is not included.</p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
