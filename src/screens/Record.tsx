@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/discogs/endpoints'
 import type { CollectionField, Release } from '../api/discogs/types'
+import { CoverSheet } from '../components/CoverSheet'
 import { Stars } from '../components/Stars'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
@@ -23,6 +24,7 @@ export function Record({ id }: { id: string }) {
   const release = useAsync(() => (item ? getRelease(client, item.releaseId) : Promise.resolve(undefined)), [item?.releaseId])
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pickingCover, setPickingCover] = useState(false)
 
   // other copies of this release, and other pressings of the same album
   const related = useLiveQuery(async () => {
@@ -90,6 +92,11 @@ export function Record({ id }: { id: string }) {
       <div className="lg:grid lg:grid-cols-[22rem_1fr] lg:gap-10">
         <div className="lg:sticky lg:top-24 lg:self-start">
           <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-md ring-1 ring-black/5" />
+          {(release.data?.images?.length ?? 0) > 1 || item.originalCover ? (
+            <button type="button" onClick={() => setPickingCover(true)} className="mx-auto mt-2 block text-sm text-stone-500 underline underline-offset-2">
+              Change cover
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-5 min-w-0 lg:mt-0">
@@ -207,6 +214,7 @@ export function Record({ id }: { id: string }) {
           </div>
         </div>
       </div>
+      {pickingCover && <CoverSheet item={item} release={r} onClose={() => setPickingCover(false)} />}
     </Screen>
   )
 }

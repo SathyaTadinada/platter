@@ -1,6 +1,7 @@
 import type { DiscogsClient } from '../api/discogs/client'
 import { getCollectionPage, getWantsPage } from '../api/discogs/endpoints'
 import { db, getSetting, setSetting, type LibraryItem, type WantItem } from '../db/db'
+import { applyCoverChoices } from './covers'
 import { toLibraryItem } from './library'
 
 export const SYNC_MAX_AGE = 6 * 60 * 60 * 1000
@@ -25,9 +26,10 @@ export async function syncCollection(client: DiscogsClient, username: string, on
     const r = await getCollectionPage(client, username, page)
     return { pages: r.pagination.pages, items: r.releases.map(toLibraryItem) }
   }, onProgress)
+  const withCovers = await applyCoverChoices(items)
   await db.transaction('rw', db.collection, async () => {
     await db.collection.clear()
-    await db.collection.bulkPut(items)
+    await db.collection.bulkPut(withCovers)
   })
   await setSetting('collectionSyncedAt', Date.now())
   return items.length
