@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import type { SearchParams, SearchResult } from '../api/discogs/types'
@@ -15,6 +15,7 @@ import { toCard, type ReleaseCard } from '../lib/format'
 import { lookupBarcode, type LookupResult } from '../lib/lookup'
 import type { Ranked } from '../lib/runout'
 import { computeOwnership } from '../lib/ownership'
+import { rememberSearch } from '../lib/recent'
 
 function describeQuery(p: URLSearchParams): string {
   if (p.get('barcode')) return p.get('barcode')!
@@ -29,6 +30,13 @@ export function Results() {
   const [, navigate] = useLocation()
   const [picked, setPicked] = useState<ReleaseCard | null>(null)
   const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
+
+  useEffect(() => {
+    const p = new URLSearchParams(qs)
+    const kind = p.get('barcode') ? 'barcode' : p.get('catno') ? 'catno' : 'title'
+    const label = describeQuery(p)
+    if (label) rememberSearch({ kind, label, url: `/results?${qs}` })
+  }, [qs])
 
   const search = (p: SearchParams) => searchReleases(client, p).then((r) => r.results)
 

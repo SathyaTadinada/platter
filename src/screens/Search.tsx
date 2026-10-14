@@ -1,17 +1,23 @@
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Hash, History, Music2, ScanBarcode, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
-import { useLocation, useSearch } from 'wouter'
-import { Button, Screen } from '../components/ui'
+import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
+import { Button, Screen, Section } from '../components/ui'
+import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
+import { clearSearches, RECENT_SEARCHES_KEY, type RecentSearch } from '../lib/recent'
+import { Cover } from './Collection'
 
 type Mode = 'barcode' | 'catno' | 'title'
 
-const modes: { id: Mode; label: string }[] = [
-  { id: 'barcode', label: 'Barcode' },
-  { id: 'catno', label: 'Catalog #' },
-  { id: 'title', label: 'Artist & title' },
+const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
+  { id: 'barcode', label: 'Barcode', Icon: ScanBarcode },
+  { id: 'catno', label: 'Catalog #', Icon: Hash },
+  { id: 'title', label: 'Artist & title', Icon: Music2 },
 ]
+const iconFor = Object.fromEntries(modes.map((m) => [m.id, m.Icon])) as Record<Mode, LucideIcon>
 
 const input = 'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base dark:border-stone-700 dark:bg-stone-900'
 
@@ -42,88 +48,155 @@ export function Search() {
   }
 
   return (
-    <Screen title="Search">
-      <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-stone-200 p-1 dark:bg-stone-800">
-        {modes.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            role="tab"
-            aria-selected={mode === m.id}
-            onClick={() => setMode(m.id)}
-            className={`min-h-10 rounded-lg text-sm font-medium ${mode === m.id ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'}`}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
+    <Screen title="Search" width="wide">
+      <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-12">
+        <div>
+          <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-stone-200 p-1 dark:bg-stone-800">
+            {modes.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={mode === id}
+                onClick={() => setMode(id)}
+                className={`inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-medium ${
+                  mode === id ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
+                }`}
+              >
+                <Icon size={16} aria-hidden className="hidden sm:block" />
+                {label}
+              </button>
+            ))}
+          </div>
 
-      <form onSubmit={submit} className="space-y-3">
-        {mode === 'barcode' && (
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Barcode number</span>
-            <input
-              className={input}
-              inputMode="numeric"
-              autoComplete="off"
-              value={barcode}
-              onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
-              placeholder="e.g. 0 75678 16412 5"
-            />
-          </label>
-        )}
-        {mode === 'catno' && (
-          <>
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium">Catalog number</span>
-              <input
-                className={input}
-                autoCapitalize="characters"
-                autoComplete="off"
-                value={catno}
-                onChange={(e) => setCatno(e.target.value)}
-                placeholder="e.g. PB 41447"
-              />
-            </label>
-            {/* spines are usually printed sideways, so try both ways round */}
-            <ReadPhotoButton label="Read it from the spine" rotations={[90, 270, 0]} onText={(t) => setSpine(catnoCandidates(t))} />
-            {spine && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-stone-500">
-                  {spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {spine.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setCatno(c)}
-                      className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800"
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <form onSubmit={submit} className="space-y-3">
+            {mode === 'barcode' && (
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium">Barcode number</span>
+                <input
+                  className={input}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={barcode}
+                  onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
+                  placeholder="e.g. 5 012394 144777"
+                />
+              </label>
             )}
-          </>
-        )}
-        {mode === 'title' && (
-          <>
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium">Artist</span>
-              <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium">Title</span>
-              <input className={input} autoComplete="off" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </label>
-          </>
-        )}
-        <Button type="submit" className="w-full" disabled={!ready}>
-          Search Discogs
-        </Button>
-      </form>
+            {mode === 'catno' && (
+              <>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium">Catalog number</span>
+                  <input
+                    className={input}
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    value={catno}
+                    onChange={(e) => setCatno(e.target.value)}
+                    placeholder="e.g. PB 41447"
+                  />
+                </label>
+                {/* spines are usually printed sideways, so try both ways round */}
+                <ReadPhotoButton label="Read it from the spine" rotations={[90, 270, 0]} onText={(t) => setSpine(catnoCandidates(t))} />
+                {spine && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-stone-500">
+                      {spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {spine.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCatno(c)}
+                          className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            {mode === 'title' && (
+              <>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium">Artist</span>
+                  <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium">Title</span>
+                  <input className={input} autoComplete="off" value={title} onChange={(e) => setTitle(e.target.value)} />
+                </label>
+              </>
+            )}
+            <Button type="submit" className="w-full" disabled={!ready}>
+              Search Discogs
+            </Button>
+          </form>
+        </div>
+
+        <div className="mt-8 space-y-2 lg:mt-0">
+          <RecentSearches />
+          <RecentlyAdded />
+        </div>
+      </div>
     </Screen>
+  )
+}
+
+function RecentSearches() {
+  const recent = useLiveQuery(async () => ((await db.settings.get(RECENT_SEARCHES_KEY))?.value as RecentSearch[] | undefined) ?? [], [])
+  if (!recent?.length) return null
+  return (
+    <Section title="Recent searches">
+      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+        {recent.map((r) => {
+          const Icon = iconFor[r.kind] ?? History
+          return (
+            <li key={r.url}>
+              <Link href={r.url} className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                <Icon size={18} className="shrink-0 text-stone-400" aria-hidden />
+                <span className={`min-w-0 truncate ${r.kind === 'title' ? '' : 'font-mono text-sm'}`}>
+                  {r.kind === 'barcode' ? formatBarcodeInput(r.label) : r.label}
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+      <button type="button" onClick={clearSearches} className="px-1 text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
+        Clear
+      </button>
+    </Section>
+  )
+}
+
+// Desktop only: a quick way back to what was just added
+function RecentlyAdded() {
+  const items = useLiveQuery(() => db.collection.orderBy('dateAdded').reverse().limit(5).toArray(), [])
+  if (!items?.length) return null
+  return (
+    <div className="hidden lg:block">
+      <Section title="Recently added">
+        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+          {items.map((i) => (
+            <li key={i.instanceId}>
+              <Link
+                href={`/collection/${i.instanceId}`}
+                className="flex items-center gap-3 px-3 py-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+              >
+                <Cover item={i} small className="size-10 shrink-0 rounded-md" />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{i.title}</span>
+                  <span className="block truncate text-xs text-stone-500">{i.artist}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    </div>
   )
 }

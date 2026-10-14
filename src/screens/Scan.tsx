@@ -334,7 +334,7 @@ function ManualBarcode({
           onChange={(e) => setValue(formatBarcodeInput(e.target.value))}
           inputMode="numeric"
           autoComplete="off"
-          placeholder="e.g. 0 75678 16412 5"
+          placeholder="e.g. 5 012394 144777"
           className="min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 dark:border-stone-700 dark:bg-stone-900"
         />
       </label>
