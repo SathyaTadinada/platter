@@ -147,7 +147,7 @@ export function Scan() {
       />
       <div className="lg:grid lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-8">
         <div>
-          <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full overflow-hidden rounded-3xl bg-stone-900 lg:max-h-none">
+          <div className="relative mx-auto aspect-[4/5] max-h-[55dvh] w-full overflow-hidden rounded-3xl bg-stone-900 lg:aspect-[3/4] lg:max-h-none">
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
 
             {!on && !still && (

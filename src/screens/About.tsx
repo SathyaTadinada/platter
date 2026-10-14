@@ -24,6 +24,7 @@ export function About() {
             Discogs address a request is for, but stores nothing and never sees what Discogs sends back. The request itself goes straight
             from your device to Discogs.
           </p>
+          <p>Reading runouts and spines from photos happens on your device too. Photos aren't uploaded anywhere.</p>
           <p>Signing out deletes everything Platter has stored on this device.</p>
         </Card>
       </Section>
