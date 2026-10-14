@@ -104,8 +104,9 @@ export function Settings() {
         {sync.error && <Notice tone="error">{sync.error}</Notice>}
       </Section>
 
-      <Section title="Backup">
+      <Section title="Import and backup">
         <List>
+          <Row label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
           <Row label="Export backup" detail="Settings as a JSON file. Your sign-in isn't included." onClick={doExport} />
           <Row label="Import backup" onClick={() => fileRef.current?.click()} />
         </List>

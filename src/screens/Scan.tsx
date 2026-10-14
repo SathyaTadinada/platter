@@ -1,9 +1,13 @@
-import { Flashlight, FlashlightOff, ImageUp, Keyboard, ScanBarcode, SwitchCamera } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, Keyboard, ScanBarcode, SwitchCamera } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
 import { Button, buttonClass, Notice, Screen } from '../components/ui'
+import { db } from '../db/db'
+import { useQueue } from '../hooks/queue'
 import { digitsOnly } from '../lib/barcode'
+import { enqueueBarcode } from '../lib/queue'
 import { useScanner } from '../scanner/useScanner'
 import { FieldNudge } from './FieldNudge'
 
@@ -14,14 +18,53 @@ let cameraWanted = false
 // A still image being read: a photo the user picked, or a frame from the shutter
 type Still = { url: string; status: 'reading' | 'failed' }
 
+type Mode = 'single' | 'batch'
+const MODE_KEY = 'platter.scanMode'
+
+function loadMode(): Mode {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'batch' ? 'batch' : 'single'
+  } catch {
+    return 'single'
+  }
+}
+
 export function Scan() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [, navigate] = useLocation()
   const [on, setOn] = useState(cameraWanted)
   const [still, setStill] = useState<Still | null>(null)
-  const onCode = useCallback((code: string) => navigate(`/results?barcode=${code}`), [navigate])
-  const scanner = useScanner(videoRef, onCode, on)
+  const [mode, setMode] = useState<Mode>(loadMode)
+  const [flash, setFlash] = useState<string | null>(null)
+  const { kick } = useQueue()
+  const waiting = useLiveQuery(() => db.queue.where('status').noneOf(['added']).count(), []) ?? 0
+
+  // batch mode: queue it, show a quick confirmation, keep scanning
+  const onCode = useCallback(
+    (code: string, source: 'scan' | 'typed' = 'scan') => {
+      if (mode === 'single') return navigate(`/results?barcode=${code}`)
+      enqueueBarcode(code, source).then(kick)
+      setFlash(code)
+      setStill(null)
+    },
+    [mode, navigate, kick],
+  )
+  useEffect(() => {
+    if (!flash) return
+    const t = setTimeout(() => setFlash(null), 1500)
+    return () => clearTimeout(t)
+  }, [flash])
+  const scanner = useScanner(videoRef, onCode, on, mode === 'batch')
+
+  function switchMode(m: Mode) {
+    setMode(m)
+    try {
+      localStorage.setItem(MODE_KEY, m)
+    } catch {
+      // not important
+    }
+  }
   const { state, torch, zoom, cameras } = scanner
 
   const stillUrl = still?.url
@@ -37,7 +80,7 @@ export function Scan() {
     try {
       const { decodeImage } = await import('../scanner/zxing')
       const code = await decodeImage(image)
-      if (code) return onCode(code)
+      if (code) return onCode(code, 'scan')
     } catch {
       // fall through to the failed state
     }
@@ -66,8 +109,30 @@ export function Scan() {
     </Button>
   )
 
+  const modeSwitch = (
+    <div role="tablist" aria-label="Scan mode" className="grid grid-cols-2 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800">
+      {(
+        [
+          ['single', 'One at a time'],
+          ['batch', 'Batch'],
+        ] as const
+      ).map(([m, label]) => (
+        <button
+          key={m}
+          type="button"
+          role="tab"
+          aria-selected={mode === m}
+          onClick={() => switchMode(m)}
+          className={`min-h-9 rounded-lg text-sm font-medium ${mode === m ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
-    <Screen title="Scan" width="wide">
+    <Screen title="Scan" width="wide" toolbar={modeSwitch}>
       {/* no `capture` attribute, so phones offer camera, photo library and files */}
       <input
         ref={fileRef}
@@ -101,6 +166,15 @@ export function Scan() {
               </div>
             )}
             {on && state === 'starting' && <p className="absolute inset-0 flex items-center justify-center text-stone-300">Starting camera…</p>}
+
+            {flash && (
+              <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center px-3" role="status">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-lg">
+                  <Check size={16} aria-hidden />
+                  Added {flash} to the batch
+                </span>
+              </div>
+            )}
 
             {still && (
               <div className="absolute inset-0 bg-stone-950">
@@ -172,18 +246,36 @@ export function Scan() {
           </div>
           {live && scanner.currentLabel && cameras.length > 1 && <p className="mt-2 text-center text-xs text-stone-500">{scanner.currentLabel}</p>}
 
-          <div className="mt-4 grid grid-cols-2 gap-2 lg:hidden">
-            <Link href="/search" className={buttonClass('secondary')}>
-              <Keyboard size={20} aria-hidden />
-              Type it in
+          {mode === 'batch' && (
+            <Link href="/batch" className={buttonClass(waiting ? 'primary' : 'secondary', 'mt-4 w-full')}>
+              {waiting ? `Review batch (${waiting})` : 'Batch is empty'}
+              <ChevronRight size={18} aria-hidden />
             </Link>
-            {chooseButton}
-          </div>
+          )}
+
+          {mode === 'single' ? (
+            <div className="mt-4 grid grid-cols-2 gap-2 lg:hidden">
+              <Link href="/search" className={buttonClass('secondary')}>
+                <Keyboard size={20} aria-hidden />
+                Type it in
+              </Link>
+              {chooseButton}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-2 lg:hidden">
+              <ManualBarcode label="Or type a barcode" button="Add" onSubmit={(c) => onCode(c, 'typed')} inline />
+              {chooseButton}
+            </div>
+          )}
         </div>
 
         <div className="mt-6 space-y-4 lg:mt-0">
           <div className="hidden space-y-4 lg:block">
-            <ManualBarcode />
+            <ManualBarcode
+              label="Or type the barcode number"
+              button={mode === 'batch' ? 'Add to batch' : 'Look it up'}
+              onSubmit={(c) => onCode(c, 'typed')}
+            />
             {chooseButton}
           </div>
           <InstallHint />
@@ -194,20 +286,21 @@ export function Scan() {
   )
 }
 
-function ManualBarcode() {
-  const [, navigate] = useLocation()
+function ManualBarcode({ label, button, onSubmit, inline }: { label: string; button: string; onSubmit: (code: string) => void; inline?: boolean }) {
   const [value, setValue] = useState('')
   const code = digitsOnly(value)
   return (
     <form
-      className="space-y-2"
+      className={inline ? 'flex items-end gap-2' : 'space-y-2'}
       onSubmit={(e) => {
         e.preventDefault()
-        if (code.length >= 8) navigate(`/results?barcode=${code}`)
+        if (code.length < 8) return
+        onSubmit(code)
+        setValue('')
       }}
     >
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">Or type the barcode number</span>
+      <label className={inline ? 'block min-w-0 flex-1' : 'block'}>
+        <span className="mb-1 block text-sm font-medium">{label}</span>
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -217,8 +310,8 @@ function ManualBarcode() {
           className="min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 dark:border-stone-700 dark:bg-stone-900"
         />
       </label>
-      <Button type="submit" className="w-full" disabled={code.length < 8}>
-        Look it up
+      <Button type="submit" className={inline ? '' : 'w-full'} disabled={code.length < 8}>
+        {button}
       </Button>
     </form>
   )

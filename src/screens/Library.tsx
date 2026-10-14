@@ -248,9 +248,14 @@ export function Library() {
         <Disc3 size={48} className="text-stone-400" aria-hidden />
         <p className="text-lg font-semibold">Nothing here yet</p>
         <p className="max-w-xs text-stone-500">Records in your Discogs collection show up here. Scan one to get started.</p>
-        <Link href="/scan" className={buttonClass('primary', 'mt-2')}>
-          Scan a record
-        </Link>
+        <div className="mt-2 flex gap-2">
+          <Link href="/scan" className={buttonClass('primary')}>
+            Scan a record
+          </Link>
+          <Link href="/import" className={buttonClass('secondary')}>
+            Import a CSV
+          </Link>
+        </div>
       </div>
     )
   } else if (!filtered.length) {

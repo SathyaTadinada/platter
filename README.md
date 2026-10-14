@@ -13,6 +13,8 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 - Shows matching releases with cover, label, catalog number, country, year and format
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
 - Falls back to MusicBrainz when Discogs doesn't know a barcode
+- Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
+- Import a Discogs collection export (CSV) into your collection, with folders, conditions, notes and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
 
 ## How it works
