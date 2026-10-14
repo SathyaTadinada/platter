@@ -7,7 +7,8 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 ## What it does
 
 - Browse your collection: grid or list, search across artist, title, label, genre and your own notes, filter by crate (Discogs folders), format, genre, style, decade, rating or any custom field, sort and shuffle
-- Record pages with tracklist, rating, crate and editable custom fields
+- Record pages with tracklist, rating, crate and editable custom fields, and a choice of cover from the release's other Discogs photos
+- Condition, price, date, store, location and notes set while adding, saved to your custom fields in one go. Without purchase or location fields, those details go into Notes as a readable line instead. In a batch, store, date and location can be set once for every record
 - Export any filtered view as a CSV in the same columns Discogs uses
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
 - Shows matching releases with cover, label, catalog number, country, year and format

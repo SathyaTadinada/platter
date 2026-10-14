@@ -122,4 +122,4 @@ export type MarketplaceStats = {
   blocked_from_sale: boolean
 }
 
-export type UserProfile = { username: string; name?: string; avatar_url?: string; uri: string }
+export type UserProfile = { username: string; name?: string; avatar_url?: string; uri: string; curr_abbr?: string }

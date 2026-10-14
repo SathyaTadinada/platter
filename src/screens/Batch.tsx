@@ -1,12 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CircleAlert, CircleCheck, Disc3, Loader, RotateCw, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'wouter'
+import { MetadataForm } from '../components/MetadataForm'
+import { useProfile } from '../components/Profile'
 import { ResolveSheet } from '../components/ResolveSheet'
 import { Button, buttonClass, Notice, Screen, Section } from '../components/ui'
 import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
-import { useQueue } from '../hooks/queue'
+import { SHARED_KEY, useQueue } from '../hooks/queue'
+import { useFieldMatches } from '../hooks/useFields'
+import { formatPrice, hasMetadata, type Metadata } from '../lib/metadata'
 import { chooseRelease, retryFailed } from '../lib/queue'
 
 const needsYou = (i: QueueItem) => i.status === 'choose' || i.status === 'notfound' || i.status === 'failed'
@@ -25,6 +29,18 @@ export function Batch() {
   const [dropWants, setDropWants] = useState(true)
   const [resolving, setResolving] = useState<QueueItem | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
+  const [editing, setEditing] = useState<QueueItem | null>(null)
+  const matches = useFieldMatches()
+  const currency = useProfile()?.curr_abbr ?? 'USD'
+  // local copy so fast typing never writes back a stale value; saved as it changes
+  const [shared, setShared] = useState<Metadata | null>(null)
+  useEffect(() => {
+    getSetting<Metadata>(SHARED_KEY).then((m) => setShared(m ?? {}))
+  }, [])
+  const updateShared = (m: Metadata) => {
+    setShared(m)
+    setSetting(SHARED_KEY, m)
+  }
 
   const folders = meta.data?.folders ?? []
   useEffect(() => {
@@ -40,7 +56,7 @@ export function Batch() {
       attention: list.filter(needsYou),
       waiting: list.filter(inFlight),
       ready: list.filter((i) => i.status === 'ready' || i.status === 'adding'),
-      added: list.filter((i) => i.status === 'added'),
+      added: list.filter((i) => i.status === 'added').reverse(), // newest first
     }
   }, [items])
 
@@ -61,6 +77,8 @@ export function Batch() {
   async function clear(which: 'added' | 'all') {
     if (which === 'added') await db.queue.where('status').equals('added').delete()
     else await db.queue.clear()
+    // an empty batch starts over, so yesterday's store doesn't carry into today's
+    if (!(await db.queue.count())) updateShared({})
     setConfirmClear(false)
   }
 
@@ -143,6 +161,18 @@ export function Batch() {
 
       {groups.ready.length > 0 && (
         <Section title={`Ready to add (${groups.ready.length})`}>
+          {shared && groups.ready.some((i) => i.source !== 'csv') && (
+            <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+              <p className="mb-3 font-semibold">Same for the whole batch</p>
+              <MetadataForm
+                value={shared}
+                onChange={updateShared}
+                matches={matches}
+                currency={currency}
+                parts={['date', 'store', 'location']}
+              />
+            </div>
+          )}
           <List>
             {groups.ready.map((i) => (
               <Row
@@ -154,6 +184,8 @@ export function Batch() {
                 wanted={Boolean(i.release && wants?.has(i.release.id))}
                 onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
                 onRemove={adding ? undefined : () => remove(i.id!)}
+                onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
+                currency={currency}
               />
             ))}
           </List>
@@ -216,6 +248,20 @@ export function Batch() {
         </div>
       )}
 
+      {editing && (
+        <DetailsSheet
+          item={editing}
+          shared={shared ?? {}}
+          matches={matches}
+          currency={currency}
+          onClose={() => setEditing(null)}
+          onSave={async (meta) => {
+            await db.queue.update(editing.id!, { meta })
+            setEditing(null)
+          }}
+        />
+      )}
+
       {resolving && (
         <ResolveSheet
           item={resolving}
@@ -257,9 +303,19 @@ type RowProps = {
   onResolve?: () => void
   onRemove?: () => void
   onRetry?: () => void
+  onEdit?: () => void
+  currency?: string
 }
 
-function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onResolve, onRemove, onRetry }: RowProps) {
+// "Very Good Plus (VG+)" -> "VG+"
+const grade = (s?: string) => s?.match(/\(([^)]+)\)/)?.[1].split(' or ')[0] ?? s
+
+function metaSummary(m: Metadata, currency: string): string {
+  const cond = [grade(m.mediaCondition), grade(m.sleeveCondition)].filter(Boolean).join('/')
+  return [cond, formatPrice(m.price, currency), m.store, m.location].filter(Boolean).join(' · ')
+}
+
+function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onResolve, onRemove, onRetry, onEdit, currency = 'USD' }: RowProps) {
   const r = item.release
   const meta = r ? [r.label, r.catno, r.year].filter(Boolean).join(' · ') : ''
 
@@ -319,6 +375,7 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
         {r && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{r.artist}</p>}
         {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         {status && <p className="text-xs text-stone-500">{status}</p>}
+        {item.meta && hasMetadata(item.meta) && item.status !== 'added' && <p className="truncate text-xs text-stone-600 dark:text-stone-400">{metaSummary(item.meta, currency)}</p>}
         {(dupe || ownedExact || ownedOther || wanted || item.source === 'csv') && item.status !== 'added' && (
           <div className="mt-1 flex flex-wrap gap-1">
             {ownedExact && <Badge tone="warn">Already in collection</Badge>}
@@ -342,6 +399,11 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
       ) : (
         <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5">{body}</div>
       )}
+      {onEdit && (
+        <button type="button" aria-label="Details" onClick={onEdit} className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800">
+          <Pencil size={17} />
+        </button>
+      )}
       {onRetry && item.status === 'failed' && (
         <button type="button" aria-label="Retry" onClick={onRetry} className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800">
           <RotateCw size={18} />
@@ -353,5 +415,56 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
         </button>
       )}
     </li>
+  )
+}
+
+// Condition, price and anything else for one record; shared values show as placeholders
+function DetailsSheet({
+  item,
+  shared,
+  matches,
+  currency,
+  onSave,
+  onClose,
+}: {
+  item: QueueItem
+  shared: Metadata
+  matches: ReturnType<typeof useFieldMatches>
+  currency: string
+  onSave: (m: Metadata) => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const [meta, setMeta] = useState<Metadata>(item.meta ?? {})
+  useEffect(() => {
+    if (ref.current && !ref.current.open) ref.current.showModal()
+  }, [])
+  const sharedText = [shared.date, shared.store, shared.location].filter(Boolean).join(' · ')
+
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => e.target === ref.current && onClose()}
+      aria-labelledby="details-title"
+      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
+    >
+      <div className="space-y-4 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+        <div>
+          <h2 id="details-title" className="truncate text-lg font-bold">
+            {item.release?.title}
+          </h2>
+          <p className="truncate text-sm text-stone-500">{item.release?.artist}</p>
+        </div>
+        <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} />
+        {sharedText && <p className="text-xs text-stone-500">Batch: {sharedText}. Anything filled in here wins.</p>}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSave(meta)}>Save</Button>
+        </div>
+      </div>
+    </dialog>
   )
 }

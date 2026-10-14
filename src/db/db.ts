@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { SearchResult } from '../api/discogs/types'
+import type { Metadata } from '../lib/metadata'
 
 export type Session = {
   id: 'current'
@@ -32,9 +33,14 @@ export type LibraryItem = OwnedItem & {
   dateAdded: string
   rating: number
   fields: Record<number, string> // custom field id -> value
+  originalCover?: string // set when the user picked a different cover
+  originalThumb?: string
 }
 export type WantItem = { releaseId: number; masterId: number }
 export type Setting = { key: string; value: unknown }
+
+// A cover the user picked from the release's other Discogs images
+export type CoverChoice = { instanceId: number; cover: string; thumb: string }
 
 // Short description of a release, enough to show it in the batch list
 export type ReleaseSummary = {
@@ -74,6 +80,8 @@ export type QueueItem = {
   folderId?: number // set by CSV import; otherwise the batch folder is used
   rating?: number
   fields?: Record<number, string>
+  meta?: Metadata // details typed in the batch for this record (scans only)
+  dropped?: string[] // details that had nowhere to go
   error?: string
   addStartedAt?: number
   instanceId?: number
@@ -87,6 +95,7 @@ export class PlatterDB extends Dexie {
   wants!: EntityTable<WantItem, 'releaseId'>
   settings!: EntityTable<Setting, 'key'>
   queue!: EntityTable<QueueItem, 'id'>
+  covers!: EntityTable<CoverChoice, 'instanceId'>
 
   constructor(name = 'platter') {
     super(name)
@@ -105,6 +114,7 @@ export class PlatterDB extends Dexie {
         await tx.table('settings').delete('collectionSyncedAt')
       })
     this.version(3).stores({ queue: '++id, status, createdAt' })
+    this.version(4).stores({ covers: 'instanceId' })
   }
 }
 

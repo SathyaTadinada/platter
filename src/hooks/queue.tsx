@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { addToFolder, editInstance, getOwnedInstances, removeWant, searchReleases, setFieldValue } from '../api/discogs/endpoints'
+import { addToFolder, editInstance, getFields, getOwnedInstances, getProfile, removeWant, searchReleases, setFieldValue } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
 import { db, getSetting, setSetting } from '../db/db'
 import { lookupBarcode } from '../lib/lookup'
-import { addReady, lookupPending, resetInterrupted, type AddDeps } from '../lib/queue'
+import { matchFields, type FieldMap } from '../lib/fields'
+import type { Metadata } from '../lib/metadata'
+import { addReady, applyBatchDetails, lookupPending, resetInterrupted, type AddDeps } from '../lib/queue'
 import { useSession } from './session'
 import { useSync } from './sync'
 
@@ -20,6 +22,7 @@ type Ctx = {
 
 const QueueContext = createContext<Ctx | null>(null)
 const JOB_KEY = 'batchAddJob' // remembered so adding resumes after a reload
+export const SHARED_KEY = 'batchShared' // store, date and location for the whole batch
 
 const useOnline = () => {
   const [online, setOnline] = useState(navigator.onLine)
@@ -95,10 +98,20 @@ export function QueueProvider({ children }: { children: ReactNode }) {
 
   const startAdding = useCallback(
     async (job: AddJob) => {
+      if (client && session) {
+        // work out each record's field values from the shared and per-record details
+        const [{ fields }, profile, map, shared] = await Promise.all([
+          getFields(client, session.username),
+          getProfile(client, session.username).catch(() => null),
+          getSetting<FieldMap>('fieldMap'),
+          getSetting<Metadata>(SHARED_KEY),
+        ])
+        await applyBatchDetails(shared ?? {}, matchFields(fields, map ?? {}), profile?.curr_abbr ?? 'USD')
+      }
       await setSetting(JOB_KEY, job)
       await adds(job)
     },
-    [adds],
+    [adds, client, session],
   )
 
   // on start: tidy up anything a reload interrupted, then carry on

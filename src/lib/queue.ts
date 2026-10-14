@@ -6,7 +6,9 @@ import { digitsOnly } from './barcode'
 import { fieldValueFits, type ImportPlan, type ImportRow } from './csv'
 import { toCard } from './format'
 import { itemFromSearch } from './library'
+import type { FieldMatch } from './fields'
 import type { LookupResult } from './lookup'
+import { mergeMetadata, planFieldWrites, type Metadata } from './metadata'
 
 export function summaryFromSearch(r: SearchResult): ReleaseSummary {
   const c = toCard(r)
@@ -126,9 +128,13 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       const target = { folderId, releaseId: release.id, instanceId }
 
       // extras are best effort: the record is in the collection either way
-      const problems: string[] = []
+      const problems = (item.dropped ?? []).map((d) => `${d} had no field`)
+      const saved: Record<number, string> = {}
       for (const [fieldId, value] of Object.entries(item.fields ?? {})) {
-        await deps.setField(target, Number(fieldId), value).catch((e: Error) => problems.push(e.message))
+        await deps.setField(target, Number(fieldId), value).then(
+          () => (saved[Number(fieldId)] = value),
+          (e: Error) => problems.push(e.message),
+        )
       }
       if (item.rating) await deps.setRating(target, item.rating).catch((e: Error) => problems.push(e.message))
       if (opts.removeFromWantlist && opts.wants.has(release.id)) {
@@ -138,7 +144,7 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
         )
       }
 
-      if (item.raw) await db.collection.put(itemFromSearch(item.raw, instanceId, folderId))
+      if (item.raw) await db.collection.put({ ...itemFromSearch(item.raw, instanceId, folderId), fields: saved })
       await db.queue.update(item.id!, { status: 'added', warning: problems.length ? `Added, but some details didn't save: ${problems[0]}` : undefined })
       added++
     } catch (e) {
@@ -152,6 +158,16 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
   }
   opts.onProgress?.(items.length, items.length)
   return { end: 'done', added, failed }
+}
+
+// Turns the batch's shared details plus each record's own into field values.
+// CSV rows already carry their own fields and are left alone.
+export async function applyBatchDetails(shared: Metadata, matches: FieldMatch[], currency: string) {
+  const ready = await db.queue.where('status').equals('ready').filter((i) => i.source !== 'csv').toArray()
+  for (const item of ready) {
+    const plan = planFieldWrites(mergeMetadata(shared, item.meta), matches, { currency })
+    await db.queue.update(item.id!, { fields: plan.writes, dropped: plan.dropped })
+  }
 }
 
 // Retry: failed lookups go back to pending, failed adds back to ready

@@ -5,7 +5,8 @@ import type { CollectionField, SearchResponse } from '../api/discogs/types'
 import { db } from '../db/db'
 import { parseDiscogsExport, planImport } from './csv'
 import type { LookupResult } from './lookup'
-import { addReady, chooseRelease, enqueueBarcode, enqueueCsv, lookupPending, resetInterrupted, retryFailed, type AddDeps } from './queue'
+import { matchFields } from './fields'
+import { addReady, applyBatchDetails, chooseRelease, enqueueBarcode, enqueueCsv, lookupPending, resetInterrupted, retryFailed, type AddDeps } from './queue'
 
 const results = (search as SearchResponse).results
 
@@ -125,6 +126,38 @@ describe('addReady', () => {
     )
     expect(r.end).toBe('offline')
     expect((await db.queue.get(id))?.status).toBe('ready')
+  })
+})
+
+describe('applyBatchDetails', () => {
+  const fields = [
+    { id: 1, name: 'Media Condition', type: 'dropdown', position: 1, public: false, options: ['Mint (M)', 'Very Good Plus (VG+)'] },
+    { id: 3, name: 'Notes', type: 'textarea', position: 3, public: false },
+    { id: 7, name: 'Location', type: 'textarea', position: 7, public: false },
+  ] as CollectionField[]
+
+  it('combines shared and per-record details into field values', async () => {
+    const a = await enqueueBarcode('111', 'scan', 1)
+    const b = await enqueueBarcode('222', 'scan', 2)
+    await chooseRelease(a, results[0])
+    await chooseRelease(b, results[1])
+    await db.queue.update(b, { meta: { mediaCondition: 'Very Good Plus (VG+)', location: 'Crate B', price: '8' } })
+
+    await applyBatchDetails({ store: 'Amoeba', location: 'Shelf 1' }, matchFields(fields), 'USD')
+
+    expect((await db.queue.get(a))?.fields).toEqual({ 3: 'Bought from Amoeba', 7: 'Shelf 1' })
+    const fb = (await db.queue.get(b))?.fields
+    expect(fb?.[1]).toBe('Very Good Plus (VG+)')
+    expect(fb?.[7]).toBe('Crate B') // the record's own value wins
+    expect(fb?.[3]).toMatch(/^Bought from Amoeba for .*8\.00$/)
+  })
+
+  it('keeps the saved details on the new collection item', async () => {
+    const id = await enqueueBarcode('111', 'scan')
+    await chooseRelease(id, results[0])
+    await applyBatchDetails({ location: 'Shelf 1' }, matchFields(fields), 'USD')
+    await addReady(deps(), addOpts)
+    expect((await db.collection.get(777))?.fields).toEqual({ 7: 'Shelf 1' })
   })
 })
 

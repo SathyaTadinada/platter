@@ -28,6 +28,7 @@ const json = (data: unknown, status = 200) =>
 function route(url: string, method: string): Response {
   if (url.includes('musicbrainz.org')) return json(mb)
   if (url.includes('/oauth/identity')) return json(identity)
+  if (url.endsWith('/users/platter-test')) return json({ username: 'platter-test', uri: 'https://www.discogs.com/user/platter-test', curr_abbr: 'USD' })
   if (url.includes('/database/search')) {
     if (/barcode=0?075678164125/.test(url)) return json(searchBarcode)
     if (url.includes('barcode=')) return json(searchFuzzy)

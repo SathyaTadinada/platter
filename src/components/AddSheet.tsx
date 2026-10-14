@@ -1,9 +1,14 @@
+import { ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { addToFolder, getFolders, getOwnedInstances, removeWant } from '../api/discogs/endpoints'
+import { addToFolder, getFolders, getOwnedInstances, removeWant, setFieldValue } from '../api/discogs/endpoints'
 import type { Folder } from '../api/discogs/types'
 import { db, getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
+import { useFieldMatches } from '../hooks/useFields'
+import { hasMetadata, planFieldWrites, type Metadata } from '../lib/metadata'
+import { MetadataForm } from './MetadataForm'
+import { useProfile } from './Profile'
 import type { ReleaseCard } from '../lib/format'
 import { itemFromSearch } from '../lib/library'
 import { checkOwnership } from '../lib/ownership'
@@ -12,7 +17,26 @@ import { Button, Notice } from './ui'
 
 type Props = { card: ReleaseCard; onClose: () => void; onScanNext: () => void }
 
-type Done = { folder: string; instanceId: number; wantRemoved: boolean }
+type Done = { folder: string; instanceId: number; wantRemoved: boolean; inNotes: string[]; problems: string[] }
+
+// "Purchase details and location" rather than listing every field name
+function inNotesText(labels: string[]) {
+  const purchase = labels.some((l) => l.startsWith('Purchase'))
+  const parts = [purchase && 'Purchase details', labels.includes('Location') && (purchase ? 'location' : 'Location')].filter(Boolean)
+  return parts.join(' and ')
+}
+
+const DETAILS_OPEN = 'platter.addDetailsOpen'
+const RECENT = 'recentDetails' // store/date/location from the last add, reused for a few hours
+const RECENT_FOR = 12 * 60 * 60 * 1000
+
+function detailsOpen() {
+  try {
+    return localStorage.getItem(DETAILS_OPEN) === '1'
+  } catch {
+    return false
+  }
+}
 
 function pickDefaultFolder(folders: Folder[], last?: number): number | undefined {
   if (last && folders.some((f) => f.id === last)) return last
@@ -26,6 +50,26 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<Done | null>(null)
+  const [meta, setMeta] = useState<Metadata>({})
+  const [more, setMore] = useState(detailsOpen)
+  const matches = useFieldMatches()
+  const currency = useProfile()?.curr_abbr ?? 'USD'
+
+  // a stack bought together usually shares store, date and shelf
+  useEffect(() => {
+    getSetting<{ meta: Metadata; at: number }>(RECENT).then((r) => {
+      if (r && Date.now() - r.at < RECENT_FOR) setMeta(r.meta)
+    })
+  }, [])
+
+  function toggleMore() {
+    setMore(!more)
+    try {
+      localStorage.setItem(DETAILS_OPEN, more ? '0' : '1')
+    } catch {
+      // not important
+    }
+  }
 
   useEffect(() => {
     if (ref.current && !ref.current.open) ref.current.showModal()
@@ -54,10 +98,27 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
     setError(null)
     try {
       const { instance_id } = await addToFolder(client, username, folderId, card.id)
-      await db.collection.put(itemFromSearch(card.raw, instance_id, folderId))
+      const target = { folderId, releaseId: card.id, instanceId: instance_id }
+
+      // details are best effort: the record is in the collection either way
+      const plan = matches ? planFieldWrites(meta, matches, { currency }) : { writes: {}, inNotes: [], dropped: [] }
+      const saved: Record<number, string> = {}
+      const problems = plan.dropped.map((d) => `${d} wasn't saved`)
+      for (const [fieldId, value] of Object.entries(plan.writes)) {
+        try {
+          await setFieldValue(client, username, target, Number(fieldId), value)
+          saved[Number(fieldId)] = value
+        } catch (e) {
+          problems.push((e as Error).message)
+        }
+      }
+
+      await db.collection.put({ ...itemFromSearch(card.raw, instance_id, folderId), fields: saved })
       await setSetting('lastFolderId', folderId)
+      const { store, date, location } = meta
+      if (store || date || location) await setSetting(RECENT, { meta: { store, date, location }, at: Date.now() })
       const folder = folders.data?.find((f) => f.id === folderId)?.name ?? 'your collection'
-      setDone({ folder, instanceId: instance_id, wantRemoved: false })
+      setDone({ folder, instanceId: instance_id, wantRemoved: false, inNotes: plan.inNotes, problems })
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -87,7 +148,7 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       aria-labelledby="add-title"
-      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
+      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
     >
       <div className="space-y-4 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
         <div className="mx-auto h-1 w-10 rounded-full bg-stone-300 sm:hidden dark:bg-stone-700" />
@@ -104,7 +165,10 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
 
         {done ? (
           <>
-            <Notice tone="success">Added to {done.folder}.</Notice>
+            <Notice tone="success">
+              Added to {done.folder}.{done.inNotes.length > 0 && ` ${inNotesText(done.inNotes)} went into Notes.`}
+            </Notice>
+            {done.problems.length > 0 && <Notice tone="warn">Some details didn't save: {done.problems.join('; ')}</Notice>}
             {o?.inWantlist && !done.wantRemoved && (
               <Notice tone="info">
                 <p>This was on your wantlist.</p>
@@ -152,6 +216,23 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
                 ))}
               </select>
             </label>
+
+            <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} parts={['conditions']} />
+
+            <div>
+              <button type="button" onClick={toggleMore} aria-expanded={more} className="flex w-full items-center justify-between py-1 text-sm font-medium">
+                <span>
+                  More details
+                  {!more && hasMetadata({ ...meta, mediaCondition: undefined, sleeveCondition: undefined }) && <span className="text-stone-500"> · filled in</span>}
+                </span>
+                <ChevronDown size={18} className={`transition ${more ? 'rotate-180' : ''}`} aria-hidden />
+              </button>
+              {more && (
+                <div className="pt-2">
+                  <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} parts={['price', 'date', 'store', 'location', 'notes']} />
+                </div>
+              )}
+            </div>
 
             {(error || folders.error) && <Notice tone="error">{error ?? folders.error?.message}</Notice>}
 
