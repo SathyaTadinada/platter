@@ -47,6 +47,8 @@ import { SYNC_MAX_AGE } from '../lib/sync'
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
 const PAGE = 120 // items rendered at a time; more load as you scroll
+const headerButton =
+  'hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-40 lg:inline-flex dark:text-stone-300 dark:hover:bg-stone-800'
 
 function loadView(): View {
   try {
@@ -239,6 +241,9 @@ export function Collection() {
     </>
   )
 
+  const exportLabel = searching ? `Export these ${filtered.length}` : 'Export CSV'
+
+  // Phones get the everyday actions plus a menu; desktop has room for all of them
   const actions = selected ? (
     selectActions
   ) : (
@@ -249,25 +254,34 @@ export function Collection() {
       <IconButton label={view === 'grid' ? 'Show as list' : 'Show as grid'} onClick={toggleView}>
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
-      <Menu
-        label="More"
-        items={[
-          { label: 'Select records', icon: <ListChecks size={18} />, onSelect: () => setSelected(new Set()), disabled: !filtered.length },
-          {
-            label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
-            icon: <RefreshCw size={18} />,
-            onSelect: () => sync.sync(true),
-            disabled: sync.running,
-          },
-          { label: 'Import a CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
-          {
-            label: searching ? `Export these ${filtered.length} as CSV` : 'Export as CSV',
-            icon: <Download size={18} />,
-            onSelect: exportCsv,
-            disabled: !filtered.length,
-          },
-        ]}
-      />
+      <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
+        <ListChecks size={20} />
+      </IconButton>
+      <IconButton label="Refresh from Discogs" onClick={() => sync.sync(true)} disabled={sync.running} className="hidden lg:block">
+        <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
+      </IconButton>
+      <span className="mx-1 hidden h-6 w-px bg-stone-200 lg:block dark:bg-stone-800" aria-hidden />
+      <button type="button" onClick={() => navigate('/import')} className={headerButton}>
+        <FileUp size={18} aria-hidden /> Import CSV
+      </button>
+      <button type="button" onClick={exportCsv} disabled={!filtered.length} className={headerButton}>
+        <Download size={18} aria-hidden /> {exportLabel}
+      </button>
+      <div className="lg:hidden">
+        <Menu
+          label="More"
+          items={[
+            {
+              label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
+              icon: <RefreshCw size={18} />,
+              onSelect: () => sync.sync(true),
+              disabled: sync.running,
+            },
+            { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
+            { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
+          ]}
+        />
+      </div>
     </>
   )
 
@@ -307,7 +321,7 @@ export function Collection() {
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         {onlyCrate ? (
           <p className="text-lg font-semibold">
-            Nothing in {facets?.folder.find((o) => o.value === String(query.filters.folder))?.label ?? 'this crate'} yet
+            Nothing in {facets?.folder.find((o) => o.value === String(query.filters.folder))?.label ?? 'this crate'}
           </p>
         ) : (
           <>

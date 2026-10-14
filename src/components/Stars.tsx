@@ -1,4 +1,5 @@
 import { Star } from 'lucide-react'
+import { useState } from 'react'
 
 export function Stars({ value, onChange, size = 22 }: { value: number; onChange?: (n: number) => void; size?: number }) {
   if (!onChange) {
@@ -11,8 +12,15 @@ export function Stars({ value, onChange, size = 22 }: { value: number; onChange?
       </span>
     )
   }
+  return <EditableStars value={value} onChange={onChange} size={size} />
+}
+
+function EditableStars({ value, onChange, size }: { value: number; onChange: (n: number) => void; size: number }) {
+  // while hovering, show what clicking would set
+  const [hover, setHover] = useState(0)
+  const shown = hover || value
   return (
-    <div className="flex" role="radiogroup" aria-label="Rating">
+    <div className="flex" role="radiogroup" aria-label="Rating" onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
@@ -20,11 +28,18 @@ export function Stars({ value, onChange, size = 22 }: { value: number; onChange?
           role="radio"
           aria-checked={value === n}
           aria-label={`${n} star${n > 1 ? 's' : ''}`}
-          // tapping the current rating clears it
+          onMouseEnter={() => setHover(n)}
+          // clicking the current rating clears it
           onClick={() => onChange(value === n ? 0 : n)}
-          className="p-1 text-amber-500"
+          className="p-1 text-amber-500 transition-transform hover:scale-110"
         >
-          <Star size={size} fill={n <= value ? 'currentColor' : 'none'} strokeWidth={1.75} aria-hidden />
+          <Star
+            size={size}
+            fill={n <= shown ? 'currentColor' : 'none'}
+            strokeWidth={1.75}
+            className={hover && n <= hover && n > value ? 'opacity-60' : ''}
+            aria-hidden
+          />
         </button>
       ))}
     </div>

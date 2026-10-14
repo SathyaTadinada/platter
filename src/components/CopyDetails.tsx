@@ -31,7 +31,8 @@ function Row({ label, saved, children, stacked }: { label: string; saved?: boole
         {label}
         {saved && <Check size={14} className="text-emerald-600" aria-label="Saved" />}
       </span>
-      <div className={stacked ? '' : 'flex min-w-0 flex-1 justify-end'}>{children}</div>
+      {/* every control gets the same width so the column lines up */}
+      <div className={stacked ? '' : 'ml-auto w-full max-w-[15rem] min-w-0'}>{children}</div>
     </li>
   )
 }
@@ -63,7 +64,7 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
         />
       </Row>
       <Row label="Added">
-        <span className="px-2 font-medium">
+        <span className="block px-2 text-right font-medium">
           {Number.isNaN(added.getTime()) ? '' : added.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
         </span>
       </Row>
@@ -159,7 +160,7 @@ function Field({
       const n = Number.parseInt(value, 10) || 0
       return (
         <Row label={field.name} saved={saved}>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center justify-end gap-1">
             <button
               type="button"
               aria-label="One fewer"
@@ -193,7 +194,7 @@ function Field({
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit(draft)}
             onKeyDown={blurOnEnter}
-            className={`${inline} max-w-48 appearance-none [&::-webkit-date-and-time-value]:text-right`}
+            className={`${inline} appearance-none [&::-webkit-date-and-time-value]:text-right`}
           />
         </Row>
       )
@@ -205,7 +206,7 @@ function Field({
             ref={notesRef}
             aria-label={field.name}
             value={draft}
-            rows={1}
+            rows={3}
             placeholder="Add notes"
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit(draft.trim())}
