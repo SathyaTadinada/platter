@@ -11,13 +11,6 @@ if (import.meta.env.DEV && (location.search.includes('demo') || sessionStorage.g
 
 registerSW({ immediate: true })
 
-// loaded fine, so a later failure is allowed one reload again (see public/recover.js)
-try {
-  sessionStorage.removeItem('platter.reloaded')
-} catch {
-  // ignore
-}
-
 // iOS can leave the page scrolled after the keyboard closes, which pushes the
 // layout up. Snap back once focus leaves a text field.
 document.addEventListener('focusout', () => {
