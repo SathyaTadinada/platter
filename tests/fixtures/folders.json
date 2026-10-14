@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "id": 0,
+      "name": "All",
+      "count": 47,
+      "resource_url": "https://api.discogs.com/users/platter-test/collection/folders/0"
+    },
+    {
+      "id": 9579420,
+      "name": "Catalog",
+      "count": 47,
+      "resource_url": "https://api.discogs.com/users/platter-test/collection/folders/9579420"
+    },
+    {
+      "id": 1,
+      "name": "Uncategorized",
+      "count": 0,
+      "resource_url": "https://api.discogs.com/users/platter-test/collection/folders/1"
+    }
+  ]
+}

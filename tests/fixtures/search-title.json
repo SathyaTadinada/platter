@@ -1,0 +1,315 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 15,
+    "per_page": 5,
+    "items": 71,
+    "urls": {
+      "last": "https://api.discogs.com/database/search?artist=Rick+Astley&release_title=Never+Gonna+Give+You+Up&type=release&per_page=5&page=15",
+      "next": "https://api.discogs.com/database/search?artist=Rick+Astley&release_title=Never+Gonna+Give+You+Up&type=release&per_page=5&page=2"
+    }
+  },
+  "results": [
+    {
+      "country": "US",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo",
+        "Promo"
+      ],
+      "label": [
+        "RCA"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Synth-pop"
+      ],
+      "id": 5453130,
+      "barcode": [],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/5453130-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "5347-7-RAA",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/vSWipVFWnaJQIm546ZtqU3JPpjVxK-KmA7BKI_eZGVE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0NTMx/MzAtMTU1MTY0MTg3/NS0yMzU1LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/IDz0x6o8-Uq9cAZjyQ7kLNDCx4qIMY8f6crds6aU97A/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0NTMx/MzAtMTU1MTY0MTg3/NS0yMzU1LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/5453130",
+      "community": {
+        "want": 156,
+        "have": 66
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo",
+            "Promo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "South Africa",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "Maxi-Single"
+      ],
+      "label": [
+        "RCA"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Synth-pop"
+      ],
+      "id": 5131993,
+      "barcode": [],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/5131993-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "RCAM 12035",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/pOLIYKI8D9q0CaPj1AWLosh1KP4EOq9T_3o9Z0yklLg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxMzE5/OTMtMTU0NDY0NTYz/Ni05Nzc3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/cmqIAWaadWfiRHQS00lr5xxs_hCIla-ZfIL0Of6yKXw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxMzE5/OTMtMTU0NDY0NTYz/Ni05Nzc3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/5131993",
+      "community": {
+        "want": 149,
+        "have": 42
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "Maxi-Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Japan",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo"
+      ],
+      "label": [
+        "RCA",
+        "BMG Victor Inc.",
+        "BMG International"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Synth-pop"
+      ],
+      "id": 9455839,
+      "barcode": [
+        "4988017201886",
+        "JASRAC"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/9455839-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "RPS-257",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/HNiSVmjQb9N-QZmr5ZhV_of7yvk7zHS_kM3ZBderD0M/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk0NTU4/MzktMTQ4MDg3OTA2/NS0yOTI1LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/ffKWQuTqdREQTYfirfuFkhT9uyU2P-on5dOLUCfU9Sg/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk0NTU4/MzktMTQ4MDg3OTA2/NS0yOTI1LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/9455839",
+      "community": {
+        "want": 114,
+        "have": 32
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1987",
+      "format": [
+        "VHS",
+        "Single",
+        "PAL",
+        "SECAM"
+      ],
+      "label": [
+        "RCA",
+        "Chart Attack - Video Cassette Single"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Synth-pop"
+      ],
+      "id": 3056012,
+      "barcode": [
+        "Only Stripes - No Numbers",
+        "5012345618906"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/3056012-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "VCS003",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/c0Sqfk5e0SNu4XnUzOiTLEtAh-gAFMad7FW5OS5Zzek/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwNTYw/MTItMTUyMzAwNjQy/My0zMjc0LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/zKCKn69oqvVnQ-nxctTzgvLyDnPqz8ssfD-UwCDBafk/rs:fit/g:sm/q:90/h:1087/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwNTYw/MTItMTUyMzAwNjQy/My0zMjc0LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3056012",
+      "community": {
+        "want": 59,
+        "have": 4
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "VHS",
+          "qty": "1",
+          "descriptions": [
+            "Single",
+            "PAL",
+            "SECAM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Europe",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "45 RPM",
+        "Maxi-Single",
+        "Stereo"
+      ],
+      "label": [
+        "RCA",
+        "RCA",
+        "RCA",
+        "RCA Corporation",
+        "Bertelsmann Music Group",
+        "BMG Records (UK) Ltd.",
+        "BMG Records",
+        "BMG Records (UK) Ltd.",
+        "All Boys Music Ltd.",
+        "RCA Records",
+        "BMG Records",
+        "BMG Ariola",
+        "Sonopress"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Dance-pop",
+        "Synth-pop",
+        "Hi NRG"
+      ],
+      "id": 995860,
+      "barcode": [
+        "012394 144869",
+        "5012394144869",
+        "BIEM GEMA",
+        "LC 0316",
+        "AF",
+        "RC120",
+        "BB",
+        "DM B-9148 A-1/8-87",
+        "DM B-9148 B-1/8-87",
+        "DM B-9148 A-1/8-87 II",
+        "DM B-9148 B-1/8-87",
+        "DM B-9148 A-1/8-87 II",
+        "DM B-9148 B-1/8-87 II",
+        "DM B-9148 A-1/8-87 III",
+        "DM B-9148 B-1/8-87"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/995860-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PT 41 448",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/LVsIrrddKD8jYK5yhsUaJ4ZOHTTnXSscmOaBQHlhl4U/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk5NTg2/MC0xNzU2NTYyMjU5/LTY0MTAuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/pGyN2bGulAY3B4tIb_iL0zJHVmqo-YB4VY49Ri3AM5s/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk5NTg2/MC0xNzU2NTYyMjU5/LTY0MTAuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/995860",
+      "community": {
+        "want": 531,
+        "have": 4490
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "45 RPM",
+            "Maxi-Single",
+            "Stereo"
+          ]
+        }
+      ]
+    }
+  ]
+}

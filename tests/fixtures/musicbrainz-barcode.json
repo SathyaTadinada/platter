@@ -1,0 +1,227 @@
+{
+  "created": "2026-10-14T02:51:01.144Z",
+  "count": 8,
+  "offset": 0,
+  "releases": [
+    {
+      "id": "a2727852-6185-49ad-a894-c41c663b1260",
+      "score": 100,
+      "status-id": "4e304316-386d-3409-af2e-78857eec5cfe",
+      "packaging-id": "ec27701a-4a22-37f4-bfac-6616e0f9750a",
+      "artist-credit-id": "2490bd03-a0d7-3c9d-8af4-244d7513521d",
+      "count": 1,
+      "title": "Invisible Touch",
+      "status": "Official",
+      "disambiguation": "made in Japan",
+      "packaging": "Jewel Case",
+      "text-representation": {
+        "language": "eng",
+        "script": "Latn"
+      },
+      "artist-credit": [
+        {
+          "name": "Genesis",
+          "artist": {
+            "id": "8e3fcd7d-bda1-4ca0-b987-b8528d2ee74e",
+            "name": "Genesis",
+            "sort-name": "Genesis",
+            "disambiguation": "English rock band"
+          }
+        }
+      ],
+      "release-group": {
+        "id": "cd5b8b39-cdfd-337a-9fab-c2571be315c0",
+        "type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "title": "Invisible Touch",
+        "primary-type": "Album"
+      },
+      "date": "1986",
+      "country": "US",
+      "release-events": [
+        {
+          "date": "1986",
+          "area": {
+            "id": "489ce91b-6658-3307-9877-795b68554c98",
+            "name": "United States",
+            "sort-name": "United States",
+            "iso-3166-1-codes": [
+              "US"
+            ]
+          }
+        }
+      ],
+      "barcode": "075678164125",
+      "label-info": [
+        {
+          "catalog-number": "7 81641-2",
+          "label": {
+            "id": "50c384a2-0b44-401b-b893-8181173339c7",
+            "name": "Atlantic"
+          }
+        }
+      ],
+      "track-count": 8,
+      "media": [
+        {
+          "id": "e86c9bb7-e58d-34a7-bdb5-227db02940c4",
+          "format": "CD",
+          "disc-count": 2,
+          "track-count": 8
+        }
+      ],
+      "tags": [
+        {
+          "count": 2,
+          "name": "progressive rock"
+        },
+        {
+          "count": 1,
+          "name": "synth-pop"
+        }
+      ]
+    },
+    {
+      "id": "57b1a6a5-3ed8-4258-9aac-dde3f1975f73",
+      "score": 100,
+      "status-id": "4e304316-386d-3409-af2e-78857eec5cfe",
+      "packaging-id": "ec27701a-4a22-37f4-bfac-6616e0f9750a",
+      "artist-credit-id": "2490bd03-a0d7-3c9d-8af4-244d7513521d",
+      "count": 1,
+      "title": "Invisible Touch",
+      "status": "Official",
+      "packaging": "Jewel Case",
+      "text-representation": {
+        "language": "eng",
+        "script": "Latn"
+      },
+      "artist-credit": [
+        {
+          "name": "Genesis",
+          "artist": {
+            "id": "8e3fcd7d-bda1-4ca0-b987-b8528d2ee74e",
+            "name": "Genesis",
+            "sort-name": "Genesis",
+            "disambiguation": "English rock band"
+          }
+        }
+      ],
+      "release-group": {
+        "id": "cd5b8b39-cdfd-337a-9fab-c2571be315c0",
+        "type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "title": "Invisible Touch",
+        "primary-type": "Album"
+      },
+      "date": "1986",
+      "country": "CA",
+      "release-events": [
+        {
+          "date": "1986",
+          "area": {
+            "id": "71bbafaa-e825-3e15-8ca9-017dcad1748b",
+            "name": "Canada",
+            "sort-name": "Canada",
+            "iso-3166-1-codes": [
+              "CA"
+            ]
+          }
+        }
+      ],
+      "barcode": "075678164125",
+      "label-info": [
+        {
+          "catalog-number": "CD 81641",
+          "label": {
+            "id": "50c384a2-0b44-401b-b893-8181173339c7",
+            "name": "Atlantic"
+          }
+        }
+      ],
+      "track-count": 8,
+      "media": [
+        {
+          "id": "0ac2df3e-db12-36e9-8984-560cfedbd96e",
+          "format": "CD",
+          "disc-count": 1,
+          "track-count": 8
+        }
+      ]
+    },
+    {
+      "id": "c181b8cd-5d37-4348-b1fa-fc901e99aa70",
+      "score": 100,
+      "status-id": "4e304316-386d-3409-af2e-78857eec5cfe",
+      "packaging-id": "ec27701a-4a22-37f4-bfac-6616e0f9750a",
+      "artist-credit-id": "2490bd03-a0d7-3c9d-8af4-244d7513521d",
+      "count": 1,
+      "title": "Invisible Touch",
+      "status": "Official",
+      "disambiguation": "Olyphant",
+      "packaging": "Jewel Case",
+      "text-representation": {
+        "language": "eng",
+        "script": "Latn"
+      },
+      "artist-credit": [
+        {
+          "name": "Genesis",
+          "artist": {
+            "id": "8e3fcd7d-bda1-4ca0-b987-b8528d2ee74e",
+            "name": "Genesis",
+            "sort-name": "Genesis",
+            "disambiguation": "English rock band"
+          }
+        }
+      ],
+      "release-group": {
+        "id": "cd5b8b39-cdfd-337a-9fab-c2571be315c0",
+        "type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+        "title": "Invisible Touch",
+        "primary-type": "Album"
+      },
+      "date": "1997",
+      "country": "US",
+      "release-events": [
+        {
+          "date": "1997",
+          "area": {
+            "id": "489ce91b-6658-3307-9877-795b68554c98",
+            "name": "United States",
+            "sort-name": "United States",
+            "iso-3166-1-codes": [
+              "US"
+            ]
+          }
+        }
+      ],
+      "barcode": "075678164125",
+      "label-info": [
+        {
+          "catalog-number": "81641-2",
+          "label": {
+            "id": "50c384a2-0b44-401b-b893-8181173339c7",
+            "name": "Atlantic"
+          }
+        },
+        {
+          "catalog-number": "7 81641-2",
+          "label": {
+            "id": "50c384a2-0b44-401b-b893-8181173339c7",
+            "name": "Atlantic"
+          }
+        }
+      ],
+      "track-count": 8,
+      "media": [
+        {
+          "id": "2af067f5-3551-32ba-96ce-ee5ac014fd42",
+          "format": "CD",
+          "disc-count": 1,
+          "track-count": 8
+        }
+      ]
+    }
+  ]
+}

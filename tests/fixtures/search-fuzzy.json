@@ -1,0 +1,2956 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 200,
+    "per_page": 50,
+    "items": 1095094,
+    "urls": {
+      "last": "https://api.discogs.com/database/search?barcode=000000000017&type=release&page=200&per_page=50",
+      "next": "https://api.discogs.com/database/search?barcode=000000000017&type=release&page=2&per_page=50"
+    }
+  },
+  "results": [
+    {
+      "country": "Germany",
+      "year": "1993",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Mono Tone",
+        "Mono Tone",
+        "Mono Tone",
+        "Three-O-Three Music",
+        "Sony Music Publishing",
+        "Biosfear"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Hardcore",
+        "Acid"
+      ],
+      "id": 35954,
+      "barcode": [
+        "MO NO - 17 - A1",
+        "MO NO - 17 - B1",
+        "MO NO-017 - C1",
+        "MO NO-017 - D1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1364,
+      "master_url": "https://api.discogs.com/masters/1364",
+      "uri": "/release/35954-The-Speed-Freak-Speed-City",
+      "catno": "MONO - 017",
+      "title": "The Speed Freak - Speed City",
+      "thumb": "https://i.discogs.com/HZNfeQO043OTjRZ5Q2y_GX4qaRVfm2VcPa8smEA4DG4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1OTU0/LTE1Njk1ODI0NzYt/MjI0MS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/KR0D24saPamc9y3H5WfjvGeDT1M1G0sG6DjWAcT2OA0/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1OTU0/LTE1Njk1ODI0NzYt/MjI0MS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/35954",
+      "community": {
+        "want": 224,
+        "have": 290
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Greenish Cyan Transparent Marbled",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "EP"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Transparent",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Argentina",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Promo"
+      ],
+      "label": [
+        "Mercury",
+        "Phonogram S.A.I.C."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Pop Rock"
+      ],
+      "id": 7380903,
+      "barcode": [
+        "00 00017·A",
+        "00 00017·B",
+        "00 00017-A-",
+        "00 00017-B-",
+        "SADAIC",
+        "AADI-CAPIF"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 48849,
+      "master_url": "https://api.discogs.com/masters/48849",
+      "uri": "/release/7380903-Big-Country-Chance-Riesgo",
+      "catno": "00 00017",
+      "title": "Big Country - Chance = Riesgo",
+      "thumb": "https://i.discogs.com/Dv47SBABbZ7VNcWNdsLqxt5SsuDvS42LZu5-zzSnHWo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczODA5/MDMtMTQ0MDI2MjQy/OC00Njk3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/45h3g03YvnYQdsKKapvEPIJQG79ZN9wo3ukNxeiev24/rs:fit/g:sm/q:90/h:629/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczODA5/MDMtMTQ0MDI2MjQy/OC00Njk3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7380903",
+      "community": {
+        "want": 15,
+        "have": 6
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Promo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "1996",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Heavy Beat"
+      ],
+      "type": "release",
+      "genre": [
+        "Reggae"
+      ],
+      "style": [],
+      "id": 10027532,
+      "barcode": [
+        "HBR - 017 - A",
+        "HBR - 017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/10027532-Mical-Rustle-Lotta-Love",
+      "catno": "HBR-0017",
+      "title": "Mical Rustle - Lotta Love",
+      "thumb": "https://i.discogs.com/M1xAWCifMBMReIH6cPFrsP7XKhN0lSfq0vDTidP5DTs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDI3/NTMyLTE0OTAzNzIx/NDItMzQ5Ny5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/4sct2iouxlsODjSMTyc8c3C8j7m1Ru8CnMmuUFwgEWk/rs:fit/g:sm/q:90/h:618/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDI3/NTMyLTE0OTAzNzIx/NDItMzQ5Ny5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10027532",
+      "community": {
+        "want": 7,
+        "have": 12
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Unknown",
+      "year": "1986",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "Mixed",
+        "Unofficial Release",
+        "Stereo"
+      ],
+      "label": [
+        "Uptide Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Funk / Soul"
+      ],
+      "style": [
+        "Synth-pop",
+        "Disco"
+      ],
+      "id": 884170,
+      "barcode": [
+        "STEMRA",
+        "20 0 17 - A -",
+        "20 0 17 - B -"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/884170-Various-Carad-Test-Pressing-N1",
+      "catno": "20017",
+      "title": "Various - Carad Test Pressing N°1",
+      "thumb": "https://i.discogs.com/VTVx6ERo2zH9oCqjjQTtrqpNCTbmSa2iddGNfE8PX38/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg4NDE3/MC0xNDE4OTM0NjUz/LTMzMTYuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/kZJFuAGziiCgcAx7qpHhZ1zgicUxQGVFxX1TEVDZ53A/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg4NDE3/MC0xNDE4OTM0NjUz/LTMzMTYuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/884170",
+      "community": {
+        "want": 22,
+        "have": 111
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "Mixed",
+            "Unofficial Release",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Belgium",
+      "genre": [
+        "Electronic",
+        "Funk / Soul"
+      ],
+      "format": [
+        "Vinyl",
+        "12\"",
+        "45 RPM",
+        "Mixed",
+        "Unofficial Release",
+        "Stereo"
+      ],
+      "style": [
+        "New Wave",
+        "Darkwave",
+        "Synth-pop",
+        "Disco"
+      ],
+      "id": 1439708,
+      "label": [
+        "Uptide Records",
+        "Doomtrax"
+      ],
+      "type": "release",
+      "barcode": [
+        "SABAM",
+        "20017 A",
+        "20017 B",
+        "20017-A-",
+        "20017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/1439708-Various-Doomtrax-II",
+      "catno": "20017",
+      "title": "Various - Doomtrax II",
+      "thumb": "https://i.discogs.com/2Xd0Suvx3GNP2ncN9GYwd0L7Jf8ijBUOXo3tPGLLaS4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0Mzk3/MDgtMTI0NDIwMTI4/NS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/VW0ztuGCZ-Zk3412AR0wRJHmzlbAs0N2YprLKqzB7qE/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0Mzk3/MDgtMTI0NDIwMTI4/NS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/1439708",
+      "community": {
+        "want": 89,
+        "have": 252
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "45 RPM",
+            "Mixed",
+            "Unofficial Release",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "2000",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "Album"
+      ],
+      "label": [
+        "Flapping Jet Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Experimental"
+      ],
+      "id": 1534211,
+      "barcode": [
+        "FJ - 017 - A",
+        "FJ - 017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 719156,
+      "master_url": "https://api.discogs.com/masters/719156",
+      "uri": "/release/1534211-Last-Of-The-Juanitas-Hawaii",
+      "catno": "FJ-017",
+      "title": "Last Of The Juanitas - Hawaii",
+      "thumb": "https://i.discogs.com/gEJYmCTvQuVulU8ljUeXMxoPrSWO5h2ms8FBGAK5mjg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1MzQy/MTEtMTYzOTcxMzQ4/My0zMDQxLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/-9z8kaEPKGB9zSMRNjtkaCIc8FgyvfehbYy_PhBhJfo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1MzQy/MTEtMTYzOTcxMzQ4/My0zMDQxLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/1534211",
+      "community": {
+        "want": 48,
+        "have": 109
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Denmark",
+      "year": "2023",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Yachtvej",
+        "Sony Music",
+        "Lydhavnen, Aarhus",
+        "Koda Kultur",
+        "Nordsø Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Pop"
+      ],
+      "style": [],
+      "id": 36092482,
+      "barcode": [
+        "NR 23 12 00 017 - A1",
+        "NR 23 12 00 017 - B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 3075467,
+      "master_url": "https://api.discogs.com/masters/3075467",
+      "uri": "/release/36092482-Ganger-Pisk",
+      "catno": "none",
+      "title": "Ganger (2) - Pisk",
+      "thumb": "https://i.discogs.com/-Ru8Qqv_JnXOvfBix_Hwzc61UlT5uv_Cn-_8g73Ybvk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDky/NDgyLTE3Njc0NzIy/MjMtNDA4MS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/xbJb1htf7LI0vsq1QQCIbAR7zY7uuHuTN3Q4hMbA2Lo/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDky/NDgyLTE3Njc0NzIy/MjMtNDA4MS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/36092482",
+      "community": {
+        "want": 0,
+        "have": 3
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Light Silver Swirl",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Belgium",
+      "year": "1970",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Mono"
+      ],
+      "label": [
+        "Philips",
+        "PolyGram Belgium",
+        "Arte-Print"
+      ],
+      "type": "release",
+      "genre": [
+        "Latin",
+        "Folk, World, & Country"
+      ],
+      "style": [
+        "Folk"
+      ],
+      "id": 1936930,
+      "barcode": [
+        "SABAM",
+        "6009 017.1",
+        "6009 017.2",
+        "6009 - 017 - 1 / 2",
+        "6009 - 017 - 2 / 2",
+        "6009 - 017 - 1 / 3",
+        "6009 - 017 - 2 / 3"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 200776,
+      "master_url": "https://api.discogs.com/masters/200776",
+      "uri": "/release/1936930-Los-Incas-El-Condor-Pasa",
+      "catno": "6009 017",
+      "title": "Los Incas - El Condor Pasa",
+      "thumb": "https://i.discogs.com/ob-s-jJYph47WmJ2WjYEMwEx57rEA7D_jy-Mz-s5Qw4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzY5/MzAtMTU3ODI1MDk5/My03MTUyLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/My2W1lC91zThh_Oc8rzkYwGrojLdat36J0r9RQPmhyo/rs:fit/g:sm/q:90/h:606/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzY5/MzAtMTU3ODI1MDk5/My03MTUyLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/1936930",
+      "community": {
+        "want": 13,
+        "have": 130
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Mono"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Canada",
+      "genre": [
+        "Pop"
+      ],
+      "format": [
+        "Shellac",
+        "10\"",
+        "78 RPM"
+      ],
+      "style": [
+        "Vocal"
+      ],
+      "id": 13055715,
+      "label": [
+        "His Master's Voice",
+        "Victor",
+        "Berliner Gram-o-phone Co. Limited"
+      ],
+      "type": "release",
+      "barcode": [
+        "0017-A",
+        "0017-B",
+        "0017A",
+        "0017B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/13055715-M-Joseph-Saucier-En-Roulant-Ma-Boule-Un-Canadien-Errant",
+      "catno": "0017",
+      "title": "M. Joseph Saucier* - En Roulant Ma Boule / Un Canadien Errant",
+      "thumb": "https://i.discogs.com/x4gk-Zj8Q-co7oP_-UgSaEHz5sQkdYfoX00T2gwhSLk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMDU1/NzE1LTE1NDcyNjIx/NDAtNzg4NC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/iCGJa1ko7vwVLoSmh77OfOA4hYlcvHolX6vNtkYnG-k/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMDU1/NzE1LTE1NDcyNjIx/NDAtNzg4NC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/13055715",
+      "community": {
+        "want": 5,
+        "have": 0
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Shellac",
+          "qty": "1",
+          "descriptions": [
+            "10\"",
+            "78 RPM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1993",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Mono Tone",
+        "Mono Tone",
+        "Mono Tone",
+        "Three-O-Three Music",
+        "Sony Music Publishing",
+        "Biosfear"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Hardcore",
+        "Acid"
+      ],
+      "id": 15440630,
+      "barcode": [
+        "MO NO - 17 - A1",
+        "MO NO - 17 - B1",
+        "MO NO-017 - C1",
+        "MO NO-017 - D1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1364,
+      "master_url": "https://api.discogs.com/masters/1364",
+      "uri": "/release/15440630-The-Speed-Freak-Speed-City",
+      "catno": "MONO - 017",
+      "title": "The Speed Freak - Speed City",
+      "thumb": "https://i.discogs.com/vZf7cjxcEuHUg10XcS5u2IrBrRPI1EfR79C738q_COM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NDQw/NjMwLTE1OTE1NjA1/NzUtMjM1Ni5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/AlwqDp0V-y0Wv9sJR0UzoXOKl0zaKPGd-tpKKQgFElg/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NDQw/NjMwLTE1OTE1NjA1/NzUtMjM1Ni5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/15440630",
+      "community": {
+        "want": 45,
+        "have": 15
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Transparent",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "EP"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Orange Transparent",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1993",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Mono Tone",
+        "Mono Tone",
+        "Mono Tone",
+        "Three-O-Three Music",
+        "Sony Music Publishing",
+        "Biosfear"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Hardcore",
+        "Gabber",
+        "Happy Hardcore",
+        "Acid",
+        "Abstract"
+      ],
+      "id": 23732780,
+      "barcode": [
+        "MO NO - 17 - A1",
+        "MO NO - 17 - B1",
+        "MO NO-017 - C1",
+        "MO NO-017 - D1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1364,
+      "master_url": "https://api.discogs.com/masters/1364",
+      "uri": "/release/23732780-The-Speed-Freak-Speed-City",
+      "catno": "MONO - 017",
+      "title": "The Speed Freak - Speed City",
+      "thumb": "https://i.discogs.com/o1amHPEIPz_qdgycFKiKa4Li8TjspSEEi4av4oul4cY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzNzMy/NzgwLTE2NTcyMDY0/NDAtNTkyNi5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/HZUF3qEYa5tt6V43QDykNHFnn8k1lZl9auXNGGreNxE/rs:fit/g:sm/q:90/h:450/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzNzMy/NzgwLTE2NTcyMDY0/NDAtNTkyNi5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/23732780",
+      "community": {
+        "want": 28,
+        "have": 6
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Pink Transparent Marbled",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "EP"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Yellow Transparent, black labels",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Poland",
+      "year": "2015",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Limited Edition"
+      ],
+      "label": [
+        "Act Of Hate Records",
+        "Under The Sign Of Garazel Productions",
+        "Rehearsal Hall",
+        "Rehearsal Hall"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Black Metal"
+      ],
+      "id": 7369615,
+      "barcode": [
+        "HATE - 017 - A",
+        "HATE 017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 883139,
+      "master_url": "https://api.discogs.com/masters/883139",
+      "uri": "/release/7369615-Szron-Pure-Slavonic-Blasphemy",
+      "catno": "Hate - 17",
+      "title": "Szron - Pure Slavonic Blasphemy",
+      "thumb": "https://i.discogs.com/by0GkIxnKXeksz0WDmSCfbu7SlBiFFoppSPNQXXty1o/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNjk2/MTUtMTc3MTQ0MjU4/OC0xMzQ3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/v2ly1uUhw8wELRBkgGlOFkt73WhTGiQxxBbiku5XJNk/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNjk2/MTUtMTc3MTQ0MjU4/OC0xMzQ3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7369615",
+      "community": {
+        "want": 80,
+        "have": 110
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Limited Edition"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Jamaica",
+      "genre": [
+        "Reggae"
+      ],
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Reissue"
+      ],
+      "style": [
+        "Reggae"
+      ],
+      "id": 9850983,
+      "label": [
+        "High Note"
+      ],
+      "type": "release",
+      "barcode": [
+        "DUC 0017 - A",
+        "DUC 0017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 575770,
+      "master_url": "https://api.discogs.com/masters/575770",
+      "uri": "/release/9850983-The-Tennors-Weather-Report",
+      "catno": "none",
+      "title": "The Tennors - Weather Report",
+      "thumb": "https://i.discogs.com/ZpB1_1SOh5e0S1dhdKH-cUUyYfk9fBivY91vamEZM10/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk4NTA5/ODMtMTUxMTgyNDI0/Mi02MzI3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/KzCOOuUEWdAvCyKvOmcjcxyOtPIe8cZK6mk6MpZWMsU/rs:fit/g:sm/q:90/h:611/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk4NTA5/ODMtMTUxMTgyNDI0/Mi02MzI3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/9850983",
+      "community": {
+        "want": 48,
+        "have": 6
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Jamaica",
+      "genre": [
+        "Reggae"
+      ],
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Reissue"
+      ],
+      "style": [],
+      "id": 4738265,
+      "label": [
+        "Treasure Isle",
+        "Push Music",
+        "Disc Pressers Ltd."
+      ],
+      "type": "release",
+      "barcode": [
+        "DUC 0017 - A",
+        "DUC 0017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 575770,
+      "master_url": "https://api.discogs.com/masters/575770",
+      "uri": "/release/4738265-The-Tennors-Weather-Report",
+      "catno": "none",
+      "title": "The Tennors - Weather Report",
+      "thumb": "https://i.discogs.com/YpiZPmaT7tr7q9dJfHkjk2jWmiX7UExsBS1DnaQzi8k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ3Mzgy/NjUtMTM3MzkyMjY3/OS0zMjI2LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/EYnU41a3c3CprmGGwbJZb_ti0kJ8VVrOljAojggmW44/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ3Mzgy/NjUtMTM3MzkyMjY3/OS0zMjI2LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/4738265",
+      "community": {
+        "want": 65,
+        "have": 20
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "Single"
+      ],
+      "label": [
+        "Inevitable",
+        "Inevitable Records Ltd.",
+        "Inevitable"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "New Wave"
+      ],
+      "id": 5161107,
+      "barcode": [
+        "INEV - 17 - A1",
+        "INEV - 17 - B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 544424,
+      "master_url": "https://api.discogs.com/masters/544424",
+      "uri": "/release/5161107-Freeze-Frame-Seeking-Professional-Advice",
+      "catno": "INEV 17",
+      "title": "Freeze Frame (4) - Seeking Professional Advice",
+      "thumb": "https://i.discogs.com/6XlzC7kcZ74E_6c1-D5f3vNddvq9ZT1RinR4QVXy_78/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxNjEx/MDctMTQwMzk0NzU0/Ni0yMDc3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/wgVtnlRSCyZltdds8b1O_g8oM_BSsXZTllCvu8G-mDU/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxNjEx/MDctMTQwMzk0NzU0/Ni0yMDc3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/5161107",
+      "community": {
+        "want": 12,
+        "have": 48
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "2001",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Compilation",
+        "Vinyl",
+        "7\"",
+        "33 ⅓ RPM",
+        "Compilation"
+      ],
+      "label": [
+        "Bad People Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Sludge Metal"
+      ],
+      "id": 1836504,
+      "barcode": [
+        "BPR-017-A",
+        "BPR-017-B",
+        "BPR-017-C",
+        "BPR-017-D"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 146770,
+      "master_url": "https://api.discogs.com/masters/146770",
+      "uri": "/release/1836504-Various-Twin-Threat-To-Your-Sanity",
+      "catno": "BPR-017",
+      "title": "Various - Twin Threat To Your Sanity",
+      "thumb": "https://i.discogs.com/11JdQ7QT0CngHn6Kj8puTSa9zrpNQ9Fhulbft97qMts/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE4MzY1/MDQtMTI0Njc2ODQ2/OS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/cnPLFTAqfLzlu_sGsxOgEqudJVeUrwS4Q0i3SQecoJU/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE4MzY1/MDQtMTI0Njc2ODQ2/OS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/1836504",
+      "community": {
+        "want": 203,
+        "have": 127
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Grey Marbled",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Compilation"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Grey Marbled",
+          "descriptions": [
+            "7\"",
+            "33 ⅓ RPM",
+            "Compilation"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Netherlands",
+      "year": "1983",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "33 ⅓ RPM",
+        "Limited Edition",
+        "Misprint",
+        "Numbered",
+        "Unofficial Release",
+        "Stereo"
+      ],
+      "label": [
+        "Decda",
+        "Paradise Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Rock & Roll"
+      ],
+      "id": 12151784,
+      "barcode": [
+        "PR 0017 - A1",
+        "PR0017 - B1",
+        "STEMRA"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1381013,
+      "master_url": "https://api.discogs.com/masters/1381013",
+      "uri": "/release/12151784-Mick-Jagger-And-The-DestroyersRolling-Stones-Five-By-Five-Alive",
+      "catno": "PD 50 096",
+      "title": "Mick Jagger And The Destroyers, The Rolling Stones - Five By Five Alive",
+      "thumb": "https://i.discogs.com/sqBq9jSDTe3rHxWaVXXzjCfAOu7q2DIRnCZgn0RpAbs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyMTUx/Nzg0LTE1MjkzNTQ0/NDUtMTMxMS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/GYVrPay_WaWEWFTcuSXd4pTWIk3p275CNNm6y-c845g/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyMTUx/Nzg0LTE1MjkzNTQ0/NDUtMTMxMS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/12151784",
+      "community": {
+        "want": 11,
+        "have": 18
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Vinyl",
+          "descriptions": [
+            "7\"",
+            "33 ⅓ RPM",
+            "Limited Edition",
+            "Misprint",
+            "Numbered",
+            "Unofficial Release",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Mexico",
+      "year": "1979",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Stereo"
+      ],
+      "label": [
+        "RCA Red Seal",
+        "RCA, S.A. DE C.V.",
+        "RCA Records",
+        "RCA Records",
+        "Henry Wood Hall, London",
+        "RCA Corporation"
+      ],
+      "type": "release",
+      "genre": [
+        "Classical"
+      ],
+      "style": [],
+      "id": 32072172,
+      "barcode": [
+        "MRS - 17 - A   T1",
+        "MRS - 17 - B   T1",
+        "D. P."
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/32072172-Eva-Maria-Zuk-Fr%C3%A9d%C3%A9ric-Chopin-Recital-Chopin",
+      "catno": "MRS-017",
+      "title": "Eva Maria Zuk, Frédéric Chopin - Recital Chopin",
+      "thumb": "https://i.discogs.com/-bql-ckcbSzpiuUPxv4k7eelSV5ofnCezJqThN45BT8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMDcy/MTcyLTE3Mjk1NzA4/NjMtNjI0MC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/CYvcqLAP3tRbCvqRoyoVVT3G2yqKzQIpPEYAu4_HYFI/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMDcy/MTcyLTE3Mjk1NzA4/NjMtNjI0MC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/32072172",
+      "community": {
+        "want": 0,
+        "have": 1
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1998",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "EP",
+        "Unofficial Release"
+      ],
+      "label": [
+        "Black Cock Records",
+        "MPO"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Rock"
+      ],
+      "style": [
+        "House",
+        "Disco"
+      ],
+      "id": 164509,
+      "barcode": [
+        "BC 0017 - AA1 MPO",
+        "BC - 0017 - NA1 MPO"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 193958,
+      "master_url": "https://api.discogs.com/masters/193958",
+      "uri": "/release/164509-DJ-Harvey-Love-Hotel-EP-2",
+      "catno": "BK 017",
+      "title": "DJ Harvey - Love Hotel E.P. 2",
+      "thumb": "https://i.discogs.com/TJRoxOEuFn3qJNCHDwHc4Q6I9VCXYKxgnEuG2H542QI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NDUw/OS0xNDk2NzcxNTAz/LTU0NDIuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/vdJJDle2ed-KB9TOl9GuJ2lVDGE5zYmdVSJU2xq4hO8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NDUw/OS0xNDk2NzcxNTAz/LTU0NDIuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/164509",
+      "community": {
+        "want": 438,
+        "have": 493
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "EP",
+            "Unofficial Release"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1992",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "Promo"
+      ],
+      "label": [
+        "Final Vinyl",
+        "Final Vinyl",
+        "Final Vinyl",
+        "Big Life Music"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Breakbeat",
+        "Hardcore"
+      ],
+      "id": 721977,
+      "barcode": [
+        "RVT - 17 - A₂",
+        "RVT - 17 - B₂"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1179962,
+      "master_url": "https://api.discogs.com/masters/1179962",
+      "uri": "/release/721977-Randon-Vibration-Featuring-Chyna-Blow-Your-Mind",
+      "catno": "R.V. PROMO1",
+      "title": "Randon Vibration* Featuring Chyna - Blow Your Mind",
+      "thumb": "https://i.discogs.com/279YKBIMC9rSM28_EPA7lGjFQtEkBnivhO4sMaRpwXA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcyMTk3/Ny0xMzcyNTk1MzEw/LTg3MTUuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/080JAbKY49lzyotZc82ePNIr9qRxaA0bOuFGmDCfPco/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcyMTk3/Ny0xMzcyNTk1MzEw/LTg3MTUuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/721977",
+      "community": {
+        "want": 79,
+        "have": 50
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "Promo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "2011",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Limited Edition"
+      ],
+      "label": [
+        "Broken Circles"
+      ],
+      "type": "release",
+      "genre": [
+        "Non-Music",
+        "Folk, World, & Country"
+      ],
+      "style": [],
+      "id": 6186869,
+      "barcode": [
+        "BCR 017 - A",
+        "BCR 017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 355415,
+      "master_url": "https://api.discogs.com/masters/355415",
+      "uri": "/release/6186869-Listener-Wooden-Heart",
+      "catno": "BCR - 017",
+      "title": "Listener - Wooden Heart",
+      "thumb": "https://i.discogs.com/9qUyY-LyCdNWrxlzo_MqdRLbZ8aTRt6B6Vhd9X-2rgY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYxODY4/NjktMTc2MjMzMTg0/Mi01NjU3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/v12io_DykvKqaW3XtIQaV5CeTpXcRckGnuUsSNoq-sY/rs:fit/g:sm/q:90/h:591/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYxODY4/NjktMTc2MjMzMTg0/Mi01NjU3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/6186869",
+      "community": {
+        "want": 76,
+        "have": 67
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Clear w/ Black",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Limited Edition"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "Single",
+        "White Label"
+      ],
+      "label": [
+        "Inevitable"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "New Wave"
+      ],
+      "id": 4451452,
+      "barcode": [
+        "I NEV - 17 - A1",
+        "I NEV - 17 - B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 544424,
+      "master_url": "https://api.discogs.com/masters/544424",
+      "uri": "/release/4451452-Freeze-Frame-Seeking-Professional-Advice",
+      "catno": "INEV 17",
+      "title": "Freeze Frame (4) - Seeking Professional Advice",
+      "thumb": "https://i.discogs.com/wtUEgdYtemr6CHG5mwRgah_xqcd2s1qUauSqiOh-rWY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0NTE0/NTItMTY3NjEyOTc0/MC03NDUwLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/Cob9x_LsTUhevUXZwWAMH4CUrFhOUexe0zTjqWi5R8M/rs:fit/g:sm/q:90/h:605/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ0NTE0/NTItMTY3NjEyOTc0/MC03NDUwLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/4451452",
+      "community": {
+        "want": 3,
+        "have": 2
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "Single",
+            "White Label"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Ecuador",
+      "year": "1973",
+      "format": [
+        "Vinyl",
+        "LP"
+      ],
+      "label": [
+        "PML",
+        "Fadisa Fabrica De Discos S.A."
+      ],
+      "type": "release",
+      "genre": [
+        "Latin",
+        "Folk, World, & Country"
+      ],
+      "style": [],
+      "id": 10034749,
+      "barcode": [
+        "700017-A",
+        "700017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/10034749-Various-Latacunga-73",
+      "catno": "700.017",
+      "title": "Various - Latacunga '73",
+      "thumb": "https://i.discogs.com/s9besfkiHM2Gb2Lq5CzyiwPirqFxlf1tFq6z3auTXi0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDM0/NzQ5LTE0OTE5MjA0/NzYtNjUwNS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/2XndK-yz1KevKTxB91XhSwS_62_5XQAyBqwHB4wtjGI/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDM0/NzQ5LTE0OTE5MjA0/NzYtNjUwNS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10034749",
+      "community": {
+        "want": 1,
+        "have": 5
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1972",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Promo",
+        "Stereo"
+      ],
+      "label": [
+        "Reprise Records",
+        "Musik Unserer Zeit",
+        "Kinney Music GmbH",
+        "Reprise Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Pop",
+        "Stage & Screen"
+      ],
+      "style": [
+        "Chanson",
+        "Musical"
+      ],
+      "id": 10154103,
+      "barcode": [
+        "GEMA",
+        "72 017-A-II",
+        "72 017-B-II",
+        "72 017-A",
+        "72 017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1197902,
+      "master_url": "https://api.discogs.com/masters/1197902",
+      "uri": "/release/10154103-Liesbeth-List-Alles-Was-Sch%C3%B6n-Ist",
+      "catno": "REP 14 178",
+      "title": "Liesbeth List - Alles Was Schön Ist",
+      "thumb": "https://i.discogs.com/hrv5TgZBlmfmBkJradS9ay9iCxx3V-8XLvBDZYhj8f8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU0/MTAzLTE3NjIxNjQ3/NzctNjI3Ny5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/JcH4Opw4qwOedTCu6qZ3LPnvP3_v1uKJfurTpT1hU2M/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU0/MTAzLTE3NjIxNjQ3/NzctNjI3Ny5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10154103",
+      "community": {
+        "want": 8,
+        "have": 7
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Promo",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Italy",
+      "year": "2005",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Numbered"
+      ],
+      "label": [
+        "Solid Sex Lovie Doll Records",
+        "The Hit Factory, Spring Branch, Tx."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Garage Rock"
+      ],
+      "id": 2646018,
+      "barcode": [
+        "SSLD 017    A",
+        "SSLD 017    B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 417916,
+      "master_url": "https://api.discogs.com/masters/417916",
+      "uri": "/release/2646018-Golden-Boys-Got-Time-Cold-Hands",
+      "catno": "SSLD 017",
+      "title": "Golden Boys* - Got Time / Cold Hands",
+      "thumb": "https://i.discogs.com/dCIDEoZYcILxruwQFkqvlrBMxp0sXLvV9yUY6plwNuA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NDYw/MTgtMTM5NjcyMDIw/NS03NjY1LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/dAm4Ku02v45gakSXTGeUNwQ4WsmCPVGHkz3BttNgI6A/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NDYw/MTgtMTM5NjcyMDIw/NS03NjY1LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/2646018",
+      "community": {
+        "want": 20,
+        "have": 51
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Numbered"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "2001",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "45 RPM",
+        "White Label"
+      ],
+      "label": [
+        "Harry Lime"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Breakbeat",
+        "Breaks",
+        "UK Garage"
+      ],
+      "id": 26586104,
+      "barcode": [
+        "SP · 017- A₁",
+        "SP - 017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 634554,
+      "master_url": "https://api.discogs.com/masters/634554",
+      "uri": "/release/26586104-Harry-Lime-Just-A-Beat-Remixes",
+      "catno": "SP017",
+      "title": "Harry Lime - Just A Beat (Remixes)",
+      "thumb": "https://i.discogs.com/ShqVs_o_hUjMrASJE2APt4b78X_4-9C2aQsS00Cm3Eo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NTg2/MTA0LTE2ODAxMTIz/NTgtNTIwMy5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/IFXNqXQSOmvIxUMgjy1JZm4vJRfuheBCF8M5scACmDY/rs:fit/g:sm/q:90/h:619/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NTg2/MTA0LTE2ODAxMTIz/NTgtNTIwMy5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/26586104",
+      "community": {
+        "want": 10,
+        "have": 2
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "45 RPM",
+            "White Label"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Austria",
+      "year": "2012",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Spectrum Spools",
+        "Editions Mego",
+        "Spectrum Spools",
+        "Negative Space"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Rock"
+      ],
+      "style": [
+        "Experimental"
+      ],
+      "id": 3596509,
+      "barcode": [
+        "SP 017   A",
+        "SP 017   B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 461680,
+      "master_url": "https://api.discogs.com/masters/461680",
+      "uri": "/release/3596509-Drainolith-Fighting",
+      "catno": "SP 017",
+      "title": "Drainolith - Fighting!",
+      "thumb": "https://i.discogs.com/4cStlacdD_q0EHagVacydnh2p0GTfPvNZgvrV0J8LrE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1OTY1/MDktMTMzNjc1NDM0/MS02ODY1LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/G8H9lLuk-M5aO3ZJKkfgDw5Hmjg_XQSzZDJbwKaKrRQ/rs:fit/g:sm/q:90/h:350/w:350/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1OTY1/MDktMTMzNjc1NDM0/MS02ODY1LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3596509",
+      "community": {
+        "want": 57,
+        "have": 130
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "2008",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "45 RPM"
+      ],
+      "label": [
+        "Whore House Recordings",
+        "Prime Direct Distribution",
+        "Prime Direct Distribution"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Electro House"
+      ],
+      "id": 5182426,
+      "barcode": [
+        "WHOREHOUSE - 017 - A2",
+        "WHOREHOUSE - 017 - B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 634365,
+      "master_url": "https://api.discogs.com/masters/634365",
+      "uri": "/release/5182426-Hoxton-Whores-Numerology",
+      "catno": "WHOREHOUSE017",
+      "title": "Hoxton Whores - Numerology",
+      "thumb": "https://i.discogs.com/EFbexnmC9FvEaNfimBYcELHOExjkXS97i1Z6tEiRExk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxODI0/MjYtMTQ3NjAzMzky/OC0zNTQ5LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/rdGp-PoXzCGd1CT7TC9JofQCByCMQv-Dx5_S17DQ6Ho/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUxODI0/MjYtMTQ3NjAzMzky/OC0zNTQ5LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/5182426",
+      "community": {
+        "want": 15,
+        "have": 21
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "45 RPM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Belgium",
+      "year": "1977",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "Single"
+      ],
+      "label": [
+        "Barclay",
+        "Barclay",
+        "Barclay"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Alternative Rock",
+        "Pop Rock"
+      ],
+      "id": 13876054,
+      "barcode": [
+        "SABAM",
+        "BUY 17 - A",
+        "BUY - 17 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 36644,
+      "master_url": "https://api.discogs.com/masters/36644",
+      "uri": "/release/13876054-Ian-Dury-Sex-Drugs-Rock-Roll",
+      "catno": "BE 640.133",
+      "title": "Ian Dury - Sex & Drugs & Rock & Roll",
+      "thumb": "https://i.discogs.com/PWV0fMWt5FzGTXTBiqqnXVZgdYeHiQt1QSW7uhGwmvQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzODc2/MDU0LTE1NjMxMjkz/OTEtODYzMi5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/GPab4jmKh2iG56BB9q_CVcnQZBLglIhR82n7yBeFWY8/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzODc2/MDU0LTE1NjMxMjkz/OTEtODYzMi5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/13876054",
+      "community": {
+        "want": 54,
+        "have": 18
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1974",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Compilation",
+        "Club Edition",
+        "Stereo",
+        "Box Set"
+      ],
+      "label": [
+        "Decca",
+        "Sélection Du Reader's Digest",
+        "Das Beste Reader's Digest",
+        "TELDEC »Telefunken-Decca« Schallplatten GmbH",
+        "Copyright Control",
+        "Das Beste Aus Reader's Digest Schallplatten"
+      ],
+      "type": "release",
+      "genre": [
+        "Classical"
+      ],
+      "style": [
+        "Romantic"
+      ],
+      "id": 17750839,
+      "barcode": [
+        "READ 601-1",
+        "READ 601-2",
+        "READ 601-3",
+        "READ 601-4",
+        "READ 601-5",
+        "READ 601-5",
+        "ZAL 7174",
+        "D 017 529",
+        "D 017 530",
+        "D 017 531",
+        "D 017 532",
+        "D 017 533",
+        "D 017 534",
+        "D 017 535",
+        "D 017 536",
+        "D 017 537",
+        "D 017 538",
+        "D 017 539"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1363039,
+      "master_url": "https://api.discogs.com/masters/1363039",
+      "uri": "/release/17750839-Wiener-Philharmoniker-Willi-Boskovsky-Johann-Strau%C3%9F-Joseph-Strau%C3%9F-Die-Wiener-Philharmoniker-Spiele",
+      "catno": "READ 601",
+      "title": "Wiener Philharmoniker, Willi Boskovsky, Johann Strauß*, Joseph Strauß* - Die Wiener Philharmoniker Spielen Strauss = L'Orchestre Philharmonique De Vienne Interprete Strauss",
+      "thumb": "https://i.discogs.com/QInkT85tdFgHZtCaMyCXgV1jy0xujNlclgq5h5NzoDA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3NzUw/ODM5LTE2MTUyODE3/MDMtMjY3Ni5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/bajKSD4oFti7HJ9dETbcgRmXe7-Q9e6M1uO5ln0MZ6Y/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3NzUw/ODM5LTE2MTUyODE3/MDMtMjY3Ni5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/17750839",
+      "community": {
+        "want": 0,
+        "have": 17
+      },
+      "format_quantity": 6,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "6",
+          "text": "Sonderauflage",
+          "descriptions": [
+            "LP",
+            "Compilation",
+            "Club Edition",
+            "Stereo"
+          ]
+        },
+        {
+          "name": "Box Set",
+          "qty": "1"
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1990",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Unofficial Release"
+      ],
+      "label": [
+        "White Bear",
+        "Crisler Arena"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock",
+        "Blues",
+        "Pop",
+        "Folk, World, & Country"
+      ],
+      "style": [
+        "Classic Rock",
+        "Folk",
+        "Modern Electric Blues",
+        "Rock & Roll"
+      ],
+      "id": 7823147,
+      "barcode": [
+        "BD - WB - 017 - A",
+        "BD - WB - 017 - B",
+        "BD - WB - 017 - C",
+        "BD - WB - 017 - D"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/7823147-Bob-DylanBand-Its-Been-A-Long-Time",
+      "catno": "WB - 017",
+      "title": "Bob Dylan, The Band - It's Been A Long Time",
+      "thumb": "https://i.discogs.com/TFCvrFmj3eUfyS3WEgmas87heDNbQx_6IetrxFAVpWg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc4MjMx/NDctMTQ0OTUyNDU5/OC0yNzk3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/M9JXZ_GsKbRBf6hOUMyRuqswu3wYDHnLwkpTxpDb7oM/rs:fit/g:sm/q:90/h:437/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc4MjMx/NDctMTQ0OTUyNDU5/OC0yNzk3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7823147",
+      "community": {
+        "want": 19,
+        "have": 6
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "2",
+          "descriptions": [
+            "LP",
+            "Unofficial Release"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Yugoslavia",
+      "year": "1962",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Mono"
+      ],
+      "label": [
+        "Diskos",
+        "Jolly Hi-Fi Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Rock & Roll"
+      ],
+      "id": 11542636,
+      "barcode": [
+        "NDK - 0017 - A",
+        "NDK - 0017 - B",
+        "B I E M"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 304014,
+      "master_url": "https://api.discogs.com/masters/304014",
+      "uri": "/release/11542636-Adriano-Celentano-Re%C4%87i-%C4%86u-Ti-Zdravo-Ciao-Ti-Diro",
+      "catno": "NDK - 0017",
+      "title": "Adriano Celentano - Reći Ću Ti Zdravo (Ciao Ti Diro)",
+      "thumb": "https://i.discogs.com/px1sNm0dYF5kNxftlVsxXYGp0PhtYN9wHn_B8Dehy5M/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNTQy/NjM2LTE1MTgyMDAw/MTAtNTE4OC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/2SJ6dxUHSkqnN_sibfLw72jB96A5LAK9A5FRDeJ2RQU/rs:fit/g:sm/q:90/h:606/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNTQy/NjM2LTE1MTgyMDAw/MTAtNTE4OC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/11542636",
+      "community": {
+        "want": 6,
+        "have": 4
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Mono"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Belgium",
+      "year": "1997",
+      "format": [
+        "Vinyl",
+        "Album",
+        "LP"
+      ],
+      "label": [
+        "Good Life Recordings"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Death Metal"
+      ],
+      "id": 2646220,
+      "barcode": [
+        "ED 017 - A1",
+        "ED 017 - B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 300525,
+      "master_url": "https://api.discogs.com/masters/300525",
+      "uri": "/release/2646220-Abnegation-Verses-Of-The-Bleeding",
+      "catno": "ED017",
+      "title": "Abnegation - Verses Of The Bleeding",
+      "thumb": "https://i.discogs.com/p5jKZPsDPj2LEzVIWU-rVL6wwAk-op9sOi5oInBt-Do/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NDYy/MjAtMTI5NDc3MjMw/MS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/s0fbQPgChhvCbNpxYenzIX1GRskKJNZOC8UqJBpRVRM/rs:fit/g:sm/q:90/h:396/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2NDYy/MjAtMTI5NDc3MjMw/MS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/2646220",
+      "community": {
+        "want": 159,
+        "have": 231
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Orange",
+          "descriptions": [
+            "Album",
+            "LP"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "2011",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Limited Edition"
+      ],
+      "label": [
+        "Broken Circles"
+      ],
+      "type": "release",
+      "genre": [
+        "Non-Music",
+        "Folk, World, & Country"
+      ],
+      "style": [],
+      "id": 6186868,
+      "barcode": [
+        "BCR 017 - A",
+        "BCR 017 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 355415,
+      "master_url": "https://api.discogs.com/masters/355415",
+      "uri": "/release/6186868-Listener-Wooden-Heart",
+      "catno": "BCR - 017",
+      "title": "Listener - Wooden Heart",
+      "thumb": "https://i.discogs.com/pwyF4MJBUmYNE7MetE0fLPOX9nxKWCAH1xoux0zbPao/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYxODY4/NjgtMTQ1NzgwMDIz/MS0xNTQyLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/wWSohn4NFcqByL3PBQW4LGVMtp0TBXSCul8LhEI6TYc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYxODY4/NjgtMTQ1NzgwMDIz/MS0xNTQyLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/6186868",
+      "community": {
+        "want": 82,
+        "have": 52
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "White",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Limited Edition"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "2001",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "45 RPM"
+      ],
+      "label": [
+        "941 Electro"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Breakbeat",
+        "Breaks"
+      ],
+      "id": 107841,
+      "barcode": [
+        "420-017 A",
+        "420-017 B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 424938,
+      "master_url": "https://api.discogs.com/masters/424938",
+      "uri": "/release/107841-DJ-Infiniti-Children-Of-The-80s",
+      "catno": "941-017",
+      "title": "DJ Infiniti - Children Of The 80's",
+      "thumb": "https://i.discogs.com/BOleAXpjd_uvvbrbtL9u2KylrNXuaYIqoC1FaTH2ugs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNzg0/MS0xMjYzOTYwNDMz/LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/rz3cIxMD9v6Tw2Okg8y_o44sPVDRz8CHpiTFGbVMV1Y/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNzg0/MS0xMjYzOTYwNDMz/LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/107841",
+      "community": {
+        "want": 590,
+        "have": 351
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "45 RPM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "1980",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM"
+      ],
+      "label": [
+        "Studio One",
+        "Jamaica Recording Studio",
+        "Coxsone's Music City",
+        "Jamrec Music"
+      ],
+      "type": "release",
+      "genre": [
+        "Reggae"
+      ],
+      "style": [],
+      "id": 3920217,
+      "barcode": [
+        "SO 0017 A",
+        "SO 0017 B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 406333,
+      "master_url": "https://api.discogs.com/masters/406333",
+      "uri": "/release/3920217-Freddie-McGregor-Boby-Babylon",
+      "catno": "SO-0119",
+      "title": "Freddie McGregor - Boby Babylon",
+      "thumb": "https://i.discogs.com/jGo7Aw7OQVfUMCWqDItOmMBzb9ZwJ7K3VKnfmEYDzbE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM5MjAy/MTctMTM1MjEzMTAz/NS02MzAyLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/CQUbY4TWtgOo_VQh6u4o5jAiyv5yzkuLSjzCNGSwqUM/rs:fit/g:sm/q:90/h:336/w:337/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM5MjAy/MTctMTM1MjEzMTAz/NS02MzAyLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3920217",
+      "community": {
+        "want": 101,
+        "have": 72
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1974",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Birth Records",
+        "Birth Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Jazz"
+      ],
+      "style": [
+        "Free Jazz"
+      ],
+      "id": 547924,
+      "barcode": [
+        "b - 0017 - A",
+        "b - 0017 - B",
+        "GEMA ASCAP"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 322500,
+      "master_url": "https://api.discogs.com/masters/322500",
+      "uri": "/release/547924-Gunter-Hampel-And-His-Galaxie-Dream-Band-Journey-To-The-Song-Within",
+      "catno": "BIRTH 0017",
+      "title": "Gunter Hampel And His Galaxie Dream Band - Journey To The Song Within",
+      "thumb": "https://i.discogs.com/oNF3Rh_rsFXZE7gNl2ZQaRG9yo8AWavSD2vbl7JcY3I/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0Nzky/NC0xMjYwNjc4NzUz/LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/eRKlIlnKyTiluDUoD3DanMZnUZbWXX5KttqQ3KcNel4/rs:fit/g:sm/q:90/h:485/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0Nzky/NC0xMjYwNjc4NzUz/LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/547924",
+      "community": {
+        "want": 91,
+        "have": 100
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1993",
+      "format": [
+        "Vinyl",
+        "LP",
+        "EP",
+        "Vinyl",
+        "LP"
+      ],
+      "label": [
+        "Mono Tone",
+        "Mono Tone"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Trance",
+        "Hardcore",
+        "Techno",
+        "Acid"
+      ],
+      "id": 1073624,
+      "barcode": [
+        "MO NO - 17 - A1",
+        "MO NO - 17 - B1",
+        "MO NO-017 - C1",
+        "MO NO-017 - D1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1364,
+      "master_url": "https://api.discogs.com/masters/1364",
+      "uri": "/release/1073624-The-Speed-Freak-Speed-City",
+      "catno": "MONO - 017",
+      "title": "The Speed Freak - Speed City",
+      "thumb": "https://i.discogs.com/kro4Gzor2AQBu9hqsMXF-QW6NMcgApi7gdlaAEKWRmM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNzM2/MjQtMTE5MDEyOTAx/MS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/T20eo5R6RAVZA2pKEPpm9DEtSobjASSMV2JeHIiTNtI/rs:fit/g:sm/q:90/h:310/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNzM2/MjQtMTE5MDEyOTAx/MS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/1073624",
+      "community": {
+        "want": 140,
+        "have": 87
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Brown-Olive Marbled",
+          "descriptions": [
+            "LP",
+            "EP"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Orange Marbled",
+          "descriptions": [
+            "LP"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Italy",
+      "year": "1964",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM"
+      ],
+      "label": [
+        "Ariston Records",
+        "Ariston Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Pop"
+      ],
+      "style": [],
+      "id": 16747710,
+      "barcode": [
+        "AR - 017 - A",
+        "AR - 017 B (BIS)"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1108088,
+      "master_url": "https://api.discogs.com/masters/1108088",
+      "uri": "/release/16747710-Don-Miko-Gente-Che-Ragazza-",
+      "catno": "AR 017",
+      "title": "Don Miko - Gente... Che Ragazza !",
+      "thumb": "https://i.discogs.com/ldKwMgIqKAuzGGeUFZoJIkftNjdRYp-XaoI_5_73kWY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NzQ3/NzEwLTE2MDk2MDE3/ODQtNjk4Ni5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/5fffHx7Ry0CqXCi21B6ABYSUjQrhXaCptnfYlq9wlqo/rs:fit/g:sm/q:90/h:609/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2NzQ3/NzEwLTE2MDk2MDE3/ODQtNjk4Ni5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/16747710",
+      "community": {
+        "want": 0,
+        "have": 2
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Belgium",
+      "year": "1978",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Stereo"
+      ],
+      "label": [
+        "Polydor",
+        "Polygram Records",
+        "Polydor Incorporated",
+        "Grand Slam Productions"
+      ],
+      "type": "release",
+      "genre": [
+        "Funk / Soul"
+      ],
+      "style": [
+        "Disco"
+      ],
+      "id": 24991384,
+      "barcode": [
+        "SABAM",
+        "2095 017 A",
+        "2095 017 B",
+        "2095 017-A1",
+        "2095 017-B1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 94145,
+      "master_url": "https://api.discogs.com/masters/94145",
+      "uri": "/release/24991384-Gloria-Gaynor-I-Will-Survive",
+      "catno": "2095 017",
+      "title": "Gloria Gaynor - I Will Survive",
+      "thumb": "https://i.discogs.com/695JdlnZNd1Vk04V4Mv9fbGklwbLVMxjI8Zcz-GUDMo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0OTkx/Mzg0LTE2NjcxMDY2/MjctNzQ4Ni5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/HD_0pANbsgNR5e6NFrGOAPhPbOBaUdLw5ytNPYxmSdY/rs:fit/g:sm/q:90/h:603/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0OTkx/Mzg0LTE2NjcxMDY2/MjctNzQ4Ni5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/24991384",
+      "community": {
+        "want": 23,
+        "have": 71
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "year": "1962",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single"
+      ],
+      "label": [
+        "Infinity",
+        "Maydee Music",
+        "Garcliff Music"
+      ],
+      "type": "release",
+      "genre": [
+        "Funk / Soul",
+        "Pop"
+      ],
+      "style": [
+        "Rhythm & Blues",
+        "Doo Wop",
+        "Soul"
+      ],
+      "id": 20270734,
+      "barcode": [
+        "INX-017 A",
+        "INX-017 B",
+        "INX-017-A",
+        "INX-017-B",
+        "BMI"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 2392354,
+      "master_url": "https://api.discogs.com/masters/2392354",
+      "uri": "/release/20270734-Bobby-Hart-Too-Many-Teardrops",
+      "catno": "INX-017",
+      "title": "Bobby Hart - Too Many Teardrops",
+      "thumb": "https://i.discogs.com/5SFrkvd6XzjPTPsDuW_-_kpPYPjLAchmZ-Ym6nHCnP4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwMjcw/NzM0LTE2MzE5MDg3/NzgtMTE3NC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/fSu-v2dqQurh_cjUxHi-cOM5eLmaHjxLXwDjxCe4Ftw/rs:fit/g:sm/q:90/h:605/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwMjcw/NzM0LTE2MzE5MDg3/NzgtMTE3NC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/20270734",
+      "community": {
+        "want": 11,
+        "have": 9
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Italy",
+      "year": "1965",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Reissue"
+      ],
+      "label": [
+        "Italia Canta",
+        "Canti Di Protesta Del Popolo Italiano"
+      ],
+      "type": "release",
+      "genre": [
+        "Folk, World, & Country"
+      ],
+      "style": [
+        "Chanson",
+        "Ballad",
+        "Political"
+      ],
+      "id": 14475840,
+      "barcode": [
+        "R 0017 - A",
+        "R 0017 - B",
+        "R-0017 - A ÷ 16-5-65",
+        "R-0017 - B ÷ 16-5-65"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1645378,
+      "master_url": "https://api.discogs.com/masters/1645378",
+      "uri": "/release/14475840-Various-Canti-Di-Protesta-Del-Popolo-Italiano-3",
+      "catno": "SP33/R/0017",
+      "title": "Various - Canti Di Protesta Del Popolo Italiano - 3",
+      "thumb": "https://i.discogs.com/0XftMC_wO2Q8--IQ-2d_fcZoHuR7blwGme_dHYBw_d4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NDc1/ODQwLTE1NzUyOTM4/NzYtMTMwNS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/XxUhWYJfsPwt_Q268sOg6rJjsydUetg995pY5aNDpJQ/rs:fit/g:sm/q:90/h:608/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NDc1/ODQwLTE1NzUyOTM4/NzYtMTMwNS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/14475840",
+      "community": {
+        "want": 2,
+        "have": 1
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "7\"",
+            "33 ⅓ RPM",
+            "EP",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Italy",
+      "year": "1967",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Repress"
+      ],
+      "label": [
+        "Cedi",
+        "C.E.D.I.",
+        "Canti Di Protesta Del Popolo Italiano",
+        "Grafiche Dotti"
+      ],
+      "type": "release",
+      "genre": [
+        "Folk, World, & Country"
+      ],
+      "style": [
+        "Chanson",
+        "Ballad",
+        "Political"
+      ],
+      "id": 14504321,
+      "barcode": [
+        "R 0017 - A",
+        "R 0017 - B",
+        "R-0017 - A ÷ 16-5-65",
+        "R-0017 - B ÷ 16-5-65"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1645378,
+      "master_url": "https://api.discogs.com/masters/1645378",
+      "uri": "/release/14504321-Various-Il-Canzoniere-Italiano-Canti-Di-Protesta-Del-Popolo-Italiano-3",
+      "catno": "GEP 80029",
+      "title": "Various - Il Canzoniere Italiano (Canti Di Protesta Del Popolo Italiano - 3)",
+      "thumb": "https://i.discogs.com/iuHWNM24dWoGVefhEBeAmL14lPsZRTCegoeDMlL61GY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NTA0/MzIxLTE1NzU4OTA1/MjUtMzY5MS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/fmHq7SJhPzWueTPFPuyUEC3H4Sqq1V8TNg9Red8Xhi0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NTA0/MzIxLTE1NzU4OTA1/MjUtMzY5MS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/14504321",
+      "community": {
+        "want": 1,
+        "have": 0
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "33 ⅓ RPM",
+            "EP",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1978",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Reissue",
+        "Stereo"
+      ],
+      "label": [
+        "April",
+        "Schneeball",
+        "David Volksmund Produktion",
+        "Tonstudio Pfanz"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Alternative Rock",
+        "Garage Rock",
+        "Indie Rock"
+      ],
+      "id": 36031180,
+      "barcode": [
+        "LC 4553",
+        "GEMA",
+        "TSS - 17 - A PF",
+        "TSS - 17 - B PF",
+        "TSS - 17 - C PF",
+        "TSS - 17 - D PF"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 119295,
+      "master_url": "https://api.discogs.com/masters/119295",
+      "uri": "/release/36031180-Ton-Steine-Scherben-Keine-Macht-F%C3%BCr-Niemand",
+      "catno": "00007",
+      "title": "Ton Steine Scherben - Keine Macht Für Niemand",
+      "thumb": "https://i.discogs.com/IYcqilbB7urL4jZQskTSpXGwKCEEHzoqRidLO5-kA3k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDMx/MTgwLTE3NjY4NTM3/NTQtMjg2OS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/cUrgRoxBHZSSBCpQ1DKJmxr4b7M9MBJ0er_wQaooiHw/rs:fit/g:sm/q:90/h:605/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDMx/MTgwLTE3NjY4NTM3/NTQtMjg2OS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/36031180",
+      "community": {
+        "want": 10,
+        "have": 8
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "2",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Reissue",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Portugal",
+      "year": "1975",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single"
+      ],
+      "label": [
+        "Beverly",
+        "Gráficos Reunidos, Lda.",
+        "Fábrica Portuguesa de Discos Da Rádio Triunfo, Lda."
+      ],
+      "type": "release",
+      "genre": [
+        "Latin"
+      ],
+      "style": [
+        "MPB"
+      ],
+      "id": 6077944,
+      "barcode": [
+        "BIEM",
+        "NS - 47 - 17 - A",
+        "NS - 47 - 17 - B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/6077944-Juventude-Em-Embalo-Bilu-T%C3%A9t%C3%A9ia-Voc%C3%AA-Zombou-De-Mim",
+      "catno": "N-S-47-17",
+      "title": "Juventude Em Embalo - Bilu Tétéia / Você Zombou De Mim",
+      "thumb": "https://i.discogs.com/nkDpfWdgyKD9ezamx3V1cQQcLW8ueo7t26S7miZAf5E/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYwNzc5/NDQtMTQ0MzY5NzM2/OC0zNTc2LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/apenhaySI4lYM7Sd6x373n_myaoIX3YbvkzayPMLyVs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYwNzc5/NDQtMTQ0MzY5NzM2/OC0zNTc2LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/6077944",
+      "community": {
+        "want": 0,
+        "have": 31
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "1993",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "EP",
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "Album"
+      ],
+      "label": [
+        "Mono Tone",
+        "Mono Tone",
+        "Mono Tone",
+        "Three-O-Three Music",
+        "Sony Music Publishing",
+        "Biosfear"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Hardcore",
+        "Gabber",
+        "Happy Hardcore",
+        "Acid",
+        "Abstract"
+      ],
+      "id": 8526714,
+      "barcode": [
+        "MO NO - 17 - A1",
+        "MO NO - 17 - B1",
+        "MO NO-017 - C1",
+        "MO NO-017 - D1"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1364,
+      "master_url": "https://api.discogs.com/masters/1364",
+      "uri": "/release/8526714-The-Speed-Freak-Speed-City",
+      "catno": "MONO - 017",
+      "title": "The Speed Freak - Speed City",
+      "thumb": "https://i.discogs.com/yY98gjYPggfqoYhlLFt1Ra1Yi6LJOiBzONjnoknx0wk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1MjY3/MTQtMTQ5OTAwNzk3/Mi0xNDY3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/po1TTwx1L1ZjLfoAqF8d52aKIDK14Km3cWOPM6c86Mk/rs:fit/g:sm/q:90/h:540/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1MjY3/MTQtMTQ5OTAwNzk3/Mi0xNDY3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/8526714",
+      "community": {
+        "want": 106,
+        "have": 76
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Transparent Marbled",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "EP"
+          ]
+        },
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Yellow Transparent Marbled",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1964",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single"
+      ],
+      "label": [
+        "Red Bird",
+        "December Music",
+        "17 Savile Row"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Pop Rock",
+        "Rock & Roll"
+      ],
+      "id": 5754261,
+      "barcode": [
+        "RB10 017-A",
+        "RB10 017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 535257,
+      "master_url": "https://api.discogs.com/masters/535257",
+      "uri": "/release/5754261-The-Dixie-Cups-Little-Bell-",
+      "catno": "RB10 017",
+      "title": "The Dixie Cups - Little Bell ",
+      "thumb": "https://i.discogs.com/dvVHnEchnLwbcxxEwD7sUYSj9bMz9cFwkrCnAgFSILk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU3NTQy/NjEtMTQwMTczMTk4/OC0zMTc4LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/G-xtob0pnsbjdYjRoDyWcDo5U52X6POJLAhudIDXdgU/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU3NTQy/NjEtMTQwMTczMTk4/OC0zMTc4LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/5754261",
+      "community": {
+        "want": 10,
+        "have": 19
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "New Zealand",
+      "year": "1960",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single"
+      ],
+      "label": [
+        "La Gloria Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Pop",
+        "Folk, World, & Country"
+      ],
+      "style": [
+        "Pacific"
+      ],
+      "id": 8773818,
+      "barcode": [
+        "GSP-017 (a)",
+        "GSP-017 (b)",
+        "GSP017-A",
+        "GSP017-B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1028594,
+      "master_url": "https://api.discogs.com/masters/1028594",
+      "uri": "/release/8773818-Howard-Morrison-Quartet-With-The-Tremellos-Hoki-Mai",
+      "catno": "GSP-017",
+      "title": "Howard Morrison Quartet* With The Tremellos* - Hoki Mai",
+      "thumb": "https://i.discogs.com/yfyhuMmKI-NVsS4U0OhIv2av8Y_oOZmo6NefQoCa-hU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg3NzM4/MTgtMTQ2ODQ4Nzc3/My00MTAzLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/ysxGGmoSpGMEfMjnVUfC6AzWbu7pr2vSYnsbbOGG1MY/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg3NzM4/MTgtMTQ2ODQ4Nzc3/My00MTAzLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/8773818",
+      "community": {
+        "want": 2,
+        "have": 9
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Original press",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "2002",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "33 ⅓ RPM",
+        "Album"
+      ],
+      "label": [
+        "Vertical Form",
+        "Vertical Form",
+        "Vertical Form"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "IDM",
+        "Minimal",
+        "Experimental"
+      ],
+      "id": 36099,
+      "barcode": [
+        "VFORM 017-A",
+        "VFORM 017-B",
+        "VFORM 017-C",
+        "VFORM 017-D"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 9825,
+      "master_url": "https://api.discogs.com/masters/9825",
+      "uri": "/release/36099-PanAmerican-The-River-Made-No-Sound",
+      "catno": "VFORM017LP",
+      "title": "Pan•American - The River Made No Sound",
+      "thumb": "https://i.discogs.com/Ot4K48XcpKiS-S2f5zoviu2g0q8OaKGk81wlaqVhmyA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDk5/LTEzNDk4OTkyOTUt/MTA5NC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/XQBgij9lHIE-mVvi6mQUm_QmFS7ktyM5FZ3lAS50W-w/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2MDk5/LTEzNDk4OTkyOTUt/MTA5NC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/36099",
+      "community": {
+        "want": 240,
+        "have": 338
+      },
+      "format_quantity": 2,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "2",
+          "descriptions": [
+            "12\"",
+            "33 ⅓ RPM",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "year": "2020",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Test Pressing",
+        "White Label"
+      ],
+      "label": [
+        "Nullpunkt"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic"
+      ],
+      "style": [
+        "Experimental"
+      ],
+      "id": 16389372,
+      "barcode": [
+        "LXC / ALPHACUT",
+        "0000 017 A",
+        "0000 017 B",
+        "RAND"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1966537,
+      "master_url": "https://api.discogs.com/masters/1966537",
+      "uri": "/release/16389372-Ena-One-Draw",
+      "catno": "0000 017",
+      "title": "Ena (2) - One Draw",
+      "thumb": "https://i.discogs.com/HhVVZDByTSvNMtBzAyzt07W4Udu7G8tvfxGNZn9acJA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2Mzg5/MzcyLTE2MDc3NzI5/MzAtMzYxMC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/HkePI_Sa-7AsxP8uZjxo2qfcywOP3GzMjx_EeUbTLBM/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2Mzg5/MzcyLTE2MDc3NzI5/MzAtMzYxMC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/16389372",
+      "community": {
+        "want": 23,
+        "have": 9
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Test Pressing",
+            "White Label"
+          ]
+        }
+      ]
+    }
+  ]
+}

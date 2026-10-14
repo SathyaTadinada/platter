@@ -1,0 +1,362 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 3,
+    "per_page": 5,
+    "items": 12,
+    "urls": {
+      "last": "https://api.discogs.com/database/search?catno=PB+41447&type=release&per_page=5&page=3",
+      "next": "https://api.discogs.com/database/search?catno=PB+41447&type=release&per_page=5&page=2"
+    }
+  },
+  "results": [
+    {
+      "country": "UK",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo"
+      ],
+      "label": [
+        "RCA",
+        "BMG Records (UK) Ltd.",
+        "BMG Records (UK) Ltd.",
+        "Pete Waterman Ltd.",
+        "All Boys Music Ltd.",
+        "BMG Records",
+        "BMG Ariola",
+        "RCA Records",
+        "Utopia Studios",
+        "BMG Records (UK) Ltd.",
+        "PWL",
+        "CBS Pressing Plant, Aston Clinton"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Euro-Disco"
+      ],
+      "id": 249504,
+      "barcode": [
+        "5012394144777",
+        "LC 0316",
+        "AC",
+        "RC110",
+        "AA",
+        "PB 41447 A‡",
+        "PB 41447 B‡",
+        "PB 41447 A2 UTOPIA MS",
+        "PB 41447-B.2 UTOPIA MS",
+        "PB 41447 A4 UTOPIA MS.",
+        "PB 41447 B4 UTOPIA MS ♥ RD.",
+        "PB 41447 A2 UTOPIA MS B",
+        "PB 41447-B.2 B UTOPIA MS"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/249504-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PB 41447",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/HG2xChKN-rIHHSfgL53W9z2vJWeFknfevpOMwSHtIaM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0OTUw/NC0xMzM0NTkyMjEy/LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/-DPFA5hKT8i91jnjn4rLB1zSiuUBFTrGWspu1TpLV30/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0OTUw/NC0xMzM0NTkyMjEy/LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/249504",
+      "community": {
+        "want": 589,
+        "have": 4138
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "France",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo"
+      ],
+      "label": [
+        "RCA",
+        "Bertelsmann Music Group",
+        "BMG Records",
+        "BMG Ariola",
+        "BMG Ariola France",
+        "BMG Records (UK) Ltd.",
+        "BMG Records (UK) Ltd.",
+        "SNA",
+        "SNA",
+        "All Boys Music Ltd."
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Synth-pop",
+        "Dance-pop"
+      ],
+      "id": 3805964,
+      "barcode": [
+        "5 012394 144777",
+        "5012394144777",
+        "LC 0316",
+        "SACEM SACD SDRM SGDL",
+        "AC",
+        "RC 110",
+        "AA",
+        "[SNA logo] PB 41447 A",
+        "[SNA logo] 41447 B",
+        "[SNA logo] PB 41447 A 2",
+        "[SNA logo] 41447 B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/3805964-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PB 41447",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/TjabUO1b4KiBA23ZZnjTmql0JMBpGscI8Sw8daxKux8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4MDU5/NjQtMTM0NTEzNzcw/OS0yMTc4LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/zwDb24bV75srz392B5apBGQIg9n_gOwaG2ek4d9hcxQ/rs:fit/g:sm/q:90/h:600/w:595/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4MDU5/NjQtMTM0NTEzNzcw/OS0yMTc4LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3805964",
+      "community": {
+        "want": 152,
+        "have": 1018
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Spain",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo"
+      ],
+      "label": [
+        "RCA",
+        "BMG Records (UK) Ltd.",
+        "BMG Records (UK) Ltd.",
+        "All Boys Music Ltd.",
+        "RCA, S.A.",
+        "Iberofon, S.A.",
+        "RCA Victor",
+        "Indugraf Madrid, S.A."
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Euro-Disco"
+      ],
+      "id": 7794917,
+      "barcode": [
+        "S.G.A.E.",
+        "M-28676-87",
+        "PB 41447-A-IN3DM",
+        "PB 41447-B-IN3DM"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/7794917-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PB-41447",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/aL9-6G0e7zNABFF_B09jAnQP2iBT9hMteEvidO_LA-4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc3OTQ5/MTctMTU4OTY1MDIz/Ny02MzUwLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/n91lCXINWqyQHmJ82HWzkYMHNR8gPMZq7xWEy9b23Rc/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc3OTQ5/MTctMTU4OTY1MDIz/Ny02MzUwLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7794917",
+      "community": {
+        "want": 110,
+        "have": 71
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Ireland",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single"
+      ],
+      "label": [
+        "RCA",
+        "BMG Records (UK) Ltd.",
+        "BMG Records (UK) Ltd.",
+        "Pete Waterman Ltd.",
+        "All Boys Music Ltd.",
+        "BMG Records",
+        "BMG Ariola",
+        "RCA Records",
+        "Utopia Studios",
+        "BMG Records (UK) Ltd.",
+        "PWL"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Euro-Disco"
+      ],
+      "id": 8588115,
+      "barcode": [
+        "PB 41447 A2 UTOPIA MS [encircled]",
+        "PB 41447-B.2 UTOPIA MS [encircled]"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/8588115-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PB 41447",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/DuYNRffYpWbyWEF4gW5cafW0kbbk82hZnV-WCypTaGo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1ODgx/MTUtMTQ4NTA4MTkz/OS05NDcyLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/4MykpRRYOA2nZyv6NcgweQtnMAlBLQXiTEkkkQptTJ4/rs:fit/g:sm/q:90/h:618/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1ODgx/MTUtMTQ4NTA4MTkz/OS05NDcyLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/8588115",
+      "community": {
+        "want": 95,
+        "have": 31
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Italy",
+      "year": "1987",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Promo"
+      ],
+      "label": [
+        "RCA",
+        "BMG Records (UK) Ltd.",
+        "BMG Records (UK) Ltd.",
+        "Pete Waterman Ltd.",
+        "BMG Ariola S.p.A.",
+        "All Boys Music Ltd.",
+        "RCA S.p.A.",
+        "RCA Records Factory, Italy"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Pop"
+      ],
+      "style": [
+        "Synth-pop"
+      ],
+      "id": 9138092,
+      "barcode": [
+        "5 012394 144777",
+        "PB41447 A IS 1A 3 SPIRY",
+        "PB41447 B IS 1A 6 SPIRY",
+        "SIAE",
+        "LC 0316"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 96559,
+      "master_url": "https://api.discogs.com/masters/96559",
+      "uri": "/release/9138092-Rick-Astley-Never-Gonna-Give-You-Up",
+      "catno": "PB 41447",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "thumb": "https://i.discogs.com/4NJW9aF8vqBLKbn9wpHw8RhwUi82nFyKBqT1xBPkCg4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzgw/OTItMTQ3NTQyODc1/Ni02NjY0LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/X6BmdgkkZbnIQejGSkh4FwI5GOyZ2QfWnXXzagCA3n4/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzgw/OTItMTQ3NTQyODc1/Ni02NjY0LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/9138092",
+      "community": {
+        "want": 95,
+        "have": 11
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Promo"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 5,
+    "per_page": 5,
+    "items": 25,
+    "urls": {
+      "last": "https://api.discogs.com/database/search?barcode=075678164125&type=release&per_page=5&page=5",
+      "next": "https://api.discogs.com/database/search?barcode=075678164125&type=release&per_page=5&page=2"
+    }
+  },
+  "results": [
+    {
+      "country": "USA & Canada",
+      "year": "1986",
+      "format": [
+        "CD",
+        "Album",
+        "Club Edition"
+      ],
+      "label": [
+        "Atlantic",
+        "Charisma Records Ltd.",
+        "Charisma Records Ltd.",
+        "Anthony Banks Ltd.",
+        "Philip Collins Ltd.",
+        "Michael Rutherford Ltd.",
+        "Hit & Run Music (Publishing) Ltd.",
+        "The Farm",
+        "The Farm",
+        "Masterdisk",
+        "EMI Records",
+        "Columbia House"
+      ],
+      "type": "release",
+      "genre": [
+        "Electronic",
+        "Rock"
+      ],
+      "style": [
+        "Soft Rock",
+        "Pop Rock",
+        "Synth-pop",
+        "Art Rock"
+      ],
+      "id": 10176645,
+      "barcode": [
+        "0 7567-81641-2 5",
+        "075678164125"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 29002,
+      "master_url": "https://api.discogs.com/masters/29002",
+      "uri": "/release/10176645-Genesis-Invisible-Touch",
+      "catno": "A2-81641",
+      "title": "Genesis - Invisible Touch",
+      "thumb": "https://i.discogs.com/lYJX6jfFSPfRPYHOGeerZptM4dxMvrUwuop5nzHzb84/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+      "cover_image": "https://i.discogs.com/1xYt2AZ_5jGMlI5SBhYoU-Btcr2WPGMQbfqRZLqneZs/rs:fit/g:sm/q:90/h:578/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10176645",
+      "community": {
+        "want": 82,
+        "have": 93
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "Album",
+            "Club Edition"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Unknown",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "CD",
+        "Compilation",
+        "Unofficial Release"
+      ],
+      "style": [
+        "Heavy Metal"
+      ],
+      "id": 7344589,
+      "label": [
+        "Inrocks Records"
+      ],
+      "type": "release",
+      "barcode": [
+        "0075678164125"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/7344589-Omen-Battle-Cry-Warning-Of-Danger",
+      "catno": "IR23049-1",
+      "title": "Omen (3) - Battle Cry / Warning Of Danger",
+      "thumb": "https://i.discogs.com/4Lzbaidej4s7no1ECUlkPIShmbqHZTZDBsFq8W5hxl4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNDQ1/ODktMTQzOTM5MTM5/My02NTI2LnBuZw.jpeg",
+      "cover_image": "https://i.discogs.com/qWka7Hl13ERwLKiDeJXlyP08c6oSJHMTRnSiHRQGMf4/rs:fit/g:sm/q:90/h:175/w:176/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNDQ1/ODktMTQzOTM5MTM5/My02NTI2LnBuZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7344589",
+      "community": {
+        "want": 2,
+        "have": 2
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "Compilation",
+            "Unofficial Release"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "CD",
+        "Album",
+        "Repress"
+      ],
+      "style": [
+        "Pop Rock"
+      ],
+      "id": 695397,
+      "label": [
+        "Atlantic",
+        "Atlantic",
+        "Gelring Ltd.",
+        "Philip Collins Ltd.",
+        "Michael Rutherford Ltd.",
+        "Anthony Banks Ltd.",
+        "Atlantic Recording Corporation",
+        "Assorted iMaGes",
+        "The Farm",
+        "The Farm",
+        "Masterdisk",
+        "WEA Manufacturing Inc.",
+        "Specialty Records Corporation"
+      ],
+      "type": "release",
+      "barcode": [
+        "075678164125",
+        "0 7567-81641-2 5",
+        "ADD",
+        "3 81641-2 SRC+13 M4S1",
+        "IFPI 2U6B"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 29002,
+      "master_url": "https://api.discogs.com/masters/29002",
+      "uri": "/release/695397-Genesis-Invisible-Touch",
+      "catno": "7 81641-2",
+      "title": "Genesis - Invisible Touch",
+      "thumb": "https://i.discogs.com/JoHIwoRoKOEGvgymEzV6M9MsSs4YwpSHkQtbP7opI8w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY5NTM5/Ny0xMjg0Nzg0MDc0/LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/gRhCujxT-HQkmGiwixHitQ0OUuPPQgKjUHCGhnH1u7c/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY5NTM5/Ny0xMjg0Nzg0MDc0/LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/695397",
+      "community": {
+        "want": 112,
+        "have": 1274
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "Album",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "2006",
+      "format": [
+        "CD",
+        "EP",
+        "Promo"
+      ],
+      "label": [
+        "The Adventure Club"
+      ],
+      "type": "release",
+      "genre": [
+        "Folk, World, & Country"
+      ],
+      "style": [],
+      "id": 7104036,
+      "barcode": [
+        "075678164125"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 0,
+      "master_url": null,
+      "uri": "/release/7104036-Artisan-I-Hold-My-Breath",
+      "catno": "TAC001",
+      "title": "Artisan - I Hold My Breath",
+      "thumb": "",
+      "cover_image": "https://st.discogs.com/df7000a58f4dc84a6663472dd515417a92c46215/images/spacer.gif",
+      "resource_url": "https://api.discogs.com/releases/7104036",
+      "community": {
+        "want": 0,
+        "have": 3
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "EP",
+            "Promo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "US",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "CD",
+        "Album",
+        "Reissue"
+      ],
+      "style": [
+        "Pop Rock"
+      ],
+      "id": 30456794,
+      "label": [
+        "Atlantic",
+        "Atlantic",
+        "Atlantic Recording Corporation",
+        "Warner Communications",
+        "The Farm",
+        "The Farm",
+        "Masterdisk",
+        "WEA Manufacturing Inc.",
+        "Gelring Ltd.",
+        "Philip Collins Ltd.",
+        "Michael Rutherford Ltd.",
+        "Anthony Banks Ltd.",
+        "Assorted iMaGes",
+        "Specialty Records Corporation",
+        "Allied Record Company"
+      ],
+      "type": "release",
+      "barcode": [
+        "0 7567-81641-2 5",
+        "075678164125",
+        "ADD",
+        "ASCAP",
+        "3 81641-2 SRC=12 ARC *M1 S3 "
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 29002,
+      "master_url": "https://api.discogs.com/masters/29002",
+      "uri": "/release/30456794-Genesis-Invisible-Touch",
+      "catno": "7 81641-2",
+      "title": "Genesis - Invisible Touch",
+      "thumb": "https://i.discogs.com/WnPbZDDYjAd_1WhMvyKNwPxpqVoxuUoZbe9rrjDpcTk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwNDU2/Nzk0LTE3MTM2NDU0/MjgtNzU5Mi5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/2IqzmIuayvfaSShKcLkxJ_U2gZmwjpMgymCVu9yki-Q/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwNDU2/Nzk0LTE3MTM2NDU0/MjgtNzU5Mi5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/30456794",
+      "community": {
+        "want": 31,
+        "have": 19
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "text": "SRC/ARC",
+          "descriptions": [
+            "Album",
+            "Reissue"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,437 @@
+{
+  "id": 10176645,
+  "status": "Accepted",
+  "year": 1986,
+  "resource_url": "https://api.discogs.com/releases/10176645",
+  "uri": "https://www.discogs.com/release/10176645-Genesis-Invisible-Touch",
+  "artists": [
+    {
+      "name": "Genesis",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 124506,
+      "resource_url": "https://api.discogs.com/artists/124506",
+      "thumbnail_url": "https://i.discogs.com/z0zMUi4CK4C8YPEUOKKzzU0pEOcA0zmZ_9ZHQ-p3Vz4/rs:fit/g:sm/q:90/h:200/w:273/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTEyNDUw/Ni0xNDk4NjYwNjM0/LTg4MzcuanBlZw.jpeg"
+    }
+  ],
+  "artists_sort": "Genesis",
+  "labels": [
+    {
+      "name": "Atlantic",
+      "catno": "A2-81641",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 681,
+      "resource_url": "https://api.discogs.com/labels/681",
+      "thumbnail_url": "https://i.discogs.com/PvGehzQPvOW9qMVS-EDAeOmU6qODkqTEQ5bW03gpVyo/rs:fit/g:sm/q:90/h:426/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTY4MS0x/NTEwNjgyMTM0LTgz/NTAucG5n.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Charisma Records Ltd.",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 146171,
+      "resource_url": "https://api.discogs.com/labels/146171",
+      "thumbnail_url": "https://i.discogs.com/00WY1zvotSj_Qj966VH9TMkqpfTEih3Sq9wFsHdowV8/rs:fit/g:sm/q:90/h:124/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE0NjE3/MS0xMzYzMTYxNTc0/LTE0MjQuanBlZw.jpeg"
+    },
+    {
+      "name": "Charisma Records Ltd.",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 146171,
+      "resource_url": "https://api.discogs.com/labels/146171",
+      "thumbnail_url": "https://i.discogs.com/00WY1zvotSj_Qj966VH9TMkqpfTEih3Sq9wFsHdowV8/rs:fit/g:sm/q:90/h:124/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE0NjE3/MS0xMzYzMTYxNTc0/LTE0MjQuanBlZw.jpeg"
+    },
+    {
+      "name": "Anthony Banks Ltd.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 267637,
+      "resource_url": "https://api.discogs.com/labels/267637"
+    },
+    {
+      "name": "Philip Collins Ltd.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 267639,
+      "resource_url": "https://api.discogs.com/labels/267639",
+      "thumbnail_url": "https://i.discogs.com/4lrUF2rsBvNeQNvyIR0ztiqkbVtA48kiXEqCISKcpog/rs:fit/g:sm/q:90/h:93/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NzYz/OS0xNjIwNzQ2MzM4/LTg0MDQuanBlZw.jpeg"
+    },
+    {
+      "name": "Michael Rutherford Ltd.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 267638,
+      "resource_url": "https://api.discogs.com/labels/267638",
+      "thumbnail_url": "https://i.discogs.com/peLSGGxGHVaxOHHTJjeC0agf1seAIFCJHM8Rx32oQek/rs:fit/g:sm/q:90/h:77/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NzYz/OC0xNjIwNzQ1ODg4/LTM0OTcuanBlZw.jpeg"
+    },
+    {
+      "name": "Hit & Run Music (Publishing) Ltd.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 268600,
+      "resource_url": "https://api.discogs.com/labels/268600",
+      "thumbnail_url": "https://i.discogs.com/JRY7qWvl6BLvJ9Pb4SC6lYKiOcP-vZgoYgujS6WGHuU/rs:fit/g:sm/q:90/h:160/w:396/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2ODYw/MC0xNjM4ODM2NTcw/LTE3MzEuanBlZw.jpeg"
+    },
+    {
+      "name": "The Farm",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 272538,
+      "resource_url": "https://api.discogs.com/labels/272538",
+      "thumbnail_url": "https://i.discogs.com/6KfFjGQ_0zjIVgTCQT_adwTtZP2vr6cfdToTsypxav4/rs:fit/g:sm/q:90/h:400/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MjUz/OC0xMzE1MzMwNTk4/LmpwZWc.jpeg"
+    },
+    {
+      "name": "The Farm",
+      "catno": "",
+      "entity_type": "27",
+      "entity_type_name": "Mixed At",
+      "id": 272538,
+      "resource_url": "https://api.discogs.com/labels/272538",
+      "thumbnail_url": "https://i.discogs.com/6KfFjGQ_0zjIVgTCQT_adwTtZP2vr6cfdToTsypxav4/rs:fit/g:sm/q:90/h:400/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MjUz/OC0xMzE1MzMwNTk4/LmpwZWc.jpeg"
+    },
+    {
+      "name": "Masterdisk",
+      "catno": "",
+      "entity_type": "29",
+      "entity_type_name": "Mastered At",
+      "id": 264111,
+      "resource_url": "https://api.discogs.com/labels/264111",
+      "thumbnail_url": "https://i.discogs.com/xACky_ehUKoqxzqTQuTQFVdck9_NLo6hwsK7-cahDs0/rs:fit/g:sm/q:90/h:200/w:200/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDEx/MS0xMzQ0MDcwODIx/LTk0MjUuanBlZw.jpeg"
+    },
+    {
+      "name": "EMI Records",
+      "catno": "",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 754,
+      "resource_url": "https://api.discogs.com/labels/754",
+      "thumbnail_url": "https://i.discogs.com/Z6fF-KnSzJG4uGQWWNzaKUICfdE3QoVMeEC5XzieAL4/rs:fit/g:sm/q:90/h:200/w:200/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc1NC0x/Mzg3NjIyNzUwLTky/NzQuanBlZw.jpeg"
+    },
+    {
+      "name": "Columbia House",
+      "catno": "A2-81641",
+      "entity_type": "10",
+      "entity_type_name": "Manufactured By",
+      "id": 55613,
+      "resource_url": "https://api.discogs.com/labels/55613",
+      "thumbnail_url": "https://i.discogs.com/IQDQ4-P5hsQ7BONnTokff4xxLl9LYxdH01ggDev9ymU/rs:fit/g:sm/q:90/h:589/w:589/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTU1NjEz/LTE1NDM4MzQ5NDQt/NjM5Ni5qcGVn.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "CD",
+      "qty": "1",
+      "descriptions": [
+        "Album",
+        "Club Edition"
+      ]
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 93,
+    "want": 82,
+    "rating": {
+      "count": 4,
+      "average": 4.25
+    },
+    "submitter": {
+      "username": "techiesjc",
+      "resource_url": "https://api.discogs.com/users/techiesjc"
+    },
+    "contributors": [
+      {
+        "username": "techiesjc",
+        "resource_url": "https://api.discogs.com/users/techiesjc"
+      },
+      {
+        "username": "valparaiso",
+        "resource_url": "https://api.discogs.com/users/valparaiso"
+      },
+      {
+        "username": "earshot",
+        "resource_url": "https://api.discogs.com/users/earshot"
+      },
+      {
+        "username": "Same.Old.Me",
+        "resource_url": "https://api.discogs.com/users/Same.Old.Me"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2017-04-22T16:55:02-07:00",
+  "date_changed": "2019-10-15T04:20:18-07:00",
+  "num_for_sale": 2,
+  "lowest_price": 4.49,
+  "master_id": 29002,
+  "master_url": "https://api.discogs.com/masters/29002",
+  "title": "Invisible Touch",
+  "country": "USA & Canada",
+  "released": "1986-06-00",
+  "notes": "Written, recorded and mixed at The Farm, Surrey, 85/86.\n\nMastered at Masterdisc N.Y.C.\n\nSleeve produced at Assorted Images.\n\nTrack 6 'Domino' consists of two parts.\n\nVirgin Records.\n ℗ 1986 Charisma Records Ltd. © 1986 Charisma Records Ltd.\n\nColumbia House Club Manufactured",
+  "released_formatted": "Jun 1986",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "0 7567-81641-2 5",
+      "description": "Text"
+    },
+    {
+      "type": "Barcode",
+      "value": "075678164125",
+      "description": "String"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=fIHVzJMjVDs",
+      "title": "Genesis - Invisible Touch (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 211,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=bvsz_9pp3no",
+      "title": "Genesis -  Tonight, Tonight, Tonight (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 534,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=C19InkgElIE",
+      "title": "Genesis - Land Of Confusion (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 287,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=fSwSmaW0zNA",
+      "title": "Genesis - In Too Deep (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 303,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Qm_8pRYKHqo",
+      "title": "Genesis - Anything She Does (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 261,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=b4vNMtCvIHE",
+      "title": "Genesis - Domino Medley (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Bj-_1zcVYb0",
+      "title": "Genesis - Throwing It All Away (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 232,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=wLFwxs7u4HM",
+      "title": "Genesis - The Brazilian (Official Audio)",
+      "description": "**CLICK HERE TO SUBSCRIBE TO THE GENESIS OFFICIAL YOUTUBE CHANNEL**\nhttps://found.ee/GenesisYouTube\n\n**WATCH GENESIS' OFFICIAL MUSIC VIDEOS**\nhttps://www.youtube.com/playlist?list=PLWnwFAnZO1AGhzxUm4YlbW7ex-33vazOT\n \n**FOLLOW GENESIS ONLINE** \nFOLLOW ON Y",
+      "duration": 305,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Rock"
+  ],
+  "styles": [
+    "Soft Rock",
+    "Pop Rock",
+    "Synth-pop",
+    "Art Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "1",
+      "type_": "track",
+      "title": "Invisible Touch",
+      "duration": "3:26"
+    },
+    {
+      "position": "2",
+      "type_": "track",
+      "title": "Tonight, Tonight, Tonight",
+      "duration": "8:49"
+    },
+    {
+      "position": "3",
+      "type_": "track",
+      "title": "Land Of Confusion",
+      "duration": "4:45"
+    },
+    {
+      "position": "4",
+      "type_": "track",
+      "title": "In Too Deep",
+      "duration": "4:59"
+    },
+    {
+      "position": "5",
+      "type_": "track",
+      "title": "Anything She Does",
+      "duration": "4:06"
+    },
+    {
+      "position": "",
+      "type_": "index",
+      "title": "Domino",
+      "duration": "10:42",
+      "sub_tracks": [
+        {
+          "position": "6.1",
+          "type_": "track",
+          "title": "In The Glow Of The Night",
+          "duration": ""
+        },
+        {
+          "position": "6.2",
+          "type_": "track",
+          "title": "The Last Domino",
+          "duration": ""
+        }
+      ]
+    },
+    {
+      "position": "7",
+      "type_": "track",
+      "title": "Throwing It All Away",
+      "duration": "4:41"
+    },
+    {
+      "position": "8",
+      "type_": "track",
+      "title": "The Brazilian",
+      "duration": "4:49"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Baker Dave",
+      "anv": "",
+      "join": "",
+      "role": "Artwork",
+      "tracks": "",
+      "id": 1016850,
+      "resource_url": "https://api.discogs.com/artists/1016850"
+    },
+    {
+      "name": "Phil Collins",
+      "anv": "",
+      "join": "",
+      "role": "Composed By, Drums, Vocals, Percussion",
+      "tracks": "",
+      "id": 101028,
+      "resource_url": "https://api.discogs.com/artists/101028"
+    },
+    {
+      "name": "Mike Rutherford",
+      "anv": "",
+      "join": "",
+      "role": "Composed By, Guitar, Bass",
+      "tracks": "",
+      "id": 296372,
+      "resource_url": "https://api.discogs.com/artists/296372"
+    },
+    {
+      "name": "Tony Banks",
+      "anv": "",
+      "join": "",
+      "role": "Composed By, Keyboards, Synth [Synth Bass]",
+      "tracks": "",
+      "id": 336885,
+      "resource_url": "https://api.discogs.com/artists/336885"
+    },
+    {
+      "name": "Paul Gomersall",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assistant]",
+      "tracks": "",
+      "id": 268946,
+      "resource_url": "https://api.discogs.com/artists/268946"
+    },
+    {
+      "name": "Bob Ludwig",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 271098,
+      "resource_url": "https://api.discogs.com/artists/271098"
+    },
+    {
+      "name": "John Swannell",
+      "anv": "",
+      "join": "",
+      "role": "Photography By",
+      "tracks": "",
+      "id": 1876536,
+      "resource_url": "https://api.discogs.com/artists/1876536"
+    },
+    {
+      "name": "Genesis",
+      "anv": "",
+      "join": "",
+      "role": "Producer, Arranged By, Written-By",
+      "tracks": "",
+      "id": 124506,
+      "resource_url": "https://api.discogs.com/artists/124506"
+    },
+    {
+      "name": "Hugh Padgham",
+      "anv": "",
+      "join": "",
+      "role": "Producer, Engineer",
+      "tracks": "",
+      "id": 76325,
+      "resource_url": "https://api.discogs.com/artists/76325"
+    },
+    {
+      "name": "Geoff Callingham",
+      "anv": "",
+      "join": "",
+      "role": "Technician [Technical Assistant]",
+      "tracks": "",
+      "id": 308849,
+      "resource_url": "https://api.discogs.com/artists/308849"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/1xYt2AZ_5jGMlI5SBhYoU-Btcr2WPGMQbfqRZLqneZs/rs:fit/g:sm/q:90/h:578/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/1xYt2AZ_5jGMlI5SBhYoU-Btcr2WPGMQbfqRZLqneZs/rs:fit/g:sm/q:90/h:578/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/lYJX6jfFSPfRPYHOGeerZptM4dxMvrUwuop5nzHzb84/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+      "width": 600,
+      "height": 578
+    }
+  ],
+  "thumb": "https://i.discogs.com/lYJX6jfFSPfRPYHOGeerZptM4dxMvrUwuop5nzHzb84/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTc2/NjQ1LTE1MzQ1NDY3/NjQtNzEzOS5wbmc.jpeg",
+  "estimated_weight": 85,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

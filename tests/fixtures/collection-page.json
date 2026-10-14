@@ -1,0 +1,206 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 100,
+    "items": 3,
+    "urls": {}
+  },
+  "releases": [
+    {
+      "id": 249504,
+      "instance_id": 1000,
+      "date_added": "2026-01-01T00:00:00-08:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 249504,
+        "master_id": 96559,
+        "master_url": "https://api.discogs.com/masters/59501",
+        "resource_url": "https://api.discogs.com/releases/249504",
+        "thumb": "https://i.discogs.com/4OEyQygeXaa3GUkAorgITC-zB9JCf51BCrP9a4EkJnU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/2JRfmUxxKRn1L1g5bJQ3Z7urblnqF2K17zg2SrBzON0/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "title": "Never Gonna Give You Up",
+        "year": 1976,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "SP - Specialty Pressing, Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Asylum Records",
+            "catno": "7E-1084",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 33574,
+            "resource_url": "https://api.discogs.com/labels/33574"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Rick Astley",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 255680,
+            "resource_url": "https://api.discogs.com/artists/255680"
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Classic Rock",
+          "Pop Rock",
+          "Country Rock",
+          "Soft Rock"
+        ]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        }
+      ]
+    },
+    {
+      "id": 1934367,
+      "instance_id": 1001,
+      "date_added": "2026-01-01T00:00:00-08:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 1934367,
+        "master_id": 59501,
+        "master_url": "https://api.discogs.com/masters/59501",
+        "resource_url": "https://api.discogs.com/releases/1934367",
+        "thumb": "https://i.discogs.com/4OEyQygeXaa3GUkAorgITC-zB9JCf51BCrP9a4EkJnU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/2JRfmUxxKRn1L1g5bJQ3Z7urblnqF2K17zg2SrBzON0/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "title": "Hotel California",
+        "year": 1976,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "SP - Specialty Pressing, Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Asylum Records",
+            "catno": "7E-1084",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 33574,
+            "resource_url": "https://api.discogs.com/labels/33574"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Eagles",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 255680,
+            "resource_url": "https://api.discogs.com/artists/255680"
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Classic Rock",
+          "Pop Rock",
+          "Country Rock",
+          "Soft Rock"
+        ]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        }
+      ]
+    },
+    {
+      "id": 367084,
+      "instance_id": 1002,
+      "date_added": "2026-01-01T00:00:00-08:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 367084,
+        "master_id": 23934,
+        "master_url": "https://api.discogs.com/masters/59501",
+        "resource_url": "https://api.discogs.com/releases/367084",
+        "thumb": "https://i.discogs.com/4OEyQygeXaa3GUkAorgITC-zB9JCf51BCrP9a4EkJnU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/2JRfmUxxKRn1L1g5bJQ3Z7urblnqF2K17zg2SrBzON0/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzQz/NjctMTM4MzkwODQz/OC00MTc1LmpwZWc.jpeg",
+        "title": "Kind Of Blue",
+        "year": 1976,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "SP - Specialty Pressing, Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Asylum Records",
+            "catno": "7E-1084",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 33574,
+            "resource_url": "https://api.discogs.com/labels/33574"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Miles Davis",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 255680,
+            "resource_url": "https://api.discogs.com/artists/255680"
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Classic Rock",
+          "Pop Rock",
+          "Country Rock",
+          "Soft Rock"
+        ]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        }
+      ]
+    }
+  ]
+}
