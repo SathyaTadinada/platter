@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Route, Switch, useLocation } from 'wouter'
 import { loadSession, takeOAuthFragment } from './auth/auth'
-import { BottomNav } from './components/BottomNav'
+import { BottomNav, SideNav } from './components/Nav'
 import { StatusBar } from './components/StatusBar'
 import { Spinner } from './components/ui'
 import { pruneCache } from './db/cache'
@@ -17,7 +17,7 @@ import { Settings } from './screens/Settings'
 import { Setup } from './screens/Setup'
 import { Welcome } from './screens/Welcome'
 
-type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string; justSignedIn?: boolean }
+type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
 
 type Ready = Extract<Boot, { state: 'ready' }>
 
@@ -27,7 +27,10 @@ async function start(): Promise<Ready> {
   if (frag && 'error' in frag) return { state: 'ready', session: null, error: describeAuthError(frag.error) }
   if (frag) {
     try {
-      return { state: 'ready', session: await signInWithOAuth(frag.token, frag.secret), justSignedIn: true }
+      const session = await signInWithOAuth(frag.token, frag.secret)
+      // set the URL before the first render so the scanner never mounts
+      history.replaceState(null, '', '/setup')
+      return { state: 'ready', session }
     } catch {
       return { state: 'ready', session: null, error: describeAuthError('access_token') }
     }
@@ -52,18 +55,13 @@ export default function App() {
   if (boot.state === 'loading') return <Spinner label="Opening Platter" />
   return (
     <SessionProvider initial={boot.session}>
-      <Routes error={boot.error} justSignedIn={boot.justSignedIn} />
+      <Routes error={boot.error} />
     </SessionProvider>
   )
 }
 
-function Routes({ error, justSignedIn }: { error?: string; justSignedIn?: boolean }) {
+function Routes({ error }: { error?: string }) {
   const { session } = useSession()
-  const [, navigate] = useLocation()
-
-  useEffect(() => {
-    if (justSignedIn) navigate('/setup', { replace: true })
-  }, [justSignedIn, navigate])
 
   if (!session) {
     return (
@@ -78,8 +76,7 @@ function Routes({ error, justSignedIn }: { error?: string; justSignedIn?: boolea
 
   return (
     <SyncProvider>
-      <StatusBar />
-      <main>
+      <Shell>
         <Switch>
           <Route path="/" component={Scan} />
           <Route path="/search" component={Search} />
@@ -89,8 +86,29 @@ function Routes({ error, justSignedIn }: { error?: string; justSignedIn?: boolea
           <Route path="/about" component={About} />
           <Route component={Scan} />
         </Switch>
-      </main>
-      <BottomNav />
+      </Shell>
     </SyncProvider>
+  )
+}
+
+// Full-height layout: only the middle scrolls, so the nav never moves.
+function Shell({ children }: { children: ReactNode }) {
+  const [path] = useLocation()
+  const scroller = useRef<HTMLElement>(null)
+  useEffect(() => {
+    scroller.current?.scrollTo(0, 0)
+  }, [path])
+
+  return (
+    <div className="flex h-dvh flex-col lg:flex-row">
+      <SideNav />
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <main ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {children}
+        </main>
+        <StatusBar />
+      </div>
+      <BottomNav />
+    </div>
   )
 }

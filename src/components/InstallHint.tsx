@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getSetting, setSetting } from '../db/db'
 import { Button, Card } from './ui'
-import { ShareIcon } from './Icons'
+import { Share } from 'lucide-react'
 
 type InstallEvent = Event & { prompt: () => Promise<void> }
 
@@ -20,7 +20,7 @@ export function InstallSteps() {
   if (isIos()) {
     return (
       <p className="text-sm text-stone-600 dark:text-stone-400">
-        In Safari, tap <ShareIcon className="inline align-text-bottom" width={16} height={16} /> Share, then <b>Add to Home Screen</b>.
+        In Safari, tap <Share className="inline align-text-bottom" size={16} aria-label="Share" /> Share, then <b>Add to Home Screen</b>.
       </p>
     )
   }

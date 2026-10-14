@@ -1,16 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { RefreshCw } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link, useLocation } from 'wouter'
+import { useLocation } from 'wouter'
+import { getFields } from '../api/discogs/endpoints'
 import { InstallSteps, isStandalone } from '../components/InstallHint'
-import { Button, buttonClass, Card, Notice, Screen, Section } from '../components/ui'
-import { db } from '../db/db'
+import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
+import { db, getSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
+import { useAsync } from '../hooks/useAsync'
 import { exportLocalData, importLocalData } from '../lib/exportData'
+import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { timeAgo } from '../lib/time'
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
 export function Settings() {
-  const { session, auth, setSession } = useSignedIn()
+  const { session, auth, client, setSession } = useSignedIn()
   const sync = useSync()
   const [, navigate] = useLocation()
   const [confirming, setConfirming] = useState(false)
@@ -23,10 +29,15 @@ export function Settings() {
     syncedAt: (await db.settings.get('collectionSyncedAt'))?.value as number | undefined,
   }))
 
+  const fields = useAsync(async () => {
+    const [{ fields }, map] = await Promise.all([getFields(client, session.username), getSetting<FieldMap>('fieldMap')])
+    return matchFields(fields, map ?? {}).filter((m) => m.field).length
+  }, [client, session.username])
+
   async function signOut() {
     await auth.signOut()
-    setSession(null)
     navigate('/', { replace: true })
+    setSession(null)
   }
 
   async function doExport() {
@@ -42,7 +53,7 @@ export function Settings() {
   async function doImport(file: File) {
     try {
       const n = await importLocalData(JSON.parse(await file.text()))
-      setMessage({ tone: 'success', text: `Imported ${n} item${n === 1 ? '' : 's'}.` })
+      setMessage({ tone: 'success', text: `Imported ${plural(n, 'item')}.` })
     } catch (e) {
       setMessage({ tone: 'error', text: e instanceof SyntaxError ? "That file isn't valid JSON." : (e as Error).message })
     }
@@ -51,16 +62,11 @@ export function Settings() {
   return (
     <Screen title="Settings">
       <Section title="Account">
-        <Card className="space-y-3">
-          <p>
-            Signed in as <b>{session.username}</b>
-            <span className="block text-sm text-stone-500">{session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'}</span>
-          </p>
+        <List>
+          <Row label={session.username} detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'} />
           {confirming ? (
-            <div className="space-y-2">
-              <p className="text-sm">
-                This removes your sign-in and everything Platter keeps on this device. Your Discogs collection isn't touched.
-              </p>
+            <li className="space-y-3 px-4 py-3">
+              <p className="text-sm">Sign out and remove everything Platter keeps on this device? Your Discogs collection isn't touched.</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="secondary" onClick={() => setConfirming(false)}>
                   Cancel
@@ -69,76 +75,67 @@ export function Settings() {
                   Sign out
                 </Button>
               </div>
-            </div>
+            </li>
           ) : (
-            <Button variant="secondary" className="w-full" onClick={() => setConfirming(true)}>
-              Sign out
-            </Button>
+            <Row label="Sign out" danger onClick={() => setConfirming(true)} />
           )}
-        </Card>
+        </List>
       </Section>
 
       <Section title="Collection">
-        <Card className="space-y-3">
-          <p className="text-sm text-stone-600 dark:text-stone-400">
-            Platter keeps a list of what you own and want so it can warn you about duplicates.
-            {stats && (
-              <>
-                {' '}
-                {stats.records} record{stats.records === 1 ? '' : 's'} and {stats.wants} want{stats.wants === 1 ? '' : 's'}
-                {stats.syncedAt ? `, updated ${timeAgo(stats.syncedAt)}.` : ', not synced yet.'}
-              </>
-            )}
-          </p>
-          {sync.error && <Notice tone="error">{sync.error}</Notice>}
-          <Button variant="secondary" className="w-full" disabled={sync.running} onClick={() => sync.sync(true)}>
-            {sync.running ? 'Syncing…' : 'Sync now'}
-          </Button>
-          <Link href="/setup" className={buttonClass('secondary', 'w-full')}>
-            Collection fields
-          </Link>
-        </Card>
+        <List>
+          <Row
+            label={stats ? `${plural(stats.records, 'record')}, ${plural(stats.wants, 'want')}` : 'Collection'}
+            detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
+            trailing={
+              <button
+                type="button"
+                aria-label="Sync now"
+                disabled={sync.running}
+                onClick={() => sync.sync(true)}
+                className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
+              >
+                <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
+              </button>
+            }
+          />
+          <Row label="Collection fields" value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.length} set up` : undefined} href="/setup" />
+        </List>
+        {sync.error && <Notice tone="error">{sync.error}</Notice>}
       </Section>
 
-      <Section title="Your data">
-        <Card className="space-y-3">
-          <p className="text-sm text-stone-600 dark:text-stone-400">
-            Back up Platter's own data, like settings, to a file. Your sign-in isn't included.
-          </p>
-          {message && <Notice tone={message.tone}>{message.text}</Notice>}
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={doExport}>
-              Export
-            </Button>
-            <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-              Import
-            </Button>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) doImport(f)
-              e.target.value = ''
-            }}
-          />
-        </Card>
+      <Section title="Backup">
+        <List>
+          <Row label="Export backup" detail="Settings as a JSON file. Your sign-in isn't included." onClick={doExport} />
+          <Row label="Import backup" onClick={() => fileRef.current?.click()} />
+        </List>
+        {message && <Notice tone={message.tone}>{message.text}</Notice>}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) doImport(f)
+            e.target.value = ''
+          }}
+        />
       </Section>
 
       {!isStandalone() && (
         <Section title="Install">
-          <Card>
+          <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
             <InstallSteps />
-          </Card>
+          </div>
         </Section>
       )}
 
-      <Link href="/about" className={buttonClass('ghost', 'w-full')}>
-        About and privacy
-      </Link>
+      <Section>
+        <List>
+          <Row label="About and privacy" href="/about" />
+        </List>
+      </Section>
     </Screen>
   )
 }

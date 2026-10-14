@@ -1,13 +1,13 @@
 import type { ReleaseCard } from '../lib/format'
 import type { Ownership } from '../lib/ownership'
-import { DiscIcon } from './Icons'
+import { Disc3 } from 'lucide-react'
 
 export function Cover({ src, size = 'size-20' }: { src?: string; size?: string }) {
   return src ? (
     <img src={src} alt="" loading="lazy" className={`${size} shrink-0 rounded-lg bg-stone-200 object-cover dark:bg-stone-800`} />
   ) : (
     <div className={`${size} flex shrink-0 items-center justify-center rounded-lg bg-stone-200 text-stone-400 dark:bg-stone-800`}>
-      <DiscIcon />
+      <Disc3 aria-hidden />
     </div>
   )
 }

@@ -47,7 +47,7 @@ export function Results() {
   }, [state.data])
 
   return (
-    <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/' : '/search'}>
+    <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/' : '/search'} width="wide">
       {state.loading && <Spinner label="Searching Discogs" />}
       {state.error && <Notice tone="error">{state.error.message}</Notice>}
 
@@ -63,7 +63,7 @@ export function Results() {
           <p className="mb-3 text-sm text-stone-500">
             {cards.length === 1 ? '1 match' : `${cards.length} matches`}. Tap the one in your hands.
           </p>
-          <ul className="space-y-3">
+          <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
               <ReleaseCardView key={c.id} card={c} own={own?.get(c.id)} onPick={() => setPicked(c)} />
             ))}

@@ -31,7 +31,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: true,
     aliases: ['media', 'record condition', 'vinyl condition'],
     why: 'Grade of the record itself.',
-    setup: 'Type: Dropdown. Options: the standard grades, Mint (M) through Poor (P).',
+    setup: 'Type: Dropdown, with the standard grades Mint (M) through Poor (P).',
   },
   {
     key: 'sleeveCondition',
@@ -40,7 +40,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: true,
     aliases: ['sleeve', 'cover condition', 'jacket condition'],
     why: 'Grade of the sleeve.',
-    setup: 'Type: Dropdown. Options: Generic, No Cover, then Mint (M) through Poor (P).',
+    setup: 'Type: Dropdown, with Generic, No Cover, then Mint (M) through Poor (P).',
   },
   {
     key: 'notes',
@@ -49,7 +49,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: true,
     aliases: ['note', 'comments'],
     why: 'Anything else about this copy.',
-    setup: 'Type: free text, 3 lines.',
+    setup: 'Type: Text Area.',
   },
   {
     key: 'purchasePrice',
@@ -58,7 +58,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['price', 'price paid', 'paid', 'cost'],
     why: 'What you paid, used for value tracking.',
-    setup: 'Type: free text, 1 line. Leave Public unchecked.',
+    setup: 'Type: Text Area.',
   },
   {
     key: 'purchasedFrom',
@@ -67,7 +67,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['store', 'shop', 'bought from', 'source', 'seller'],
     why: 'The store or seller.',
-    setup: 'Type: free text, 1 line.',
+    setup: 'Type: Text Area.',
   },
   {
     key: 'purchaseDate',
@@ -76,7 +76,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['date purchased', 'bought', 'date bought', 'acquired'],
     why: 'When you bought it.',
-    setup: 'Type: free text, 1 line. Platter writes dates as YYYY-MM-DD.',
+    setup: 'Type: Text Area. Platter writes dates as YYYY-MM-DD.',
   },
   {
     key: 'location',
@@ -85,7 +85,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['shelf', 'storage', 'where'],
     why: 'Where the record lives, like "Shelf 2" or "Crate B".',
-    setup: 'Type: free text, 1 line. A dropdown of your shelves works too.',
+    setup: 'Type: Text Area. A Dropdown listing your shelves works too.',
   },
   {
     key: 'playCount',
@@ -94,7 +94,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['plays', 'times played', 'spins'],
     why: 'Bumped each time you log a spin.',
-    setup: 'Type: free text, 1 line.',
+    setup: 'Type: Text Area.',
   },
   {
     key: 'lastPlayed',
@@ -103,7 +103,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     builtIn: false,
     aliases: ['last spin', 'last listened'],
     why: 'Date of the last spin.',
-    setup: 'Type: free text, 1 line.',
+    setup: 'Type: Text Area.',
   },
 ]
 

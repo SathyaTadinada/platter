@@ -19,7 +19,7 @@ function useNow(enabled: boolean) {
   return now
 }
 
-// Thin bar at the top for background work: sync progress and rate-limit waits.
+// Small pill for background work: sync progress and rate-limit waits.
 export function StatusBar() {
   const { client } = useSession()
   const status = useClientStatus(client)
@@ -37,8 +37,8 @@ export function StatusBar() {
   if (!text) return null
 
   return (
-    <div role="status" className="fixed inset-x-0 top-0 z-30 bg-stone-900 pt-[env(safe-area-inset-top)] text-center text-xs font-medium text-stone-100 dark:bg-accent-500 dark:text-stone-950">
-      <div className="px-3 py-1.5">{text}</div>
+    <div role="status" className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-4">
+      <p className="rounded-full bg-stone-900 px-4 py-2 text-xs font-medium text-stone-100 shadow-lg dark:bg-accent-500 dark:text-stone-950">{text}</p>
     </div>
   )
 }

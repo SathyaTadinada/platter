@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { DiscogsError } from '../api/discogs/client'
-import { DiscIcon } from '../components/Icons'
+import { Disc3 } from 'lucide-react'
 import { Button, buttonClass, Card, ExternalLink, Notice } from '../components/ui'
 import { useSession } from '../hooks/session'
 import { signInWithToken } from '../lib/signIn'
@@ -13,7 +13,7 @@ export function Welcome({ error }: { error?: string }) {
     <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),2rem)] pb-8">
       <div className="flex flex-1 flex-col justify-center gap-6">
         <div className="space-y-3">
-          <DiscIcon width={48} height={48} className="text-accent-500" />
+          <Disc3 size={48} className="text-accent-500" aria-hidden />
           <h1 className="text-4xl font-bold tracking-tight">Platter</h1>
           <p className="text-lg text-stone-600 dark:text-stone-400">Scan the barcode on a record and add it to your Discogs collection in a couple of taps.</p>
         </div>
@@ -56,8 +56,9 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
     setBusy(true)
     setError(null)
     try {
-      setSession(await signInWithToken(token.trim()))
+      const session = await signInWithToken(token.trim())
       navigate('/setup', { replace: true })
+      setSession(session)
     } catch (err) {
       setError(err instanceof DiscogsError && err.status === 401 ? "Discogs didn't accept that token. Check you copied all of it." : (err as Error).message)
     } finally {

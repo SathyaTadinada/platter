@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
 import type { CollectionField } from '../api/discogs/types'
-import { CheckIcon } from '../components/Icons'
+import { Check } from 'lucide-react'
 import { Button, buttonClass, Card, ExternalLink, Notice, Screen, Section, Spinner } from '../components/ui'
 import { getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
@@ -53,8 +53,10 @@ export function Setup() {
                 <li>
                   Open <ExternalLink href={FIELDS_SETTINGS_URL}>Discogs collection settings</ExternalLink>
                 </li>
-                <li>Tap <b>Add a Field</b> for each one below, using the exact name and type shown.</li>
-                <li>Tap <b>Save Fields</b>, then come back and check again.</li>
+                <li>
+                  Tap <b>Add Field</b> for each one below, using the exact name and type shown. Leave <b>Make Public</b> off.
+                </li>
+                <li>Save, then come back here and check again.</li>
               </ol>
               <Button variant="secondary" className="w-full" onClick={state.reload} disabled={state.loading}>
                 {state.loading ? 'Checking…' : 'Check again'}
@@ -106,7 +108,7 @@ function FieldRow({
             field ? 'bg-emerald-500 text-white' : 'border-2 border-stone-300 dark:border-stone-700'
           }`}
         >
-          {field && <CheckIcon width={14} height={14} strokeWidth={3} />}
+          {field && <Check size={14} strokeWidth={3} aria-hidden />}
         </span>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-semibold">{spec.name}</p>
@@ -116,7 +118,7 @@ function FieldRow({
           {!field && source === 'manual' && <p className="text-sm text-stone-500">Turned off.</p>}
           {wrongType && (
             <p className="text-sm text-amber-700 dark:text-amber-400">
-              This field is a {field.type === 'dropdown' ? 'dropdown' : 'free text field'}; Platter expects {spec.type === 'dropdown' ? 'a dropdown' : 'free text'}.
+              This field is a {field.type === 'dropdown' ? 'Dropdown' : 'Text Area'}; Platter expects a {spec.type === 'dropdown' ? 'Dropdown' : 'Text Area'}.
             </p>
           )}
           <label className="block pt-1">
