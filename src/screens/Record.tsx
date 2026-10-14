@@ -7,6 +7,7 @@ import type { CollectionField, Release } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
 import { CoverSheet } from '../components/CoverSheet'
 import { Identifiers } from '../components/Identifiers'
+import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
 import { PlayButton } from '../components/PlayButton'
 import { ShareButton } from '../components/ShareButton'
@@ -162,6 +163,7 @@ export function Record({ id }: { id: string }) {
           <div className="mt-4 space-y-3">
             <Stars value={item.rating} onChange={setRating} />
             <PlayButton item={item} />
+            <ListenLinks releaseId={item.releaseId} artist={item.artist} title={item.title} identifiers={r?.identifiers} />
           </div>
 
           {error && (

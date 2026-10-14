@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Heart } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { addWant, removeWant } from '../api/discogs/endpoints'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { RecordRow, statCard } from '../components/stats'
 import { toast } from '../components/Toaster'
 import { Notice, Screen, Spinner, useBack } from '../components/ui'
@@ -95,6 +96,11 @@ export function Wantlist() {
             </li>
           ))}
         </ul>
+      )}
+      {wants && wants.length > 0 && (
+        <p className="mt-4">
+          <DiscogsCredit url={`https://www.discogs.com/wantlist?user=${encodeURIComponent(username)}`} />
+        </p>
       )}
     </Screen>
   )

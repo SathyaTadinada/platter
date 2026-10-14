@@ -12,9 +12,13 @@ export async function writeCache(key: string, data: unknown, now = Date.now()): 
   await db.cache.put({ key, data, fetchedAt: now })
 }
 
+// Discogs entries go after 6 hours; other lookups (Apple Music links) keep for a month
+const OTHER_MAX_AGE = 30 * 24 * 60 * 60 * 1000
+
 export async function pruneCache(maxAge = DISCOGS_MAX_AGE, now = Date.now()): Promise<number> {
   return db.cache
     .where('fetchedAt')
     .below(now - maxAge)
+    .filter((e) => e.key.startsWith('discogs:') || e.fetchedAt < now - OTHER_MAX_AGE)
     .delete()
 }

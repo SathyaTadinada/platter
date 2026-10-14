@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'Platter',
         short_name: 'Platter',
-        description: 'Scan your records and add them to your Discogs collection.',
+        description: "Catalog your records on Discogs: scan them in, see what they're worth, and keep track of what you play.",
         theme_color: '#1c1917',
         background_color: '#1c1917',
         display: 'standalone',

@@ -5,10 +5,12 @@ import { Link } from 'wouter'
 import { CrateSelect } from '../components/CrateSelect'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ResolveSheet } from '../components/ResolveSheet'
 import { Button, buttonClass, Notice, Screen, Section } from '../components/ui'
 import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
+import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import { formatPrice, hasMetadata, type Metadata } from '../lib/metadata'
@@ -18,6 +20,7 @@ const needsYou = (i: QueueItem) => i.status === 'choose' || i.status === 'notfou
 const inFlight = (i: QueueItem) => i.status === 'pending' || i.status === 'looking'
 
 export function Batch() {
+  const { username } = useSignedIn()
   const items = useLiveQuery(() => db.queue.orderBy('createdAt').toArray(), [])
   const owned = useLiveQuery(async () => {
     const all = await db.collection.toArray()
@@ -106,9 +109,9 @@ export function Batch() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Disc3 size={48} className="text-stone-400" aria-hidden />
           <p className="text-lg font-semibold">Batch is empty</p>
-          <p className="max-w-xs text-stone-500">Switch Scan to Batch to scan several records in a row, or import a CSV.</p>
+          <p className="max-w-xs text-stone-500">Scan several records in a row and add them together, or import a CSV.</p>
           <div className="mt-2 flex gap-2">
-            <Link href="/scan" className={buttonClass('primary')}>
+            <Link href="/scan?mode=batch" className={buttonClass('primary')}>
               Start scanning
             </Link>
             <Link href="/import" className={buttonClass('secondary')}>
@@ -285,6 +288,9 @@ export function Batch() {
           }}
         />
       )}
+      <p className="mt-6">
+        <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
+      </p>
     </Screen>
   )
 }

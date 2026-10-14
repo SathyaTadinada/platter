@@ -85,7 +85,7 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
                 <ReleaseCardView key={r.id} card={toCard(r)} onPick={() => onPick(r)} extra={result && <RunoutMatch result={result} />} />
               ))}
             </ul>
-            <DiscogsCredit />
+            <DiscogsCredit url={`https://www.discogs.com/search/?q=${encodeURIComponent(q)}&type=release`} />
           </>
         )}
       </div>

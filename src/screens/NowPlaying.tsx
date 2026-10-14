@@ -5,6 +5,7 @@ import { Link, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { PlaySummary } from '../components/PlayButton'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { RecordRow, statCard } from '../components/stats'
 import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
@@ -62,6 +63,9 @@ export function NowPlaying() {
         <h2 className="mt-1 text-2xl font-bold tracking-tight">{item.title}</h2>
         <p className="text-stone-600 dark:text-stone-300">{item.artist}</p>
         <PlaySummary item={item} className="mt-2 text-sm text-stone-500" />
+        <p className="mt-1">
+          <DiscogsCredit url={`https://www.discogs.com/release/${item.releaseId}`} />
+        </p>
         <div className="mt-6 grid grid-cols-2 gap-2">
           <Link href={`/collection/${item.instanceId}`} className={buttonClass('secondary')}>
             Open record

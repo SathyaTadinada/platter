@@ -95,7 +95,7 @@ export function Results() {
               ))}
           </ul>
           <p className="mt-4">
-            <DiscogsCredit />
+            <DiscogsCredit url={`https://www.discogs.com/search/?q=${encodeURIComponent(describeQuery(params))}&type=release`} />
           </p>
         </>
       )}

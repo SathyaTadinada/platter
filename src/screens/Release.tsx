@@ -6,6 +6,7 @@ import { addWant, getOwnedInstances, getRelease, removeWant } from '../api/disco
 import { AddForm, type Added } from '../components/AddForm'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Identifiers } from '../components/Identifiers'
+import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
 import { ShareButton } from '../components/ShareButton'
 import { RecordRow, statCard } from '../components/stats'
@@ -60,7 +61,13 @@ export function Release({ id }: { id: string }) {
     }
   }
 
-  if (release.loading && !r) return <Spinner />
+  if (release.loading && !r) {
+    return (
+      <Screen title="" back={back}>
+        <Spinner />
+      </Screen>
+    )
+  }
   if (!r) {
     return (
       <Screen title="Release" back={back}>
@@ -138,6 +145,9 @@ export function Release({ id }: { id: string }) {
               <Heart size={16} className={own?.wanted ? 'fill-current' : ''} aria-hidden />
               {own?.wanted ? 'On your wantlist' : 'Add to wantlist'}
             </button>
+          </div>
+          <div className="mt-3">
+            <ListenLinks releaseId={releaseId} artist={joinArtists(r.artists)} title={r.title} identifiers={r.identifiers} />
           </div>
           {error && (
             <div className="mt-3">

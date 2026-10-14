@@ -1,6 +1,6 @@
 # Platter
 
-Scan the barcode on a record and add it to your Discogs collection. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
+Catalog your records on Discogs: scan a barcode to add a record, see what your collection is worth, and keep track of what you play. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
 
 Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](https://platter.tadinada.com/?demo).
 
@@ -8,13 +8,15 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 
 - Browse your collection as a grid or list, and search across artist, title, label, genre, and your own notes
 - Filter by crate (Discogs folders), format, genre, style, decade, rating, or any custom field, then sort or shuffle
-- Record pages with tracklist, rating, crate, and editable custom fields (price, dates, and play count get their own editors), and a choice of cover from the release's other Discogs photos
-- Condition, price, date, store, location, and notes set while adding, saved to your custom fields in one go. Without purchase or location fields, those details go into Notes as a readable line instead. In a batch, store, date, and location can be set once for every record
+- Record pages with tracklist, rating, crate, editable custom fields (price, dates, and play count get their own editors), barcodes and runouts, market prices, links to stream the album, and a choice of cover from the release's other Discogs photos
+- Search results open a page for that release, laid out like a record page, where you can add it with its condition, price, store, date, location, and notes filled in, or put it on your wantlist
+- In a batch, store, date, and location can be set once for every record. Purchase details without a field of their own go into Notes as a readable line
 - Export any filtered view as a CSV in the same columns Discogs uses
 - Stats tab with the collection's value from Discogs, with a daily reading kept on the device for a chart over time, what you paid next to what records go for now, your most valuable records, and sorting by value. Per-record prices use Discogs' suggested price for the copy's condition when seller settings are filled in, otherwise the lowest current listing. Prices refresh on their own in the background after each sync, at a pace that leaves room under the rate limit
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
-- Shows matching releases with cover, label, catalog number, country, year, and format
+- Shows matching releases with cover, label, catalog number, country, year, and format, and can narrow them to ones you own, other pressings of ones you own, or new ones
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
+- Wantlist page, with each want opening its release page
 - Falls back to MusicBrainz when Discogs doesn't know a barcode
 - Tells pressings apart by the runout: type what's etched in the dead wax, or read it from a photo, and candidates are ranked against Discogs' Matrix / Runout data, allowing for lookalike characters (O/0, I/1, S/5, B/8) and partial transcriptions
 - Reads catalog numbers off a photo of the spine
@@ -26,14 +28,17 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Listening stats: plays by month, most played, recently played, and records that haven't been on in a year
 - Sort by most played, recently played, or location
 - Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks
-- Accent color picker
+- Light, dark, or system theme, and a choice of accent color
+- Streaming links: Apple Music and album.link (every service) for the exact album, looked up only when tapped, plus searches on Spotify, YouTube Music, and Bandcamp
 - A demo with a sample collection, for trying it without a Discogs account
 
 Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.
 
 ## How it works
 
-Everything runs in the browser. There's no database and no user accounts. API calls go directly from the browser to `api.discogs.com`, which allows cross-origin requests.
+Everything runs in the browser. There's no server-side database and no user accounts; Platter keeps its data in the browser's IndexedDB. API calls go directly from the browser to `api.discogs.com`, which allows cross-origin requests.
+
+Other services are only contacted when they're needed: MusicBrainz and the Cover Art Archive when a barcode isn't on Discogs, Apple's iTunes Search API when you tap Apple Music or All services, and ListenBrainz if you connect it. The content security policy in `public/_headers` lists every host the app can talk to.
 
 Two ways to sign in:
 
@@ -75,6 +80,8 @@ Platter runs on the Cloudflare Workers free plan.
    ```
 
 5. Deploy with `npm run deploy`.
+
+Discogs doesn't allow "Discogs" in an app's name except as "<your name> for Discogs" (see their [Application Name and Description Policy](https://support.discogs.com/hc/en-us/articles/360009207054-Application-Name-and-Description-Policy)), so pick your own name when registering.
 
 Skip steps 3 and 4 if you only want personal access tokens; the "Log in with Discogs" button won't work, but everything else will.
 

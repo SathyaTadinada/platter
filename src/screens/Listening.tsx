@@ -1,8 +1,10 @@
 import { Shuffle } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
 import { buttonClass, Card, Notice, Section, Spinner } from '../components/ui'
 import { useListening, usePlayFields } from '../hooks/plays'
+import { useSignedIn } from '../hooks/session'
 import { listeningStats, type Listening } from '../lib/plays'
 import { dayAgo } from '../lib/time'
 import { byMonth, localDate } from '../lib/value'
@@ -12,6 +14,7 @@ const TOP = 8
 // The Listening view of the Stats tab
 export function ListeningStats() {
   const data = useListening()
+  const { username } = useSignedIn()
   const ids = usePlayFields()
   const [, navigate] = useLocation()
   if (!data) return <Spinner />
@@ -99,6 +102,9 @@ export function ListeningStats() {
           </Section>
         )}
       </div>
+      <p className="lg:col-span-2">
+        <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
+      </p>
     </div>
   )
 }

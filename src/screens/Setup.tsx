@@ -35,7 +35,6 @@ export function Setup() {
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
           Platter saves details like price and location to your Discogs custom fields. Fields can only be added on the Discogs website.
-          Anything without a field goes into Notes.
         </p>
       </Section>
 
