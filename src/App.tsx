@@ -9,9 +9,12 @@ import { Spinner } from './components/ui'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
 import { SessionProvider, useSession } from './hooks/session'
+import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
+import { Batch } from './screens/Batch'
+import { Import } from './screens/Import'
 import { Results } from './screens/Results'
 import { Library } from './screens/Library'
 import { Record } from './screens/Record'
@@ -80,19 +83,23 @@ function Routes({ error }: { error?: string }) {
 
   return (
     <SyncProvider>
-      <Shell>
-        <Switch>
-          <Route path="/" component={Library} />
-          <Route path="/library/:id">{(p) => <Record id={p.id} />}</Route>
-          <Route path="/scan" component={Scan} />
-          <Route path="/search" component={Search} />
-          <Route path="/results" component={Results} />
-          <Route path="/setup" component={Setup} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/about" component={About} />
-          <Route component={Library} />
-        </Switch>
-      </Shell>
+      <QueueProvider>
+        <Shell>
+          <Switch>
+            <Route path="/" component={Library} />
+            <Route path="/library/:id">{(p) => <Record id={p.id} />}</Route>
+            <Route path="/scan" component={Scan} />
+            <Route path="/batch" component={Batch} />
+            <Route path="/import" component={Import} />
+            <Route path="/search" component={Search} />
+            <Route path="/results" component={Results} />
+            <Route path="/setup" component={Setup} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/about" component={About} />
+            <Route component={Library} />
+          </Switch>
+        </Shell>
+      </QueueProvider>
     </SyncProvider>
   )
 }

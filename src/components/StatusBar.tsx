@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { DiscogsClient } from '../api/discogs/client'
 import { useSession } from '../hooks/session'
+import { useQueue } from '../hooks/queue'
 import { useSync } from '../hooks/sync'
 
 const idle = { active: 0, waitUntil: null }
@@ -24,6 +25,7 @@ export function StatusBar() {
   const { client } = useSession()
   const status = useClientStatus(client)
   const sync = useSync()
+  const { run } = useQueue()
   const waiting = status.waitUntil !== null
   const now = useNow(waiting)
 
@@ -31,6 +33,8 @@ export function StatusBar() {
   if (waiting) {
     const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
     text = `Discogs rate limit, continuing in ${s}s`
+  } else if (run) {
+    text = run.kind === 'lookup' ? `Looking up scans (${Math.min(run.done + 1, run.total)} of ${run.total})` : `Adding to your collection (${Math.min(run.done + 1, run.total)} of ${run.total})`
   } else if (sync.running) {
     text = sync.total > 1 ? `${sync.label} (page ${sync.done} of ${sync.total})` : `${sync.label}…`
   }

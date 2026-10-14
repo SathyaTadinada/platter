@@ -36,9 +36,18 @@ function rememberCamera(id: string) {
 
 type Caps = { torch?: boolean; zoom?: { min: number; max: number } }
 
+const REPEAT_GAP = 4000 // in continuous mode, ignore the same barcode for this long
+const PAUSE_AFTER_READ = 1200
+
 // Runs the camera into `videoRef` while `enabled`, decoding frames until a
-// barcode is confirmed, then calls onCode and stops.
-export function useScanner(videoRef: RefObject<HTMLVideoElement | null>, onCode: (code: string) => void, enabled: boolean) {
+// barcode is confirmed. Normally it then calls onCode and stops; in continuous
+// mode (batch scanning) it pauses briefly and keeps going.
+export function useScanner(
+  videoRef: RefObject<HTMLVideoElement | null>,
+  onCode: (code: string) => void,
+  enabled: boolean,
+  continuous = false,
+) {
   const [state, setState] = useState<ScannerState>('idle')
   const [cameras, setCameras] = useState<Camera[]>([])
   const [cameraId, setCameraId] = useState<string | undefined>()
@@ -47,6 +56,8 @@ export function useScanner(videoRef: RefObject<HTMLVideoElement | null>, onCode:
   const trackRef = useRef<MediaStreamTrack | null>(null)
   const onCodeRef = useRef(onCode)
   onCodeRef.current = onCode
+  const continuousRef = useRef(continuous)
+  continuousRef.current = continuous
 
   useEffect(() => {
     if (!enabled) {
@@ -57,6 +68,7 @@ export function useScanner(videoRef: RefObject<HTMLVideoElement | null>, onCode:
     let stream: MediaStream | null = null
     let timer = 0
     let frame = 0
+    let last = { code: '', at: 0 }
     const confirmer = new ReadConfirmer()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
@@ -129,10 +141,21 @@ export function useScanner(videoRef: RefObject<HTMLVideoElement | null>, onCode:
         try {
           const code = confirmer.push(await decode(ctx.getImageData(0, 0, canvas.width, canvas.height), binarizer), performance.now())
           if (code && !stopped) {
-            stopped = true
-            navigator.vibrate?.(40)
-            onCodeRef.current(code)
-            return
+            const now = performance.now()
+            if (!continuousRef.current) {
+              stopped = true
+              navigator.vibrate?.(40)
+              onCodeRef.current(code)
+              return
+            }
+            if (code !== last.code || now - last.at > REPEAT_GAP) {
+              last = { code, at: now }
+              navigator.vibrate?.(40)
+              onCodeRef.current(code)
+              confirmer.reset()
+              timer = window.setTimeout(() => loop(decode), PAUSE_AFTER_READ)
+              return
+            }
           }
         } catch {
           setState('error')
