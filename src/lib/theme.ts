@@ -1,5 +1,5 @@
-// Light, dark, or whatever the system says. Tailwind's dark: styles key off
-// a class on <html>, so the choice here wins over the system setting.
+// Light, dark, or whatever the system says. A "light" or "dark" class on <html>
+// overrides the system setting (see the dark variant in index.css).
 export type Theme = 'system' | 'light' | 'dark'
 
 const KEY = 'platter.theme'
@@ -18,7 +18,8 @@ export function getTheme(): Theme {
 export function applyTheme(theme: Theme = getTheme()) {
   const dark = theme === 'dark' || (theme === 'system' && media().matches)
   const root = document.documentElement
-  root.classList.toggle('dark', dark)
+  root.classList.toggle('dark', theme === 'dark')
+  root.classList.toggle('light', theme === 'light')
   root.style.colorScheme = dark ? 'dark' : 'light' // form controls and scrollbars
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0c0a09' : '#fafaf9')
 }

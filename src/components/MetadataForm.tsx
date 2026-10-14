@@ -1,12 +1,12 @@
-import { useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { CollectionField } from '../api/discogs/types'
 import { useFieldSuggestions } from '../hooks/useFields'
+import { inline, Row } from './CopyDetails'
 import { fieldFor, type FieldKey, type FieldMatch } from '../lib/fields'
 import type { Metadata } from '../lib/metadata'
 
 type Part = 'conditions' | 'price' | 'date' | 'store' | 'location' | 'notes'
 
-const input = 'min-h-11 w-full rounded-xl border border-stone-300 bg-transparent px-3 text-base dark:border-stone-700'
 const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 
 function currencySymbol(currency: string) {
@@ -50,153 +50,173 @@ export function MetadataForm({
   )
   const allPurchaseMissing = matches !== null && shownPurchase.length > 1 && shownPurchase.every((k) => !field(k))
 
-  // a missing field still works if Notes exists; say so quietly
-  const hint = (k: FieldKey) => {
-    if (field(k) || (allPurchaseMissing && purchaseKeys.includes(k))) return null
-    return <span className="font-normal text-stone-400"> · {notes ? 'in Notes' : 'not saved'}</span>
-  }
+  // a missing field still works if Notes exists; say so quietly in its label
+  const hintText = (k: FieldKey) => (field(k) || (allPurchaseMissing && purchaseKeys.includes(k)) ? '' : notes ? 'in Notes' : 'not saved')
+  const label = (text: string, k?: FieldKey) => (k && hintText(k) ? `${text} · ${hintText(k)}` : text)
 
-  const label = (text: string, k?: FieldKey) => (
-    <span className="mb-1 block text-sm font-medium">
-      {text}
-      {k && hint(k)}
-    </span>
+  const select = (value: string, onPick: (v: string) => void, options: string[], none: string, name: string) => (
+    <select
+      aria-label={name}
+      value={value}
+      onChange={(e) => onPick(e.target.value)}
+      className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
+    >
+      <option value="">{none}</option>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
   )
 
-  const conditionInput = (k: 'mediaCondition' | 'sleeveCondition', f: CollectionField | null) => {
+  const condition = (k: 'mediaCondition' | 'sleeveCondition', f: CollectionField | null) => {
     if (!f) return null
+    const name = k === 'mediaCondition' ? 'Media Condition' : 'Sleeve Condition'
     return (
-      <label className="block min-w-0">
-        {label(k === 'mediaCondition' ? 'Media' : 'Sleeve')}
+      <Row label={name}>
         {f.type === 'dropdown' ? (
-          <select value={value[k] ?? ''} onChange={(e) => set(k, e.target.value)} className={input}>
-            <option value="">Not graded</option>
-            {f.options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
+          select(value[k] ?? '', (v) => set(k, v), f.options, 'Not graded', name)
         ) : (
-          <input value={value[k] ?? ''} onChange={(e) => set(k, e.target.value)} className={input} />
+          <input aria-label={name} value={value[k] ?? ''} onChange={(e) => set(k, e.target.value)} placeholder="Add" className={inline} />
         )}
-      </label>
+      </Row>
     )
   }
 
   const loc = field('location')
+  const shown = (part: Part) => parts.includes(part)
 
   return (
-    <div className="space-y-3">
-      {parts.includes('conditions') && (field('mediaCondition') || field('sleeveCondition')) && (
-        <div className="grid grid-cols-2 gap-2">
-          {conditionInput('mediaCondition', field('mediaCondition'))}
-          {conditionInput('sleeveCondition', field('sleeveCondition'))}
-        </div>
-      )}
-
-      {(parts.includes('price') || parts.includes('date')) && (
-        <div className={parts.includes('price') && parts.includes('date') ? 'grid grid-cols-2 gap-2' : ''}>
-          {parts.includes('price') && (
-            <label className="block min-w-0">
-              {label('Price', 'purchasePrice')}
-              <span className="relative block">
-                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-500">
-                  {currencySymbol(currency)}
-                </span>
-                <input
-                  value={value.price ?? ''}
-                  onChange={(e) => set('price', e.target.value)}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  className={`${input} pl-8`}
-                />
-              </span>
-            </label>
-          )}
-          {parts.includes('date') && (
-            <label className="block min-w-0">
-              <span className="mb-1 flex items-baseline justify-between gap-2 text-sm font-medium">
-                <span className="truncate">Date{hint('purchaseDate')}</span>
-                {value.date !== today() && (
-                  <button type="button" onClick={() => set('date', today())} className="text-xs font-medium text-stone-500 underline">
-                    Today
-                  </button>
-                )}
-              </span>
-              {/* iOS gives date inputs a fixed minimum width; let it shrink */}
-              <input
-                type="date"
-                value={value.date ?? ''}
-                onChange={(e) => set('date', e.target.value)}
-                className={`${input} min-w-0 appearance-none [&::-webkit-date-and-time-value]:text-left`}
-              />
-            </label>
-          )}
-        </div>
-      )}
-
-      {parts.includes('store') && (
-        <label className="block">
-          {label('Bought from', 'purchasedFrom')}
-          <input
-            value={value.store ?? ''}
-            onChange={(e) => set('store', e.target.value)}
-            list={`${id}-stores`}
-            autoComplete="off"
-            placeholder="Store or seller"
-            className={input}
-          />
-          <datalist id={`${id}-stores`}>
-            {stores.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </label>
-      )}
-
-      {allPurchaseMissing && (
-        <p className="-mt-1 text-xs text-stone-400">{notes ? 'Saved in Notes' : 'Not saved: no purchase fields or Notes on Discogs'}</p>
-      )}
-
-      {parts.includes('location') && (
-        <label className="block">
-          {label('Location', 'location')}
-          {loc?.type === 'dropdown' ? (
-            <select value={value.location ?? ''} onChange={(e) => set('location', e.target.value)} className={input}>
-              <option value="">None</option>
-              {loc.options.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
+    <div className="space-y-2">
+      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+        {shown('conditions') && condition('mediaCondition', field('mediaCondition'))}
+        {shown('conditions') && condition('sleeveCondition', field('sleeveCondition'))}
+        {shown('price') && (
+          <Row label={label('Purchase Price', 'purchasePrice')}>
+            <input
+              aria-label="Purchase price"
+              value={value.price ?? ''}
+              onChange={(e) => set('price', e.target.value)}
+              inputMode="decimal"
+              placeholder={`${currencySymbol(currency)}0.00`}
+              className={inline}
+            />
+          </Row>
+        )}
+        {shown('date') && (
+          <Row label={label('Purchase Date', 'purchaseDate')}>
+            <DateControl value={value.date ?? ''} onChange={(v) => set('date', v)} />
+          </Row>
+        )}
+        {shown('store') && (
+          <Row label={label('Purchased From', 'purchasedFrom')}>
+            <input
+              aria-label="Purchased from"
+              value={value.store ?? ''}
+              onChange={(e) => set('store', e.target.value)}
+              list={`${id}-stores`}
+              autoComplete="off"
+              placeholder="Add"
+              className={inline}
+            />
+            <datalist id={`${id}-stores`}>
+              {stores.map((s) => (
+                <option key={s} value={s} />
               ))}
-            </select>
-          ) : (
-            <>
-              <input
-                value={value.location ?? ''}
-                onChange={(e) => set('location', e.target.value)}
-                list={`${id}-locations`}
-                autoComplete="off"
-                placeholder="Shelf, crate, room"
-                className={input}
-              />
-              <datalist id={`${id}-locations`}>
-                {locations.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
-            </>
-          )}
-        </label>
-      )}
-
-      {parts.includes('notes') && notes && (
-        <label className="block">
-          {label('Notes')}
-          <textarea value={value.notes ?? ''} onChange={(e) => set('notes', e.target.value)} rows={2} className={`${input} py-2`} />
-        </label>
+            </datalist>
+          </Row>
+        )}
+        {shown('location') && (
+          <Row label={label('Location', 'location')}>
+            {loc?.type === 'dropdown' ? (
+              select(value.location ?? '', (v) => set('location', v), loc.options, 'None', 'Location')
+            ) : (
+              <>
+                <input
+                  aria-label="Location"
+                  value={value.location ?? ''}
+                  onChange={(e) => set('location', e.target.value)}
+                  list={`${id}-locations`}
+                  autoComplete="off"
+                  placeholder="Add"
+                  className={inline}
+                />
+                <datalist id={`${id}-locations`}>
+                  {locations.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              </>
+            )}
+          </Row>
+        )}
+        {shown('notes') && notes && (
+          <Row label="Notes" stacked>
+            <textarea
+              aria-label="Notes"
+              value={value.notes ?? ''}
+              onChange={(e) => set('notes', e.target.value)}
+              rows={3}
+              placeholder="Add notes"
+              className={`${inline} !text-left`}
+            />
+          </Row>
+        )}
+      </ul>
+      {allPurchaseMissing && (
+        <p className="px-1 text-xs text-stone-500">
+          {notes ? 'Purchase details are saved in Notes' : 'Purchase details have nowhere to go: no purchase fields or Notes on Discogs'}
+        </p>
       )}
     </div>
+  )
+}
+
+// Like the date rows on a record page: "Add" until a date is picked, so an empty
+// field doesn't show Safari's greyed-out today as if it were set
+function DateControl({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [picking, setPicking] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (!picking) return
+    ref.current?.focus()
+    try {
+      ref.current?.showPicker()
+    } catch {
+      // focus is enough
+    }
+  }, [picking])
+
+  if (!value && !picking) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <button
+          type="button"
+          onClick={() => onChange(today())}
+          className="rounded-lg px-2 py-2 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="rounded-lg px-2 py-2 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
+          Add
+        </button>
+      </div>
+    )
+  }
+  return (
+    <input
+      ref={ref}
+      type="date"
+      aria-label="Purchase date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={() => setPicking(false)}
+      className={`${inline} ml-auto block h-10 w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
+    />
   )
 }

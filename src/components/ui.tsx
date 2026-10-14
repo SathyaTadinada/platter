@@ -1,6 +1,7 @@
 import { canGoBack } from '../lib/nav'
 import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
+import { useEffect } from 'react'
 import { Link, useLocation } from 'wouter'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -81,6 +82,10 @@ export function Screen({
   backdrop?: string // image shown blurred behind the top of the page
 }) {
   const [, navigate] = useLocation()
+  // the browser tab (and history menu) names the page
+  useEffect(() => {
+    document.title = typeof title === 'string' && title ? `${title} · Platter` : 'Platter'
+  }, [title])
   return (
     <div className="relative isolate">
       {backdrop && (

@@ -17,6 +17,17 @@ const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
   { id: 'catno', label: 'Catalog #', Icon: Tag },
   { id: 'title', label: 'Artist & title', Icon: Music2 },
 ]
+// the last tab picked comes back next time, like the scanner's mode
+const MODE_KEY = 'platter.searchMode'
+function savedMode(): Mode {
+  try {
+    const v = localStorage.getItem(MODE_KEY)
+    return v === 'catno' || v === 'title' ? v : 'barcode'
+  } catch {
+    return 'barcode'
+  }
+}
+
 const iconFor = Object.fromEntries(modes.map((m) => [m.id, m.Icon])) as Record<Mode, LucideIcon>
 
 const input = 'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base dark:border-stone-700 dark:bg-stone-900'
@@ -24,7 +35,18 @@ const input = 'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 
 export function Search() {
   const params = new URLSearchParams(useSearch())
   const [, navigate] = useLocation()
-  const [mode, setMode] = useState<Mode>((params.get('mode') as Mode) || 'barcode')
+  const [mode, setModeState] = useState<Mode>(() => {
+    const asked = params.get('mode')
+    return asked && modes.some((m) => m.id === asked) ? (asked as Mode) : savedMode()
+  })
+  function setMode(m: Mode) {
+    setModeState(m)
+    try {
+      localStorage.setItem(MODE_KEY, m)
+    } catch {
+      // not important
+    }
+  }
   const [barcode, setBarcode] = useState(params.get('barcode') ?? '')
   const [catno, setCatno] = useState(params.get('catno') ?? '')
   const [artist, setArtist] = useState(params.get('artist') ?? '')

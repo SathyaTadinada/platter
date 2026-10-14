@@ -13,6 +13,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
+import { formatBarcodeInput } from '../lib/barcode'
 import { formatPrice, hasMetadata, type Metadata } from '../lib/metadata'
 import { chooseRelease, retryFailed } from '../lib/queue'
 
@@ -177,8 +178,8 @@ export function Batch() {
       {groups.ready.length > 0 && (
         <Section title={`Ready to add (${groups.ready.length})`}>
           {shared && groups.ready.some((i) => i.source !== 'csv') && (
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-              <p className="mb-3 font-semibold">Same for every record</p>
+            <div>
+              <p className="mb-2 px-1 text-sm font-medium">Same for every record</p>
               <MetadataForm
                 value={shared}
                 onChange={updateShared}
@@ -402,7 +403,7 @@ function Row({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{r ? r.title : item.barcode}</p>
+        <p className="truncate font-medium">{r ? r.title : item.barcode && formatBarcodeInput(item.barcode)}</p>
         {r && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{r.artist}</p>}
         {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         {status && <p className="text-xs text-stone-500">{status}</p>}

@@ -4,6 +4,7 @@ import { searchReleases } from '../api/discogs/endpoints'
 import type { SearchResult } from '../api/discogs/types'
 import type { QueueItem } from '../db/db'
 import { useSignedIn } from '../hooks/session'
+import { formatBarcodeInput } from '../lib/barcode'
 import { toCard } from '../lib/format'
 import type { Ranked } from '../lib/runout'
 import { DiscogsCredit, ReleaseCardView } from './ReleaseCardView'
@@ -51,7 +52,7 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
     >
       <div className="flex items-center justify-between border-b border-stone-200 px-5 py-3 dark:border-stone-800">
         <h2 id="resolve-title" className="text-lg font-bold">
-          {item.barcode ? `Which release is ${item.barcode}?` : 'Pick a release'}
+          {item.barcode ? `Which release is ${formatBarcodeInput(item.barcode ?? '')}?` : 'Pick a release'}
         </h2>
         <button
           type="button"

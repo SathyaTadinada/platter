@@ -49,7 +49,13 @@ export function Record({ id }: { id: string }) {
     }
   }, [item?.instanceId, item?.releaseId, item?.masterId])
 
-  if (item === undefined) return <Spinner />
+  if (item === undefined) {
+    return (
+      <Screen title="" back={back}>
+        <Spinner />
+      </Screen>
+    )
+  }
   if (item === null || !item) {
     return (
       <Screen title="Not found" back={back}>

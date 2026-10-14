@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Route, Switch, useLocation, useSearch } from 'wouter'
 import { loadSession } from './auth/auth'
 import { finishOAuth } from './auth/oauthFlow'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { BottomNav, SideNav } from './components/Nav'
 import { StatusBar } from './components/StatusBar'
 import { Toaster } from './components/Toaster'
@@ -77,9 +78,11 @@ export default function App() {
   const boot = useBoot()
   if (boot.state === 'loading') return <Spinner label="Opening Platter" />
   return (
-    <SessionProvider initial={boot.session}>
-      <Routes error={boot.error} />
-    </SessionProvider>
+    <ErrorBoundary>
+      <SessionProvider initial={boot.session}>
+        <Routes error={boot.error} />
+      </SessionProvider>
+    </ErrorBoundary>
   )
 }
 
