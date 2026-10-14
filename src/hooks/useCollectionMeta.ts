@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { getFields, getFolders } from '../api/discogs/endpoints'
 import type { CollectionField, Folder } from '../api/discogs/types'
 import { useSignedIn } from './session'
@@ -10,17 +11,29 @@ type Meta = { folders: Folder[]; fields: CollectionField[] }
 let cache: { at: number; user: string; meta: Meta } | null = null
 const MAX_AGE = 5 * 60 * 1000
 
+// Bumped when crates or fields change, so open screens fetch again
+let version = 0
+const listeners = new Set<() => void>()
+
 export const invalidateCollectionMeta = () => {
   cache = null
+  version++
+  listeners.forEach((l) => l())
+}
+
+const subscribe = (l: () => void) => {
+  listeners.add(l)
+  return () => listeners.delete(l)
 }
 
 export function useCollectionMeta() {
   const { client, username } = useSignedIn()
+  const v = useSyncExternalStore(subscribe, () => version)
   return useAsync(async () => {
     if (cache && cache.user === username && Date.now() - cache.at < MAX_AGE) return cache.meta
     const [{ folders }, { fields }] = await Promise.all([getFolders(client, username), getFields(client, username)])
     const meta = { folders: folders.filter((f) => f.id !== 0), fields: [...fields].sort((a, b) => a.position - b.position) }
     cache = { at: Date.now(), user: username, meta }
     return meta
-  }, [client, username])
+  }, [client, username, v])
 }

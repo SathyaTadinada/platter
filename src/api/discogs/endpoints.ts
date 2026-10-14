@@ -4,6 +4,7 @@ import type {
   AddResponse,
   CollectionPage,
   FieldsResponse,
+  Folder,
   FoldersResponse,
   IdentityResponse,
   MarketplaceStats,
@@ -77,3 +78,14 @@ export const editInstance = (c: DiscogsClient, username: string, t: InstanceTarg
 
 export const deleteInstance = (c: DiscogsClient, username: string, t: InstanceTarget) =>
   c.request<null>('DELETE', instancePath(username, t))
+
+// Crates are Discogs collection folders
+export const createFolder = (c: DiscogsClient, username: string, name: string) =>
+  c.request<Folder>('POST', `${u(username)}/collection/folders`, { body: { name } })
+
+export const renameFolder = (c: DiscogsClient, username: string, folderId: number, name: string) =>
+  c.request<Folder>('POST', `${u(username)}/collection/folders/${folderId}`, { body: { name } })
+
+// Discogs only deletes empty folders
+export const deleteFolder = (c: DiscogsClient, username: string, folderId: number) =>
+  c.request<null>('DELETE', `${u(username)}/collection/folders/${folderId}`)
