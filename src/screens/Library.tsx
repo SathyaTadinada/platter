@@ -1,12 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowDownUp, Disc3, Download, LayoutGrid, List as ListIcon, RefreshCw, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowDownUp, Check, Disc3, Download, LayoutGrid, List as ListIcon, ListChecks, RefreshCw, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
+import { deleteInstance, editInstance } from '../api/discogs/endpoints'
 import { FilterSheet } from '../components/FilterSheet'
+import { toast } from '../components/Toaster'
 import { Stars } from '../components/Stars'
 import { Button, buttonClass, IconButton, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
-import { useCollectionMeta } from '../hooks/useCollectionMeta'
+import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import {
@@ -22,6 +24,7 @@ import {
   type Filters,
   type LibraryQuery,
 } from '../lib/library'
+import { runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 
 type View = 'grid' | 'list'
@@ -37,7 +40,7 @@ function loadView(): View {
 }
 
 export function Library() {
-  const { username } = useSignedIn()
+  const { client, username } = useSignedIn()
   const sync = useSync()
   const search = useSearch()
   const [, navigate] = useLocation()
@@ -46,6 +49,7 @@ export function Library() {
   const [view, setView] = useState<View>(loadView)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [limit, setLimit] = useState(PAGE)
+  const [selected, setSelected] = useState<Set<number> | null>(null) // null = not selecting
   const meta = useCollectionMeta()
 
   const items = useLiveQuery(() => db.collection.toArray(), [])
@@ -159,8 +163,58 @@ export function Library() {
     </div>
   )
 
-  const actions = (
+  const toggle = (id: number) =>
+    setSelected((s) => {
+      const next = new Set(s)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  async function bulk(kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) {
+    const chosen = filtered.filter((i) => selected?.has(i.instanceId))
+    const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
+    const r = await runBulk(
+      chosen,
+      async (i) => {
+        if (kind === 'remove') {
+          await deleteInstance(client, username, target(i))
+          await db.collection.delete(i.instanceId)
+        } else {
+          await editInstance(client, username, target(i), { folder_id: folderId })
+          await db.collection.update(i.instanceId, { folderId })
+        }
+      },
+      onProgress,
+    )
+    invalidateCollectionMeta()
+    const verb = kind === 'remove' ? 'Removed' : 'Moved'
+    const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
+    if (r.failed.length) toast(`${verb} ${n(r.done.length)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
+    else toast(`${verb} ${n(r.done.length)}.`, { tone: 'success' })
+    setSelected(null)
+  }
+
+  const selectActions = (
     <>
+      <button
+        type="button"
+        onClick={() => setSelected(new Set(selected?.size === filtered.length ? [] : filtered.map((i) => i.instanceId)))}
+        className="rounded-lg px-2 py-1.5 text-sm font-medium"
+      >
+        {selected?.size === filtered.length ? 'Select none' : 'Select all'}
+      </button>
+      <button type="button" onClick={() => setSelected(null)} className="rounded-lg px-2 py-1.5 text-sm font-semibold">
+        Done
+      </button>
+    </>
+  )
+
+  const actions = selected ? selectActions : (
+    <>
+      <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
+        <ListChecks size={20} />
+      </IconButton>
       <IconButton label="Pick a random record" onClick={shuffle} disabled={!filtered.length}>
         <Shuffle size={20} />
       </IconButton>
@@ -225,13 +279,13 @@ export function Library() {
             {view === 'grid' ? (
               <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {g.items.map((i) => (
-                  <GridTile key={i.instanceId} item={i} />
+                  <GridTile key={i.instanceId} item={i} selected={selected?.has(i.instanceId)} onSelect={selected ? () => toggle(i.instanceId) : undefined} />
                 ))}
               </ul>
             ) : (
               <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
                 {g.items.map((i) => (
-                  <ListRow key={i.instanceId} item={i} />
+                  <ListRow key={i.instanceId} item={i} selected={selected?.has(i.instanceId)} onSelect={selected ? () => toggle(i.instanceId) : undefined} />
                 ))}
               </ul>
             )}
@@ -252,30 +306,80 @@ export function Library() {
   }
 
   return (
-    <Screen title="Library" width="full" actions={actions} toolbar={items?.length && fresh ? toolbar : undefined}>
+    <Screen
+      title={selected ? (selected.size ? `${selected.size} selected` : 'Select records') : 'Library'}
+      width="full"
+      actions={actions}
+      toolbar={items?.length && fresh ? toolbar : undefined}
+    >
       {body}
+      {selected && selected.size > 0 && <BulkBar count={selected.size} folders={folders} onRun={bulk} />}
       {filtersOpen && facets && <FilterSheet facets={facets} filters={query.filters} count={filtered.length} onChange={setFilters} onClose={() => setFiltersOpen(false)} />}
     </Screen>
   )
 }
 
-function GridTile({ item }: { item: LibraryItem }) {
+type Selectable = { selected?: boolean; onSelect?: () => void }
+
+// In select mode a tap toggles the record instead of opening it
+function Tap({ item, onSelect, selected, className, children }: Selectable & { item: LibraryItem; className: string; children: React.ReactNode }) {
+  return onSelect ? (
+    <button type="button" onClick={onSelect} aria-pressed={selected} className={`w-full text-left ${className}`}>
+      {children}
+    </button>
+  ) : (
+    <Link href={`/library/${item.instanceId}`} className={className}>
+      {children}
+    </Link>
+  )
+}
+
+function Tick({ on }: { on?: boolean }) {
+  return (
+    <span
+      className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${
+        on ? 'border-accent-500 bg-accent-500 text-stone-950' : 'border-white bg-black/30 text-transparent'
+      }`}
+      aria-hidden
+    >
+      <Check size={14} strokeWidth={3} />
+    </span>
+  )
+}
+
+function GridTile({ item, selected, onSelect }: { item: LibraryItem } & Selectable) {
   return (
     <li className="min-w-0">
-      <Link href={`/library/${item.instanceId}`} className="group block">
-        <Cover item={item} className="aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98]" />
+      <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
+        <div className="relative">
+          <Cover
+            item={item}
+            className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${selected ? 'opacity-70 ring-4 ring-accent-500' : ''}`}
+          />
+          {onSelect && (
+            <span className="absolute top-2 right-2">
+              <Tick on={selected} />
+            </span>
+          )}
+        </div>
         <p className="mt-2 truncate text-sm font-semibold">{item.title}</p>
         <p className="truncate text-sm text-stone-500">{item.artist}</p>
-      </Link>
+      </Tap>
     </li>
   )
 }
 
-function ListRow({ item }: { item: LibraryItem }) {
+function ListRow({ item, selected, onSelect }: { item: LibraryItem } & Selectable) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
     <li>
-      <Link href={`/library/${item.instanceId}`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800">
+      <Tap
+        item={item}
+        selected={selected}
+        onSelect={onSelect}
+        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-amber-50 dark:bg-amber-950/30' : ''}`}
+      >
+        {onSelect && <Tick on={selected} />}
         <Cover item={item} small className="size-14 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{item.title}</p>
@@ -287,7 +391,7 @@ function ListRow({ item }: { item: LibraryItem }) {
             <Stars value={item.rating} size={12} />
           </span>
         )}
-      </Link>
+      </Tap>
     </li>
   )
 }
@@ -357,6 +461,75 @@ function ActiveFilters({ filters, facets, onChange }: { filters: Filters; facets
       <button type="button" onClick={() => onChange({ fields: {} })} className="px-2 text-sm text-stone-500 underline">
         Clear all
       </button>
+    </div>
+  )
+}
+
+// Pinned to the bottom while records are selected
+function BulkBar({
+  count,
+  folders,
+  onRun,
+}: {
+  count: number
+  folders: { id: number; name: string }[]
+  onRun: (kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) => Promise<void>
+}) {
+  const [confirm, setConfirm] = useState(false)
+  const [progress, setProgress] = useState<string | null>(null)
+  const records = `${count} record${count === 1 ? '' : 's'}`
+
+  async function run(kind: 'remove' | 'move', folderId?: number) {
+    const verb = kind === 'remove' ? 'Removing' : 'Moving'
+    setProgress(`${verb}…`)
+    await onRun(kind, folderId, (d, t) => setProgress(`${verb} ${d} of ${t}…`))
+    setProgress(null)
+    setConfirm(false)
+  }
+
+  return (
+    <div className="sticky bottom-3 z-10 mt-4">
+      <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        {progress ? (
+          <p className="py-2 text-center text-sm font-medium" role="status">
+            {progress}
+          </p>
+        ) : confirm ? (
+          <div className="space-y-2">
+            <p className="text-sm">Remove {records} from your Discogs collection? Their field values go with them.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" onClick={() => setConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={() => run('remove')}>
+                Remove
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <label className="relative">
+              <span className={buttonClass('secondary', 'w-full')}>Move to…</span>
+              <select
+                aria-label="Move to folder"
+                value=""
+                onChange={(e) => e.target.value && run('move', Number(e.target.value))}
+                className="absolute inset-0 opacity-0"
+              >
+                <option value="">Move to…</option>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button variant="danger" onClick={() => setConfirm(true)}>
+              Remove
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
