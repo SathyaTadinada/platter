@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  change,
   chartPaths,
+  distribution,
+  totalsBy,
   isFresh,
   localDate,
   paidTotal,
@@ -122,5 +125,41 @@ describe('chartPaths', () => {
     const p = chartPaths([snap('2026-10-01', 10), snap('2026-10-03', 20)], 100, 60, 0)!
     expect(p.line).toBe('M0.0,50.0 L100.0,10.0')
     expect(p.area).toBe('M0.0,50.0 L100.0,10.0 L100.0,60 L0.0,60 Z')
+  })
+})
+
+describe('change', () => {
+  it('gives the difference and percentage', () => {
+    expect(change(100, 125)).toEqual({ abs: 25, pct: 0.25 })
+    expect(change(0, 5)).toEqual({ abs: 5, pct: undefined })
+  })
+})
+
+describe('distribution', () => {
+  it('buckets amounts by price range', () => {
+    const b = distribution([3, 12, 15, 60, 250, 100], (n) => `$${n}`)
+    expect(b.map((x) => [x.label, x.count, x.total])).toEqual([
+      ['Under $10', 1, 3],
+      ['$10–$20', 2, 27],
+      ['$20–$50', 0, 0],
+      ['$50–$100', 1, 60],
+      ['$100+', 2, 350],
+    ])
+  })
+})
+
+describe('totalsBy', () => {
+  it('splits records across their groups and folds the tail into Other', () => {
+    const rows = [
+      { row: ['Rock'], amount: 10 },
+      { row: ['Rock', 'Pop'], amount: 20 },
+      { row: ['Jazz'], amount: 5 },
+      { row: ['Folk'], amount: 1 },
+    ]
+    expect(totalsBy(rows, (r) => r, 3)).toEqual([
+      { label: 'Rock', total: 20 },
+      { label: 'Pop', total: 10 },
+      { label: 'Other', total: 6 },
+    ])
   })
 })

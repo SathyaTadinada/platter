@@ -122,8 +122,45 @@ export function chartPaths(history: ValueSnapshot[], w: number, h: number, pad =
   const hi = Math.max(...values) + spread * 0.25
   const x = (i: number) => pad + ((t[i] - t0) / span) * (w - pad * 2)
   const y = (v: number) => h - pad - ((v - lo) / (hi - lo)) * (h - pad * 2)
-  const points = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`)
-  const line = `M${points.join(' L')}`
+  const points = values.map((v, i) => ({ x: x(i), y: y(v) }))
+  const line = `M${points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`
   const area = `${line} L${x(values.length - 1).toFixed(1)},${h} L${x(0).toFixed(1)},${h} Z`
-  return { line, area }
+  return { line, area, points }
+}
+
+// Change between two amounts; pct is undefined when starting from zero
+export function change(from: number, to: number) {
+  const abs = to - from
+  return { abs, pct: from ? abs / from : undefined }
+}
+
+export type Bucket = { label: string; count: number; total: number }
+
+// How many records fall in each price range, and what they add up to. Cheapest first.
+export function distribution(amounts: number[], money: (n: number) => string): Bucket[] {
+  const ranges: [number, number, string][] = [
+    [0, 10, `Under ${money(10)}`],
+    [10, 20, `${money(10)}–${money(20)}`],
+    [20, 50, `${money(20)}–${money(50)}`],
+    [50, 100, `${money(50)}–${money(100)}`],
+    [100, Infinity, `${money(100)}+`],
+  ]
+  return ranges.map(([lo, hi, label]) => {
+    const inRange = amounts.filter((a) => a >= lo && a < hi)
+    return { label, count: inRange.length, total: inRange.reduce((n, a) => n + a, 0) }
+  })
+}
+
+// Totals per group (genre, decade…), biggest first, with the rest folded into "Other"
+export function totalsBy<T>(rows: { row: T; amount: number }[], keys: (row: T) => string[], top = 6) {
+  const totals = new Map<string, number>()
+  for (const { row, amount } of rows) {
+    const ks = keys(row)
+    // a record with two genres counts half toward each, so the bars still add up
+    for (const k of ks) totals.set(k, (totals.get(k) ?? 0) + amount / ks.length)
+  }
+  const sorted = [...totals.entries()].map(([label, total]) => ({ label, total })).sort((a, b) => b.total - a.total)
+  if (sorted.length <= top) return sorted
+  const rest = sorted.slice(top - 1).reduce((n, g) => n + g.total, 0)
+  return [...sorted.slice(0, top - 1), { label: 'Other', total: rest }]
 }

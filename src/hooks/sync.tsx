@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { toast } from '../components/Toaster'
 import { getProfile } from '../api/discogs/endpoints'
 import type { DiscogsClient } from '../api/discogs/client'
+import { db } from '../db/db'
 import { recordCollectionValue, recordedToday } from '../lib/pricing'
+import { checkPrices } from './prices'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
 import { useSession } from './session'
 
@@ -33,7 +35,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           await syncWants(client, session.username, (done, total) => setState((s) => ({ ...s, done, total })))
         }
         setState(idle)
-        recordValue(client, session.username)
+        updateValues(client, session.username)
       } catch (e) {
         const message = (e as Error).message
         setState({ ...idle, error: message })
@@ -66,13 +68,16 @@ export function useSync() {
   return ctx
 }
 
-// One reading of the collection's value a day, for the chart. Not worth bothering anyone if it fails.
-async function recordValue(client: DiscogsClient, username: string) {
+// Keeps value data current without anyone asking: one reading of the total a day
+// for the chart, and per-record prices refreshed in the background once they're
+// over six hours old. Failures just wait for the next sync.
+async function updateValues(client: DiscogsClient, username: string) {
   try {
-    if (await recordedToday()) return
-    const profile = await getProfile(client, username)
-    await recordCollectionValue(client, username, profile.curr_abbr ?? 'USD')
+    const currency = (await getProfile(client, username)).curr_abbr ?? 'USD'
+    if (!(await recordedToday())) await recordCollectionValue(client, username, currency)
+    const ids = (await db.collection.toArray()).map((i) => i.releaseId)
+    await checkPrices(client, ids, currency)
   } catch {
-    // try again next sync
+    // next sync
   }
 }

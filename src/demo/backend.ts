@@ -45,6 +45,11 @@ const FIELDS: CollectionField[] = [
 
 function initialState(): State {
   const items = structuredClone((demo as unknown as { releases: CollectionItem[] }).releases)
+  // purchase prices on two out of three records, so "paid vs now" has something to compare
+  items.forEach((item, n) => {
+    if (n % 3 === 2 || item.notes?.some((x) => x.field_id === 5)) return
+    item.notes = [...(item.notes ?? []), { field_id: 5, value: usd(12 + ((item.id * 31) % 2400) / 100) }]
+  })
   return {
     folders: [
       { id: 1, name: 'Uncategorized' },

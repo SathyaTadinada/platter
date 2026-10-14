@@ -1,4 +1,4 @@
-import { Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
+import { ChartLine, Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
@@ -8,6 +8,7 @@ const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/', label: 'Collection', Icon: LibraryBig },
   { href: '/scan', label: 'Scan', Icon: ScanBarcode },
   { href: '/search', label: 'Search', Icon: Search },
+  { href: '/value', label: 'Value', Icon: ChartLine },
   { href: '/settings', label: 'Settings', Icon: Settings2 },
 ]
 

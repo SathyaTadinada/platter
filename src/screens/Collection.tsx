@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownUp,
-  ChartLine,
   Check,
   Disc3,
   Download,
@@ -186,9 +185,11 @@ export function Collection() {
       </label>
       <div className="flex items-center gap-2">
         {/* the visible pill sizes to the current label; the real select sits on top, invisible */}
-        <label className="relative inline-flex min-h-9 items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium dark:bg-stone-800">
-          <ArrowDownUp size={16} aria-hidden />
-          <span aria-hidden>{SORTS.find((s) => s.key === query.sort)?.label}</span>
+        <label className="relative inline-flex min-h-9 min-w-0 items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium dark:bg-stone-800">
+          <ArrowDownUp size={16} className="shrink-0" aria-hidden />
+          <span aria-hidden className="truncate whitespace-nowrap">
+            {SORTS.find((s) => s.key === query.sort)?.label}
+          </span>
           <span className="sr-only">Sort by</span>
           <select
             value={query.sort}
@@ -205,7 +206,7 @@ export function Collection() {
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
-          className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
+          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium whitespace-nowrap ${
             nFilters ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950' : 'bg-stone-200 dark:bg-stone-800'
           }`}
         >
@@ -288,9 +289,6 @@ export function Collection() {
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
       </IconButton>
       <span className="mx-1 hidden h-6 w-px bg-stone-200 lg:block dark:bg-stone-800" aria-hidden />
-      <button type="button" onClick={() => navigate('/value')} className={headerButton}>
-        <ChartLine size={18} aria-hidden /> Value
-      </button>
       <button type="button" onClick={() => navigate('/import')} className={headerButton}>
         <FileUp size={18} aria-hidden /> Import CSV
       </button>
@@ -307,7 +305,6 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
-            { label: 'Value', icon: <ChartLine size={18} />, onSelect: () => navigate('/value') },
             { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}
@@ -326,7 +323,7 @@ export function Collection() {
     ) : (
       <div className="space-y-3 py-6">
         <Notice tone={sync.error ? 'error' : 'info'}>
-          {sync.error ? `Couldn't update your collection: ${sync.error}` : 'Your collection needs a refresh from Discogs.'}
+          {sync.error ? `Couldn't update your collection: ${sync.error}` : 'Your collection is out of date.'}
         </Notice>
         <Button onClick={() => sync.sync(true)}>Refresh now</Button>
       </div>
@@ -551,7 +548,7 @@ export function Cover({
 }
 
 // Sorting by value only works for records with a recent price
-function PriceCoverage({ items, prices, currency }: { items: LibraryItem[]; prices: Map<number, unknown>; currency: string }) {
+export function PriceCoverage({ items, prices, currency }: { items: LibraryItem[]; prices: Map<number, unknown>; currency: string }) {
   const { client } = useSignedIn()
   const check = usePriceCheck()
   const ids = [...new Set(items.map((i) => i.releaseId))]
@@ -563,14 +560,20 @@ function PriceCoverage({ items, prices, currency }: { items: LibraryItem[]; pric
         <>
           <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent text-stone-500" />
           <span className="tabular-nums">
-            Checking prices · {check.done} of {check.total}
+            Getting prices · {check.done} of {check.total}
           </span>
         </>
       ) : (
         <>
-          <span className="min-w-0 flex-1">{priced ? `${priced} of ${ids.length} have prices.` : 'Nothing has a price yet.'}</span>
+          <span className="min-w-0 flex-1">
+            {check.error
+              ? `Couldn't get prices: ${check.error}`
+              : priced
+                ? `Prices for ${priced} of ${ids.length} records.`
+                : 'No prices yet.'}
+          </span>
           <button type="button" onClick={() => checkPrices(client, ids, currency)} className="shrink-0 font-semibold">
-            {priced ? 'Check the rest' : 'Check prices'}
+            {check.error ? 'Try again' : priced ? 'Get the rest' : 'Get prices'}
           </button>
         </>
       )}

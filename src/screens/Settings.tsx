@@ -1,12 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Boxes, ChartLine, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
+import { Boxes, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
 import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
-import { DISCOGS_MAX_AGE } from '../db/cache'
 import { db, getSetting } from '../db/db'
 import { stopPriceCheck } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
@@ -16,7 +15,6 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { timeAgo } from '../lib/time'
-import { formatMoney } from '../lib/value'
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
@@ -30,11 +28,6 @@ export function Settings() {
   const install = useInstallPrompt()
   const demo = session.kind === 'demo'
   const crates = useCollectionMeta().data?.folders.length
-  // latest reading, if it's recent enough to show
-  const value = useLiveQuery(async () => {
-    const last = await db.valueHistory.orderBy('date').last()
-    return last && Date.now() - last.at < DISCOGS_MAX_AGE ? formatMoney(last.median, last.currency, { whole: true }) : undefined
-  })
 
   const stats = useLiveQuery(async () => ({
     records: await db.collection.count(),
@@ -89,8 +82,8 @@ export function Settings() {
                 <li className="space-y-3 px-4 py-3">
                   <p className="text-sm">
                     {demo
-                      ? 'Leave the demo? Changes to the sample collection are discarded.'
-                      : "Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected."}
+                      ? 'Leave the demo? Anything you changed is thrown away.'
+                      : "Sign out? Platter's data on this device gets deleted. Nothing changes on Discogs."}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="secondary" onClick={() => setConfirming(false)}>
@@ -125,7 +118,6 @@ export function Settings() {
                   </button>
                 }
               />
-              <Row icon={<ChartLine size={20} />} label="Value" value={value} href="/value" />
               <Row icon={<Boxes size={20} />} label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
               <Row
                 icon={<ListChecks size={20} />}
