@@ -6,6 +6,7 @@ import { useFieldSuggestions } from '../hooks/useFields'
 import type { FieldKey, FieldMatch } from '../lib/fields'
 import { formatPrice } from '../lib/metadata'
 import { CrateSelect } from './CrateSelect'
+import { DateInput } from './DateInput'
 
 type Kind = 'select' | 'price' | 'date' | 'count' | 'notes' | 'text'
 
@@ -18,11 +19,9 @@ export function kindOf(field: CollectionField, key: FieldKey | undefined): Kind 
   return 'text'
 }
 
-const isoDate = /^\d{4}-\d{2}-\d{2}$/
-
 // Inputs that look like plain values until hovered or focused
 export const inline =
-  'min-h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-right font-medium placeholder:font-normal placeholder:text-stone-400 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-accent-500/60 dark:hover:bg-stone-800 dark:focus:bg-stone-800'
+  'min-h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-right font-medium placeholder:font-normal placeholder:text-stone-500 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-accent-500/60 dark:hover:bg-stone-800 dark:focus:bg-stone-800'
 
 export function Row({ label, saved, children, stacked }: { label: string; saved?: boolean; children: ReactNode; stacked?: boolean }) {
   return (
@@ -107,17 +106,6 @@ export function Field({
   const [draft, setDraft] = useState(value)
   const [saved, setSaved] = useState(false)
   const notesRef = useRef<HTMLTextAreaElement>(null)
-  const dateRef = useRef<HTMLInputElement>(null)
-  const [pickingDate, setPickingDate] = useState(false)
-  useEffect(() => {
-    if (!pickingDate) return
-    dateRef.current?.focus()
-    try {
-      dateRef.current?.showPicker()
-    } catch {
-      // not everywhere; focus is enough
-    }
-  }, [pickingDate])
   useEffect(() => setDraft(value), [value])
   useEffect(() => {
     if (!saved) return
@@ -200,27 +188,7 @@ export function Field({
     case 'date':
       return (
         <Row label={field.name} saved={saved}>
-          {/* an empty date input shows a greyed-out today in Safari, which reads as a real
-              value; show "Add" like the other fields until it's picked */}
-          {isoDate.test(draft) || pickingDate ? (
-            <input
-              ref={dateRef}
-              type="date"
-              aria-label={field.name}
-              value={isoDate.test(draft) ? draft : ''}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => {
-                setPickingDate(false)
-                commit(draft)
-              }}
-              onKeyDown={blurOnEnter}
-              className={`${inline} ml-auto block h-10 w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
-            />
-          ) : (
-            <button type="button" onClick={() => setPickingDate(true)} className={`${inline} font-normal! text-stone-400`}>
-              Add
-            </button>
-          )}
+          <DateInput value={draft} onChange={(v) => commit(v)} label={field.name} />
         </Row>
       )
 
@@ -247,7 +215,7 @@ export function Field({
             aria-label={field.name}
             value={draft}
             inputMode={kind === 'price' ? 'decimal' : undefined}
-            placeholder={kind === 'price' ? formatPrice('0', currency) : 'Add'}
+            placeholder="Add"
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit(kind === 'price' ? (formatPrice(draft, currency) ?? '') : draft.trim())}
             onKeyDown={blurOnEnter}

@@ -203,7 +203,7 @@ export function IconButton({ label, children, className = '', ...props }: Button
       type="button"
       aria-label={label}
       title={label}
-      className={`rounded-full p-2 text-stone-700 hover:bg-stone-200 active:bg-stone-200 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${className}`}
+      className={`rounded-full p-2 text-stone-700 hover:bg-stone-200 active:bg-stone-200 disabled:opacity-40 max-[359px]:p-1.5 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${className}`}
       {...props}
     >
       {children}

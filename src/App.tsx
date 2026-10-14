@@ -149,7 +149,7 @@ function DemoBar() {
       <p className="py-1.5">
         <b>Demo</b>
       </p>
-      <button type="button" onClick={leave} className="rounded-md bg-stone-950/10 px-2 py-0.5 font-medium hover:bg-stone-950/20">
+      <button type="button" onClick={leave} className="rounded-md bg-stone-950 px-2 py-0.5 font-medium text-white hover:bg-stone-800">
         Exit
       </button>
     </div>
@@ -168,7 +168,9 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="flex h-dvh flex-col">
       <DemoBar />
       {/* the demo bar already covers the status bar area */}
-      <div className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--header-inset:0px]' : ''}`}>
+      <div
+        className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--demo-bar:2rem] [--header-inset:0px]' : ''}`}
+      >
         <SideNav />
         <div className="relative flex min-h-0 flex-1 flex-col">
           <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none">

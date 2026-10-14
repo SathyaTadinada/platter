@@ -186,7 +186,7 @@ function RecentSearches() {
           return (
             <li key={r.url}>
               <Link href={r.url} className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                <Icon size={18} className="shrink-0 text-stone-400" aria-hidden />
+                <Icon size={18} className="shrink-0 text-stone-500" aria-hidden />
                 <span className={`min-w-0 truncate ${r.kind === 'title' ? '' : 'font-mono text-sm'}`}>
                   {r.kind === 'barcode' ? formatBarcodeInput(r.label) : r.label}
                 </span>

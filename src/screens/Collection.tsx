@@ -180,7 +180,7 @@ export function Collection() {
     <div className="space-y-2">
       <label className="relative block">
         <span className="sr-only">Search your collection</span>
-        <Search size={18} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-400" aria-hidden />
+        <Search size={18} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-500" aria-hidden />
         <input
           type="search"
           value={text}
@@ -194,7 +194,7 @@ export function Collection() {
             type="button"
             aria-label="Clear search"
             onClick={() => setText('')}
-            className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-400"
+            className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-500"
           >
             <X size={18} />
           </button>
@@ -297,6 +297,9 @@ export function Collection() {
       <IconButton label={view === 'grid' ? 'Show as list' : 'Show as grid'} onClick={toggleView}>
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
+      <IconButton label="Wantlist" onClick={() => navigate('/wantlist')} className="lg:hidden">
+        <Heart size={20} />
+      </IconButton>
       <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
         <SquareCheckBig size={20} />
       </IconButton>
@@ -323,7 +326,6 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
-            { label: 'Wantlist', icon: <Heart size={18} />, onSelect: () => navigate('/wantlist') },
             { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}

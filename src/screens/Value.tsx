@@ -357,7 +357,7 @@ function Breakdown({ valued, money }: { valued: Valued[]; money: Money }) {
         {buckets.map((b) => (
           <div key={b.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             <span className="text-xs font-semibold tabular-nums">{b.count || ''}</span>
-            <span className="w-full rounded-t-lg bg-accent-500/80" style={{ height: b.count ? pct(b.count, most) : 0 }} />
+            <span className="w-full rounded-t-lg bg-accent-mark/80" style={{ height: b.count ? pct(b.count, most) : 0 }} />
           </div>
         ))}
       </div>
@@ -384,7 +384,7 @@ function BarList({ rows }: { rows: { label: string; amount: number; text: string
             <span className="shrink-0 font-medium tabular-nums">{r.text}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
-            <div className="h-full rounded-full bg-accent-500" style={{ width: pct(r.amount, most) }} />
+            <div className="h-full rounded-full bg-accent-mark" style={{ width: pct(r.amount, most) }} />
           </div>
         </div>
       ))}

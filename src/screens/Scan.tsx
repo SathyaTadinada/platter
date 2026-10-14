@@ -158,9 +158,12 @@ export function Scan() {
         <div>
           {/* dark while there's a picture in it; otherwise it follows the theme */}
           <div
-            className={`relative mx-auto aspect-[4/5] max-h-[55dvh] w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
-              on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'
-            }`}
+            // on phones it takes whatever height is left, so the page fits without scrolling
+            className={`relative mx-auto aspect-[4/5] min-h-40 w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
+              mode === 'batch'
+                ? 'max-h-[calc(100dvh-25rem-var(--demo-bar,0px)-env(safe-area-inset-top)-env(safe-area-inset-bottom))]'
+                : 'max-h-[calc(100dvh-21rem-var(--demo-bar,0px)-env(safe-area-inset-top)-env(safe-area-inset-bottom))]'
+            } ${on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'}`}
           >
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
 
@@ -170,6 +173,14 @@ export function Scan() {
                 <p className="text-sm">Point the camera at the barcode</p>
                 <button type="button" onClick={start} className={buttonClass('primary', 'bg-accent-500! text-stone-950!')}>
                   Start camera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium underline-offset-2 hover:underline lg:hidden"
+                >
+                  <ImageUp size={16} aria-hidden />
+                  Or choose a photo
                 </button>
               </div>
             )}
@@ -281,14 +292,13 @@ export function Scan() {
             </Link>
           )}
 
-          <div className="mt-4 space-y-2 lg:hidden">
+          <div className="mt-4 lg:hidden">
             <ManualBarcode
               label="Or type a barcode"
               button={mode === 'play' ? 'Find' : mode === 'batch' ? 'Add' : 'Look up'}
               onSubmit={(c) => onCode(c, 'typed')}
               inline
             />
-            {chooseButton}
           </div>
         </div>
 

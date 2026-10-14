@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId } from 'react'
 import type { CollectionField } from '../api/discogs/types'
 import { useFieldSuggestions } from '../hooks/useFields'
 import { inline, Row } from './CopyDetails'
+import { DateInput } from './DateInput'
 import { fieldFor, type FieldKey, type FieldMatch } from '../lib/fields'
 import type { Metadata } from '../lib/metadata'
 
@@ -9,34 +10,16 @@ type Part = 'conditions' | 'price' | 'date' | 'store' | 'location' | 'notes'
 
 const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 
-function currencySymbol(currency: string) {
-  try {
-    return (
-      new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(0).find((p) => p.type === 'currency')?.value ??
-      currency
-    )
-  } catch {
-    return currency
-  }
-}
-
 type Props = {
   value: Metadata
   onChange: (m: Metadata) => void
   matches: FieldMatch[] | null
-  currency: string
   parts?: Part[]
 }
 
 // Condition, purchase details, location, and notes. Fields the user hasn't set
 // up on Discogs either fall back to Notes (marked) or aren't shown.
-export function MetadataForm({
-  value,
-  onChange,
-  matches,
-  currency,
-  parts = ['conditions', 'price', 'date', 'store', 'location', 'notes'],
-}: Props) {
+export function MetadataForm({ value, onChange, matches, parts = ['conditions', 'price', 'date', 'store', 'location', 'notes'] }: Props) {
   const id = useId()
   const [stores, locations] = useFieldSuggestions(matches, ['purchasedFrom', 'location'])
   const field = (k: FieldKey) => (matches ? fieldFor(matches, k) : null)
@@ -99,14 +82,27 @@ export function MetadataForm({
               value={value.price ?? ''}
               onChange={(e) => set('price', e.target.value)}
               inputMode="decimal"
-              placeholder={`${currencySymbol(currency)}0.00`}
+              placeholder="Add"
               className={inline}
             />
           </Row>
         )}
         {shown('date') && (
           <Row label={label('Purchase Date', 'purchaseDate')}>
-            <DateControl value={value.date ?? ''} onChange={(v) => set('date', v)} />
+            <DateInput
+              value={value.date ?? ''}
+              onChange={(v) => set('date', v)}
+              label="Purchase date"
+              extra={
+                <button
+                  type="button"
+                  onClick={() => set('date', today())}
+                  className="rounded-lg px-2 py-2 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-800"
+                >
+                  Today
+                </button>
+              }
+            />
           </Row>
         )}
         {shown('store') && (
@@ -170,53 +166,5 @@ export function MetadataForm({
         </p>
       )}
     </div>
-  )
-}
-
-// Like the date rows on a record page: "Add" until a date is picked, so an empty
-// field doesn't show Safari's greyed-out today as if it were set
-function DateControl({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [picking, setPicking] = useState(false)
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (!picking) return
-    ref.current?.focus()
-    try {
-      ref.current?.showPicker()
-    } catch {
-      // focus is enough
-    }
-  }, [picking])
-
-  if (!value && !picking) {
-    return (
-      <div className="flex items-center justify-end gap-1">
-        <button
-          type="button"
-          onClick={() => onChange(today())}
-          className="rounded-lg px-2 py-2 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-800"
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          onClick={() => setPicking(true)}
-          className="rounded-lg px-2 py-2 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
-        >
-          Add
-        </button>
-      </div>
-    )
-  }
-  return (
-    <input
-      ref={ref}
-      type="date"
-      aria-label="Purchase date"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={() => setPicking(false)}
-      className={`${inline} ml-auto block h-10 w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
-    />
   )
 }

@@ -164,7 +164,7 @@ function RatingPicker({ options, value, onPick }: { options: FacetOption[]; valu
             onClick={() => onPick(n)}
             className="p-1 transition-transform hover:scale-110 disabled:opacity-30"
           >
-            <Star size={28} className={n <= lit ? 'fill-accent-500 text-accent-500' : 'text-stone-300 dark:text-stone-600'} aria-hidden />
+            <Star size={28} className={n <= lit ? 'fill-accent-mark text-accent-mark' : 'text-stone-300 dark:text-stone-600'} aria-hidden />
           </button>
         ))}
         <span className="ml-3 text-sm text-stone-500 tabular-nums">{note}</span>

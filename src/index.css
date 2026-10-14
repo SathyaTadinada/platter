@@ -20,6 +20,12 @@
   --color-accent-500: #f59e0b;
   --color-accent-600: #d97706;
   --color-accent-700: #b45309;
+  /* accent used as text (ink) and for stars, bars, and icons (mark), picked per mode so
+     they keep WCAG contrast: 4.5:1 for text, 3:1 for graphics */
+  /* secondary grey text, a touch darker than Tailwind's so it stays over 4.5:1 on light grey chips */
+  --color-stone-500: oklch(51% 0.013 58.071);
+  --color-accent-ink: var(--color-accent-700);
+  --color-accent-mark: var(--color-accent-600);
 }
 
 /* accent picked in Settings (amber is the default above) */
@@ -94,6 +100,26 @@
   --color-accent-500: #84cc16;
   --color-accent-600: #65a30d;
   --color-accent-700: #4d7c0f;
+}
+/* amber and lime are light enough that their 600 is too faint on a light page */
+:root:not([data-accent]),
+:root[data-accent='amber'],
+:root[data-accent='lime'] {
+  --color-accent-mark: var(--color-accent-700);
+}
+/* On dark backgrounds the lighter shades read better. Grey secondary text (stone-500, only
+   ever used for text) also gets lighter, since its usual shade is under 4.5:1 on dark grey. */
+:root.dark {
+  --color-accent-ink: var(--color-accent-400);
+  --color-accent-mark: var(--color-accent-500);
+  --color-stone-500: oklch(70.9% 0.01 56.259);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --color-accent-ink: var(--color-accent-400);
+    --color-accent-mark: var(--color-accent-500);
+    --color-stone-500: oklch(70.9% 0.01 56.259);
+  }
 }
 
 html,

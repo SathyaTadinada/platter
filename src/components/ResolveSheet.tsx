@@ -65,7 +65,7 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
       </div>
       <div className="min-h-0 flex-auto space-y-3 overflow-y-auto px-4 py-4">
         <form onSubmit={search} className="relative">
-          <Search size={18} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-400" aria-hidden />
+          <Search size={18} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-500" aria-hidden />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}

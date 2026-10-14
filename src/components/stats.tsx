@@ -90,7 +90,7 @@ export function MonthBars({
           >
             {m.total > 0 && <span className="text-[0.625rem] font-semibold whitespace-nowrap tabular-nums">{short(m.total)}</span>}
             <span
-              className="w-full rounded-t-md bg-accent-500/80 group-hover:bg-accent-500"
+              className="w-full rounded-t-md bg-accent-mark/80 group-hover:bg-accent-mark"
               style={{ height: m.total ? pct(m.total, most) : 0 }}
             />
           </div>

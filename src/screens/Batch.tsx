@@ -5,6 +5,7 @@ import { Link } from 'wouter'
 import { CrateSelect } from '../components/CrateSelect'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
+import { formatDay } from '../components/DateInput'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ResolveSheet } from '../components/ResolveSheet'
 import { Button, buttonClass, Notice, Screen, Section } from '../components/ui'
@@ -180,13 +181,7 @@ export function Batch() {
           {shared && groups.ready.some((i) => i.source !== 'csv') && (
             <div>
               <p className="mb-2 px-1 text-sm font-medium">Same for every record</p>
-              <MetadataForm
-                value={shared}
-                onChange={updateShared}
-                matches={matches}
-                currency={currency}
-                parts={['date', 'store', 'location']}
-              />
+              <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
             </div>
           )}
           <List>
@@ -270,7 +265,6 @@ export function Batch() {
           item={editing}
           shared={shared ?? {}}
           matches={matches}
-          currency={currency}
           onClose={() => setEditing(null)}
           onSave={async (meta) => {
             await db.queue.update(editing.id!, { meta })
@@ -464,7 +458,7 @@ function Row({
           type="button"
           aria-label="Remove from batch"
           onClick={onRemove}
-          className="rounded-full p-2 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
+          className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
         >
           <X size={18} />
         </button>
@@ -478,14 +472,12 @@ function DetailsSheet({
   item,
   shared,
   matches,
-  currency,
   onSave,
   onClose,
 }: {
   item: QueueItem
   shared: Metadata
   matches: ReturnType<typeof useFieldMatches>
-  currency: string
   onSave: (m: Metadata) => void
   onClose: () => void
 }) {
@@ -494,7 +486,7 @@ function DetailsSheet({
   useEffect(() => {
     if (ref.current && !ref.current.open) ref.current.showModal()
   }, [])
-  const sharedText = [shared.date, shared.store, shared.location].filter(Boolean).join(' · ')
+  const sharedText = [shared.date && formatDay(shared.date), shared.store, shared.location].filter(Boolean).join(' · ')
 
   return (
     <dialog
@@ -511,7 +503,7 @@ function DetailsSheet({
           </h2>
           <p className="truncate text-sm text-stone-500">{item.release?.artist}</p>
         </div>
-        <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} />
+        <MetadataForm value={meta} onChange={setMeta} matches={matches} />
         {sharedText && <p className="text-xs text-stone-500">Batch values: {sharedText}. Anything entered here replaces them.</p>}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose}>
