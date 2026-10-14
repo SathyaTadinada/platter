@@ -1,19 +1,62 @@
 # Platter
 
-Scan your records and add them to your Discogs collection. Platter runs entirely in the browser: there's no backend, and your Discogs token never leaves your device except to talk to Discogs.
+Scan the barcode on a record and add it to your Discogs collection. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
 
-Work in progress.
+Live at [platter.tadinada.com](https://platter.tadinada.com).
 
-This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. ‘Discogs’ is a trademark of Zink Media, LLC.
+## What it does
+
+- Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
+- Shows matching releases with cover, label, catalog number, country, year and format
+- Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
+- Falls back to MusicBrainz when Discogs doesn't know a barcode
+- Checks which Discogs custom collection fields you have and walks you through adding the rest
+
+## How it works
+
+Everything runs in the browser. There's no database and no user accounts. API calls go directly from the browser to `api.discogs.com`, which allows cross-origin requests.
+
+Two ways to sign in:
+
+- **Log in with Discogs** (OAuth 1.0a). Discogs requires every request to be signed with the app's consumer secret, which can't ship to the browser. A small Cloudflare Worker (`worker/`) holds the secret, runs the login handshake and signs requests. The browser then sends each signed request to Discogs itself, so the Worker never sees responses and Discogs rate limits stay per user.
+- **Personal access token**. Pasted in once, kept in IndexedDB, no Worker involved.
+
+Discogs counts rate limits per IP and doesn't expose its rate-limit headers to browsers, so the client throttles itself to 55 requests a minute and backs off on 429s. Cached Discogs data expires after 6 hours, per the Discogs API terms.
 
 ## Development
 
 ```sh
 npm install
-npm run spike        # API check page, dev server
-npm run spike:build  # build to dist/
+npm run dev        # app on http://localhost:5173
+npm test           # unit tests, using recorded responses in tests/fixtures
+npm run typecheck
 ```
+
+`npm run dev` serves the app only, so log in with a personal access token locally. The OAuth routes (`/auth/*`, `/api/*`) only exist on the deployed Worker.
+
+To re-record test fixtures, put a token in `.env` (see `.env.example`) and run `npm run fixtures`. Your username and collection are replaced with placeholders before anything is written.
+
+## Self-hosting
+
+Platter runs on the Cloudflare Workers free plan.
+
+1. Fork the repo and change the `routes` entry in `wrangler.jsonc` to your own domain, or remove it to use a `workers.dev` address.
+2. Update `ALLOWED_ORIGINS` in `worker/index.ts` to match.
+3. Register an app at [discogs.com/settings/developers](https://www.discogs.com/settings/developers) with the callback URL `https://<your domain>/auth/callback`.
+4. Log in to Cloudflare and store the app's key and secret:
+
+   ```sh
+   npx wrangler login
+   npx wrangler secret put DISCOGS_CONSUMER_KEY
+   npx wrangler secret put DISCOGS_CONSUMER_SECRET
+   ```
+
+5. Deploy with `npm run deploy`.
+
+Skip steps 3 and 4 if you only want personal access tokens; the "Log in with Discogs" button won't work, but everything else will.
 
 ## License
 
 MIT
+
+This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. ‘Discogs’ is a trademark of Zink Media, LLC.
