@@ -7,30 +7,33 @@ export function About() {
     <Screen title="About Platter" back={session ? '/settings' : '/'}>
       <Section>
         <p className="text-stone-700 dark:text-stone-300">
-          Platter is a free, open-source app for cataloging your records on Discogs. Scan a barcode and the record is in your collection.
+          Platter adds records to your Discogs collection by scanning their barcodes. It's free and open source.
         </p>
       </Section>
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>Platter doesn't have accounts of its own and doesn't track you.</p>
-          <p>Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs.</p>
+          <p>Platter has no accounts or analytics of its own.</p>
+          <p>Everything it saves, including your sign-in, stays in this browser, and it talks to Discogs directly from your device.</p>
           <p>
-            Other services only hear from Platter when you use them: MusicBrainz and the Cover Art Archive when a barcode isn't on Discogs,
-            Apple Music when you tap Apple Music or All services, and ListenBrainz if you connect it.
+            If you log in with Discogs, each request is signed by a small Platter server first. That server doesn't keep anything and never
+            sees Discogs' replies.
           </p>
           <p>
-            When you log in with Discogs, a small Platter server adds a signature to each request. It doesn't store anything or see what
-            Discogs sends back.
+            Other services are only used when you need them. If Discogs doesn't know a barcode, Platter checks MusicBrainz and the Cover Art
+            Archive. Tapping Apple Music or All services looks the album up with Apple. Plays go to ListenBrainz only if you've connected
+            it.
           </p>
-          <p>Photos used to read runouts and spines are processed on your device.</p>
-          <p>Signing out deletes everything Platter saved on this device.</p>
+          <p>Photos of runouts and spines are read on your device and never uploaded.</p>
+          <p>Signing out deletes everything Platter saved here.</p>
         </Card>
       </Section>
 
       <Section title="Source">
         <p className="text-sm">
-          <ExternalLink href="https://github.com/SathyaTadinada/platter">github.com/SathyaTadinada/platter</ExternalLink>, MIT license.
+          The code is on GitHub at{' '}
+          <ExternalLink href="https://github.com/SathyaTadinada/platter">github.com/SathyaTadinada/platter</ExternalLink> under the MIT
+          license.
         </p>
       </Section>
 
