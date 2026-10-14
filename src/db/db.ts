@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import type { SearchResult } from '../api/discogs/types'
 
 export type Session = {
   id: 'current'
@@ -35,12 +36,57 @@ export type LibraryItem = OwnedItem & {
 export type WantItem = { releaseId: number; masterId: number }
 export type Setting = { key: string; value: unknown }
 
+// Short description of a release, enough to show it in the batch list
+export type ReleaseSummary = {
+  id: number
+  masterId?: number
+  title: string
+  artist: string
+  thumb?: string
+  label?: string
+  catno?: string
+  year?: string
+  format?: string
+}
+
+export type QueueStatus =
+  | 'pending' // waiting to be looked up
+  | 'looking'
+  | 'ready' // one release chosen, waiting to be added
+  | 'choose' // several matches, the user picks
+  | 'notfound'
+  | 'adding'
+  | 'added'
+  | 'failed' // lookup or add went wrong; error says why
+
+// One record in a batch: a scan, a typed barcode, or a row from a CSV import
+export type QueueItem = {
+  id?: number
+  createdAt: number
+  source: 'scan' | 'typed' | 'csv'
+  status: QueueStatus
+  barcode?: string
+  candidates?: SearchResult[]
+  via?: 'discogs' | 'musicbrainz'
+  guess?: string // what MusicBrainz said the barcode was
+  release?: ReleaseSummary
+  raw?: SearchResult // the chosen search result, to add it to the library right away
+  folderId?: number // set by CSV import; otherwise the batch folder is used
+  rating?: number
+  fields?: Record<number, string>
+  error?: string
+  addStartedAt?: number
+  instanceId?: number
+  warning?: string // added, but something minor went wrong (e.g. a field didn't save)
+}
+
 export class PlatterDB extends Dexie {
   session!: EntityTable<Session, 'id'>
   cache!: EntityTable<CacheEntry, 'key'>
   collection!: EntityTable<LibraryItem, 'instanceId'>
   wants!: EntityTable<WantItem, 'releaseId'>
   settings!: EntityTable<Setting, 'key'>
+  queue!: EntityTable<QueueItem, 'id'>
 
   constructor(name = 'platter') {
     super(name)
@@ -58,6 +104,7 @@ export class PlatterDB extends Dexie {
         await tx.table('collection').clear()
         await tx.table('settings').delete('collectionSyncedAt')
       })
+    this.version(3).stores({ queue: '++id, status, createdAt' })
   }
 }
 
