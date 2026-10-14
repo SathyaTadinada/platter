@@ -47,7 +47,7 @@ export const addToFolder = (c: DiscogsClient, username: string, folderId: number
 export const setFieldValue = (
   c: DiscogsClient,
   username: string,
-  target: { folderId: number; releaseId: number; instanceId: number },
+  target: InstanceTarget,
   fieldId: number,
   value: string,
 ) =>
@@ -62,3 +62,15 @@ export const removeWant = (c: DiscogsClient, username: string, releaseId: number
 
 export const getMarketplaceStats = (c: DiscogsClient, releaseId: number) =>
   c.get<MarketplaceStats>(`/marketplace/stats/${releaseId}`, undefined, DISCOGS_MAX_AGE)
+
+export type InstanceTarget = { folderId: number; releaseId: number; instanceId: number }
+
+const instancePath = (username: string, t: InstanceTarget) =>
+  `${u(username)}/collection/folders/${t.folderId}/releases/${t.releaseId}/instances/${t.instanceId}`
+
+// Change rating (0-5) and/or move to another folder
+export const editInstance = (c: DiscogsClient, username: string, t: InstanceTarget, changes: { rating?: number; folder_id?: number }) =>
+  c.request<null>('POST', instancePath(username, t), { body: changes })
+
+export const deleteInstance = (c: DiscogsClient, username: string, t: InstanceTarget) =>
+  c.request<null>('DELETE', instancePath(username, t))
