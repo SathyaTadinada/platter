@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { json, routeFetch } from '../../tests/helpers'
 import { db } from '../db/db'
-import { oauthAuth, saveSession, takeOAuthFragment, tokenAuth } from './auth'
+import { oauthAuth, saveSession, tokenAuth } from './auth'
 
 const id = { username: 'platter-test', id: 1 }
 
@@ -46,19 +46,5 @@ describe('sessions', () => {
     await tokenAuth('abc', id).signOut()
     expect(await db.session.get('current')).toBeUndefined()
     expect(await db.settings.count()).toBe(0)
-  })
-})
-
-describe('takeOAuthFragment', () => {
-  const at = (hash: string) => ({ hash, pathname: '/', search: '' }) as Location
-
-  it('reads tokens', () => {
-    expect(takeOAuthFragment(at('#oauth_token=a&oauth_token_secret=b'))).toEqual({ token: 'a', secret: 'b' })
-  })
-  it('reads errors', () => {
-    expect(takeOAuthFragment(at('#auth_error=access_token_401'))).toEqual({ error: 'access_token_401' })
-  })
-  it('ignores unrelated fragments', () => {
-    expect(takeOAuthFragment(at('#something'))).toBeNull()
   })
 })

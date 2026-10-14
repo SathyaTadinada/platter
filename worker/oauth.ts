@@ -43,37 +43,32 @@ type SignInput = {
   url: string
   consumerKey: string
   consumerSecret: string
-  token: string
-  tokenSecret: string
+  token?: string // absent when asking for a request token
+  tokenSecret?: string
+  oauth?: Record<string, string> // extra oauth_* params, e.g. oauth_callback, oauth_verifier
   extra?: [string, string][] // form body params, if any
   timestamp?: string
   nonce?: string
 }
 
-// Returns a full Authorization header value signed with HMAC-SHA1.
-export async function signHmac(i: SignInput): Promise<string> {
+// All oauth_* params for a request, signed with HMAC-SHA1. They can go in
+// an Authorization header or in the query string.
+export async function signParams(i: SignInput): Promise<Record<string, string>> {
   const oauth: Record<string, string> = {
     oauth_consumer_key: i.consumerKey,
     oauth_nonce: i.nonce ?? nonce(),
     oauth_signature_method: 'HMAC-SHA1',
     oauth_timestamp: i.timestamp ?? String(Math.floor(Date.now() / 1000)),
-    oauth_token: i.token,
+    ...(i.token ? { oauth_token: i.token } : {}),
     oauth_version: '1.0',
+    ...i.oauth,
   }
   const base = baseString(i.method, i.url, [...Object.entries(oauth), ...(i.extra ?? [])])
-  oauth.oauth_signature = await hmacSha1(`${pct(i.consumerSecret)}&${pct(i.tokenSecret)}`, base)
-  return header(oauth)
+  oauth.oauth_signature = await hmacSha1(`${pct(i.consumerSecret)}&${pct(i.tokenSecret ?? '')}`, base)
+  return oauth
 }
 
-// Request/access token calls only happen inside the Worker, so PLAINTEXT is fine there.
-export function plaintextHeader(consumerKey: string, consumerSecret: string, extra: Record<string, string>, tokenSecret = ''): string {
-  return header({
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: nonce(),
-    oauth_signature_method: 'PLAINTEXT',
-    oauth_timestamp: String(Math.floor(Date.now() / 1000)),
-    oauth_version: '1.0',
-    ...extra,
-    oauth_signature: `${consumerSecret}&${tokenSecret}`,
-  })
+// Returns a full Authorization header value signed with HMAC-SHA1.
+export async function signHmac(i: SignInput): Promise<string> {
+  return header(await signParams(i))
 }

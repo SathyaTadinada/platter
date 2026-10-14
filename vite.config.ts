@@ -32,8 +32,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,wasm}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/index.html',
-        // these are handled by the Worker, never the app shell
-        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
+        // handled by the Worker, never the app shell
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],

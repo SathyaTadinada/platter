@@ -2,12 +2,26 @@ import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { DiscogsError } from '../api/discogs/client'
 import { Disc3 } from 'lucide-react'
-import { Button, buttonClass, Card, ExternalLink, Notice } from '../components/ui'
+import { startOAuth } from '../auth/oauthFlow'
+import { Button, Card, ExternalLink, Notice } from '../components/ui'
 import { useSession } from '../hooks/session'
 import { signInWithToken } from '../lib/signIn'
 
 export function Welcome({ error }: { error?: string }) {
   const [useToken, setUseToken] = useState(false)
+  const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
+
+  async function logIn() {
+    setStarting(true)
+    setStartError(null)
+    try {
+      await startOAuth() // navigates away to Discogs
+    } catch (e) {
+      setStartError((e as Error).message)
+      setStarting(false)
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),2rem)] pb-8">
@@ -18,15 +32,15 @@ export function Welcome({ error }: { error?: string }) {
           <p className="text-lg text-stone-600 dark:text-stone-400">Scan the barcode on a record and add it to your Discogs collection in a couple of taps.</p>
         </div>
 
-        {error && <Notice tone="error">{error}</Notice>}
+        {(startError ?? error) && <Notice tone="error">{startError ?? error}</Notice>}
 
         {useToken ? (
           <TokenForm onCancel={() => setUseToken(false)} />
         ) : (
           <div className="space-y-3">
-            <a href="/auth/start" className={buttonClass('primary', 'w-full')}>
-              Log in with Discogs
-            </a>
+            <Button className="w-full" onClick={logIn} disabled={starting}>
+              {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
+            </Button>
             <Button variant="ghost" className="w-full" onClick={() => setUseToken(true)}>
               Use a personal access token instead
             </Button>

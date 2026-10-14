@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Route, Switch, useLocation } from 'wouter'
-import { loadSession, takeOAuthFragment } from './auth/auth'
+import { loadSession } from './auth/auth'
+import { finishOAuth } from './auth/oauthFlow'
 import { BottomNav, SideNav } from './components/Nav'
 import { StatusBar } from './components/StatusBar'
 import { Spinner } from './components/ui'
@@ -8,7 +9,7 @@ import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
 import { SessionProvider, useSession } from './hooks/session'
 import { SyncProvider } from './hooks/sync'
-import { describeAuthError, signInWithOAuth } from './lib/signIn'
+import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
 import { Results } from './screens/Results'
 import { Library } from './screens/Library'
@@ -25,16 +26,16 @@ type Ready = Extract<Boot, { state: 'ready' }>
 
 async function start(): Promise<Ready> {
   pruneCache().catch(() => {})
-  const frag = takeOAuthFragment()
-  if (frag && 'error' in frag) return { state: 'ready', session: null, error: describeAuthError(frag.error) }
-  if (frag) {
+  // Discogs sends people back here after they approve Platter
+  if (location.pathname === '/auth/callback') {
     try {
-      const session = await signInWithOAuth(frag.token, frag.secret)
-      // set the URL before the first render so the scanner never mounts
+      const { token, secret } = await finishOAuth(location.search)
+      const session = await signInWithOAuth(token, secret)
       history.replaceState(null, '', '/setup')
       return { state: 'ready', session }
-    } catch {
-      return { state: 'ready', session: null, error: describeAuthError('access_token') }
+    } catch (e) {
+      history.replaceState(null, '', '/')
+      return { state: 'ready', session: null, error: (e as Error).message }
     }
   }
   return { state: 'ready', session: (await loadSession()) ?? null }

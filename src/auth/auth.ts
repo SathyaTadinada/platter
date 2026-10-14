@@ -64,16 +64,3 @@ export async function saveSession(s: Omit<Session, 'id'>): Promise<Session> {
   await navigator.storage?.persist?.().catch(() => false)
   return session
 }
-
-// Reads OAuth tokens or an error that the Worker put in the URL fragment.
-export function takeOAuthFragment(loc: Location = location): { token: string; secret: string } | { error: string } | null {
-  const frag = new URLSearchParams(loc.hash.slice(1))
-  const token = frag.get('oauth_token')
-  const secret = frag.get('oauth_token_secret')
-  const error = frag.get('auth_error')
-  if (!token && !error) return null
-  history.replaceState(null, '', loc.pathname + loc.search)
-  if (error) return { error }
-  if (!token || !secret) return { error: 'missing_token' }
-  return { token, secret }
-}
