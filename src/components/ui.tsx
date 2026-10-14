@@ -66,6 +66,7 @@ export function Screen({
   actions,
   toolbar,
   width = 'narrow',
+  backdrop,
 }: {
   title: ReactNode
   back?: string | (() => void)
@@ -73,11 +74,22 @@ export function Screen({
   actions?: ReactNode
   toolbar?: ReactNode // stays pinned under the title
   width?: keyof typeof widths
+  backdrop?: string // image shown blurred behind the top of the page
 }) {
   const [, navigate] = useLocation()
   return (
-    <>
-      <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-stone-50/95 pt-[env(safe-area-inset-top)] backdrop-blur dark:border-stone-800/70 dark:bg-stone-950/95">
+    <div className="relative isolate">
+      {backdrop && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] overflow-hidden" aria-hidden>
+          <img src={backdrop} alt="" className="size-full scale-125 object-cover opacity-40 blur-3xl saturate-150 dark:opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-stone-50 dark:to-stone-950" />
+        </div>
+      )}
+      <header
+        className={`sticky top-0 z-10 border-b border-stone-200/70 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-stone-800/70 ${
+          backdrop ? 'bg-stone-50/70 dark:bg-stone-950/70' : 'bg-stone-50/95 dark:bg-stone-950/95'
+        }`}
+      >
         <div className={`mx-auto flex min-h-14 w-full items-center gap-1 px-4 lg:px-8 ${widths[width]}`}>
           {back && (
             <button
@@ -95,7 +107,7 @@ export function Screen({
         {toolbar && <div className={`mx-auto w-full px-4 pb-3 lg:px-8 ${widths[width]}`}>{toolbar}</div>}
       </header>
       <div className={`mx-auto w-full px-4 pt-4 pb-8 lg:px-8 lg:pt-6 ${widths[width]}`}>{children}</div>
-    </>
+    </div>
   )
 }
 

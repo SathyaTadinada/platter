@@ -1,16 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, ExternalLink as ExternalIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ExternalLink as ExternalIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/discogs/endpoints'
 import type { CollectionField, Release } from '../api/discogs/types'
+import { CopyDetails } from '../components/CopyDetails'
 import { CoverSheet } from '../components/CoverSheet'
+import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
+import { useFieldMatches } from '../hooks/useFields'
 import { discogsUrl } from '../lib/format'
 import { Cover } from './Collection'
 
@@ -21,6 +24,8 @@ export function Record({ id }: { id: string }) {
   const [, navigate] = useLocation()
   const item = useLiveQuery(() => db.collection.get(instanceId), [instanceId])
   const meta = useCollectionMeta()
+  const matches = useFieldMatches()
+  const currency = useProfile()?.curr_abbr ?? 'USD'
   const release = useAsync(() => (item ? getRelease(client, item.releaseId) : Promise.resolve(undefined)), [item?.releaseId])
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -85,23 +90,37 @@ export function Record({ id }: { id: string }) {
   const r = release.data
   const url = discogsUrl(r?.uri ?? `/release/${item.releaseId}`)
   const where = [r?.country, r?.released?.slice(0, 4) || item.year || null].filter(Boolean).join(' · ')
-  const added = new Date(item.dateAdded)
+  const canPickCover = (r?.images?.length ?? 0) > 1 || Boolean(item.originalCover)
+
+  const tracklist = (
+    <Section title="Tracklist">
+      {release.loading && !r ? <Spinner label="Loading tracklist" /> : r ? <Tracklist release={r} /> : <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>}
+    </Section>
+  )
 
   return (
-    <Screen title={item.title} back={back} width="wide">
-      <div className="lg:grid lg:grid-cols-[22rem_1fr] lg:gap-10">
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-md ring-1 ring-black/5" />
-          {(release.data?.images?.length ?? 0) > 1 || item.originalCover ? (
-            <button type="button" onClick={() => setPickingCover(true)} className="mx-auto mt-2 block text-sm text-stone-500 underline underline-offset-2">
-              Change cover
-            </button>
-          ) : null}
+    <Screen title={item.title} back={back} width="wide" backdrop={item.cover ?? item.thumb}>
+      <div className="lg:grid lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-10">
+        {/* on wide screens the tracklist sits under the cover so the column isn't empty */}
+        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <div>
+            <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
+            {canPickCover && (
+              <button
+                type="button"
+                onClick={() => setPickingCover(true)}
+                className="mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
+              >
+                Change cover
+              </button>
+            )}
+          </div>
+          <div className="hidden lg:block">{tracklist}</div>
         </div>
 
-        <div className="mt-5 min-w-0 lg:mt-0">
-          <h2 className="text-2xl font-bold tracking-tight">{item.title}</h2>
-          <p className="text-lg text-stone-600 dark:text-stone-400">{item.artist}</p>
+        <div className="mt-6 min-w-0 lg:mt-0">
+          <h2 className="text-2xl font-bold tracking-tight lg:text-3xl">{item.title}</h2>
+          <p className="text-lg text-stone-600 dark:text-stone-300">{item.artist}</p>
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
             {(item.label || item.catno) && <p>{[item.label, item.catno].filter(Boolean).join(' · ')}</p>}
             {where && <p>{where}</p>}
@@ -110,14 +129,9 @@ export function Record({ id }: { id: string }) {
 
           {(item.genres.length > 0 || item.styles.length > 0) && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {item.genres.map((g) => (
-                <Link key={g} href={`/?genre=${encodeURIComponent(g)}`} className="rounded-full bg-stone-200 px-2.5 py-1 text-xs font-medium dark:bg-stone-800">
-                  {g}
-                </Link>
-              ))}
-              {item.styles.map((s) => (
-                <Link key={s} href={`/?style=${encodeURIComponent(s)}`} className="rounded-full bg-stone-100 px-2.5 py-1 text-xs dark:bg-stone-900">
-                  {s}
+              {[...item.genres.map((g) => ['genre', g]), ...item.styles.map((s) => ['style', s])].map(([k, v]) => (
+                <Link key={`${k}${v}`} href={`/?${k}=${encodeURIComponent(v)}`} className="rounded-full bg-stone-900/5 px-2.5 py-1 text-xs font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15">
+                  {v}
                 </Link>
               ))}
             </div>
@@ -135,31 +149,22 @@ export function Record({ id }: { id: string }) {
 
           <div className="mt-6">
             <Section title="Your copy">
-              <div className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
-                <FieldRow label="Crate">
-                  <select
-                    value={item.folderId}
-                    onChange={(e) => moveTo(Number(e.target.value))}
-                    className="max-w-[60%] truncate bg-transparent text-right text-stone-600 dark:text-stone-300"
-                  >
-                    {(meta.data?.folders ?? [{ id: item.folderId, name: 'Current folder', count: 0 }]).map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
-                </FieldRow>
-                <FieldRow label="Added">
-                  <span className="text-stone-600 dark:text-stone-300">
-                    {Number.isNaN(added.getTime()) ? '' : added.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </span>
-                </FieldRow>
-                {meta.data?.fields.map((f) => <FieldEditor key={f.id} field={f} value={item.fields[f.id] ?? ''} onSave={(v) => setField(f, v)} />)}
-              </div>
-              {meta.loading && !meta.data && <p className="text-sm text-stone-500">Loading your fields…</p>}
+              {meta.data ? (
+                <CopyDetails
+                  item={item}
+                  folders={meta.data.folders}
+                  fields={meta.data.fields}
+                  matches={matches}
+                  currency={currency}
+                  onMove={moveTo}
+                  onSetField={setField}
+                />
+              ) : (
+                <Spinner label="Loading your fields" />
+              )}
             </Section>
 
-            {(related?.copies.length || related?.pressings.length) ? (
+            {related?.copies.length || related?.pressings.length ? (
               <Section title="Also in your collection">
                 <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
                   {[...related.copies, ...related.pressings].map((o) => (
@@ -177,9 +182,7 @@ export function Record({ id }: { id: string }) {
               </Section>
             ) : null}
 
-            <Section title="Tracklist">
-              {release.loading && !r ? <Spinner label="Loading tracklist" /> : r ? <Tracklist release={r} /> : <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>}
-            </Section>
+            <div className="lg:hidden">{tracklist}</div>
 
             <Section>
               <a href={url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-stone-500 underline underline-offset-2">
@@ -191,7 +194,7 @@ export function Record({ id }: { id: string }) {
             <Section>
               {confirmRemove ? (
                 <div className="space-y-3 rounded-2xl bg-red-50 p-4 dark:bg-red-950/40">
-                  <p className="text-sm">Remove this copy from your Discogs collection? Its field values go with it.</p>
+                  <p className="text-sm">Remove this copy from your Discogs collection? Its notes and other details are deleted too.</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="secondary" onClick={() => setConfirmRemove(false)}>
                       Cancel
@@ -216,62 +219,6 @@ export function Record({ id }: { id: string }) {
       </div>
       {pickingCover && <CoverSheet item={item} release={r} onClose={() => setPickingCover(false)} />}
     </Screen>
-  )
-}
-
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-12 items-center justify-between gap-3 px-4 py-2">
-      <span className="shrink-0">{label}</span>
-      {children}
-    </div>
-  )
-}
-
-// Dropdown fields save on change, text fields when you leave them
-function FieldEditor({ field, value, onSave }: { field: CollectionField; value: string; onSave: (v: string) => Promise<void> }) {
-  const [draft, setDraft] = useState(value)
-  const [saved, setSaved] = useState(false)
-  useEffect(() => setDraft(value), [value])
-
-  async function commit(v: string) {
-    if (v === value) return
-    await onSave(v)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1500)
-  }
-
-  return (
-    <FieldRow label={field.name}>
-      <span className="flex min-w-0 items-center gap-1.5">
-        {saved && <Check size={16} className="shrink-0 text-emerald-600" aria-label="Saved" />}
-        {field.type === 'dropdown' ? (
-          <select
-            value={value}
-            onChange={(e) => commit(e.target.value)}
-            className="max-w-full truncate bg-transparent text-right text-stone-600 dark:text-stone-300"
-            aria-label={field.name}
-          >
-            <option value="">Not set</option>
-            {field.options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => commit(draft.trim())}
-            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-            placeholder="Add"
-            aria-label={field.name}
-            className="w-full min-w-0 bg-transparent text-right text-stone-600 placeholder:text-stone-400 dark:text-stone-300"
-          />
-        )}
-      </span>
-    </FieldRow>
   )
 }
 
