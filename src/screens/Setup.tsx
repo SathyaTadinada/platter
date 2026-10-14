@@ -79,7 +79,7 @@ export function Setup() {
       )}
 
       <Link href="/" className={buttonClass('primary', 'w-full')}>
-        Start scanning
+        Done
       </Link>
     </Screen>
   )

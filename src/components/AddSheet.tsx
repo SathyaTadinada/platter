@@ -5,6 +5,7 @@ import { db, getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import type { ReleaseCard } from '../lib/format'
+import { itemFromSearch } from '../lib/library'
 import { checkOwnership } from '../lib/ownership'
 import { Cover, DiscogsCredit, ReleaseSummary } from './ReleaseCardView'
 import { Button, Notice } from './ui'
@@ -53,7 +54,7 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
     setError(null)
     try {
       const { instance_id } = await addToFolder(client, username, folderId, card.id)
-      await db.collection.put({ instanceId: instance_id, releaseId: card.id, masterId: card.masterId ?? 0, folderId })
+      await db.collection.put(itemFromSearch(card.raw, instance_id, folderId))
       await setSetting('lastFolderId', folderId)
       const folder = folders.data?.find((f) => f.id === folderId)?.name ?? 'your collection'
       setDone({ folder, instanceId: instance_id, wantRemoved: false })

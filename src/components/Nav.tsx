@@ -1,16 +1,17 @@
-import { Disc3, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
+import { Disc3, LibraryBig, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
 
 const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: '/', label: 'Scan', Icon: ScanBarcode },
+  { href: '/', label: 'Library', Icon: LibraryBig },
+  { href: '/scan', label: 'Scan', Icon: ScanBarcode },
   { href: '/search', label: 'Search', Icon: Search },
   { href: '/settings', label: 'Settings', Icon: Settings2 },
 ]
 
 function useCurrent() {
   const [path] = useLocation()
-  return (href: string) => (href === '/' ? path === '/' : path.startsWith(href))
+  return (href: string) => (href === '/' ? path === '/' || path.startsWith('/library') : path.startsWith(href))
 }
 
 // Phones and tablets: tab bar at the bottom, part of the layout (not fixed),

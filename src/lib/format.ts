@@ -13,6 +13,7 @@ export type ReleaseCard = {
   format?: string
   masterId?: number
   discogsUrl: string
+  raw: SearchResult
 }
 
 // "Artist (2)" -> "Artist"; Discogs adds numbers to tell same-named artists apart
@@ -59,5 +60,6 @@ export function toCard(r: SearchResult): ReleaseCard {
     format: describeFormats(r.formats, r.format),
     masterId: r.master_id || undefined,
     discogsUrl: discogsUrl(r.uri),
+    raw: r,
   }
 }

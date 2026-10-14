@@ -11,6 +11,8 @@ import { SyncProvider } from './hooks/sync'
 import { describeAuthError, signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
 import { Results } from './screens/Results'
+import { Library } from './screens/Library'
+import { Record } from './screens/Record'
 import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
@@ -78,13 +80,15 @@ function Routes({ error }: { error?: string }) {
     <SyncProvider>
       <Shell>
         <Switch>
-          <Route path="/" component={Scan} />
+          <Route path="/" component={Library} />
+          <Route path="/library/:id">{(p) => <Record id={p.id} />}</Route>
+          <Route path="/scan" component={Scan} />
           <Route path="/search" component={Search} />
           <Route path="/results" component={Results} />
           <Route path="/setup" component={Setup} />
           <Route path="/settings" component={Settings} />
           <Route path="/about" component={About} />
-          <Route component={Scan} />
+          <Route component={Library} />
         </Switch>
       </Shell>
     </SyncProvider>
@@ -103,7 +107,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="flex h-dvh flex-col lg:flex-row">
       <SideNav />
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <main ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
           {children}
         </main>
         <StatusBar />

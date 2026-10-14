@@ -37,8 +37,12 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     [client, session],
   )
 
+  // check on open and whenever the app comes back to the foreground
   useEffect(() => {
     sync()
+    const onVisible = () => document.visibilityState === 'visible' && sync()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [sync])
 
   return <SyncContext.Provider value={{ ...state, sync }}>{children}</SyncContext.Provider>

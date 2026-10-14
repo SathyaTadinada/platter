@@ -55,7 +55,7 @@ export function Spinner({ label = 'Loading' }: { label?: string }) {
   )
 }
 
-const widths = { narrow: 'max-w-xl', wide: 'max-w-5xl' }
+const widths = { narrow: 'max-w-xl', wide: 'max-w-5xl', full: 'max-w-7xl' }
 
 // Page with a header that stays put and covers the status bar area,
 // so scrolled content never shows through behind the clock.
@@ -64,12 +64,14 @@ export function Screen({
   back,
   children,
   actions,
+  toolbar,
   width = 'narrow',
 }: {
-  title: string
-  back?: string
+  title: ReactNode
+  back?: string | (() => void)
   children: ReactNode
   actions?: ReactNode
+  toolbar?: ReactNode // stays pinned under the title
   width?: keyof typeof widths
 }) {
   const [, navigate] = useLocation()
@@ -82,14 +84,15 @@ export function Screen({
               type="button"
               aria-label="Back"
               className="-ml-2 rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800"
-              onClick={() => navigate(back)}
+              onClick={() => (typeof back === 'function' ? back() : navigate(back))}
             >
               <ChevronLeft />
             </button>
           )}
-          <h1 className="flex-1 truncate text-xl font-bold tracking-tight">{title}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight">{title}</h1>
           {actions}
         </div>
+        {toolbar && <div className={`mx-auto w-full px-4 pb-3 lg:px-8 ${widths[width]}`}>{toolbar}</div>}
       </header>
       <div className={`mx-auto w-full px-4 pt-4 pb-8 lg:px-8 lg:pt-6 ${widths[width]}`}>{children}</div>
     </>
@@ -157,4 +160,24 @@ export function Row({ label, detail, value, trailing, href, onClick, danger }: R
       )}
     </li>
   )
+}
+
+export function IconButton({ label, children, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={`rounded-full p-2 text-stone-700 hover:bg-stone-200 active:bg-stone-200 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+// Goes back in history when there is somewhere to go, otherwise to a fallback
+export function useBack(fallback: string) {
+  const [, navigate] = useLocation()
+  return () => (history.state !== null && history.length > 1 ? history.back() : navigate(fallback))
 }

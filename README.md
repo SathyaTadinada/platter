@@ -6,6 +6,9 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 
 ## What it does
 
+- Browse your collection: grid or list, search across artist, title, label, genre and your own notes, filter by folder, format, genre, style, decade, rating or any custom field, sort and shuffle
+- Record pages with tracklist, rating, folder and editable custom fields
+- Export any filtered view as a CSV in the same columns Discogs uses
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
 - Shows matching releases with cover, label, catalog number, country, year and format
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
