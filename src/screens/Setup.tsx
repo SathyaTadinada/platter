@@ -54,7 +54,7 @@ export function Setup() {
                   Open <ExternalLink href={FIELDS_SETTINGS_URL}>Discogs collection settings</ExternalLink>
                 </li>
                 <li>
-                  Tap <b>Add Field</b> for each one below, using the exact name and type shown. Leave <b>Make Public</b> off.
+                  Use <b>Add Field</b> for each one below, with the exact name and type shown. Leave <b>Make Public</b> off.
                 </li>
                 <li>Save, then come back here and check again.</li>
               </ol>

@@ -4,8 +4,15 @@ import { cleanArtist, describeFormats, splitTitle } from './format'
 
 // ---- building items ----
 
-const joinArtists = (artists: { name: string; join?: string }[]) =>
-  artists.map((a, i) => cleanArtist(a.name) + (i < artists.length - 1 ? (a.join?.trim() ? ` ${a.join.trim()} ` : ', ') : '')).join('')
+// Discogs gives each artist a joiner for the next one: "&", "feat.", or plain ","
+function joiner(join?: string): string {
+  const j = join?.trim()
+  if (!j || j === ',') return ', '
+  return /^[,;/]$/.test(j) ? `${j} ` : ` ${j} `
+}
+
+export const joinArtists = (artists: { name: string; join?: string }[]) =>
+  artists.map((a, i) => cleanArtist(a.name) + (i < artists.length - 1 ? joiner(a.join) : '')).join('')
 
 const realImage = (url?: string) => (url && !url.endsWith('spacer.gif') ? url : undefined)
 

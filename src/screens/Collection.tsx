@@ -1,9 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowDownUp, Check, Disc3, Download, LayoutGrid, List as ListIcon, ListChecks, RefreshCw, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowDownUp, Check, Disc3, Download, FileUp, LayoutGrid, List as ListIcon, ListChecks, RefreshCw, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance } from '../api/discogs/endpoints'
 import { FilterSheet } from '../components/FilterSheet'
+import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
 import { Stars } from '../components/Stars'
 import { Button, buttonClass, IconButton, Notice, Screen, Spinner } from '../components/ui'
@@ -133,13 +134,15 @@ export function Collection() {
         )}
       </label>
       <div className="flex items-center gap-2">
-        <label className="relative">
+        {/* the visible pill sizes to the current label; the real select sits on top, invisible */}
+        <label className="relative inline-flex min-h-9 items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium dark:bg-stone-800">
+          <ArrowDownUp size={16} aria-hidden />
+          <span aria-hidden>{SORTS.find((s) => s.key === query.sort)?.label}</span>
           <span className="sr-only">Sort by</span>
-          <ArrowDownUp size={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" aria-hidden />
           <select
             value={query.sort}
             onChange={(e) => setQuery({ ...query, sort: e.target.value as LibraryQuery['sort'] })}
-            className="min-h-9 appearance-none rounded-full bg-stone-200 pr-3 pl-8 text-sm font-medium dark:bg-stone-800"
+            className="absolute inset-0 cursor-pointer appearance-none opacity-0"
           >
             {SORTS.map((s) => (
               <option key={s.key} value={s.key}>
@@ -212,18 +215,26 @@ export function Collection() {
 
   const actions = selected ? selectActions : (
     <>
-      <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
-        <ListChecks size={20} />
-      </IconButton>
       <IconButton label="Pick a random record" onClick={shuffle} disabled={!filtered.length}>
         <Shuffle size={20} />
       </IconButton>
       <IconButton label={view === 'grid' ? 'Show as list' : 'Show as grid'} onClick={toggleView}>
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
-      <IconButton label="Refresh from Discogs" onClick={() => sync.sync(true)} disabled={sync.running}>
-        <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
-      </IconButton>
+      <Menu
+        label="More"
+        items={[
+          { label: 'Select records', icon: <ListChecks size={18} />, onSelect: () => setSelected(new Set()), disabled: !filtered.length },
+          { label: sync.running ? 'Refreshing…' : 'Refresh from Discogs', icon: <RefreshCw size={18} />, onSelect: () => sync.sync(true), disabled: sync.running },
+          { label: 'Import a CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
+          {
+            label: searching ? `Export these ${filtered.length} as CSV` : 'Export as CSV',
+            icon: <Download size={18} />,
+            onSelect: exportCsv,
+            disabled: !filtered.length,
+          },
+        ]}
+      />
     </>
   )
 
@@ -297,14 +308,10 @@ export function Collection() {
           </section>
         ))}
         {filtered.length > limit && <LoadMore onVisible={() => setLimit((n) => n + PAGE)} />}
-        <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
+        <footer className="mt-4 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
           <a href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} target="_blank" rel="noopener" className="text-stone-500 underline underline-offset-2">
             Data provided by Discogs.
           </a>
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1.5 font-medium text-stone-600 dark:text-stone-300">
-            <Download size={16} aria-hidden />
-            Export {searching ? `these ${filtered.length}` : 'all'} as CSV
-          </button>
         </footer>
       </>
     )

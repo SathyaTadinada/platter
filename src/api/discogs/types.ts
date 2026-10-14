@@ -121,3 +121,5 @@ export type MarketplaceStats = {
   lowest_price: { value: number; currency: string } | null
   blocked_from_sale: boolean
 }
+
+export type UserProfile = { username: string; name?: string; avatar_url?: string; uri: string }

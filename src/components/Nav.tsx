@@ -1,6 +1,7 @@
 import { Disc3, LibraryBig, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
+import { ProfileLink } from './Profile'
 
 const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/', label: 'Collection', Icon: LibraryBig },
@@ -46,8 +47,8 @@ export function SideNav() {
   const { session } = useSession()
   return (
     <nav className="hidden w-60 shrink-0 flex-col border-r border-stone-200 bg-white px-3 py-5 lg:flex dark:border-stone-800 dark:bg-stone-950">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-3 text-lg font-bold tracking-tight">
-        <Disc3 className="text-accent-500" aria-hidden />
+      <Link href="/" className="mb-7 flex items-center gap-2.5 px-3 text-2xl font-bold tracking-tight">
+        <Disc3 size={30} className="text-accent-500" aria-hidden />
         Platter
       </Link>
       <ul className="space-y-1">
@@ -68,7 +69,7 @@ export function SideNav() {
           </li>
         ))}
       </ul>
-      {session && <p className="mt-auto truncate px-3 text-sm text-stone-500">Signed in as {session.username}</p>}
+      {session && <ProfileLink className="mt-auto rounded-lg px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-900" />}
     </nav>
   )
 }

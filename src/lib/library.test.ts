@@ -10,6 +10,7 @@ import {
   filterItems,
   groupItems,
   itemFromSearch,
+  joinArtists,
   parseQuery,
   serializeQuery,
   sortItems,
@@ -48,6 +49,15 @@ describe('toLibraryItem', () => {
       },
     })
     expect(i.artist).toBe('Nirvana, Prince')
+  })
+})
+
+describe('joinArtists', () => {
+  it('spaces joiners like Discogs shows them', () => {
+    expect(joinArtists([{ name: 'Frédéric Chopin', join: ',' }, { name: 'Christoph Eschenbach' }])).toBe('Frédéric Chopin, Christoph Eschenbach')
+    expect(joinArtists([{ name: 'Simon', join: '&' }, { name: 'Garfunkel' }])).toBe('Simon & Garfunkel')
+    expect(joinArtists([{ name: 'A', join: 'Feat.' }, { name: 'B' }])).toBe('A Feat. B')
+    expect(joinArtists([{ name: 'A', join: '' }, { name: 'B (2)' }])).toBe('A, B')
   })
 })
 

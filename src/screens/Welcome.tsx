@@ -86,7 +86,7 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
         <li>
           Open your <ExternalLink href="https://www.discogs.com/settings/developers">Discogs developer settings</ExternalLink> and log in if asked.
         </li>
-        <li>Tick the box to agree to the API terms, then tap <b>Generate new token</b>.</li>
+        <li>Tick the box to agree to the API terms, then choose <b>Generate new token</b>.</li>
         <li>Copy the long string next to "Current token" and paste it below.</li>
       </ol>
       <form onSubmit={submit} className="space-y-3">

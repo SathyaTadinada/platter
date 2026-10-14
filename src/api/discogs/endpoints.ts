@@ -11,12 +11,15 @@ import type {
   Release,
   SearchParams,
   SearchResponse,
+  UserProfile,
   WantsPage,
 } from './types'
 
 const u = (username: string) => `/users/${encodeURIComponent(username)}`
 
 export const getIdentity = (c: DiscogsClient) => c.get<IdentityResponse>('/oauth/identity')
+
+export const getProfile = (c: DiscogsClient, username: string) => c.get<UserProfile>(u(username), undefined, DISCOGS_MAX_AGE)
 
 export const searchReleases = (c: DiscogsClient, params: SearchParams, page = 1) =>
   c.get<SearchResponse>('/database/search', { ...params, type: 'release', per_page: 50, page }, DISCOGS_MAX_AGE)

@@ -3,7 +3,8 @@ import { RefreshCw } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
-import { InstallSteps, isStandalone } from '../components/InstallHint'
+import { useInstallPrompt } from '../components/InstallHint'
+import { ProfileLink } from '../components/Profile'
 import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
 import { db, getSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
@@ -22,6 +23,7 @@ export function Settings() {
   const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const install = useInstallPrompt()
 
   const stats = useLiveQuery(async () => ({
     records: await db.collection.count(),
@@ -63,7 +65,12 @@ export function Settings() {
     <Screen title="Settings">
       <Section title="Account">
         <List>
-          <Row label={session.username} detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'} />
+          <li>
+            <ProfileLink
+              detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'}
+              className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+            />
+          </li>
           {confirming ? (
             <li className="space-y-3 px-4 py-3">
               <p className="text-sm">Sign out and remove everything Platter keeps on this device? Your Discogs collection isn't touched.</p>
@@ -124,16 +131,9 @@ export function Settings() {
         />
       </Section>
 
-      {!isStandalone() && (
-        <Section title="Install">
-          <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-            <InstallSteps />
-          </div>
-        </Section>
-      )}
-
       <Section>
         <List>
+          {install && <Row label="Install Platter" onClick={install} />}
           <Row label="About and privacy" href="/about" />
         </List>
       </Section>
