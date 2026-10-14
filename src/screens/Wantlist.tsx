@@ -82,7 +82,7 @@ export function Wantlist() {
                   href={`/release/${w.releaseId}`}
                   detail={[w.artist, w.format?.split(',')[0], w.year].filter(Boolean).join(' · ')}
                 >
-                  {note(w) && <span className="text-xs font-medium text-accent-ink">{note(w)}</span>}
+                  {note(w) && <span className="text-xs font-medium text-accent">{note(w)}</span>}
                 </RecordRow>
               </div>
               <button

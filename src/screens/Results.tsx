@@ -123,7 +123,7 @@ export function Results() {
                 onClick={() => setFiltersOpen(true)}
                 className={`mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
                   activeResultFilters(filters)
-                    ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                    ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
                     : 'bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700'
                 }`}
               >
@@ -259,7 +259,7 @@ function ShowFilter({
             onClick={() => onChange(k)}
             className={`rounded-full px-3 py-1.5 text-sm transition ${
               on
-                ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
                 : 'bg-stone-200 text-stone-800 hover:bg-stone-300 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
             }`}
           >

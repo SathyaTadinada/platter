@@ -124,7 +124,7 @@ export function Group({
               disabled={!on && o.count === 0}
               className={`rounded-full px-3 py-1.5 text-sm transition disabled:opacity-40 ${
                 on
-                  ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                  ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
                   : 'bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
               }`}
             >
@@ -164,7 +164,7 @@ function RatingPicker({ options, value, onPick }: { options: FacetOption[]; valu
             onClick={() => onPick(n)}
             className="p-1 transition-transform hover:scale-110 disabled:opacity-30"
           >
-            <Star size={28} className={n <= lit ? 'fill-accent-mark text-accent-mark' : 'text-stone-300 dark:text-stone-600'} aria-hidden />
+            <Star size={28} className={n <= lit ? 'fill-accent text-accent' : 'text-stone-300 dark:text-stone-600'} aria-hidden />
           </button>
         ))}
         <span className="ml-3 text-sm text-stone-500 tabular-nums">{note}</span>

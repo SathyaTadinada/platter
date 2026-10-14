@@ -45,7 +45,7 @@ export function StatusBar() {
 
   return (
     <div role="status" className="pointer-events-none flex justify-center px-4">
-      <p className="rounded-full bg-stone-900 px-4 py-2 text-xs font-medium text-stone-100 shadow-lg dark:bg-accent-500 dark:text-stone-950">
+      <p className="rounded-full bg-stone-900 px-4 py-2 text-xs font-medium text-stone-100 shadow-lg dark:bg-accent dark:text-accent-fg">
         {text}
       </p>
     </div>

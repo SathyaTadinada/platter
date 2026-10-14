@@ -32,7 +32,7 @@ export function Welcome({ error }: { error?: string }) {
   return (
     <div className="flex min-h-dvh flex-col items-center px-6 pt-[max(env(safe-area-inset-top),1.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
       <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center text-center">
-        <Disc3 size={56} strokeWidth={1.5} className="text-accent-mark" aria-hidden />
+        <Disc3 size={56} strokeWidth={1.5} className="text-accent" aria-hidden />
         <h1 className="mt-4 text-4xl font-bold tracking-tight">Platter</h1>
         <p className="mt-2 text-stone-500">Catalog your records on Discogs.</p>
 
@@ -82,7 +82,7 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
     setError(null)
     try {
       const session = await signInWithToken(token.trim())
-      navigate('/setup', { replace: true })
+      navigate('/', { replace: true })
       setSession(session)
     } catch (err) {
       setError(

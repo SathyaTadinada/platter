@@ -126,7 +126,7 @@ export function Release({ id }: { id: string }) {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {copyCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-ink dark:bg-accent-500/20">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent dark:bg-accent/20">
                 <Check size={16} aria-hidden />
                 {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
               </span>

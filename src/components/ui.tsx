@@ -7,7 +7,7 @@ import { Link, useLocation } from 'wouter'
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950 active:opacity-80 hover:opacity-90',
+  primary: 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg active:opacity-80 hover:opacity-90',
   secondary: 'bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-100 active:opacity-80 hover:opacity-90',
   ghost: 'text-stone-700 dark:text-stone-300 active:bg-stone-200 hover:bg-stone-100 dark:active:bg-stone-800 dark:hover:bg-stone-900',
   danger: 'bg-red-600 text-white active:opacity-80',

@@ -39,7 +39,7 @@ export function BottomNav() {
               href={hrefOf(href)}
               aria-current={isCurrent(href) ? 'page' : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                isCurrent(href) ? 'text-accent-ink' : 'text-stone-500'
+                isCurrent(href) ? 'text-accent' : 'text-stone-500'
               }`}
             >
               <Icon size={22} aria-hidden />
@@ -88,7 +88,7 @@ export function SideNav() {
     >
       <div className={`mb-8 flex items-center ${collapsed ? 'flex-col gap-3' : 'justify-between pr-1 pl-3'}`}>
         <Link href="/" className="flex items-center gap-2.5 text-[1.75rem] font-bold tracking-tight" aria-label="Platter">
-          <Disc3 size={34} className="text-accent-mark" aria-hidden />
+          <Disc3 size={34} className="text-accent" aria-hidden />
           {!collapsed && 'Platter'}
         </Link>
         <button
@@ -110,7 +110,7 @@ export function SideNav() {
               title={collapsed ? label : undefined}
               className={`flex items-center gap-3 rounded-lg py-2 font-medium ${collapsed ? 'justify-center px-2.5' : 'px-3'} ${
                 isCurrent(href)
-                  ? 'bg-stone-100 text-accent-ink dark:bg-stone-900'
+                  ? 'bg-stone-100 text-accent dark:bg-stone-900'
                   : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-900'
               }`}
             >

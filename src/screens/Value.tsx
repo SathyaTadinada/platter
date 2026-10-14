@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Card, Section, Spinner } from '../components/ui'
 import type { Folder } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
@@ -11,6 +11,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { recordCollectionValue } from '../lib/pricing'
+import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
 import {
   byMonth,
   change,
@@ -48,6 +49,7 @@ export function ValueStats() {
     [client, username, currency],
   )
 
+  const layout = useSyncExternalStore(subscribeLayout, getLayout)
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
@@ -67,10 +69,63 @@ export function ValueStats() {
   const series = (history ?? []).filter((h) => h.currency === currency)
   const anySuggested = valued.some((v) => v.value.basis === 'suggested')
 
+  const sections: Record<SectionKey, ReactNode> = {
+    overTime: (
+      <Section title="Over time">
+        <Card>
+          {series.length >= 2 ? (
+            <Chart series={series} money={(n) => money(n, true)} />
+          ) : (
+            <p className="text-sm text-stone-500">Check back in a couple of days. Platter saves the value once a day to draw this.</p>
+          )}
+        </Card>
+      </Section>
+    ),
+    paid: <PaidVsNow items={items} valued={valued} paidField={paidField} money={money} />,
+    month: (
+      <Section title="By month">
+        <Monthly items={items} paidField={paidField} dateField={dateField} money={money} currency={currency} />
+      </Section>
+    ),
+    top: valued.length > 0 && (
+      <Section title="Most valuable">
+        <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${card}`}>
+          {valued.slice(0, TOP).map(({ item, value }) => (
+            <li key={item.instanceId}>
+              <RecordRow item={item}>
+                <span className="block text-sm font-semibold tabular-nums">{money(value.amount)}</span>
+                {/* only worth saying when the list mixes both kinds */}
+                {anySuggested && (
+                  <span className="block text-xs text-stone-500">{value.basis === 'suggested' ? 'suggested' : 'lowest listing'}</span>
+                )}
+              </RecordRow>
+            </li>
+          ))}
+        </ul>
+        <p className="px-1 text-xs text-stone-500">
+          {anySuggested
+            ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
+            : "Going by the cheapest copy for sale on Discogs. Fill in your seller settings there and you'll get prices for your copy's condition instead."}
+        </p>
+      </Section>
+    ),
+    price: valued.length > 0 && (
+      <Section title="By price">
+        <Breakdown valued={valued} money={money} />
+      </Section>
+    ),
+    breakdown: valued.length > 0 && (
+      <Section title="Breakdown">
+        <GroupTotals valued={valued} folders={folders} money={money} />
+      </Section>
+    ),
+  }
+
   return (
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
-      <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+      {/* sections flow down two columns on wide screens, in the order picked in "Choose charts" */}
+      <div className="lg:columns-2 lg:gap-x-8 [&>*]:break-inside-avoid">
         <div>
           <Section>
             <div className={`${card} p-4`}>
@@ -98,60 +153,12 @@ export function ValueStats() {
               )}
             </div>
           </Section>
-
-          <Section title="Over time">
-            <Card>
-              {series.length >= 2 ? (
-                <Chart series={series} money={(n) => money(n, true)} />
-              ) : (
-                <p className="text-sm text-stone-500">Check back in a couple of days. Platter saves the value once a day to draw this.</p>
-              )}
-            </Card>
-          </Section>
-
-          <PaidVsNow items={items} valued={valued} paidField={paidField} money={money} />
-
-          <Section title="By month">
-            <Monthly items={items} paidField={paidField} dateField={dateField} money={money} currency={currency} />
-          </Section>
         </div>
-
-        <div>
-          {valued.length > 0 && (
-            <>
-              <Section title="Most valuable">
-                <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${card}`}>
-                  {valued.slice(0, TOP).map(({ item, value }) => (
-                    <li key={item.instanceId}>
-                      <RecordRow item={item}>
-                        <span className="block text-sm font-semibold tabular-nums">{money(value.amount)}</span>
-                        {/* only worth saying when the list mixes both kinds */}
-                        {anySuggested && (
-                          <span className="block text-xs text-stone-500">
-                            {value.basis === 'suggested' ? 'suggested' : 'lowest listing'}
-                          </span>
-                        )}
-                      </RecordRow>
-                    </li>
-                  ))}
-                </ul>
-                <p className="px-1 text-xs text-stone-500">
-                  {anySuggested
-                    ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
-                    : "Going by the cheapest copy for sale on Discogs. Fill in your seller settings there and you'll get prices for your copy's condition instead."}
-                </p>
-              </Section>
-
-              <Section title="By price">
-                <Breakdown valued={valued} money={money} />
-              </Section>
-
-              <Section title="Breakdown">
-                <GroupTotals valued={valued} folders={folders} money={money} />
-              </Section>
-            </>
-          )}
-        </div>
+        {layout.order
+          .filter((k) => !layout.hidden.includes(k) && sections[k])
+          .map((k) => (
+            <div key={k}>{sections[k]}</div>
+          ))}
       </div>
       <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
         <a
@@ -357,7 +364,7 @@ function Breakdown({ valued, money }: { valued: Valued[]; money: Money }) {
         {buckets.map((b) => (
           <div key={b.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             <span className="text-xs font-semibold tabular-nums">{b.count || ''}</span>
-            <span className="w-full rounded-t-lg bg-accent-mark/80" style={{ height: b.count ? pct(b.count, most) : 0 }} />
+            <span className="w-full rounded-t-lg bg-accent/80" style={{ height: b.count ? pct(b.count, most) : 0 }} />
           </div>
         ))}
       </div>
@@ -384,7 +391,7 @@ function BarList({ rows }: { rows: { label: string; amount: number; text: string
             <span className="shrink-0 font-medium tabular-nums">{r.text}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
-            <div className="h-full rounded-full bg-accent-mark" style={{ width: pct(r.amount, most) }} />
+            <div className="h-full rounded-full bg-accent" style={{ width: pct(r.amount, most) }} />
           </div>
         </div>
       ))}

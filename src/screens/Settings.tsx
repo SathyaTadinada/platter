@@ -258,12 +258,12 @@ function Appearance() {
               setAccent(a.id)
               setLocal(a.id)
             }}
-            className={`flex aspect-square w-full items-center justify-center rounded-full transition hover:scale-105 ${
+            className={`flex aspect-square w-full items-center justify-center rounded-full bg-accent transition hover:scale-105 ${
               accent === a.id ? 'ring-2 ring-stone-900 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-stone-900' : ''
             }`}
-            style={{ backgroundColor: a.swatch }}
+            data-accent={a.id}
           >
-            {accent === a.id && <Check size={18} strokeWidth={3} className="text-stone-950" aria-hidden />}
+            {accent === a.id && <Check size={18} strokeWidth={3} className="text-accent-fg" aria-hidden />}
           </button>
         ))}
       </div>

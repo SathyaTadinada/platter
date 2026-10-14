@@ -43,7 +43,7 @@ export function ListenBrainz() {
                 type="checkbox"
                 checked={saved.enabled}
                 onChange={(e) => setSetting(LISTENBRAINZ_KEY, { ...saved, enabled: e.target.checked })}
-                className="size-5 accent-accent-500"
+                className="size-5 accent-accent"
               />
             </label>
             <p className="text-sm text-stone-500">Each play is sent as the album's tracks, ending when you logged it.</p>

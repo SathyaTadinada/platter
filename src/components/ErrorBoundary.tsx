@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
           <button
             type="button"
             onClick={() => location.reload()}
-            className="min-h-11 rounded-xl bg-stone-900 px-4 font-semibold text-white dark:bg-accent-500 dark:text-stone-950"
+            className="min-h-11 rounded-xl bg-stone-900 px-4 font-semibold text-white dark:bg-accent dark:text-accent-fg"
           >
             Reload
           </button>

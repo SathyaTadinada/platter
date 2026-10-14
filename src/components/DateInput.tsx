@@ -24,7 +24,7 @@ export function DateInput({
   return (
     <div className="flex items-center justify-end gap-1">
       {!set && extra}
-      <label className="relative flex min-h-10 cursor-pointer items-center rounded-lg px-2 hover:bg-stone-100 focus-within:ring-2 focus-within:ring-accent-500/60 dark:hover:bg-stone-800">
+      <label className="relative flex min-h-10 cursor-pointer items-center rounded-lg px-2 hover:bg-stone-100 focus-within:ring-2 focus-within:ring-accent/60 dark:hover:bg-stone-800">
         <span className={set ? 'font-medium' : 'text-stone-500'}>{set ? formatDay(value) : 'Not set'}</span>
         <input
           type="date"

@@ -51,6 +51,7 @@ import { fieldFor } from '../lib/fields'
 import { formatMoney, valueOf } from '../lib/value'
 import { runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
+import { FieldNudge } from './FieldNudge'
 
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
@@ -222,7 +223,7 @@ export function Collection() {
           type="button"
           onClick={() => setFiltersOpen(true)}
           className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium whitespace-nowrap ${
-            nFilters ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950' : 'bg-stone-200 dark:bg-stone-800'
+            nFilters ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg' : 'bg-stone-200 dark:bg-stone-800'
           }`}
         >
           <SlidersHorizontal size={16} aria-hidden />
@@ -392,6 +393,7 @@ export function Collection() {
   } else {
     body = (
       <>
+        <FieldNudge className="mb-4" />
         <ActiveFilters filters={query.filters} facets={facets} onChange={setFilters} />
         {byValue && currency && prices && <PriceCoverage items={filtered} prices={prices} currency={currency} />}
         {groups.map((g) => (
@@ -486,7 +488,7 @@ function Tick({ on }: { on?: boolean }) {
   return (
     <span
       className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${
-        on ? 'border-accent-500 bg-accent-500 text-stone-950' : 'border-white bg-black/30 text-transparent'
+        on ? 'border-accent bg-accent text-accent-fg' : 'border-white bg-black/30 text-transparent'
       }`}
       aria-hidden
     >
@@ -502,7 +504,7 @@ function GridTile({ item, note, selected, onSelect }: { item: LibraryItem; note?
         <div className="relative">
           <Cover
             item={item}
-            className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${selected ? 'opacity-70 ring-4 ring-accent-500' : ''}`}
+            className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${selected ? 'opacity-70 ring-4 ring-accent' : ''}`}
           />
           {onSelect && (
             <span className="absolute top-2 right-2">
@@ -526,7 +528,7 @@ function ListRow({ item, note, selected, onSelect }: { item: LibraryItem; note?:
         item={item}
         selected={selected}
         onSelect={onSelect}
-        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent-500/10' : ''}`}
+        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
       >
         {onSelect && <Tick on={selected} />}
         <Cover item={item} small className="size-14 shrink-0 rounded-lg" />
@@ -661,7 +663,7 @@ function ActiveFilters({
           key={c.key}
           type="button"
           onClick={c.clear}
-          className="inline-flex items-center gap-1 rounded-full bg-stone-900 py-1 pr-2 pl-3 text-sm text-white dark:bg-accent-500 dark:text-stone-950"
+          className="inline-flex items-center gap-1 rounded-full bg-stone-900 py-1 pr-2 pl-3 text-sm text-white dark:bg-accent dark:text-accent-fg"
           aria-label={`Remove filter ${c.label}`}
         >
           {c.label}

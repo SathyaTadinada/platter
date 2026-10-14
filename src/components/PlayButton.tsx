@@ -26,7 +26,7 @@ export function PlayButton({ item }: { item: LibraryItem }) {
         type="button"
         disabled={busy}
         onClick={() => log(item)}
-        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-stone-900 px-4 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 dark:bg-accent-500 dark:text-stone-950"
+        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-stone-900 px-4 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 dark:bg-accent dark:text-accent-fg"
       >
         <Disc3 size={18} className={busy ? 'animate-spin' : ''} aria-hidden />
         Log a play

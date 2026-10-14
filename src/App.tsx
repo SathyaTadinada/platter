@@ -44,7 +44,7 @@ async function start(): Promise<Ready> {
     try {
       const { token, secret } = await finishOAuth(location.search)
       const session = await signInWithOAuth(token, secret)
-      history.replaceState(null, '', '/setup')
+      history.replaceState(null, '', '/')
       return { state: 'ready', session }
     } catch (e) {
       history.replaceState(null, '', '/')
@@ -133,7 +133,6 @@ function Routes({ error }: { error?: string }) {
   )
 }
 
-// Full-height layout: only the middle scrolls, so the nav never moves.
 function DemoBar() {
   const { session, auth, setSession } = useSession()
   const [, navigate] = useLocation()
@@ -145,17 +144,20 @@ function DemoBar() {
     setSession(null)
   }
   return (
-    <div className="flex shrink-0 items-center justify-center gap-3 bg-accent-500 px-4 pt-[env(safe-area-inset-top)] text-sm text-stone-950">
+    <div className="flex shrink-0 items-center justify-center gap-3 bg-accent px-4 pt-[env(safe-area-inset-top)] text-sm text-accent-fg">
       <p className="py-1.5">
         <b>Demo</b>
       </p>
-      <button type="button" onClick={leave} className="rounded-md bg-stone-950 px-2 py-0.5 font-medium text-white hover:bg-stone-800">
+      <button type="button" onClick={leave} className="rounded-md bg-accent-fg px-2 py-0.5 font-medium text-accent hover:opacity-90">
         Exit
       </button>
     </div>
   )
 }
 
+// Pinned to the screen edges rather than sized with 100dvh: installed on iOS, dvh is
+// wrong at launch, which left a gap under the tab bar and let the whole page scroll.
+// Only the middle scrolls, so the header and tab bar never move.
 function Shell({ children }: { children: ReactNode }) {
   const { session } = useSession()
   const [path] = useLocation()
@@ -165,15 +167,13 @@ function Shell({ children }: { children: ReactNode }) {
   }, [path])
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="fixed inset-0 flex flex-col">
       <DemoBar />
       {/* the demo bar already covers the status bar area */}
-      <div
-        className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--demo-bar:2rem] [--header-inset:0px]' : ''}`}
-      >
+      <div className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--header-inset:0px]' : ''}`}>
         <SideNav />
         <div className="relative flex min-h-0 flex-1 flex-col">
-          <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none">
+          <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size]">
             {children}
           </main>
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">

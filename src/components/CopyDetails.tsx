@@ -21,7 +21,7 @@ export function kindOf(field: CollectionField, key: FieldKey | undefined): Kind 
 
 // Inputs that look like plain values until hovered or focused
 export const inline =
-  'min-h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-right font-medium placeholder:font-normal placeholder:text-stone-500 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-accent-500/60 dark:hover:bg-stone-800 dark:focus:bg-stone-800'
+  'min-h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-right font-medium placeholder:font-normal placeholder:text-stone-500 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-accent/60 dark:hover:bg-stone-800 dark:focus:bg-stone-800'
 
 export function Row({ label, saved, children, stacked }: { label: string; saved?: boolean; children: ReactNode; stacked?: boolean }) {
   return (

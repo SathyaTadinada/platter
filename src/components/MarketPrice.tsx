@@ -39,7 +39,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
               return (
                 <div
                   key={condition}
-                  className={`rounded-lg px-2 py-1.5 text-center ${mine ? 'bg-accent-100 ring-1 ring-accent-500 dark:bg-accent-500/20' : 'bg-stone-100 dark:bg-stone-800'}`}
+                  className={`rounded-lg px-2 py-1.5 text-center ${mine ? 'bg-accent-100 ring-1 ring-accent dark:bg-accent/20' : 'bg-stone-100 dark:bg-stone-800'}`}
                 >
                   <p className="text-xs text-stone-500">{grade(condition)}</p>
                   <p className="text-sm font-semibold tabular-nums">{formatMoney(amount, currency, { whole: true })}</p>
@@ -62,7 +62,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
           href={`https://www.discogs.com/sell/release/${releaseId}`}
           target="_blank"
           rel="noopener"
-          className="flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-accent-ink hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/50"
+          className="flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-accent hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/50"
         >
           See listings on Discogs
           <ArrowUpRight size={16} aria-hidden />

@@ -5,7 +5,7 @@ export function Stars({ value, onChange, size = 22 }: { value: number; onChange?
   if (!onChange) {
     if (!value) return null
     return (
-      <span className="inline-flex text-accent-mark" aria-label={`${value} out of 5 stars`}>
+      <span className="inline-flex text-accent" aria-label={`${value} out of 5 stars`}>
         {Array.from({ length: value }, (_, i) => (
           <Star key={i} size={size} fill="currentColor" strokeWidth={0} aria-hidden />
         ))}
@@ -31,7 +31,7 @@ function EditableStars({ value, onChange, size }: { value: number; onChange: (n:
           onMouseEnter={() => setHover(n)}
           // clicking the current rating clears it
           onClick={() => onChange(value === n ? 0 : n)}
-          className="p-1 text-accent-mark transition-transform hover:scale-110"
+          className="p-1 text-accent transition-transform hover:scale-110"
         >
           <Star
             size={size}

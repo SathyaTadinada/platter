@@ -67,7 +67,7 @@ export function Menu({
             >
               {item.icon && <span className="text-stone-500">{item.icon}</span>}
               <span className="flex-1">{item.label}</span>
-              {item.checked && <Check size={16} className="text-accent-mark" aria-hidden />}
+              {item.checked && <Check size={16} className="text-accent" aria-hidden />}
             </button>
           ))}
         </div>

@@ -1,5 +1,8 @@
 import { useLocation, useSearch } from 'wouter'
-import { Screen } from '../components/ui'
+import { SlidersHorizontal } from 'lucide-react'
+import { useState } from 'react'
+import { ChartsSheet } from '../components/ChartsSheet'
+import { IconButton, Screen } from '../components/ui'
 import { ListeningStats } from './Listening'
 import { ValueStats } from './Value'
 
@@ -18,6 +21,7 @@ export function Stats() {
   const params = new URLSearchParams(useSearch())
   const [, navigate] = useLocation()
   const asked = params.get('view')
+  const [choosing, setChoosing] = useState(false)
   const view: View = asked === 'listening' || asked === 'value' ? asked : savedView()
 
   function show(v: View) {
@@ -56,8 +60,20 @@ export function Stats() {
   )
 
   return (
-    <Screen title="Stats" width="wide" toolbar={toggle}>
+    <Screen
+      title="Stats"
+      width="wide"
+      toolbar={toggle}
+      actions={
+        view === 'value' && (
+          <IconButton label="Choose charts" onClick={() => setChoosing(true)}>
+            <SlidersHorizontal size={20} />
+          </IconButton>
+        )
+      }
+    >
       {view === 'value' ? <ValueStats /> : <ListeningStats />}
+      {choosing && <ChartsSheet onClose={() => setChoosing(false)} />}
     </Screen>
   )
 }

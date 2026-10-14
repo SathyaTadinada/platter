@@ -3,13 +3,14 @@ import { Link } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
 import type { CollectionField } from '../api/discogs/types'
 import { Check } from 'lucide-react'
-import { Button, buttonClass, Card, ExternalLink, Notice, Screen, Section, Spinner } from '../components/ui'
+import { Button, buttonClass, Card, ExternalLink, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { FIELDS_SETTINGS_URL, matchFields, type FieldKey, type FieldMap, type FieldMatch } from '../lib/fields'
 
 export function Setup() {
+  const back = useBack('/settings')
   const { client, username } = useSignedIn()
   const [map, setMap] = useState<FieldMap>({})
 
@@ -31,7 +32,7 @@ export function Setup() {
   const missing = matches.filter((m) => !m.field && m.source === 'none')
 
   return (
-    <Screen title="Collection fields" back="/settings">
+    <Screen title="Collection fields" back={back}>
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
           Platter saves details like price and location to your Discogs custom fields. Fields can only be added on the Discogs website.

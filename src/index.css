@@ -20,16 +20,25 @@
   --color-accent-500: #f59e0b;
   --color-accent-600: #d97706;
   --color-accent-700: #b45309;
-  /* accent used as text (ink) and for stars, bars, and icons (mark), picked per mode so
-     they keep WCAG contrast: 4.5:1 for text, 3:1 for graphics */
+  /* the accent as it's actually shown: one shade per theme (set below), with the text color
+     that goes on top of it. Both pairings keep WCAG AA contrast. */
+  --color-accent: var(--color-accent-700);
+  --color-accent-fg: #ffffff;
   /* secondary grey text, a touch darker than Tailwind's so it stays over 4.5:1 on light grey chips */
   --color-stone-500: oklch(51% 0.013 58.071);
-  --color-accent-ink: var(--color-accent-700);
-  --color-accent-mark: var(--color-accent-600);
 }
 
-/* accent picked in Settings (amber is the default above) */
-:root[data-accent='orange'] {
+/* Accents picked in Settings. Plain [data-accent] selectors, so the swatches in Settings can
+   carry their own accent and show exactly the color the app would use. */
+[data-accent='amber'] {
+  --color-accent-50: #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+  --color-accent-700: #b45309;
+}
+[data-accent='orange'] {
   --color-accent-50: #fff7ed;
   --color-accent-100: #ffedd5;
   --color-accent-400: #fb923c;
@@ -37,7 +46,7 @@
   --color-accent-600: #ea580c;
   --color-accent-700: #c2410c;
 }
-:root[data-accent='rose'] {
+[data-accent='rose'] {
   --color-accent-50: #fff1f2;
   --color-accent-100: #ffe4e6;
   --color-accent-400: #fb7185;
@@ -45,7 +54,7 @@
   --color-accent-600: #e11d48;
   --color-accent-700: #be123c;
 }
-:root[data-accent='pink'] {
+[data-accent='pink'] {
   --color-accent-50: #fdf2f8;
   --color-accent-100: #fce7f3;
   --color-accent-400: #f472b6;
@@ -53,7 +62,7 @@
   --color-accent-600: #db2777;
   --color-accent-700: #be185d;
 }
-:root[data-accent='violet'] {
+[data-accent='violet'] {
   --color-accent-50: #f5f3ff;
   --color-accent-100: #ede9fe;
   --color-accent-400: #a78bfa;
@@ -61,7 +70,7 @@
   --color-accent-600: #7c3aed;
   --color-accent-700: #6d28d9;
 }
-:root[data-accent='blue'] {
+[data-accent='blue'] {
   --color-accent-50: #eff6ff;
   --color-accent-100: #dbeafe;
   --color-accent-400: #60a5fa;
@@ -69,7 +78,7 @@
   --color-accent-600: #2563eb;
   --color-accent-700: #1d4ed8;
 }
-:root[data-accent='sky'] {
+[data-accent='sky'] {
   --color-accent-50: #f0f9ff;
   --color-accent-100: #e0f2fe;
   --color-accent-400: #38bdf8;
@@ -77,7 +86,7 @@
   --color-accent-600: #0284c7;
   --color-accent-700: #0369a1;
 }
-:root[data-accent='teal'] {
+[data-accent='teal'] {
   --color-accent-50: #f0fdfa;
   --color-accent-100: #ccfbf1;
   --color-accent-400: #2dd4bf;
@@ -85,7 +94,7 @@
   --color-accent-600: #0d9488;
   --color-accent-700: #0f766e;
 }
-:root[data-accent='emerald'] {
+[data-accent='emerald'] {
   --color-accent-50: #ecfdf5;
   --color-accent-100: #d1fae5;
   --color-accent-400: #34d399;
@@ -93,7 +102,7 @@
   --color-accent-600: #059669;
   --color-accent-700: #047857;
 }
-:root[data-accent='lime'] {
+[data-accent='lime'] {
   --color-accent-50: #f7fee7;
   --color-accent-100: #ecfccb;
   --color-accent-400: #a3e635;
@@ -101,23 +110,32 @@
   --color-accent-600: #65a30d;
   --color-accent-700: #4d7c0f;
 }
-/* amber and lime are light enough that their 600 is too faint on a light page */
-:root:not([data-accent]),
-:root[data-accent='amber'],
-:root[data-accent='lime'] {
-  --color-accent-mark: var(--color-accent-700);
+
+/* Light theme: the darkest shade a page needs for accent text to read (4.5:1 on white),
+   with white text on accent backgrounds. Violet and blue are dark enough one step lighter. */
+[data-accent] {
+  --color-accent: var(--color-accent-700);
+  --color-accent-fg: #ffffff;
 }
-/* On dark backgrounds the lighter shades read better. Grey secondary text (stone-500, only
+[data-accent='violet'],
+[data-accent='blue'] {
+  --color-accent: var(--color-accent-600);
+}
+/* Dark theme: a light shade, with near-black text on it. Grey secondary text (stone-500, only
    ever used for text) also gets lighter, since its usual shade is under 4.5:1 on dark grey. */
-:root.dark {
-  --color-accent-ink: var(--color-accent-400);
-  --color-accent-mark: var(--color-accent-500);
+:root.dark,
+:root.dark [data-accent],
+:root.dark[data-accent] {
+  --color-accent: var(--color-accent-400);
+  --color-accent-fg: #0c0a09;
   --color-stone-500: oklch(70.9% 0.01 56.259);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --color-accent-ink: var(--color-accent-400);
-    --color-accent-mark: var(--color-accent-500);
+  :root:not(.light),
+  :root:not(.light) [data-accent],
+  :root:not(.light)[data-accent] {
+    --color-accent: var(--color-accent-400);
+    --color-accent-fg: #0c0a09;
     --color-stone-500: oklch(70.9% 0.01 56.259);
   }
 }
@@ -126,6 +144,12 @@ html,
 body,
 #root {
   min-height: 100%;
+}
+
+/* no rubber-banding of the whole page; scrolling happens inside the app */
+html,
+body {
+  overscroll-behavior: none;
 }
 
 body {
@@ -140,8 +164,8 @@ body {
 }
 
 ::selection {
-  background-color: var(--color-accent-500);
-  color: var(--color-stone-950);
+  background-color: var(--color-accent);
+  color: var(--color-accent-fg);
 }
 
 /* Safari pads the inside of date inputs, which pushes the text off center */

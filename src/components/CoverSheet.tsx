@@ -45,7 +45,7 @@ export function CoverSheet({ item, release, onClose }: { item: LibraryItem; rele
                     type="button"
                     aria-pressed={current}
                     onClick={() => chooseCover(item, img.uri, img.uri150).then(onClose)}
-                    className={`relative block w-full overflow-hidden rounded-lg ring-2 ${current ? 'ring-accent-500' : 'ring-transparent'}`}
+                    className={`relative block w-full overflow-hidden rounded-lg ring-2 ${current ? 'ring-accent' : 'ring-transparent'}`}
                   >
                     <img
                       src={img.uri150}
@@ -54,7 +54,7 @@ export function CoverSheet({ item, release, onClose }: { item: LibraryItem; rele
                       className="aspect-square w-full bg-stone-200 object-cover dark:bg-stone-800"
                     />
                     {current && (
-                      <span className="absolute top-1 right-1 rounded-full bg-accent-500 p-0.5 text-stone-950">
+                      <span className="absolute top-1 right-1 rounded-full bg-accent p-0.5 text-accent-fg">
                         <Check size={14} strokeWidth={3} aria-hidden />
                       </span>
                     )}

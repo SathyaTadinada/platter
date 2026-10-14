@@ -1,16 +1,15 @@
-// Accent colors the user can pick. Each one's 500 shade is light enough for the
-// dark text used on accent buttons and chips.
+// Accent colors the user can pick. The shades actually shown, per theme, are in index.css.
 export const ACCENTS = [
-  { id: 'amber', label: 'Amber', swatch: '#f59e0b' },
-  { id: 'orange', label: 'Orange', swatch: '#f97316' },
-  { id: 'rose', label: 'Rose', swatch: '#f43f5e' },
-  { id: 'pink', label: 'Pink', swatch: '#ec4899' },
-  { id: 'violet', label: 'Violet', swatch: '#8b5cf6' },
-  { id: 'blue', label: 'Blue', swatch: '#3b82f6' },
-  { id: 'sky', label: 'Sky', swatch: '#0ea5e9' },
-  { id: 'teal', label: 'Teal', swatch: '#14b8a6' },
-  { id: 'emerald', label: 'Emerald', swatch: '#10b981' },
-  { id: 'lime', label: 'Lime', swatch: '#84cc16' },
+  { id: 'amber', label: 'Amber' },
+  { id: 'orange', label: 'Orange' },
+  { id: 'rose', label: 'Rose' },
+  { id: 'pink', label: 'Pink' },
+  { id: 'violet', label: 'Violet' },
+  { id: 'blue', label: 'Blue' },
+  { id: 'sky', label: 'Sky' },
+  { id: 'teal', label: 'Teal' },
+  { id: 'emerald', label: 'Emerald' },
+  { id: 'lime', label: 'Lime' },
 ] as const
 
 export type AccentId = (typeof ACCENTS)[number]['id']

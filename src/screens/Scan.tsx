@@ -158,11 +158,11 @@ export function Scan() {
         <div>
           {/* dark while there's a picture in it; otherwise it follows the theme */}
           <div
-            // on phones it takes whatever height is left, so the page fits without scrolling
+            // on phones it takes whatever height is left in the scrolling area (100cqh), so the page fits without scrolling
             className={`relative mx-auto aspect-[4/5] min-h-40 w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
               mode === 'batch'
-                ? 'max-h-[calc(100dvh-25rem-var(--demo-bar,0px)-env(safe-area-inset-top)-env(safe-area-inset-bottom))]'
-                : 'max-h-[calc(100dvh-21rem-var(--demo-bar,0px)-env(safe-area-inset-top)-env(safe-area-inset-bottom))]'
+                ? 'max-h-[calc(100cqh-21.5rem-var(--header-inset,env(safe-area-inset-top)))]'
+                : 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]'
             } ${on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'}`}
           >
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
@@ -171,7 +171,7 @@ export function Scan() {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-stone-600 dark:text-stone-300">
                 <ScanBarcode size={48} aria-hidden />
                 <p className="text-sm">Point the camera at the barcode</p>
-                <button type="button" onClick={start} className={buttonClass('primary', 'bg-accent-500! text-stone-950!')}>
+                <button type="button" onClick={start} className={buttonClass('primary', 'bg-accent! text-accent-fg!')}>
                   Start camera
                 </button>
                 <button
@@ -261,7 +261,7 @@ export function Scan() {
                     onClick={scanner.toggleTorch}
                     aria-pressed={torch.on}
                     aria-label="Flashlight"
-                    className={`absolute bottom-5 left-3 rounded-full p-2.5 ${torch.on ? 'bg-accent-500 text-stone-950' : 'bg-black/55 text-white'}`}
+                    className={`absolute bottom-5 left-3 rounded-full p-2.5 ${torch.on ? 'bg-accent text-accent-fg' : 'bg-black/55 text-white'}`}
                   >
                     {torch.on ? <Flashlight size={22} /> : <FlashlightOff size={22} />}
                   </button>
