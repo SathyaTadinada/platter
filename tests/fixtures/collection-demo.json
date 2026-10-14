@@ -1,0 +1,2412 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 100,
+    "items": 40,
+    "urls": {}
+  },
+  "releases": [
+    {
+      "id": 6712734,
+      "instance_id": 5000,
+      "folder_id": 1,
+      "date_added": "2026-01-01T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 6712734,
+        "master_id": 10362,
+        "title": "The Dark Side Of The Moon",
+        "year": 1973,
+        "thumb": "https://i.discogs.com/40lhf0yMcJgCSKVh7pPcHuReOgrdgapssttBi7NBjAE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3MTI3/MzQtMTQyNTE0NDkw/My04OTY0LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/qlUIvoWTPZL7BaERIJiHPixJt4aamYlozdKGHlE00Aw/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3MTI3/MzQtMTQyNTE0NDkw/My04OTY0LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Pink Floyd"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Harvest",
+            "catno": "SHVL 804"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Classic Rock",
+          "Prog Rock"
+        ]
+      }
+    },
+    {
+      "id": 5635398,
+      "instance_id": 5001,
+      "folder_id": 1,
+      "date_added": "2026-05-29T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 5635398,
+        "master_id": 38722,
+        "title": "Rumours",
+        "year": 1977,
+        "thumb": "https://i.discogs.com/mHu2HwiVhD59u4360SzB448ynueotYgB0xZANY631fE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU2MzUz/OTgtMTQ1MzQ5OTY5/MS05OTIxLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/j0twdQtvcOP8LiomMufnmV5Zsrt53jZFvBTPTyNXO9w/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU2MzUz/OTgtMTQ1MzQ5OTY5/MS05OTIxLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Fleetwood Mac"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Bros. Records",
+            "catno": "BSK 3010"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Pitman Press, Textured Sleeve",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Pop Rock",
+          "Arena Rock"
+        ]
+      }
+    },
+    {
+      "id": 841283,
+      "instance_id": 5002,
+      "folder_id": 1,
+      "date_added": "2026-03-11T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 841283,
+        "master_id": 8883,
+        "title": "Thriller",
+        "year": 1983,
+        "thumb": "https://i.discogs.com/hnWgTcBPFIE2QYrMGkjQKPMzhAIgyfbkLXthqIaSYsA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg0MTI4/My0xNDk4NTc0ODkx/LTI4OTMuanBlZw.jpeg",
+        "cover_image": "https://i.discogs.com/RDTOqiRKKMg0c8x9ZrK2nlN-AWKiCskeN4MV5NMRkb8/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg0MTI4/My0xNDk4NTc0ODkx/LTI4OTMuanBlZw.jpeg",
+        "artists": [
+          {
+            "name": "Michael Jackson"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Epic",
+            "catno": "EPIC 10051"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Pop"
+        ],
+        "styles": [
+          "Disco"
+        ]
+      }
+    },
+    {
+      "id": 13403219,
+      "instance_id": 5003,
+      "folder_id": 1,
+      "date_added": "2026-07-26T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 13403219,
+        "master_id": 24047,
+        "title": "Abbey Road",
+        "year": 1969,
+        "thumb": "https://i.discogs.com/ouziKfh5Uv0KzlSsqer9pVYPHXekFewQXZqgxaxXvhY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNDAz/MjE5LTE1NTM1MzQ2/ODAtODQ0Ny5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/zi7p-QzrI8VXcMzEJjQ7rLDkzFAWxAThUHQvKRmxBYQ/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNDAz/MjE5LTE1NTM1MzQ2/ODAtODQ0Ny5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "The Beatles"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Apple Records",
+            "catno": "SO-383"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Jacksonville Pressing",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Pop Rock"
+        ]
+      }
+    },
+    {
+      "id": 8653105,
+      "instance_id": 5004,
+      "folder_id": 1,
+      "date_added": "2026-03-07T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 8653105,
+        "master_id": 5460,
+        "title": "Kind Of Blue",
+        "year": 0,
+        "thumb": "https://i.discogs.com/i1TlJnz5JgXq6_tWuA0_L-tQzTTsKHKYkSU3f7mdH-M/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg2NTMx/MDUtMTQ4NzE0Mjkw/Mi02MTc5LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/oRwsek1F2Iz_x1g7nnPGyO6N-_gOJkDE5LnXqyZSIp0/rs:fit/g:sm/q:90/h:400/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg2NTMx/MDUtMTQ4NzE0Mjkw/Mi02MTc5LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Miles Davis"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "PC 8163"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz"
+        ],
+        "styles": [
+          "Modal"
+        ]
+      }
+    },
+    {
+      "id": 7000090,
+      "instance_id": 5005,
+      "folder_id": 1,
+      "date_added": "2026-08-04T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 7000090,
+        "master_id": 13814,
+        "title": "Nevermind",
+        "year": 1992,
+        "thumb": "https://i.discogs.com/0yT63sxEkYo2MlDZ1aRLOoPaZ9OUKuuKHgg7ih_5YAE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcwMDAw/OTAtMTc2NzI2NTM5/My0yMjg3LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/Gq9Nt-UaPKDRLdcAc2etIElDdl-iaKWQj3d4Sn1vc8U/rs:fit/g:sm/q:90/h:905/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcwMDAw/OTAtMTc2NzI2NTM5/My0yMjg3LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Nirvana"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Globus International",
+            "catno": "21 0118-1 311"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Turquoise Translucent",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Grunge"
+        ]
+      }
+    },
+    {
+      "id": 20904106,
+      "instance_id": 5006,
+      "folder_id": 1,
+      "date_added": "2026-04-12T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 3,
+          "value": "Gift from Mom"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 20904106,
+        "master_id": 21491,
+        "title": "OK Computer",
+        "year": 2007,
+        "thumb": "https://i.discogs.com/mkIzRyf-DEPYsR1T_o_y_i_mmjwFcTplmAneQ3NFaJA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwOTA0/MTA2LTE2MzY0NTU0/OTYtMzU4MC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/1WFr4ZyvnMnGLRIDKb8GtC823dYeZMnzBaonDmYu-Vw/rs:fit/g:sm/q:90/h:582/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwOTA0/MTA2LTE2MzY0NTU0/OTYtMzU4MC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Radiohead"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Parlophone",
+            "catno": "NODATA 02"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "180g",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Repress"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Rock"
+        ],
+        "styles": [
+          "Alternative Rock"
+        ]
+      }
+    },
+    {
+      "id": 22896029,
+      "instance_id": 5007,
+      "folder_id": 1,
+      "date_added": "2026-06-02T00:00:00-00:00",
+      "rating": 3,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 22896029,
+        "master_id": 26647,
+        "title": "Discovery",
+        "year": 2022,
+        "thumb": "https://i.discogs.com/5W6y2ncVJDqdfRAIy04d3GyqCgkEHaA1Gx1uFoMS3Iw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyODk2/MDI5LTE2NTAwNjk5/ODQtODgyMC5wbmc.jpeg",
+        "cover_image": "https://i.discogs.com/3UkVEf4Lk6ybQoJRAsABxVyxwLyIRtMl_3PWa4_ev_g/rs:fit/g:sm/q:90/h:450/w:450/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyODk2/MDI5LTE2NTAwNjk5/ODQtODgyMC5wbmc.jpeg",
+        "artists": [
+          {
+            "name": "Daft Punk"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Parlophone",
+            "catno": "PRL1-496065"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue",
+              "Repress"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic"
+        ],
+        "styles": [
+          "House",
+          "Disco",
+          "Electro"
+        ]
+      }
+    },
+    {
+      "id": 7568442,
+      "instance_id": 5008,
+      "folder_id": 1,
+      "date_added": "2026-02-23T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 3,
+          "value": "Signed"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 7568442,
+        "master_id": 810214,
+        "title": "To Pimp A Butterfly",
+        "year": 2015,
+        "thumb": "https://i.discogs.com/qReGPRFvpLPMnidpfOI_uN3HnlnuUQkWBgkvE7yah-Q/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1Njg0/NDItMTQ0NDIxMjgw/Ny03MzMxLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/uyNREpCzq3Qt3jaKkfrEBTiqVoFO03P2Q1wrWh6qzAE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1Njg0/NDItMTQ0NDIxMjgw/Ny03MzMxLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Kendrick Lamar"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Top Dawg Entertainment",
+            "catno": "0602547311009"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Hip Hop",
+          "Funk / Soul"
+        ],
+        "styles": [
+          "Conscious",
+          "Jazzy Hip-Hop",
+          "G-Funk"
+        ]
+      }
+    },
+    {
+      "id": 993128,
+      "instance_id": 5009,
+      "folder_id": 1,
+      "date_added": "2026-01-28T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 3,
+          "value": "Slight warp on side B"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 993128,
+        "master_id": 51256,
+        "title": "Back To Black",
+        "year": 2009,
+        "thumb": "https://i.discogs.com/0n35KEYkAyE9U85J1rKHg3FKUOkRmDNBjuZ1KdmPLu0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk5MzEy/OC0xNTA0MzUzNTAz/LTI0MTcuanBlZw.jpeg",
+        "cover_image": "https://i.discogs.com/w3_8NZwD4BNM7qdO0ImgQvOaicfdfs5trFXML4r3jmo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk5MzEy/OC0xNTA0MzUzNTAz/LTI0MTcuanBlZw.jpeg",
+        "artists": [
+          {
+            "name": "Amy Winehouse"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Universal Records",
+            "catno": "173 412 8"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "180g",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Repress"
+            ]
+          }
+        ],
+        "genres": [
+          "Funk / Soul"
+        ],
+        "styles": [
+          "Contemporary R&B",
+          "Soul"
+        ]
+      }
+    },
+    {
+      "id": 13262826,
+      "instance_id": 5010,
+      "folder_id": 2,
+      "date_added": "2026-01-29T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 13262826,
+        "master_id": 4300,
+        "title": "Led Zeppelin IV",
+        "year": 1988,
+        "thumb": "https://i.discogs.com/dSsdeZEXlwmjB8tJzUbvdrzpnN9O2sdHkXmPclK8Cus/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjYy/ODI2LTE1NTA5NTY4/ODYtNzI1Ni5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/ENLbr1ZNkY8iqUPEoQHz-Kyw6n3uksDOkYsoGo70wyg/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjYy/ODI2LTE1NTA5NTY4/ODYtNzI1Ni5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Led Zeppelin"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Atlantic",
+            "catno": "670.4064"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Hard Rock",
+          "Classic Rock",
+          "Blues Rock"
+        ]
+      }
+    },
+    {
+      "id": 8517440,
+      "instance_id": 5011,
+      "folder_id": 1,
+      "date_added": "2026-05-11T00:00:00-00:00",
+      "rating": 3,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 8517440,
+        "master_id": 1561,
+        "title": "The Rise And Fall Of Ziggy Stardust And The Spiders From Mars",
+        "year": 1972,
+        "thumb": "https://i.discogs.com/rmNwd7unXtU2ZnMivDxB5sLvAmnNMR3JAdPYQCJFm5M/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1MTc0/NDAtMTQ2MzIyNTg1/OS0xOTAyLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/CCGaH1T6s_YOxSBRT8Sf-n9tQ3bCdqnIx4AbGzT-vYo/rs:fit/g:sm/q:90/h:603/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1MTc0/NDAtMTQ2MzIyNTg1/OS0xOTAyLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "David Bowie"
+          }
+        ],
+        "labels": [
+          {
+            "name": "RCA",
+            "catno": "LSP 4702"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Glam"
+        ]
+      }
+    },
+    {
+      "id": 23888714,
+      "instance_id": 5012,
+      "folder_id": 1,
+      "date_added": "2026-07-27T00:00:00-00:00",
+      "rating": 3,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 23888714,
+        "master_id": 66631,
+        "title": "What’s Going On",
+        "year": 0,
+        "thumb": "https://i.discogs.com/9JpYNWg6n1d-Re8qiEQpNqQMUgYnq8Ix7dE3dRWJwWo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzODg4/NzE0LTE2NTc4NTQ4/MjgtMjc2MS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/CoIiDy2GniB3mPiVbAgy-w-u-hFekGAp0-q7d5ICWlo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzODg4/NzE0LTE2NTc4NTQ4/MjgtMjc2MS5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Marvin Gaye"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Motown",
+            "catno": "TS-310"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Funk / Soul"
+        ],
+        "styles": []
+      }
+    },
+    {
+      "id": 35272621,
+      "instance_id": 5013,
+      "folder_id": 1,
+      "date_added": "2026-06-08T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 3,
+          "value": "Slight warp on side B"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 35272621,
+        "master_id": 87440,
+        "title": "Songs In The Key Of Life",
+        "year": 1976,
+        "thumb": "https://i.discogs.com/0CUQTO46kHZ2Z5KPg7xNTt8ym7No92XC14p4mi3srVQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1Mjcy/NjIxLTE3NTk1MDI2/NjgtNDM0OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/IqAyYW7iBCP4uPZFGgF31YAvuGj1PWVQdx7J1ZfClUY/rs:fit/g:sm/q:90/h:518/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1Mjcy/NjIxLTE3NTk1MDI2/NjgtNDM0OC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Stevie Wonder"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Motown",
+            "catno": "428003"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP"
+            ]
+          },
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "7\""
+            ]
+          }
+        ],
+        "genres": [
+          "Funk / Soul"
+        ],
+        "styles": []
+      }
+    },
+    {
+      "id": 10478643,
+      "instance_id": 5014,
+      "folder_id": 2,
+      "date_added": "2026-05-06T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 10478643,
+        "master_id": 47744,
+        "title": "Blue",
+        "year": 1972,
+        "thumb": "https://i.discogs.com/nq4cna2zoWfqprAPMsaPz-NdzicPPfJAx59H2EJ0-HE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDc4/NjQzLTE2MzI1NDg3/NjUtMjIwNC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/Q3GGIji0nZiVQQsDtwKiVolYcAastxOn6Yo629VEmgk/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDc4/NjQzLTE2MzI1NDg3/NjUtMjIwNC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Joni Mitchell"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Reprise Records",
+            "catno": "MS 2038"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Pop"
+        ],
+        "styles": [
+          "Acoustic",
+          "Folk",
+          "Ballad"
+        ]
+      }
+    },
+    {
+      "id": 15908846,
+      "instance_id": 5015,
+      "folder_id": 2,
+      "date_added": "2026-04-13T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 15908846,
+        "master_id": 104166,
+        "title": "Tapestry",
+        "year": 1971,
+        "thumb": "https://i.discogs.com/3r8IxT81III5TXoZUKRV0Wf_rmx5kQj_FgVgLe1vekU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1OTA4/ODQ2LTE2MDQxNzI3/ODItOTk0MS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/X8rAxL97BLAh3w_qfmzf1ERFE6ZsteU6nvJa7o-Ar8c/rs:fit/g:sm/q:90/h:606/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1OTA4/ODQ2LTE2MDQxNzI3/ODItOTk0MS5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Carole King"
+          }
+        ],
+        "labels": [
+          {
+            "name": "A&M Records",
+            "catno": "ODE SP 77009"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Folk Rock",
+          "Pop Rock"
+        ]
+      }
+    },
+    {
+      "id": 5927201,
+      "instance_id": 5016,
+      "folder_id": 1,
+      "date_added": "2026-04-23T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 5927201,
+        "master_id": 32287,
+        "title": "A Love Supreme",
+        "year": 1965,
+        "thumb": "https://i.discogs.com/SI8IkJacv9SXcpc7TvKX_dmffxIrc7N4e6UJXGzPWaE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU5Mjcy/MDEtMTYwMDM4ODk2/Mi0yOTE2LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/W50J1M_uNMzgRBXGFYg_-ItnGjC9F1EFpguBNwsB1NE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU5Mjcy/MDEtMTYwMDM4ODk2/Mi0yOTE2LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "John Coltrane"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Impulse!",
+            "catno": "SH 3063"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz"
+        ],
+        "styles": [
+          "Free Jazz",
+          "Hard Bop",
+          "Modal"
+        ]
+      }
+    },
+    {
+      "id": 12927816,
+      "instance_id": 5017,
+      "folder_id": 1,
+      "date_added": "2026-04-19T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 3,
+          "value": "Slight warp on side B"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 12927816,
+        "master_id": 65863,
+        "title": "Legend ",
+        "year": 1984,
+        "thumb": "https://i.discogs.com/991j6gKXNy7dDjlYdfb9SeiK76O_uw2453wFakOaNs4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyOTI3/ODE2LTE1NDQ3MDkx/NzEtNTI5Ny5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/QUIuqvUWQSbbGAO3OnskLLNJiJ96E6TjnjjgpEDQttQ/rs:fit/g:sm/q:90/h:638/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyOTI3/ODE2LTE1NDQ3MDkx/NzEtNTI5Ny5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Bob Marley & The Wailers"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Tuff Gong",
+            "catno": "BMW 1"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold sleeve",
+            "descriptions": [
+              "LP",
+              "Compilation"
+            ]
+          }
+        ],
+        "genres": [
+          "Reggae"
+        ],
+        "styles": [
+          "Roots Reggae"
+        ]
+      }
+    },
+    {
+      "id": 16917822,
+      "instance_id": 5018,
+      "folder_id": 1,
+      "date_added": "2026-08-08T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 3,
+          "value": "Signed"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 16917822,
+        "master_id": 26913,
+        "title": "Purple Rain",
+        "year": 1984,
+        "thumb": "https://i.discogs.com/R53wn3237bznbc7xRVp6hDlLasVdSZ-XJe0GDhhn5xM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2OTE3/ODIyLTE2Mjc5MjUy/NTQtODIyNC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/fhnJkgFT20mb2PO6eA6h3curZLVyUGZ82yP_O8xXsIA/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2OTE3/ODIyLTE2Mjc5MjUy/NTQtODIyNC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Prince"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Bros. Records",
+            "catno": "729174"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "7\"",
+              "45 RPM",
+              "Single",
+              "Test Pressing"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Pop Rock"
+        ]
+      }
+    },
+    {
+      "id": 16244176,
+      "instance_id": 5019,
+      "folder_id": 1,
+      "date_added": "2026-06-15T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 16244176,
+        "master_id": 1777815,
+        "title": "Folklore",
+        "year": 2020,
+        "thumb": "https://i.discogs.com/yQBgVnF1TlHHo2gpXlsBGPg9MKmXmUuJWkRLPC7aR5Y/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2MjQ0/MTc2LTE3NTU1NjI2/MjItNzc5My5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/mKack3jd9xjc-6QIp3TBvdg5fucnF9Ew99a1kMYkaJI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2MjQ0/MTc2LTE3NTU1NjI2/MjItNzc5My5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Taylor Swift"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Republic Records",
+            "catno": "B0032823-01"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Red \"Meet Me Behind The Mall\"",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop",
+          "Folk, World, & Country"
+        ],
+        "styles": [
+          "Vocal",
+          "Indie Pop",
+          "Indie Rock",
+          "Ballad"
+        ]
+      }
+    },
+    {
+      "id": 21678727,
+      "instance_id": 5020,
+      "folder_id": 1,
+      "date_added": "2026-05-01T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 21678727,
+        "master_id": 861083,
+        "title": "Currents",
+        "year": 2021,
+        "thumb": "https://i.discogs.com/t661qHuAmGou0t3WqOqSY1gl3uYB3yTpZMIGOlrhT2w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNjc4/NzI3LTE2NDE4MTMy/NjMtNDExNi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/Gv-qx-HC94EdooiXqH_aa4uILmvt1vhz0A7w2Tit9Y4/rs:fit/g:sm/q:90/h:599/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNjc4/NzI3LTE2NDE4MTMy/NjMtNDExNi5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Tame Impala"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Fiction Records",
+            "catno": "4730677"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Gatefold, 180 gram",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Rock"
+        ],
+        "styles": [
+          "Indie Rock",
+          "Psychedelic Rock",
+          "Synth-pop"
+        ]
+      }
+    },
+    {
+      "id": 34906460,
+      "instance_id": 5021,
+      "folder_id": 1,
+      "date_added": "2026-04-09T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 34906460,
+        "master_id": 303567,
+        "title": "21",
+        "year": 2020,
+        "thumb": "https://i.discogs.com/w9OjNSRTsNiNCLsj3zyh-uq1dQtfW_MJ2Z5nhSk7pdM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0OTA2/NDYwLTE3NTYwMDc4/NzctMjY1OS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/vzV47U0UUDWqkDUgH4ZoQn96C7_09ZzvYU5pYpPn6Js/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0OTA2/NDYwLTE3NTYwMDc4/NzctMjY1OS5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Adele (3)"
+          }
+        ],
+        "labels": [
+          {
+            "name": "XL Recordings",
+            "catno": "XL1138LP"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz",
+          "Funk / Soul",
+          "Blues",
+          "Pop"
+        ],
+        "styles": [
+          "Soul-Jazz",
+          "Acoustic",
+          "Piano Blues",
+          "Neo Soul"
+        ]
+      }
+    },
+    {
+      "id": 6565942,
+      "instance_id": 5022,
+      "folder_id": 1,
+      "date_added": "2026-03-07T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 6565942,
+        "master_id": 19493,
+        "title": "Head Hunters",
+        "year": 1976,
+        "thumb": "https://i.discogs.com/gKIqW2yfqGUfCrY4dcbIPQ6ZKF2ivTmrZlFeJIqLze8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY1NjU5/NDItMTUzNzU5MjE5/Mi05NjI4LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/Pz6BoMEEVvZm3HeFZ_nM5u93qBy53tApwTBwswPcLLI/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY1NjU5/NDItMTUzNzU5MjE5/Mi05NjI4LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Herbie Hancock"
+          }
+        ],
+        "labels": [
+          {
+            "name": "CBS",
+            "catno": "137918"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz"
+        ],
+        "styles": [
+          "Fusion",
+          "Jazz-Funk"
+        ]
+      }
+    },
+    {
+      "id": 1707078,
+      "instance_id": 5023,
+      "folder_id": 1,
+      "date_added": "2026-06-25T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 1707078,
+        "master_id": 483156,
+        "title": "Time Out, Time Further Out",
+        "year": 0,
+        "thumb": "https://i.discogs.com/BlHAMHQCW-CkhjN75b1_5548Bx_Cma_WSgZnNqjTQu0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3MDcw/NzgtMTI2ODAwMTQz/NS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/891-uKI0INdORo2ZpGhR-dABWd0QqgLUXmPRtj6LTLc/rs:fit/g:sm/q:90/h:502/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3MDcw/NzgtMTI2ODAwMTQz/NS5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "The Dave Brubeck Quartet"
+          }
+        ],
+        "labels": [
+          {
+            "name": "CBS",
+            "catno": "CBS 22120"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP",
+              "Compilation"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz"
+        ],
+        "styles": [
+          "Cool Jazz"
+        ]
+      }
+    },
+    {
+      "id": 23054972,
+      "instance_id": 5024,
+      "folder_id": 1,
+      "date_added": "2026-04-14T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 23054972,
+        "master_id": 102288,
+        "title": "Come Away With Me",
+        "year": 2022,
+        "thumb": "https://i.discogs.com/l7yw3Mdm3Pigt8PGGADWad5n_r4hANLWsKPhH9IMVfA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzMDU0/OTcyLTE2NTEyNTEz/ODItOTcwNC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/h8D9Sp1TGsDc27sWoKgba43n9CjE6V3E-JdR5deSbhc/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzMDU0/OTcyLTE2NTEyNTEz/ODItOTcwNC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Norah Jones"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Blue Note",
+            "catno": "B0034620-01"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "20th Anniversary Edition, Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz",
+          "Pop"
+        ],
+        "styles": [
+          "Vocal",
+          "Contemporary Jazz"
+        ]
+      }
+    },
+    {
+      "id": 3499764,
+      "instance_id": 5025,
+      "folder_id": 1,
+      "date_added": "2026-03-02T00:00:00-00:00",
+      "rating": 3,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 3499764,
+        "master_id": 12347,
+        "title": "Is This It",
+        "year": 2012,
+        "thumb": "https://i.discogs.com/atjdwJEzeTJ0_2jJhPxXm6fWf72tlopkZckcgPYnCQ4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0OTk3/NjQtMTQxMzM4Njk2/NC01MzkxLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/4mawPAK0peNt9nzDU0irNneLxMTZOnH8xSJ0ISLf-w8/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0OTk3/NjQtMTQxMzM4Njk2/NC01MzkxLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "The Strokes"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Music On Vinyl",
+            "catno": "MOVLP085"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "180 Gram",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Alternative Rock",
+          "Indie Rock",
+          "Garage Rock"
+        ]
+      }
+    },
+    {
+      "id": 1361007,
+      "instance_id": 5026,
+      "folder_id": 1,
+      "date_added": "2026-09-20T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 3,
+          "value": "Slight warp on side B"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 1361007,
+        "master_id": 97618,
+        "title": "For Emma, Forever Ago",
+        "year": 2008,
+        "thumb": "https://i.discogs.com/GWMQzEvOofzXylZ76nms2luiJsTq3iH9P2t9p9j7XoM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNjEw/MDctMTIxMjgwNDk3/My5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/PdpA5o2n31ijOV9lQFgIKqXpiAzj7IB7leNqmMoE2-M/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNjEw/MDctMTIxMjgwNDk3/My5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Bon Iver"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Jagjaguwar",
+            "catno": "JAG115"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Folk, World, & Country"
+        ],
+        "styles": [
+          "Folk Rock",
+          "Acoustic",
+          "Indie Rock",
+          "Folk"
+        ]
+      }
+    },
+    {
+      "id": 4055099,
+      "instance_id": 5027,
+      "folder_id": 1,
+      "date_added": "2026-04-07T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 4055099,
+        "master_id": 2994,
+        "title": "Autobahn",
+        "year": 0,
+        "thumb": "https://i.discogs.com/RClKLDKSDMfnP2jpxa849cFHlAusXbS4Gci8n6bLIBI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQwNTUw/OTktMTM1Mzc0ODIx/NS03NjUxLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/9AA1xpfTySIi-gWeiK_lDfV3f7VGWPO2Y0s4e-IuIHM/rs:fit/g:sm/q:90/h:462/w:465/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQwNTUw/OTktMTM1Mzc0ODIx/NS03NjUxLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Kraftwerk"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Philips",
+            "catno": "9279 459"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Rock"
+        ],
+        "styles": [
+          "Krautrock",
+          "Experimental"
+        ]
+      }
+    },
+    {
+      "id": 25946965,
+      "instance_id": 5028,
+      "folder_id": 1,
+      "date_added": "2026-01-16T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 3,
+          "value": "Original pressing"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 25946965,
+        "master_id": 25688,
+        "title": "Remain In Light",
+        "year": 1980,
+        "thumb": "https://i.discogs.com/bDT5z2N2q4csT04FqHbfOV5IeezEOvRLQbGce6K7b-s/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI1OTQ2/OTY1LTE2NzUxOTQ1/ODYtNzU2Ny5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/4acF5rqXkPc3KXwIv7smKDVrVe259qU0rs_LqRQ-N0s/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI1OTQ2/OTY1LTE2NzUxOTQ1/ODYtNzU2Ny5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Talkingheads*"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Sire",
+            "catno": "XSR 6095"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Impact Records Pressing",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Funk / Soul"
+        ],
+        "styles": [
+          "New Wave",
+          "Art Rock",
+          "Funk"
+        ]
+      }
+    },
+    {
+      "id": 32919615,
+      "instance_id": 5029,
+      "folder_id": 1,
+      "date_added": "2026-09-27T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 32919615,
+        "master_id": 35276,
+        "title": "The Velvet Underground & Nico",
+        "year": 1977,
+        "thumb": "https://i.discogs.com/_dwnFJjK5FjNe8cxkh4cGhNzeSXI-fVcHKeZPLujEvs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyOTE5/NjE1LTE3Mzc1NzI3/NjctNDk5NC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/dWrbNXASN18CeLsLIr-OWYrZv5TVIZa1izBZFJT2Vp8/rs:fit/g:sm/q:90/h:599/w:588/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyOTE5/NjE1LTE3Mzc1NzI3/NjctNDk5NC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "The Velvet Underground"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Polydor",
+            "catno": "23 91 323"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Art Rock",
+          "Psychedelic Rock",
+          "Garage Rock",
+          "Experimental"
+        ]
+      }
+    },
+    {
+      "id": 34675849,
+      "instance_id": 5030,
+      "folder_id": 2,
+      "date_added": "2026-04-17T00:00:00-00:00",
+      "rating": 5,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 34675849,
+        "master_id": 27765,
+        "title": "Bridge Over Troubled Water",
+        "year": 1970,
+        "thumb": "https://i.discogs.com/WnvEuhwgUPYtTg7vCmUeFkY94YTXoMg92fFg2oD5l2w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0Njc1/ODQ5LTE3NTM4MDE1/MjMtMjMyOC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/g8tarGzPaa6qQzwGkMLxy-kPkWQZ6stlY6YWnwR3SP0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0Njc1/ODQ5LTE3NTM4MDE1/MjMtMjMyOC5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Simon & Garfunkel"
+          }
+        ],
+        "labels": [
+          {
+            "name": "CBS",
+            "catno": "63699 CB-271 57"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Folk, World, & Country"
+        ],
+        "styles": [
+          "Folk"
+        ]
+      }
+    },
+    {
+      "id": 5581662,
+      "instance_id": 5031,
+      "folder_id": 1,
+      "date_added": "2026-06-22T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 5581662,
+        "master_id": 5863,
+        "title": "A Night At The Opera",
+        "year": 0,
+        "thumb": "https://i.discogs.com/MNZcE2obMDeb5GTqP1V3XJMW7SHbRk9kDg5Bb7sr3c4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU1ODE2/NjItMTM5NzE2MDMy/NC05NDU0LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/jIwt1dUUFoA2K8q5GLRpTGV1s4YPVNtFgjYOmE33XOM/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU1ODE2/NjItMTM5NzE2MDMy/NC05NDU0LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Queen"
+          }
+        ],
+        "labels": [
+          {
+            "name": "EMI",
+            "catno": "14C 064-97176"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gatefold",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock"
+        ],
+        "styles": [
+          "Hard Rock",
+          "Pop Rock"
+        ]
+      }
+    },
+    {
+      "id": 10505953,
+      "instance_id": 5032,
+      "folder_id": 1,
+      "date_added": "2026-09-27T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 3,
+          "value": "Original pressing"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 10505953,
+        "master_id": 17217,
+        "title": "Pet Sounds",
+        "year": 1966,
+        "thumb": "https://i.discogs.com/kAqTFRoUUg4FH89G7WkXjxtHojcUbgpHiGl2lrb1uEA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNTA1/OTUzLTE0OTg4NDI5/ODktNDAxNi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/t6GNOHxuLG-3Vc1T6Bf0jOPwAa4hK4aaaMLrJIbP5-0/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNTA1/OTUzLTE0OTg4NDI5/ODktNDAxNi5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "The Beach Boys"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Capitol Records",
+            "catno": "DT-2458"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "LA Pressing, Duophonic",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Pop Rock",
+          "Psychedelic Rock",
+          "Surf"
+        ]
+      }
+    },
+    {
+      "id": 227020,
+      "instance_id": 5033,
+      "folder_id": 1,
+      "date_added": "2026-04-24T00:00:00-00:00",
+      "rating": 3,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 4,
+          "value": "Living room"
+        }
+      ],
+      "basic_information": {
+        "id": 227020,
+        "master_id": 57279,
+        "title": "The Miseducation Of Lauryn Hill",
+        "year": 1998,
+        "thumb": "https://i.discogs.com/EFfGvlKTDedMpwgjHf3elAuPVYLRaGg8sXu4QkqDrIs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyNzAy/MC0xMzAxMjQzNTM1/LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/I0kfeLY7Jo3mhf3IB7lE7URdBu98gf4N8VKh3zQM1rU/rs:fit/g:sm/q:90/h:600/w:590/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyNzAy/MC0xMzAxMjQzNTM1/LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Lauryn Hill"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Ruffhouse Records",
+            "catno": "C2 69035"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Hip Hop",
+          "Funk / Soul"
+        ],
+        "styles": [
+          "Neo Soul",
+          "Conscious",
+          "Contemporary R&B"
+        ]
+      }
+    },
+    {
+      "id": 26364464,
+      "instance_id": 5034,
+      "folder_id": 1,
+      "date_added": "2026-09-29T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good (VG)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 26364464,
+        "master_id": 5542,
+        "title": "Dummy",
+        "year": 0,
+        "thumb": "https://i.discogs.com/g-ztJ75Rs6QTWi_OqJfN6Woon0Szfi65FQjrrStGhdw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2MzY0/NDY0LTE2Nzg0MjA2/MzYtNzIzOS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/ZeJmt6bioMIIXUVitnbp8JYtWToszXbU9TBdD8qCv8M/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2MzY0/NDY0LTE2Nzg0MjA2/MzYtNzIzOS5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Portishead"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Go! Beat",
+            "catno": "828 522-1"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Glossy Cover, Orange Marble Coloured Vinyl",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue",
+              "Unofficial Release",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic"
+        ],
+        "styles": [
+          "Trip Hop"
+        ]
+      }
+    },
+    {
+      "id": 4958265,
+      "instance_id": 5035,
+      "folder_id": 2,
+      "date_added": "2026-04-03T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 4,
+          "value": "Crate 1"
+        }
+      ],
+      "basic_information": {
+        "id": 4958265,
+        "master_id": 23683,
+        "title": "Mezzanine",
+        "year": 0,
+        "thumb": "https://i.discogs.com/Pl09b9rhfeMY8BwSjYgfxuLJOlNao0nuowDkn0ov_W8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ5NTgy/NjUtMTM4MDU3NzA1/MS04MzEyLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/deoG9rWruUKA9raryDoL4wZp-juUM2yqGrK9naoiHLk/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ5NTgy/NjUtMTM4MDU3NzA1/MS04MzEyLmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Massive Attack"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Not On Label (Massive Attack)",
+            "catno": "WBRLP4 7243 8 45599 1 5"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Unofficial Release"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic"
+        ],
+        "styles": [
+          "Leftfield",
+          "Trip Hop",
+          "Downtempo"
+        ]
+      }
+    },
+    {
+      "id": 21577147,
+      "instance_id": 5036,
+      "folder_id": 2,
+      "date_added": "2026-09-16T00:00:00-00:00",
+      "rating": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 21577147,
+        "master_id": 2815,
+        "title": "Homogenic",
+        "year": 2022,
+        "thumb": "https://i.discogs.com/RT4vIBmLRIlL9oEEybvJT2XBFkVek-6zxWXJfpaPx7U/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNTc3/MTQ3LTE3Nzk0MTQx/NjMtNDM5NC5wbmc.jpeg",
+        "cover_image": "https://i.discogs.com/Eiw2LhkuyIWy6UELfFUG2m-fQxZ9j4N2mN4BVdsUaCA/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNTc3/MTQ3LTE3Nzk0MTQx/NjMtNDM5NC5wbmc.jpeg",
+        "artists": [
+          {
+            "name": "Björk"
+          }
+        ],
+        "labels": [
+          {
+            "name": "One Little Independent Records",
+            "catno": "TPLP71"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Pop"
+        ],
+        "styles": [
+          "Leftfield",
+          "IDM",
+          "Downtempo",
+          "Experimental",
+          "Ambient"
+        ]
+      }
+    },
+    {
+      "id": 24386138,
+      "instance_id": 5037,
+      "folder_id": 2,
+      "date_added": "2026-04-30T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 24386138,
+        "master_id": 3211,
+        "title": "Vampire Weekend",
+        "year": 0,
+        "thumb": "https://i.discogs.com/o9SET1b4z28rQHnKDAYFSej-H5PRYJwIy5_v2Lspb64/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0Mzg2/MTM4LTE2NjIwODY2/ODgtNTEyMi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/-AJBsjn7jYB7YMRIyj0Jjg040mHRZ-KT-OClQbUYCsw/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0Mzg2/MTM4LTE2NjIwODY2/ODgtNTEyMi5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Vampire Weekend"
+          }
+        ],
+        "labels": [
+          {
+            "name": "XL Recordings",
+            "catno": "XLLP318"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue"
+            ]
+          }
+        ],
+        "genres": [
+          "Rock",
+          "Pop"
+        ],
+        "styles": [
+          "Indie Rock"
+        ]
+      }
+    },
+    {
+      "id": 1324259,
+      "instance_id": 5038,
+      "folder_id": 2,
+      "date_added": "2026-08-13T00:00:00-00:00",
+      "rating": 0,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Near Mint (NM or M-)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 3,
+          "value": "Original pressing"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf A"
+        }
+      ],
+      "basic_information": {
+        "id": 1324259,
+        "master_id": 104369,
+        "title": "Waltz For Debby",
+        "year": 2011,
+        "thumb": "https://i.discogs.com/EtBJMAR8TAtgwdI6Fe_5waASkk6yU2DVhlafSi7Ml14/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjQy/NTktMTcwNTY0MzM2/NS03MjA4LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/AiH92rXC1U3R3DEwHHZQZ3RHf3H_WJyHALJeAm3IIUA/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjQy/NTktMTcwNTY0MzM2/NS03MjA4LmpwZWc.jpeg",
+        "artists": [
+          {
+            "name": "Bill Evans Trio*"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Original Jazz Classics",
+            "catno": "OJC-210"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Reissue",
+              "Stereo"
+            ]
+          }
+        ],
+        "genres": [
+          "Jazz"
+        ],
+        "styles": [
+          "Post Bop",
+          "Modal"
+        ]
+      }
+    },
+    {
+      "id": 25404073,
+      "instance_id": 5039,
+      "folder_id": 1,
+      "date_added": "2026-06-24T00:00:00-00:00",
+      "rating": 2,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Very Good Plus (VG+)"
+        },
+        {
+          "field_id": 4,
+          "value": "Shelf B"
+        }
+      ],
+      "basic_information": {
+        "id": 25404073,
+        "master_id": 992029,
+        "title": "Lemonade",
+        "year": 2017,
+        "thumb": "https://i.discogs.com/-EdYFKDMZEpHfPZ6g5wxNakLkrsub7eUgxac0C8uqlA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI1NDA0/MDczLTE2NzA2OTUy/MDEtNDQ5Mi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/zuvIy56uO1IX-Peh3EK7JqmsG2kJtVlXI3ImnZ7DES4/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI1NDA0/MDczLTE2NzA2OTUy/MDEtNDQ5Mi5qcGVn.jpeg",
+        "artists": [
+          {
+            "name": "Beyoncé"
+          }
+        ],
+        "labels": [
+          {
+            "name": "Parkwood Entertainment",
+            "catno": "88985446751"
+          }
+        ],
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": [
+              "LP",
+              "Album"
+            ]
+          }
+        ],
+        "genres": [
+          "Electronic",
+          "Funk / Soul",
+          "Pop"
+        ],
+        "styles": [
+          "Soul",
+          "Neo Soul",
+          "Contemporary R&B"
+        ]
+      }
+    }
+  ]
+}

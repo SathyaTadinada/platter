@@ -41,13 +41,20 @@ export type SearchParams = {
 
 export type Identifier = { type: string; value: string; description?: string }
 
+export type Track = { position: string; title: string; duration?: string; type_?: string }
+
 export type Release = {
   id: number
   title: string
   year?: number
   country?: string
+  released?: string
   master_id?: number
   uri: string
+  genres?: string[]
+  styles?: string[]
+  tracklist?: Track[]
+  notes?: string
   artists: { name: string; anv?: string; join?: string }[]
   labels: { name: string; catno: string }[]
   formats: SearchFormat[]
@@ -88,6 +95,8 @@ export type BasicInformation = {
   artists: { name: string }[]
   labels: { name: string; catno: string }[]
   formats: SearchFormat[]
+  genres?: string[]
+  styles?: string[]
 }
 
 export type CollectionItem = {

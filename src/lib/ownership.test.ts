@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { db } from '../db/db'
+import { db, type LibraryItem } from '../db/db'
 import { checkOwnership, computeOwnership } from './ownership'
 
 const owned = [
@@ -34,7 +34,7 @@ describe('checkOwnership', () => {
   beforeEach(async () => {
     await db.collection.clear()
     await db.wants.clear()
-    await db.collection.bulkPut(owned)
+    await db.collection.bulkPut(owned as LibraryItem[])
     await db.wants.bulkPut(wants)
   })
 

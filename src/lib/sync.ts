@@ -1,6 +1,7 @@
 import type { DiscogsClient } from '../api/discogs/client'
 import { getCollectionPage, getWantsPage } from '../api/discogs/endpoints'
-import { db, getSetting, setSetting, type OwnedItem, type WantItem } from '../db/db'
+import { db, getSetting, setSetting, type LibraryItem, type WantItem } from '../db/db'
+import { toLibraryItem } from './library'
 
 export const SYNC_MAX_AGE = 6 * 60 * 60 * 1000
 
@@ -18,19 +19,11 @@ async function allPages<T>(fetchPage: (page: number) => Promise<{ items: T[]; pa
   return out
 }
 
-// Pulls the whole collection into a local index for ownership checks.
+// Pulls the whole collection for the library and ownership checks.
 export async function syncCollection(client: DiscogsClient, username: string, onProgress?: Progress) {
-  const items = await allPages<OwnedItem>(async (page) => {
+  const items = await allPages<LibraryItem>(async (page) => {
     const r = await getCollectionPage(client, username, page)
-    return {
-      pages: r.pagination.pages,
-      items: r.releases.map((x) => ({
-        instanceId: x.instance_id,
-        releaseId: x.id,
-        masterId: x.basic_information.master_id,
-        folderId: x.folder_id,
-      })),
-    }
+    return { pages: r.pagination.pages, items: r.releases.map(toLibraryItem) }
   }, onProgress)
   await db.transaction('rw', db.collection, async () => {
     await db.collection.clear()
