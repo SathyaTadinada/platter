@@ -18,12 +18,15 @@ let cameraWanted = false
 // A still image being read: a photo the user picked, or a frame from the shutter
 type Still = { url: string; status: 'reading' | 'failed' }
 
-type Mode = 'single' | 'batch'
+type Mode = 'single' | 'batch' | 'play'
 const MODE_KEY = 'platter.scanMode'
 
 function loadMode(): Mode {
+  const asked = new URLSearchParams(location.search).get('mode')
+  if (asked === 'play' || asked === 'batch' || asked === 'single') return asked
   try {
-    return localStorage.getItem(MODE_KEY) === 'batch' ? 'batch' : 'single'
+    const saved = localStorage.getItem(MODE_KEY)
+    return saved === 'batch' || saved === 'play' ? saved : 'single'
   } catch {
     return 'single'
   }
@@ -44,6 +47,7 @@ export function Scan() {
   const onCode = useCallback(
     (code: string, source: 'scan' | 'typed' = 'scan') => {
       if (mode === 'single') return navigate(`/results?barcode=${code}`)
+      if (mode === 'play') return navigate(`/play?barcode=${code}`)
       enqueueBarcode(code, source).then(kick)
       setFlash(code)
       setStill(null)
@@ -113,12 +117,13 @@ export function Scan() {
     <div
       role="tablist"
       aria-label="Scan mode"
-      className="grid grid-cols-2 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800"
+      className="grid grid-cols-3 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[30rem] dark:bg-stone-800"
     >
       {(
         [
           ['single', 'One at a time'],
           ['batch', 'Batch'],
+          ['play', 'Play'],
         ] as const
       ).map(([m, label]) => (
         <button
@@ -281,7 +286,12 @@ export function Scan() {
             </div>
           ) : (
             <div className="mt-4 space-y-2 lg:hidden">
-              <ManualBarcode label="Or type a barcode" button="Add" onSubmit={(c) => onCode(c, 'typed')} inline />
+              <ManualBarcode
+                label="Or type a barcode"
+                button={mode === 'play' ? 'Find' : 'Add'}
+                onSubmit={(c) => onCode(c, 'typed')}
+                inline
+              />
               {chooseButton}
             </div>
           )}
@@ -291,7 +301,7 @@ export function Scan() {
           <div className="hidden space-y-4 lg:block">
             <ManualBarcode
               label="Or type the barcode number"
-              button={mode === 'batch' ? 'Add to batch' : 'Look it up'}
+              button={mode === 'batch' ? 'Add to batch' : mode === 'play' ? 'Find my copy' : 'Look it up'}
               onSubmit={(c) => onCode(c, 'typed')}
             />
             {chooseButton}

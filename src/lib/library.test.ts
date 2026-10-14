@@ -14,7 +14,7 @@ import {
   parseQuery,
   serializeQuery,
   sortItems,
-  type ValueLookup,
+  type SortContext,
   sortName,
   toCsv,
   toLibraryItem,
@@ -124,10 +124,26 @@ describe('sortItems', () => {
 
   it('sorts by value, unpriced last', () => {
     const [a, b, c] = items
-    const prices: ValueLookup = { value: (i) => ({ [a.instanceId]: 5, [b.instanceId]: 80 })[i.instanceId], money: (n) => `$${n}` }
+    const prices: SortContext = { value: (i) => ({ [a.instanceId]: 5, [b.instanceId]: 80 })[i.instanceId], money: (n) => `$${n}` }
     const s = sortItems([a, b, c], 'value', prices)
     expect(s.map((i) => i.instanceId)).toEqual([b.instanceId, a.instanceId, c.instanceId])
     expect(groupItems(s, 'value', prices).map((g) => g.label)).toEqual(['$50 to $100', 'Under $10', 'No price yet'])
+  })
+
+  it('sorts and groups by location, with no location last', () => {
+    const [a, b, c] = items
+    const ctx: SortContext = { location: (i) => ({ [a.instanceId]: 'Shelf B', [c.instanceId]: 'Shelf A' })[i.instanceId] }
+    const s = sortItems([a, b, c], 'location', ctx)
+    expect(s.map((i) => i.instanceId)).toEqual([c.instanceId, a.instanceId, b.instanceId])
+    expect(groupItems(s, 'location', ctx).map((g) => g.label)).toEqual(['Shelf A', 'Shelf B', 'No location'])
+  })
+
+  it('sorts by plays and groups by how often', () => {
+    const [a, b, c] = items
+    const ctx: SortContext = { plays: (i) => ({ [a.instanceId]: 1, [b.instanceId]: 12 })[i.instanceId] ?? 0 }
+    const s = sortItems([a, b, c], 'plays', ctx)
+    expect(s.map((i) => i.instanceId)).toEqual([b.instanceId, a.instanceId, c.instanceId])
+    expect(groupItems(s, 'plays', ctx).map((g) => g.label)).toEqual(['Played 10+ times', 'Played once', 'Never played'])
   })
 })
 

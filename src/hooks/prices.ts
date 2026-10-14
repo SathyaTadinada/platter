@@ -31,6 +31,8 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
   set({ running: true, done: 0, total: todo.length, error: null })
   try {
     for (const id of todo) {
+      // anything else going on goes first
+      while (client.status.active > 0 && !stopRequested) await sleep(500)
       if (stopRequested) break
       const { requests } = await fetchPrice(client, id, currency)
       set({ done: state.done + 1 })

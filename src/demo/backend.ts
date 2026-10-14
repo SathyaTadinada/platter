@@ -50,6 +50,15 @@ function initialState(): State {
     if (n % 3 === 2 || item.notes?.some((x) => x.field_id === 5)) return
     item.notes = [...(item.notes ?? []), { field_id: 5, value: usd(12 + ((item.id * 31) % 2400) / 100) }]
   })
+  // and a listening history, matching what enterDemo puts in the local play log
+  const plays = demoPlays(items)
+  for (const item of items) {
+    const mine = plays.filter((p) => p.instanceId === item.instance_id)
+    if (!mine.length) continue
+    const last = new Date(Math.max(...mine.map((p) => p.at)))
+    const day = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`
+    item.notes = [...(item.notes ?? []), { field_id: 8, value: String(mine.length) }, { field_id: 9, value: day }]
+  }
   return {
     folders: [
       { id: 1, name: 'Uncategorized' },
@@ -103,8 +112,26 @@ function basicInfo(r: Release) {
 const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 // A made-up but stable estimate, so the sample collection has a value
+// Made-up plays: most records a few times over the past year or so, some never
+export function demoPlays(items: CollectionItem[], now = Date.now()) {
+  const day = 24 * 60 * 60 * 1000
+  // picked by release id, so the local log and the Discogs fields always agree
+  return items.flatMap((item) => {
+    if (item.id % 5 === 4) return []
+    const count = 1 + ((item.id * 13) % 9)
+    const shelved = item.id % 7 === 3 ? 380 : 0 // a few that haven't been on in over a year
+    return Array.from({ length: count }, (_, j) => ({
+      instanceId: item.instance_id,
+      releaseId: item.id,
+      at: now - (((item.id * 7 + j * 37) % 420) + 1 + shelved) * day - ((item.id + j) % 12) * 3_600_000,
+      before: {},
+    }))
+  })
+}
+
 export const demoValue = (releaseIds: number[]) => releaseIds.reduce((n, id) => n + 6 + ((id * 7919) % 4500) / 100, 0)
 export const currentDemoValue = async () => demoValue((await load()).items.map((i) => i.id))
+export const currentDemoPlays = async () => demoPlays((await load()).items)
 
 async function handle(realFetch: typeof fetch, url: URL, method: string, body: unknown): Promise<Response> {
   const path = url.pathname

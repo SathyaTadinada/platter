@@ -1,8 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'wouter'
-import { Card, Screen, Section, Spinner } from '../components/ui'
+import { useMemo, useState } from 'react'
+import { Card, Section, Spinner } from '../components/ui'
 import type { Folder } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
@@ -25,17 +24,19 @@ import {
   type RecordValue,
   type ValueSnapshot,
 } from '../lib/value'
-import { Cover, PriceCoverage } from './Collection'
+import { MonthBars, pct, RecordRow, statCard, Toggle } from '../components/stats'
+import { PriceCoverage } from './Collection'
 
 const TOP = 10
-const card = 'rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800'
+const card = statCard
 const up = 'text-emerald-600 dark:text-emerald-400'
 const down = 'text-red-600 dark:text-red-400'
 
 type Valued = { item: LibraryItem; value: RecordValue }
 type Money = (n: number, whole?: boolean) => string
 
-export function Value() {
+// The Value view of the Stats tab
+export function ValueStats() {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
   const items = useLiveQuery(() => db.collection.toArray(), [])
@@ -67,7 +68,7 @@ export function Value() {
   const anySuggested = valued.some((v) => v.value.basis === 'suggested')
 
   return (
-    <Screen title="Value" width="wide">
+    <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
         <div>
@@ -162,11 +163,10 @@ export function Value() {
           Data provided by Discogs.
         </a>
       </footer>
-    </Screen>
+    </>
   )
 }
 
-const pct = (n: number, of: number) => `${of > 0 ? Math.max(2, (n / of) * 100) : 0}%`
 const shortDate = (s: ValueSnapshot) => new Date(`${s.date}T12:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: number; money: (n: number) => string; suffix?: string }) {
@@ -344,22 +344,6 @@ function Movers({ title, rows, money }: { title: string; rows: (Valued & { paid:
   )
 }
 
-function RecordRow({ item, detail, children }: { item: LibraryItem; detail?: string; children: ReactNode }) {
-  return (
-    <Link
-      href={`/collection/${item.instanceId}`}
-      className="flex items-center gap-3 px-3 py-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
-    >
-      <Cover item={item} small className="size-11 shrink-0 rounded-md" />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{item.title}</span>
-        <span className="block truncate text-xs text-stone-500">{detail ?? item.artist}</span>
-      </span>
-      <span className="shrink-0 text-right">{children}</span>
-    </Link>
-  )
-}
-
 // Records per price range, with what each range adds up to
 function Breakdown({ valued, money }: { valued: Valued[]; money: Money }) {
   const buckets = distribution(
@@ -408,27 +392,6 @@ function BarList({ rows }: { rows: { label: string; amount: number; text: string
   )
 }
 
-function Toggle<T extends string>({ options, value, onChange }: { options: [T, string][]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div role="tablist" className="mb-4 inline-flex gap-1 rounded-lg bg-stone-100 p-0.5 dark:bg-stone-800">
-      {options.map(([v, label]) => (
-        <button
-          key={v}
-          type="button"
-          role="tab"
-          aria-selected={value === v}
-          onClick={() => onChange(v)}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            value === v ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 type Grouping = 'genre' | 'decade' | 'crate'
 
 function GroupTotals({ valued, folders, money }: { valued: Valued[]; folders: Folder[]; money: Money }) {
@@ -472,7 +435,6 @@ function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[];
         })
       : items.map((i) => ({ date: i.dateAdded, amount: 1 }))
   const months = byMonth(rows, 12)
-  const most = Math.max(...months.map((m) => m.total))
   const sum = months.reduce((n, m) => n + m.total, 0)
   const text = (n: number) => (show === 'spent' ? money(n, true) : String(n))
   return (
@@ -491,23 +453,7 @@ function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[];
         <span className="text-xl font-bold tabular-nums">{text(sum)}</span>{' '}
         <span className="text-stone-500">{show === 'spent' ? 'spent' : 'added'} in the last 12 months</span>
       </p>
-      <div className="flex h-28 items-end gap-1">
-        {months.map((m) => (
-          <div key={m.month} className="group flex h-full flex-1 flex-col justify-end" title={`${m.label}: ${text(m.total)}`}>
-            <span
-              className="w-full rounded-t-md bg-accent-500/80 group-hover:bg-accent-500"
-              style={{ height: m.total ? pct(m.total, most) : 0 }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-1 flex gap-1 border-t border-stone-200 pt-1 dark:border-stone-800">
-        {months.map((m, i) => (
-          <span key={m.month} className="flex-1 text-center text-[0.625rem] text-stone-500">
-            {i % 2 === 1 ? m.label : ''}
-          </span>
-        ))}
-      </div>
+      <MonthBars months={months} text={text} />
     </Card>
   )
 }

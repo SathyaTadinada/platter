@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { DiscogsClient, RateLimiter } from '../api/discogs/client'
-import { getDemoFetch } from '../demo/registry'
+import { getDemoFetch, isDemoLocal } from '../demo/registry'
 import { authFromSession } from '../auth/auth'
 import type { Auth } from '../auth/types'
 import type { Session } from '../db/db'
@@ -20,7 +20,11 @@ export function SessionProvider({ initial, children }: { initial: Session | null
     const auth = session ? authFromSession(session) : null
     // signed-out requests get a lower Discogs rate limit (25 a minute)
     const demoFetch = session?.kind === 'demo' ? getDemoFetch() : null
-    const client = auth ? (demoFetch ? new DiscogsClient(auth, demoFetch, new RateLimiter(22)) : new DiscogsClient(auth)) : null
+    const client = auth
+      ? demoFetch
+        ? new DiscogsClient(auth, demoFetch, new RateLimiter(22), undefined, undefined, isDemoLocal)
+        : new DiscogsClient(auth)
+      : null
     return { session, auth, client, setSession }
   }, [session])
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

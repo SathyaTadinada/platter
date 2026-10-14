@@ -1,7 +1,7 @@
 import { saveSession } from '../auth/auth'
 import { db, type Session } from '../db/db'
 import { localDate, type ValueSnapshot } from '../lib/value'
-import { createDemoFetch, currentDemoValue, DEMO_USER } from './backend'
+import { createDemoFetch, currentDemoPlays, currentDemoValue, DEMO_USER, resetDemo } from './backend'
 import { setDemoFetch } from './registry'
 
 setDemoFetch(createDemoFetch())
@@ -27,6 +27,9 @@ async function seedValueHistory(now = Date.now()) {
 }
 
 export async function enterDemo(): Promise<Session> {
+  // start from the sample collection again, even if a demo ran earlier in this tab
+  resetDemo()
   await seedValueHistory()
+  await db.plays.bulkAdd(await currentDemoPlays())
   return saveSession({ kind: 'demo', token: '', username: DEMO_USER, userId: 0 })
 }

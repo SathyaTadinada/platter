@@ -7,6 +7,7 @@ import type { CollectionField, Release } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
 import { CoverSheet } from '../components/CoverSheet'
 import { MarketPrice } from '../components/MarketPrice'
+import { PlayButton } from '../components/PlayButton'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
@@ -150,8 +151,9 @@ export function Record({ id }: { id: string }) {
             </div>
           )}
 
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
             <Stars value={item.rating} onChange={setRating} />
+            <PlayButton item={item} />
           </div>
 
           {error && (

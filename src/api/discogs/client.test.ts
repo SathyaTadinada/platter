@@ -111,4 +111,17 @@ describe('DiscogsClient', () => {
     await getIdentity(client(fn, clock, limiter))
     expect(fill).toHaveBeenCalledOnce()
   })
+
+  it('lets requests that never reach Discogs skip the limiter', async () => {
+    const clock = fakeClock()
+    const limiter = new RateLimiter(1, 60_000, clock.now, clock.sleep)
+    const c = new DiscogsClient(fakeAuth, (async () => json(identity)) as typeof fetch, limiter, clock.sleep, clock.now, (url) =>
+      url.includes('/oauth/identity'),
+    )
+    for (let i = 0; i < 5; i++) await getIdentity(c)
+    expect(clock.now()).toBe(1_000_000)
+    await getRelease(c, 1)
+    await getRelease(c, 2) // the limit of one applies here
+    expect(clock.now()).toBeGreaterThan(1_000_000)
+  })
 })

@@ -3,6 +3,7 @@ import { toast } from '../components/Toaster'
 import { getProfile } from '../api/discogs/endpoints'
 import type { DiscogsClient } from '../api/discogs/client'
 import { db } from '../db/db'
+import { flushScrobbles } from '../lib/plays'
 import { recordCollectionValue, recordedToday } from '../lib/pricing'
 import { checkPrices } from './prices'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
@@ -76,6 +77,7 @@ async function updateValues(client: DiscogsClient, username: string) {
     const currency = (await getProfile(client, username)).curr_abbr ?? 'USD'
     if (!(await recordedToday())) await recordCollectionValue(client, username, currency)
     const ids = (await db.collection.toArray()).map((i) => i.releaseId)
+    await flushScrobbles(client).catch(() => {})
     await checkPrices(client, ids, currency)
   } catch {
     // next sync

@@ -29,6 +29,8 @@ import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollect
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
+import { useListening } from '../hooks/plays'
+import { dayAgo } from '../lib/time'
 import { checkPrices, useCurrency, useFreshPrices, usePriceCheck } from '../hooks/prices'
 import {
   activeFilterCount,
@@ -42,7 +44,7 @@ import {
   toCsv,
   type Filters,
   type LibraryQuery,
-  type ValueLookup,
+  type SortContext,
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
 import { formatMoney, valueOf } from '../lib/value'
@@ -104,29 +106,43 @@ export function Collection() {
   const prices = useFreshPrices(byValue ? currency : undefined)
   const matches = useFieldMatches()
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
-  const valueLookup = useMemo<ValueLookup | undefined>(
-    () =>
-      prices && currency
-        ? {
-            value: (i) => valueOf(prices.get(i.releaseId), mediaField ? i.fields[mediaField] : undefined)?.amount,
-            money: (n) => formatMoney(n, currency, { whole: true }),
-          }
-        : undefined,
-    [prices, currency, mediaField],
-  )
-  const priceOf = (i: LibraryItem) => {
-    const v = byValue ? valueLookup?.value(i) : undefined
-    return v === undefined || !currency ? undefined : formatMoney(v, currency)
+  const listened = useListening()
+  const locationField = matches ? fieldFor(matches, 'location')?.id : undefined
+  const sortCtx = useMemo<SortContext>(() => {
+    const byInstance = new Map(listened?.rows.map((r) => [r.item.instanceId, r]))
+    return {
+      value: prices ? (i) => valueOf(prices.get(i.releaseId), mediaField ? i.fields[mediaField] : undefined)?.amount : undefined,
+      money: currency ? (n) => formatMoney(n, currency, { whole: true }) : undefined,
+      plays: (i) => byInstance.get(i.instanceId)?.count ?? 0,
+      lastPlayed: (i) => byInstance.get(i.instanceId)?.last,
+      location: locationField !== undefined ? (i) => i.fields[locationField] : undefined,
+    }
+  }, [prices, currency, mediaField, listened, locationField])
+
+  // a short note under each record for sorts where it helps
+  const noteOf = (i: LibraryItem) => {
+    if (query.sort === 'value') {
+      const v = sortCtx.value?.(i)
+      return v === undefined || !currency ? undefined : formatMoney(v, currency)
+    }
+    if (query.sort === 'plays') {
+      const n = sortCtx.plays?.(i) ?? 0
+      return n ? `${n} play${n === 1 ? '' : 's'}` : undefined
+    }
+    if (query.sort === 'played') {
+      const t = sortCtx.lastPlayed?.(i)
+      return t ? dayAgo(t) : undefined
+    }
   }
 
-  const filtered = useMemo(() => (items ? sortItems(filterItems(items, query), query.sort, valueLookup) : []), [items, query, valueLookup])
+  const filtered = useMemo(() => (items ? sortItems(filterItems(items, query), query.sort, sortCtx) : []), [items, query, sortCtx])
   // headings only help when groups are reasonably full; sparse ones just break up the grid
   const groups = useMemo(() => {
     const shown = filtered.slice(0, limit)
-    const all = groupItems(filtered, query.sort, valueLookup)
+    const all = groupItems(filtered, query.sort, sortCtx)
     if (all.length < 2 || filtered.length / all.length < 3) return [{ key: 'all', label: '', items: shown }]
-    return groupItems(shown, query.sort, valueLookup)
-  }, [filtered, limit, query.sort, valueLookup])
+    return groupItems(shown, query.sort, sortCtx)
+  }, [filtered, limit, query.sort, sortCtx])
   const facets = useMemo(() => (items ? buildFacets(items, query, folders, fields) : null), [items, query, folders, fields])
 
   const fresh = syncedAt !== undefined && Date.now() - syncedAt < SYNC_MAX_AGE
@@ -382,7 +398,7 @@ export function Collection() {
                   <GridTile
                     key={i.instanceId}
                     item={i}
-                    price={priceOf(i)}
+                    note={noteOf(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -394,7 +410,7 @@ export function Collection() {
                   <ListRow
                     key={i.instanceId}
                     item={i}
-                    price={priceOf(i)}
+                    note={noteOf(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -474,7 +490,7 @@ function Tick({ on }: { on?: boolean }) {
   )
 }
 
-function GridTile({ item, price, selected, onSelect }: { item: LibraryItem; price?: string } & Selectable) {
+function GridTile({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
   return (
     <li className="min-w-0">
       <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
@@ -491,13 +507,13 @@ function GridTile({ item, price, selected, onSelect }: { item: LibraryItem; pric
         </div>
         <p className="mt-2 truncate text-sm font-semibold">{item.title}</p>
         <p className="truncate text-sm text-stone-500">{item.artist}</p>
-        {price && <p className="text-sm font-medium tabular-nums">{price}</p>}
+        {note && <p className="text-sm font-medium tabular-nums">{note}</p>}
       </Tap>
     </li>
   )
 }
 
-function ListRow({ item, price, selected, onSelect }: { item: LibraryItem; price?: string } & Selectable) {
+function ListRow({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
     <li>
@@ -514,8 +530,8 @@ function ListRow({ item, price, selected, onSelect }: { item: LibraryItem; price
           <p className="truncate text-sm text-stone-600 dark:text-stone-400">{item.artist}</p>
           {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         </div>
-        {price ? (
-          <span className="shrink-0 text-sm font-semibold tabular-nums">{price}</span>
+        {note ? (
+          <span className="shrink-0 text-sm font-semibold tabular-nums">{note}</span>
         ) : (
           item.rating > 0 && (
             <span className="shrink-0">

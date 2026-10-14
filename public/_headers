@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob: https://i.discogs.com https://coverartarchive.org https://archive.org https://*.archive.org; connect-src 'self' https://api.discogs.com https://musicbrainz.org https://coverartarchive.org https://archive.org https://*.archive.org; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types default
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob: https://i.discogs.com https://coverartarchive.org https://archive.org https://*.archive.org; connect-src 'self' https://api.discogs.com https://api.listenbrainz.org https://musicbrainz.org https://coverartarchive.org https://archive.org https://*.archive.org; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types default
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   Permissions-Policy: camera=(self), microphone=(), geolocation=(), interest-cohort=()

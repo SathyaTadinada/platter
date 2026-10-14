@@ -1,8 +1,8 @@
 import { db } from '../db/db'
 
-// Tables worth backing up: settings, the batch queue, chosen covers, and value history. Session (the token)
+// Tables worth backing up: settings, the batch queue, chosen covers, value history, and plays. Session (the token)
 // and caches are left out on purpose.
-const TABLES = ['settings', 'queue', 'covers', 'valueHistory'] as const
+const TABLES = ['settings', 'queue', 'covers', 'valueHistory', 'plays'] as const
 
 export type ExportFile = {
   app: 'platter'

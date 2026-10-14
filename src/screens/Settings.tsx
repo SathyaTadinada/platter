@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Boxes, Check, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
+import { Boxes, Check, Radio, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
@@ -15,6 +15,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
+import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 import { timeAgo } from '../lib/time'
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -29,6 +30,7 @@ export function Settings() {
   const install = useInstallPrompt()
   const demo = session.kind === 'demo'
   const crates = useCollectionMeta().data?.folders.length
+  const lb = useLiveQuery(async () => (await db.settings.get(LISTENBRAINZ_KEY))?.value as ListenBrainzSettings | undefined)
 
   const stats = useLiveQuery(async () => ({
     records: await db.collection.count(),
@@ -131,6 +133,19 @@ export function Settings() {
           </Section>
         </div>
         <div>
+          {!demo && (
+            <Section title="Listening">
+              <List>
+                <Row
+                  icon={<Radio size={20} />}
+                  label="ListenBrainz"
+                  value={lb ? (lb.enabled ? lb.user : 'Paused') : 'Off'}
+                  href="/listenbrainz"
+                />
+              </List>
+            </Section>
+          )}
+
           <Section title="Appearance">
             <AccentPicker />
           </Section>

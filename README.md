@@ -11,7 +11,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Record pages with tracklist, rating, crate, and editable custom fields (price, dates, and play count get their own editors), and a choice of cover from the release's other Discogs photos
 - Condition, price, date, store, location, and notes set while adding, saved to your custom fields in one go. Without purchase or location fields, those details go into Notes as a readable line instead. In a batch, store, date, and location can be set once for every record
 - Export any filtered view as a CSV in the same columns Discogs uses
-- Collection value from Discogs, with a daily reading kept on the device for a chart over time, what you paid next to what records go for now, your most valuable records, and sorting by value. Per-record prices use Discogs' suggested price for the copy's condition when seller settings are filled in, otherwise the lowest current listing. Prices refresh on their own in the background after each sync, at a pace that leaves room under the rate limit
+- Stats tab with the collection's value from Discogs, with a daily reading kept on the device for a chart over time, what you paid next to what records go for now, your most valuable records, and sorting by value. Per-record prices use Discogs' suggested price for the copy's condition when seller settings are filled in, otherwise the lowest current listing. Prices refresh on their own in the background after each sync, at a pace that leaves room under the rate limit
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
 - Shows matching releases with cover, label, catalog number, country, year, and format
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
@@ -22,6 +22,11 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
 - Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes, and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
+- Listening log: tap Played it on a record, or scan it in Play mode, to bump its Play Count and Last Played fields. Every play is also kept on the device, with undo
+- Listening stats: plays by month, most played, recently played, and records that haven't been on in a year
+- Sort by most played, recently played, or location
+- Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks
+- Accent color picker
 - A demo with a sample collection, for trying it without a Discogs account
 
 Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.

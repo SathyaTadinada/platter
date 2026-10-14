@@ -15,8 +15,8 @@ export function About() {
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
           <p>No accounts, analytics, or tracking.</p>
           <p>
-            Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs, and to
-            MusicBrainz when a barcode isn't on Discogs.
+            Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs, to
+            MusicBrainz when a barcode isn't on Discogs, and to ListenBrainz if you connect it.
           </p>
           <p>
             When you log in with Discogs, a small Platter server adds a signature to each request. It doesn't store anything or see what

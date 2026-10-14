@@ -87,6 +87,8 @@ export class DiscogsClient {
     private limiter = new RateLimiter(),
     private sleep: Sleep = realSleep,
     private now = () => Date.now(),
+    // requests that never reach Discogs (the demo answers some itself) skip the limiter
+    private local: (url: string) => boolean = () => false,
   ) {}
 
   get requestsPerMinute(): number {
@@ -131,7 +133,7 @@ export class DiscogsClient {
 
   private async send<T>(method: string, url: string, body: unknown): Promise<T> {
     for (let attempt = 0; ; attempt++) {
-      await this.limiter.take((ms) => this.setStatus({ waitUntil: this.now() + ms }))
+      if (!this.local(url)) await this.limiter.take((ms) => this.setStatus({ waitUntil: this.now() + ms }))
       this.setStatus({ waitUntil: null })
 
       const headers: Record<string, string> = await this.auth.getAuthHeaders({ method, url })

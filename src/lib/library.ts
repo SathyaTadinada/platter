@@ -73,7 +73,8 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
 
 // ---- query ----
 
-export type SortKey = 'added' | 'added-old' | 'artist' | 'title' | 'year' | 'year-old' | 'rating' | 'value'
+export type SortKey =
+  'added' | 'added-old' | 'artist' | 'title' | 'year' | 'year-old' | 'rating' | 'value' | 'plays' | 'played' | 'location'
 
 export const SORTS: { key: SortKey; label: string }[] = [
   { key: 'added', label: 'Recently added' },
@@ -84,6 +85,9 @@ export const SORTS: { key: SortKey; label: string }[] = [
   { key: 'year-old', label: 'Oldest release' },
   { key: 'rating', label: 'Rating' },
   { key: 'value', label: 'Value' },
+  { key: 'plays', label: 'Most played' },
+  { key: 'played', label: 'Recently played' },
+  { key: 'location', label: 'Location' },
 ]
 
 export type Filters = {
@@ -194,10 +198,16 @@ export const sortName = (s: string) => fold(s).replace(/^(the|a|an)\s+/, '')
 
 const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
 
-// Value sort and headings need prices, which live outside the library
-export type ValueLookup = { value: (i: LibraryItem) => number | undefined; money: (n: number) => string }
+// Some sorts need data that lives outside the library: prices, plays, the location field
+export type SortContext = {
+  value?: (i: LibraryItem) => number | undefined
+  money?: (n: number) => string
+  plays?: (i: LibraryItem) => number
+  lastPlayed?: (i: LibraryItem) => number | undefined
+  location?: (i: LibraryItem) => string | undefined
+}
 
-export function sortItems(items: LibraryItem[], sort: SortKey, prices?: ValueLookup): LibraryItem[] {
+export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}): LibraryItem[] {
   const out = [...items]
   const tie = (a: LibraryItem, b: LibraryItem) =>
     byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
@@ -211,7 +221,11 @@ export function sortItems(items: LibraryItem[], sort: SortKey, prices?: ValueLoo
     'year-old': (a, b) => (a.year || 9999) - (b.year || 9999) || tie(a, b),
     rating: (a, b) => b.rating - a.rating || tie(a, b),
     // unpriced last
-    value: (a, b) => (prices?.value(b) ?? -1) - (prices?.value(a) ?? -1) || tie(a, b),
+    value: (a, b) => (ctx.value?.(b) ?? -1) - (ctx.value?.(a) ?? -1) || tie(a, b),
+    plays: (a, b) => (ctx.plays?.(b) ?? 0) - (ctx.plays?.(a) ?? 0) || tie(a, b),
+    played: (a, b) => (ctx.lastPlayed?.(b) ?? 0) - (ctx.lastPlayed?.(a) ?? 0) || tie(a, b),
+    // no location last
+    location: (a, b) => byText(ctx.location?.(a) || '\uffff', ctx.location?.(b) || '\uffff') || tie(a, b),
   }
   return out.sort(cmp[sort])
 }
@@ -223,7 +237,7 @@ const letter = (s: string) => {
   return /[A-Z]/.test(c) ? c : '#'
 }
 
-function groupLabel(i: LibraryItem, sort: SortKey, prices?: ValueLookup): string {
+function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
   switch (sort) {
     case 'added':
     case 'added-old': {
@@ -240,15 +254,33 @@ function groupLabel(i: LibraryItem, sort: SortKey, prices?: ValueLookup): string
     case 'rating':
       return i.rating ? `${'★'.repeat(i.rating)}` : 'Not rated'
     case 'value':
-      return prices ? valueBracket(prices.value(i), prices.money) : ''
+      return ctx.value && ctx.money ? valueBracket(ctx.value(i), ctx.money) : ''
+    case 'plays': {
+      const n = ctx.plays?.(i) ?? 0
+      return n >= 10
+        ? 'Played 10+ times'
+        : n >= 5
+          ? 'Played 5 to 9 times'
+          : n >= 2
+            ? 'Played 2 to 4 times'
+            : n === 1
+              ? 'Played once'
+              : 'Never played'
+    }
+    case 'played': {
+      const t = ctx.lastPlayed?.(i)
+      return t ? new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Never played'
+    }
+    case 'location':
+      return ctx.location?.(i)?.trim() || 'No location'
   }
 }
 
 // Items must already be sorted; consecutive items with the same label share a group
-export function groupItems(items: LibraryItem[], sort: SortKey, prices?: ValueLookup): Group[] {
+export function groupItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}): Group[] {
   const groups: Group[] = []
   for (const i of items) {
-    const label = groupLabel(i, sort, prices)
+    const label = groupLabel(i, sort, ctx)
     const last = groups.at(-1)
     if (last?.label === label) last.items.push(i)
     else groups.push({ key: `${label}-${groups.length}`, label, items: [i] })

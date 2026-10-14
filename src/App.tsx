@@ -24,7 +24,9 @@ import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
 import { Setup } from './screens/Setup'
-import { Value } from './screens/Value'
+import { ListenBrainz } from './screens/ListenBrainz'
+import { NowPlaying } from './screens/NowPlaying'
+import { Stats } from './screens/Stats'
 import { Welcome } from './screens/Welcome'
 
 type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
@@ -107,7 +109,10 @@ function Routes({ error }: { error?: string }) {
             <Route path="/setup" component={Setup} />
             <Route path="/settings" component={Settings} />
             <Route path="/crates" component={Crates} />
-            <Route path="/value" component={Value} />
+            <Route path="/stats" component={Stats} />
+            <Route path="/play" component={NowPlaying} />
+            <Route path="/listenbrainz" component={ListenBrainz} />
+            <Route path="/value" component={Stats} />
             <Route path="/about" component={About} />
             <Route component={Collection} />
           </Switch>

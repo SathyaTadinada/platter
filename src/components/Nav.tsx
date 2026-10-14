@@ -8,7 +8,7 @@ const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/', label: 'Collection', Icon: LibraryBig },
   { href: '/scan', label: 'Scan', Icon: ScanBarcode },
   { href: '/search', label: 'Search', Icon: Search },
-  { href: '/value', label: 'Value', Icon: ChartLine },
+  { href: '/stats', label: 'Stats', Icon: ChartLine },
   { href: '/settings', label: 'Settings', Icon: Settings2 },
 ]
 

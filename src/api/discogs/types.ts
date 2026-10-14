@@ -41,7 +41,13 @@ export type SearchParams = {
 
 export type Identifier = { type: string; value: string; description?: string }
 
-export type Track = { position: string; title: string; duration?: string; type_?: string }
+export type Track = {
+  position: string
+  title: string
+  duration?: string
+  type_?: string
+  artists?: { name: string; anv?: string; join?: string }[]
+}
 
 export type Release = {
   id: number
