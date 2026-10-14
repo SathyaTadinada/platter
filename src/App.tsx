@@ -118,7 +118,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="flex h-dvh flex-col lg:flex-row">
       <SideNav />
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+        <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none">
           {children}
         </main>
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">

@@ -94,15 +94,21 @@ export function Record({ id }: { id: string }) {
 
   const tracklist = (
     <Section title="Tracklist">
-      {release.loading && !r ? <Spinner label="Loading tracklist" /> : r ? <Tracklist release={r} /> : <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>}
+      {release.loading && !r ? (
+        <Spinner label="Loading tracklist" />
+      ) : r ? (
+        <Tracklist release={r} />
+      ) : (
+        <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>
+      )}
     </Section>
   )
 
   return (
     <Screen title={item.title} back={back} width="wide" backdrop={item.cover ?? item.thumb}>
-      <div className="lg:grid lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-10">
+      <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
         {/* on wide screens the tracklist sits under the cover so the column isn't empty */}
-        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <div className="space-y-6">
           <div>
             <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
             {canPickCover && (
@@ -130,7 +136,11 @@ export function Record({ id }: { id: string }) {
           {(item.genres.length > 0 || item.styles.length > 0) && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {[...item.genres.map((g) => ['genre', g]), ...item.styles.map((s) => ['style', s])].map(([k, v]) => (
-                <Link key={`${k}${v}`} href={`/?${k}=${encodeURIComponent(v)}`} className="rounded-full bg-stone-900/5 px-2.5 py-1 text-xs font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15">
+                <Link
+                  key={`${k}${v}`}
+                  href={`/?${k}=${encodeURIComponent(v)}`}
+                  className="rounded-full bg-stone-900/5 px-2.5 py-1 text-xs font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15"
+                >
                   {v}
                 </Link>
               ))}
@@ -169,11 +179,18 @@ export function Record({ id }: { id: string }) {
                 <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
                   {[...related.copies, ...related.pressings].map((o) => (
                     <li key={o.instanceId}>
-                      <Link href={`/collection/${o.instanceId}`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                      <Link
+                        href={`/collection/${o.instanceId}`}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                      >
                         <Cover item={o} small className="size-11 shrink-0 rounded-md" />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{o.releaseId === item.releaseId ? 'Another copy of this pressing' : o.format || 'Another pressing'}</p>
-                          <p className="truncate text-xs text-stone-500">{[o.label, o.catno, o.year || null].filter(Boolean).join(' · ')}</p>
+                          <p className="truncate text-sm font-medium">
+                            {o.releaseId === item.releaseId ? 'Another copy of this pressing' : o.format || 'Another pressing'}
+                          </p>
+                          <p className="truncate text-xs text-stone-500">
+                            {[o.label, o.catno, o.year || null].filter(Boolean).join(' · ')}
+                          </p>
                         </div>
                       </Link>
                     </li>
@@ -185,7 +202,12 @@ export function Record({ id }: { id: string }) {
             <div className="lg:hidden">{tracklist}</div>
 
             <Section>
-              <a href={url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-stone-500 underline underline-offset-2">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-1 text-sm text-stone-500 underline underline-offset-2"
+              >
                 Data provided by Discogs.
                 <ExternalIcon size={14} aria-hidden />
               </a>
