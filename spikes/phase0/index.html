@@ -16,7 +16,11 @@
         aren't touched.
       </p>
 
-      <label for="token">Discogs personal access token</label>
+      <a id="signin" class="button" href="/auth/start">Sign in with Discogs</a>
+      <button id="signout" type="button" hidden>Sign out</button>
+      <p id="oauth-status" class="muted"></p>
+
+      <label for="token">Or paste a personal access token</label>
       <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" />
 
       <label for="barcode">Barcode to search</label>

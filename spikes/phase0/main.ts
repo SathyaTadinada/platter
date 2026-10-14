@@ -18,6 +18,38 @@ const coverEl = $<HTMLImageElement>('cover')
 let token = ''
 let lines: Line[] = []
 
+// OAuth tokens arrive in the URL fragment after /auth/callback
+type OAuth = { token: string; secret: string }
+let oauth: OAuth | null = null
+let lastAuthMode = ''
+
+function readOAuth() {
+  const frag = new URLSearchParams(location.hash.slice(1))
+  const t = frag.get('oauth_token')
+  const s = frag.get('oauth_token_secret')
+  const err = frag.get('auth_error')
+  if (t && s) sessionStorage.setItem('oauth', JSON.stringify({ token: t, secret: s }))
+  if (t || err) history.replaceState(null, '', location.pathname)
+  if (err) $('oauth-status').textContent = `Sign-in failed: ${err}`
+  const saved = sessionStorage.getItem('oauth')
+  oauth = saved ? (JSON.parse(saved) as OAuth) : null
+  if (oauth) {
+    $('oauth-status').textContent = 'Signed in with Discogs. Run checks will use OAuth (token field ignored).'
+    $('signout').hidden = false
+    $('signin').hidden = true
+  }
+}
+
+// Ask the Worker to sign one or more requests
+async function signRequests(reqs: { method: string; url: string }[]): Promise<string[]> {
+  const r = await request('/api/sign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: oauth!.token, tokenSecret: oauth!.secret, requests: reqs }),
+  })
+  return r.data.headers as string[]
+}
+
 class HttpError extends Error {
   constructor(public resp: Resp) {
     super(`HTTP ${resp.status}: ${short(resp.data)}`)
@@ -52,8 +84,9 @@ async function request(url: string, init: RequestInit = {}): Promise<Resp> {
 
 type ReqBody = { json: unknown } | { form: Record<string, string> }
 
-function discogs(method: string, path: string, body?: ReqBody): Promise<Resp> {
-  const headers: Record<string, string> = { Authorization: `Discogs token=${token}` }
+async function discogs(method: string, path: string, body?: ReqBody, signed?: string): Promise<Resp> {
+  const auth = signed ?? (oauth ? (await signRequests([{ method, url: API + path }]))[0] : `Discogs token=${token}`)
+  const headers: Record<string, string> = { Authorization: auth }
   let payload: BodyInit | undefined
   if (body && 'json' in body) {
     headers['Content-Type'] = 'application/json'
@@ -109,13 +142,18 @@ const skip = (name: string, why: string) => log(name, 'skip', why)
 async function run() {
   token = tokenEl.value.trim()
   const barcode = barcodeEl.value.replace(/\D/g, '')
-  if (!token) return
+  if (!token && !oauth) return
+  lastAuthMode = oauth ? 'OAuth (HMAC-SHA1 via /api/sign)' : 'personal access token'
   lines = []
   coverEl.hidden = true
   runBtn.disabled = true
   copyBtn.hidden = true
 
-  log('Browser', 'ok', `${navigator.userAgent}\nstandalone: ${matchMedia('(display-mode: standalone)').matches}`)
+  log(
+    'Browser',
+    'ok',
+    `${navigator.userAgent}\nstandalone: ${matchMedia('(display-mode: standalone)').matches}\nauth: ${lastAuthMode}`,
+  )
 
   // 1. Identity, using the browser's own User-Agent
   const identity = await step('GET /oauth/identity', async () => {
@@ -283,7 +321,19 @@ async function run() {
     })
   }
 
-  // 8. Local storage
+  // 8. Batch signing: sign two requests in one call, send them later
+  if (oauth) {
+    await step('Batch sign, send after 5s', async () => {
+      const paths = [`/users/${user}/collection/folders`, `/database/search?barcode=${barcode}&type=release&per_page=1`]
+      const signed = await signRequests(paths.map((p) => ({ method: 'GET', url: API + p })))
+      await new Promise((res) => setTimeout(res, 5000))
+      const a = await discogs('GET', paths[0], undefined, signed[0])
+      const b = await discogs('GET', paths[1], undefined, signed[1])
+      return { value: true, detail: `${a.status}, ${b.status}` }
+    })
+  }
+
+  // 9. Local storage
   await step('IndexedDB write/read', async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open('platter-spike', 1)
@@ -324,8 +374,15 @@ function finish() {
 
 copyBtn.addEventListener('click', async () => {
   const text = lines.map((l) => `[${l.status.toUpperCase()}] ${l.name}\n${l.detail}`).join('\n\n')
-  await navigator.clipboard.writeText(text.replaceAll(token, '<token>'))
+  let safe = token ? text.replaceAll(token, '<token>') : text
+  if (oauth) safe = safe.replaceAll(oauth.token, '<oauth_token>').replaceAll(oauth.secret, '<oauth_secret>')
+  await navigator.clipboard.writeText(safe)
   $('copied').hidden = false
 })
 
 runBtn.addEventListener('click', run)
+$('signout').addEventListener('click', () => {
+  sessionStorage.removeItem('oauth')
+  location.reload()
+})
+readOAuth()
