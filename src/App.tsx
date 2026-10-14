@@ -4,6 +4,7 @@ import { loadSession } from './auth/auth'
 import { finishOAuth } from './auth/oauthFlow'
 import { BottomNav, SideNav } from './components/Nav'
 import { StatusBar } from './components/StatusBar'
+import { Toaster } from './components/Toaster'
 import { Spinner } from './components/ui'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
@@ -111,7 +112,10 @@ function Shell({ children }: { children: ReactNode }) {
         <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
           {children}
         </main>
-        <StatusBar />
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">
+          <Toaster />
+          <StatusBar />
+        </div>
       </div>
       <BottomNav />
     </div>

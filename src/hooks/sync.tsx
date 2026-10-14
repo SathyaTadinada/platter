@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { toast } from '../components/Toaster'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
 import { useSession } from './session'
 
@@ -13,6 +14,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const { client, session } = useSession()
   const [state, setState] = useState<SyncState>(idle)
   const busy = useRef(false)
+  const syncRef = useRef<(force?: boolean) => Promise<void>>(async () => {})
 
   const sync = useCallback(
     async (force = false) => {
@@ -29,7 +31,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         }
         setState(idle)
       } catch (e) {
-        setState({ ...idle, error: (e as Error).message })
+        const message = (e as Error).message
+        setState({ ...idle, error: message })
+        toast(`Couldn't update your library from Discogs. ${message}`, { tone: 'error', action: { label: 'Retry', onClick: () => syncRef.current(true) } })
       } finally {
         busy.current = false
       }
@@ -38,6 +42,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   )
 
   // check on open and whenever the app comes back to the foreground
+  syncRef.current = sync
   useEffect(() => {
     sync()
     const onVisible = () => document.visibilityState === 'visible' && sync()
