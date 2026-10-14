@@ -5,7 +5,9 @@ import type { SearchResult } from '../api/discogs/types'
 import type { QueueItem } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { toCard } from '../lib/format'
+import type { Ranked } from '../lib/runout'
 import { ReleaseCardView } from './ReleaseCardView'
+import { RunoutMatch, RunoutPanel } from './RunoutPanel'
 import { Notice, Spinner } from './ui'
 
 // Pick the right release for a batch item: from its barcode matches, or by searching
@@ -36,6 +38,8 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
   }
 
   const list = results ?? item.candidates ?? []
+  const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
+  const ordered = ranked && !results ? ranked : list.map((r) => ({ item: r, result: undefined }))
 
   return (
     <dialog
@@ -68,10 +72,11 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
         {error && <Notice tone="error">{error}</Notice>}
         {!busy && results && !results.length && <Notice tone="info">Nothing found. Try fewer words.</Notice>}
         {!busy && !results && !list.length && <p className="text-sm text-stone-500">Search for the record by artist and title, or the catalog number on the spine.</p>}
+        {!busy && !results && list.length > 1 && <RunoutPanel candidates={list} onRanked={setRanked} />}
         {!busy && list.length > 0 && (
           <ul className="grid grid-cols-1 gap-3">
-            {list.map((r) => (
-              <ReleaseCardView key={r.id} card={toCard(r)} onPick={() => onPick(r)} />
+            {ordered.map(({ item: r, result }) => (
+              <ReleaseCardView key={r.id} card={toCard(r)} onPick={() => onPick(r)} extra={result && <RunoutMatch result={result} />} />
             ))}
           </ul>
         )}

@@ -53,7 +53,7 @@ export function DiscogsCredit({ url }: { url: string }) {
   )
 }
 
-export function ReleaseCardView({ card, own, onPick }: { card: ReleaseCard; own?: Ownership; onPick: () => void }) {
+export function ReleaseCardView({ card, own, onPick, extra }: { card: ReleaseCard; own?: Ownership; onPick: () => void; extra?: React.ReactNode }) {
   return (
     <li className="min-w-0 rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       <button type="button" onClick={onPick} className="flex w-full gap-3 p-3 text-left active:bg-stone-50 dark:active:bg-stone-800/50">
@@ -61,6 +61,7 @@ export function ReleaseCardView({ card, own, onPick }: { card: ReleaseCard; own?
         <div className="min-w-0 flex-1">
           <ReleaseSummary card={card} />
           <Badges own={own} />
+          {extra}
         </div>
       </button>
       <div className="border-t border-stone-100 px-3 py-1.5 dark:border-stone-800">

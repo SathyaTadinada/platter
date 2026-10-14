@@ -13,6 +13,10 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 - Shows matching releases with cover, label, catalog number, country, year and format
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
 - Falls back to MusicBrainz when Discogs doesn't know a barcode
+- Tells pressings apart by the runout: type what's etched in the dead wax, or read it from a photo, and candidates are ranked against Discogs' Matrix / Runout data, allowing for lookalike characters (O/0, I/1, S/5, B/8) and partial transcriptions
+- Reads catalog numbers off a photo of the spine
+
+Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
 - Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest

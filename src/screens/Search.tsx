@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useLocation, useSearch } from 'wouter'
 import { Button, Screen } from '../components/ui'
+import { ReadPhotoButton } from '../components/ReadPhotoButton'
 import { digitsOnly } from '../lib/barcode'
+import { catnoCandidates } from '../lib/catno'
 
 type Mode = 'barcode' | 'catno' | 'title'
 
@@ -21,6 +23,7 @@ export function Search() {
   const [catno, setCatno] = useState(params.get('catno') ?? '')
   const [artist, setArtist] = useState(params.get('artist') ?? '')
   const [title, setTitle] = useState(params.get('title') ?? '')
+  const [spine, setSpine] = useState<string[] | null>(null)
 
   const ready =
     mode === 'barcode' ? digitsOnly(barcode).length >= 8 : mode === 'catno' ? catno.trim().length > 0 : (artist + title).trim().length > 0
@@ -59,20 +62,36 @@ export function Search() {
         {mode === 'barcode' && (
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Barcode number</span>
-            <input className={input} inputMode="numeric" autoComplete="off" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="e.g. 0 75678 16412 5" autoFocus />
+            <input className={input} inputMode="numeric" autoComplete="off" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="e.g. 0 75678 16412 5" />
           </label>
         )}
         {mode === 'catno' && (
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Catalog number</span>
-            <input className={input} autoCapitalize="characters" autoComplete="off" value={catno} onChange={(e) => setCatno(e.target.value)} placeholder="e.g. PB 41447" autoFocus />
-          </label>
+          <>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Catalog number</span>
+              <input className={input} autoCapitalize="characters" autoComplete="off" value={catno} onChange={(e) => setCatno(e.target.value)} placeholder="e.g. PB 41447" />
+            </label>
+            {/* spines are usually printed sideways, so try both ways round */}
+            <ReadPhotoButton label="Read it from the spine" rotations={[90, 270, 0]} onText={(t) => setSpine(catnoCandidates(t))} />
+            {spine && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-stone-500">{spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}</p>
+                <div className="flex flex-wrap gap-2">
+                  {spine.map((c) => (
+                    <button key={c} type="button" onClick={() => setCatno(c)} className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800">
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
         {mode === 'title' && (
           <>
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Artist</span>
-              <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} autoFocus />
+              <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} />
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Title</span>

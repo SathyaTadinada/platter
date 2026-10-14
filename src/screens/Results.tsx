@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
-import type { SearchParams } from '../api/discogs/types'
+import type { SearchParams, SearchResult } from '../api/discogs/types'
 import { coverArtUrl, searchMbBarcode, type MbRelease } from '../api/musicbrainz'
 import { AddSheet } from '../components/AddSheet'
+import { RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
 import { ReleaseCardView } from '../components/ReleaseCardView'
 import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
 import { db } from '../db/db'
@@ -12,6 +13,7 @@ import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { toCard, type ReleaseCard } from '../lib/format'
 import { lookupBarcode, type LookupResult } from '../lib/lookup'
+import type { Ranked } from '../lib/runout'
 import { computeOwnership } from '../lib/ownership'
 
 function describeQuery(p: URLSearchParams): string {
@@ -26,6 +28,7 @@ export function Results() {
   const params = new URLSearchParams(qs)
   const [, navigate] = useLocation()
   const [picked, setPicked] = useState<ReleaseCard | null>(null)
+  const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
 
   const search = (p: SearchParams) => searchReleases(client, p).then((r) => r.results)
 
@@ -37,7 +40,11 @@ export function Results() {
     return { kind: 'search', results: await search(p) }
   }, [qs, client])
 
-  const cards = state.data && 'results' in state.data ? state.data.results.map(toCard) : []
+  const results = useMemo(() => (state.data && 'results' in state.data ? state.data.results : []), [state.data])
+  const cards = useMemo(() => results.map(toCard), [results])
+  const matchOf = useMemo(() => new Map(ranked?.map((r) => [r.item.id, r.result])), [ranked])
+  // in runout order once something has been typed
+  const shown = ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards
 
   // badges come from the local index, so they update live after an add
   const own = useLiveQuery(async () => {
@@ -61,9 +68,16 @@ export function Results() {
       {cards.length > 0 && (
         <>
           <p className="mb-3 text-sm text-stone-500">{resultsLine(cards.length, Boolean(params.get('barcode')))}</p>
+          {cards.length > 1 && <RunoutPanel candidates={results} onRanked={setRanked} />}
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {cards.map((c) => (
-              <ReleaseCardView key={c.id} card={c} own={own?.get(c.id)} onPick={() => setPicked(c)} />
+            {shown.map((c) => (
+              <ReleaseCardView
+                key={c.id}
+                card={c}
+                own={own?.get(c.id)}
+                onPick={() => setPicked(c)}
+                extra={matchOf.get(c.id) && <RunoutMatch result={matchOf.get(c.id)!} />}
+              />
             ))}
           </ul>
         </>
@@ -76,8 +90,7 @@ export function Results() {
 
 function resultsLine(n: number, barcode: boolean): string {
   if (n === 1) return barcode ? 'One release has this barcode.' : '1 result'
-  // several pressings often share a barcode; label, catalog number and year tell them apart
-  return barcode ? `${n} releases share this barcode. Compare the label, catalog number and year with your copy.` : `${n} results`
+  return barcode ? `${n} releases share this barcode.` : `${n} results`
 }
 
 function MbNotice({ mb }: { mb: MbRelease }) {
