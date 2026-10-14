@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Star, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FacetOption, Facets, Filters } from '../lib/library'
 import { Button } from './ui'
@@ -61,12 +61,7 @@ export function FilterSheet({ facets, filters, count, onChange, onClose }: Props
           selected={filters.decade !== undefined ? String(filters.decade) : undefined}
           onPick={(v) => set('decade', Number(v))}
         />
-        <Group
-          title="Rating"
-          options={facets.rating}
-          selected={filters.rating ? String(filters.rating) : undefined}
-          onPick={(v) => set('rating', Number(v))}
-        />
+        <RatingPicker options={facets.rating} value={filters.rating} onPick={(n) => set('rating', n)} />
         {facets.fields.map(({ field, options }) => (
           <Group
             key={field.id}
@@ -142,6 +137,37 @@ function Group({
             {all ? 'Show fewer' : `Show all ${options.length}`}
           </button>
         )}
+      </div>
+    </section>
+  )
+}
+
+// Five stars on one line: tap one for "this many and up", tap it again to clear
+function RatingPicker({ options, value, onPick }: { options: FacetOption[]; value?: number; onPick: (n: number) => void }) {
+  const [hover, setHover] = useState(0)
+  if (!options.length && !value) return null
+  const count = (n: number) => options.find((o) => o.value === String(n))?.count ?? 0
+  const lit = hover || value || 0
+  const note = lit ? `${lit}+ stars · ${count(lit)}` : 'Any'
+  return (
+    <section>
+      <h3 className="mb-1 text-sm font-semibold text-stone-500">Rating</h3>
+      <div className="flex items-center" onPointerLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-label={`${n} star${n === 1 ? '' : 's'} and up`}
+            aria-pressed={value === n}
+            disabled={value !== n && !count(n)}
+            onPointerEnter={() => setHover(n)}
+            onClick={() => onPick(n)}
+            className="p-1 transition-transform hover:scale-110 disabled:opacity-30"
+          >
+            <Star size={28} className={n <= lit ? 'fill-accent-500 text-accent-500' : 'text-stone-300 dark:text-stone-600'} aria-hidden />
+          </button>
+        ))}
+        <span className="ml-3 text-sm text-stone-500 tabular-nums">{note}</span>
       </div>
     </section>
   )

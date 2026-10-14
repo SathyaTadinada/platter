@@ -66,6 +66,14 @@
   --color-accent-600: #0d9488;
   --color-accent-700: #0f766e;
 }
+:root[data-accent='emerald'] {
+  --color-accent-50: #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+}
 :root[data-accent='lime'] {
   --color-accent-50: #f7fee7;
   --color-accent-100: #ecfccb;
@@ -90,6 +98,11 @@ body {
     'Segoe UI',
     sans-serif;
   -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background-color: var(--color-accent-500);
+  color: var(--color-stone-950);
 }
 
 dialog::backdrop {

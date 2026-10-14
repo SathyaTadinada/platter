@@ -55,6 +55,9 @@ export const setFieldValue = (c: DiscogsClient, username: string, target: Instan
     { body: { value } },
   )
 
+export const addWant = (c: DiscogsClient, username: string, releaseId: number) =>
+  c.request<{ id: number }>('PUT', `${u(username)}/wants/${releaseId}`)
+
 export const removeWant = (c: DiscogsClient, username: string, releaseId: number) =>
   c.request<null>('DELETE', `${u(username)}/wants/${releaseId}`)
 

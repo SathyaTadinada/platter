@@ -7,7 +7,7 @@ import {
   FileUp,
   LayoutGrid,
   List as ListIcon,
-  ListChecks,
+  SquareCheckBig,
   RefreshCw,
   Search,
   Shuffle,
@@ -200,25 +200,23 @@ export function Collection() {
         )}
       </label>
       <div className="flex items-center gap-2">
-        {/* the visible pill sizes to the current label; the real select sits on top, invisible */}
-        <label className="relative inline-flex min-h-9 min-w-0 items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium dark:bg-stone-800">
-          <ArrowDownUp size={16} className="shrink-0" aria-hidden />
-          <span aria-hidden className="truncate whitespace-nowrap">
-            {SORTS.find((s) => s.key === query.sort)?.label}
-          </span>
-          <span className="sr-only">Sort by</span>
-          <select
-            value={query.sort}
-            onChange={(e) => setQuery({ ...query, sort: e.target.value as LibraryQuery['sort'] })}
-            className="absolute inset-0 cursor-pointer appearance-none opacity-0"
-          >
-            {SORTS.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Menu
+          label="Sort by"
+          align="left"
+          className="min-w-0"
+          buttonClassName="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
+          button={
+            <>
+              <ArrowDownUp size={16} className="shrink-0" aria-hidden />
+              <span className="truncate whitespace-nowrap">{SORTS.find((s) => s.key === query.sort)?.label}</span>
+            </>
+          }
+          items={SORTS.map((s) => ({
+            label: s.label,
+            checked: s.key === query.sort,
+            onSelect: () => setQuery({ ...query, sort: s.key }),
+          }))}
+        />
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
@@ -299,7 +297,7 @@ export function Collection() {
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
       <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
-        <ListChecks size={20} />
+        <SquareCheckBig size={20} />
       </IconButton>
       <IconButton label="Refresh from Discogs" onClick={() => sync.sync(true)} disabled={sync.running} className="hidden lg:block">
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />

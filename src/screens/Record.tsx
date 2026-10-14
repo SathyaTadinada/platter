@@ -6,6 +6,7 @@ import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/
 import type { CollectionField, Release } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
 import { CoverSheet } from '../components/CoverSheet'
+import { Identifiers } from '../components/Identifiers'
 import { MarketPrice } from '../components/MarketPrice'
 import { PlayButton } from '../components/PlayButton'
 import { useProfile } from '../components/Profile'
@@ -180,7 +181,7 @@ export function Record({ id }: { id: string }) {
             </Section>
 
             <Section title="Market">
-              <MarketPrice item={item} mediaCondition={mediaField !== undefined ? item.fields[mediaField] : undefined} />
+              <MarketPrice releaseId={item.releaseId} mediaCondition={mediaField !== undefined ? item.fields[mediaField] : undefined} />
             </Section>
 
             {related?.copies.length || related?.pressings.length ? (
@@ -207,6 +208,12 @@ export function Record({ id }: { id: string }) {
                 </ul>
               </Section>
             ) : null}
+
+            {r && (r.identifiers?.length ?? 0) > 0 && (
+              <Section title="Barcode and other identifiers">
+                <Identifiers identifiers={r.identifiers} />
+              </Section>
+            )}
 
             <div className="lg:hidden">{tracklist}</div>
 
@@ -253,7 +260,7 @@ export function Record({ id }: { id: string }) {
   )
 }
 
-function Tracklist({ release }: { release: Release }) {
+export function Tracklist({ release }: { release: Release }) {
   const tracks = release.tracklist ?? []
   if (!tracks.length) return <p className="text-sm text-stone-500">No tracklist on Discogs.</p>
   return (

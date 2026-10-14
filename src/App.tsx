@@ -20,6 +20,7 @@ import { Import } from './screens/Import'
 import { Results } from './screens/Results'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
+import { Release } from './screens/Release'
 import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
@@ -101,6 +102,7 @@ function Routes({ error }: { error?: string }) {
           <Switch>
             <Route path="/" component={Collection} />
             <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
+            <Route path="/release/:id">{(p) => <Release id={p.id} />}</Route>
             <Route path="/scan" component={Scan} />
             <Route path="/batch" component={Batch} />
             <Route path="/import" component={Import} />

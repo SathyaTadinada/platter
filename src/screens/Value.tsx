@@ -137,8 +137,8 @@ export function ValueStats() {
                 </ul>
                 <p className="px-1 text-xs text-stone-500">
                   {anySuggested
-                    ? "Prices are Discogs' suggestion for each copy's condition, or the cheapest listing if the copy isn't graded."
-                    : "These are the cheapest listings, which can be in worse shape than yours. Fill in your seller settings on Discogs and you'll get suggested prices by condition instead."}
+                    ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
+                    : "Going by the cheapest copy for sale on Discogs. Fill in your seller settings there and you'll get prices for your copy's condition instead."}
                 </p>
               </Section>
 
@@ -146,7 +146,7 @@ export function ValueStats() {
                 <Breakdown valued={valued} money={money} />
               </Section>
 
-              <Section title="Where the value is">
+              <Section title="Breakdown">
                 <GroupTotals valued={valued} folders={folders} money={money} />
               </Section>
             </>
@@ -402,10 +402,14 @@ function GroupTotals({ valued, folders, money }: { valued: Valued[]; folders: Fo
     decade: (i) => [i.year ? `${Math.floor(i.year / 10) * 10}s` : 'Unknown'],
     crate: (i) => [crate.get(i.folderId) ?? 'Uncategorized'],
   }
-  const rows = totalsBy(
-    valued.map((v) => ({ row: v.item, amount: v.value.amount })),
-    keys[by],
-  )
+  const amounts = valued.map((v) => ({ row: v.item, amount: v.value.amount }))
+  // decades read best in order, with Unknown at the end; the others go biggest first
+  const rows =
+    by === 'decade'
+      ? totalsBy(amounts, keys.decade, Infinity).sort(
+          (a, b) => Number(a.label === 'Unknown') - Number(b.label === 'Unknown') || parseInt(b.label) - parseInt(a.label),
+        )
+      : totalsBy(amounts, keys[by])
   return (
     <Card>
       <Toggle

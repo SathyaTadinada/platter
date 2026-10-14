@@ -107,7 +107,7 @@ export function Settings() {
             <List>
               <Row
                 icon={<Disc3 size={20} />}
-                label={stats ? `${plural(stats.records, 'record')}, ${plural(stats.wants, 'want')}` : 'Collection'}
+                label={stats ? `${plural(stats.records, 'record')}, ${stats.wants} on your wantlist` : 'Collection'}
                 detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
                 trailing={
                   <button
@@ -146,7 +146,7 @@ export function Settings() {
             </Section>
           )}
 
-          <Section title="Appearance">
+          <Section title="Accent color">
             <AccentPicker />
           </Section>
 
@@ -201,8 +201,7 @@ function AccentPicker() {
   const [accent, setLocal] = useState<AccentId>(getAccent)
   return (
     <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-      <p className="mb-3 text-sm font-medium">Accent color</p>
-      <div role="radiogroup" aria-label="Accent color" className="flex flex-wrap gap-3">
+      <div role="radiogroup" aria-label="Accent color" className="grid grid-cols-5 gap-3 sm:grid-cols-10">
         {ACCENTS.map((a) => (
           <button
             key={a.id}
@@ -215,7 +214,7 @@ function AccentPicker() {
               setAccent(a.id)
               setLocal(a.id)
             }}
-            className={`flex size-9 items-center justify-center rounded-full transition hover:scale-110 ${
+            className={`flex aspect-square w-full items-center justify-center rounded-full transition hover:scale-105 ${
               accent === a.id ? 'ring-2 ring-stone-900 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-stone-900' : ''
             }`}
             style={{ backgroundColor: a.swatch }}

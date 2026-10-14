@@ -18,7 +18,7 @@ export function Badges({ own }: { own?: Ownership }) {
   if (own.exactCopies) badges.push(['You own this', 'bg-accent-100 text-accent-700 dark:bg-accent-500/20 dark:text-accent-400'])
   else if (own.otherPressings)
     badges.push(['You own another pressing', 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300'])
-  if (own.inWantlist) badges.push(['In your wantlist', 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200'])
+  if (own.inWantlist) badges.push(['On your wantlist', 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200'])
   if (!badges.length) return null
   return (
     <div className="mt-1.5 flex flex-wrap gap-1">

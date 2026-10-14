@@ -1,4 +1,4 @@
-import type { CollectionField, CollectionItem, Folder, SearchResult } from '../api/discogs/types'
+import type { CollectionField, CollectionItem, Folder, Release, SearchResult } from '../api/discogs/types'
 import type { LibraryItem } from '../db/db'
 import { cleanArtist, describeFormats, splitTitle } from './format'
 import { valueBracket } from './value'
@@ -41,6 +41,32 @@ export function toLibraryItem(x: CollectionItem): LibraryItem {
     dateAdded: x.date_added,
     rating: x.rating,
     fields,
+  }
+}
+
+// After adding from a release page, so the library shows it right away
+export function itemFromRelease(r: Release, instanceId: number, folderId: number, now = new Date()): LibraryItem {
+  const label = r.labels?.[0]
+  return {
+    instanceId,
+    releaseId: r.id,
+    masterId: r.master_id ?? 0,
+    folderId,
+    title: r.title,
+    artist: joinArtists(r.artists),
+    year: r.year || 0,
+    thumb: realImage(r.images?.[0]?.uri150 ?? r.thumb),
+    cover: realImage(r.images?.[0]?.uri),
+    label: label?.name,
+    catno: label?.catno && label.catno !== 'none' ? label.catno : undefined,
+    format: describeFormats(r.formats) ?? '',
+    formatNames: [...new Set((r.formats ?? []).map((f) => f.name))],
+    formatTags: [...new Set((r.formats ?? []).flatMap((f) => f.descriptions ?? []))],
+    genres: r.genres ?? [],
+    styles: r.styles ?? [],
+    dateAdded: now.toISOString(),
+    rating: 0,
+    fields: {},
   }
 }
 

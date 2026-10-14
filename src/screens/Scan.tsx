@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, Keyboard, ScanBarcode, SwitchCamera } from 'lucide-react'
+import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, ScanBarcode, SwitchCamera } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
@@ -276,25 +276,15 @@ export function Scan() {
             </Link>
           )}
 
-          {mode === 'single' ? (
-            <div className="mt-4 grid grid-cols-2 gap-2 lg:hidden">
-              <Link href="/search" className={buttonClass('secondary')}>
-                <Keyboard size={20} aria-hidden />
-                Type it in
-              </Link>
-              {chooseButton}
-            </div>
-          ) : (
-            <div className="mt-4 space-y-2 lg:hidden">
-              <ManualBarcode
-                label="Or type a barcode"
-                button={mode === 'play' ? 'Find' : 'Add'}
-                onSubmit={(c) => onCode(c, 'typed')}
-                inline
-              />
-              {chooseButton}
-            </div>
-          )}
+          <div className="mt-4 space-y-2 lg:hidden">
+            <ManualBarcode
+              label="Or type a barcode"
+              button={mode === 'play' ? 'Find' : mode === 'batch' ? 'Add' : 'Look up'}
+              onSubmit={(c) => onCode(c, 'typed')}
+              inline
+            />
+            {chooseButton}
+          </div>
         </div>
 
         <div className="mt-6 space-y-4 lg:mt-0">

@@ -9,7 +9,7 @@ import { CrateSelect } from './CrateSelect'
 
 type Kind = 'select' | 'price' | 'date' | 'count' | 'notes' | 'text'
 
-function kindOf(field: CollectionField, key: FieldKey | undefined): Kind {
+export function kindOf(field: CollectionField, key: FieldKey | undefined): Kind {
   if (field.type === 'dropdown') return 'select'
   if (key === 'purchasePrice') return 'price'
   if (key === 'purchaseDate' || key === 'lastPlayed') return 'date'
@@ -21,10 +21,10 @@ function kindOf(field: CollectionField, key: FieldKey | undefined): Kind {
 const isoDate = /^\d{4}-\d{2}-\d{2}$/
 
 // Inputs that look like plain values until hovered or focused
-const inline =
+export const inline =
   'min-h-10 w-full min-w-0 rounded-lg bg-transparent px-2 text-right font-medium placeholder:font-normal placeholder:text-stone-400 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-accent-500/60 dark:hover:bg-stone-800 dark:focus:bg-stone-800'
 
-function Row({ label, saved, children, stacked }: { label: string; saved?: boolean; children: ReactNode; stacked?: boolean }) {
+export function Row({ label, saved, children, stacked }: { label: string; saved?: boolean; children: ReactNode; stacked?: boolean }) {
   return (
     <li className={stacked ? 'px-4 py-3' : 'flex min-h-14 items-center gap-3 px-4 py-1.5'}>
       <span className={`flex shrink-0 items-center gap-1.5 text-sm text-stone-500 ${stacked ? 'mb-1' : 'max-w-[45%]'}`}>
@@ -86,20 +86,22 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
   )
 }
 
-function Field({
+export function Field({
   field,
   kind,
   value,
   currency,
   suggestions,
   onSave,
+  quiet,
 }: {
   field: CollectionField
   kind: Kind
   value: string
   currency: string
   suggestions: string[]
-  onSave: (v: string) => Promise<void>
+  onSave: (v: string) => Promise<void> | void
+  quiet?: boolean // no "saved" tick, for forms that save later
 }) {
   const id = useId()
   const [draft, setDraft] = useState(value)
@@ -124,7 +126,7 @@ function Field({
     if (v === value) return
     setDraft(v)
     await onSave(v)
-    setSaved(true)
+    if (!quiet) setSaved(true)
   }
 
   const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -194,7 +196,7 @@ function Field({
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit(draft)}
             onKeyDown={blurOnEnter}
-            className={`${inline} appearance-none [&::-webkit-date-and-time-value]:text-right`}
+            className={`${inline} ml-auto block w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
           />
         </Row>
       )

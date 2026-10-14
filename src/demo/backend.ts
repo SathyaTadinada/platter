@@ -230,6 +230,14 @@ async function handle(realFetch: typeof fetch, url: URL, method: string, body: u
     await save(s)
     return json(null, 204)
   }
+  if (m && method === 'PUT') {
+    const r = await realFetch(`https://api.discogs.com/releases/${m[1]}`)
+    if (!r.ok) return json({ message: `Couldn't load release ${m[1]}` }, 502)
+    const want = { id: Number(m[1]), basic_information: basicInfo((await r.json()) as Release) } as unknown as WantItem
+    s.wants = [...s.wants.filter((w) => w.id !== want.id), want]
+    await save(s)
+    return json(want, 201)
+  }
 
   if (path.startsWith(mine)) return notFound()
   // anything else is a public catalog request: ask Discogs, signed out

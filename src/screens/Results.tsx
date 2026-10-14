@@ -4,7 +4,6 @@ import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import type { SearchParams, SearchResult } from '../api/discogs/types'
 import { coverArtUrl, searchMbBarcode, type MbRelease } from '../api/musicbrainz'
-import { AddSheet } from '../components/AddSheet'
 import { RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
 import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
 import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
@@ -14,7 +13,7 @@ import { useAsync } from '../hooks/useAsync'
 import { toCard, type ReleaseCard } from '../lib/format'
 import { lookupBarcode, type LookupResult } from '../lib/lookup'
 import type { Ranked } from '../lib/runout'
-import { computeOwnership } from '../lib/ownership'
+import { computeOwnership, type Ownership } from '../lib/ownership'
 import { rememberSearch } from '../lib/recent'
 
 function describeQuery(p: URLSearchParams): string {
@@ -28,7 +27,7 @@ export function Results() {
   const qs = useSearch()
   const params = new URLSearchParams(qs)
   const [, navigate] = useLocation()
-  const [picked, setPicked] = useState<ReleaseCard | null>(null)
+  const [show, setShow] = useState<Show>('all')
   const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
 
   useEffect(() => {
@@ -54,7 +53,7 @@ export function Results() {
   const cards = useMemo(() => results.map(toCard), [results])
   const matchOf = useMemo(() => new Map(ranked?.map((r) => [r.item.id, r.result])), [ranked])
   // in runout order once something has been typed
-  const shown = ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards
+  const ordered = ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards
 
   // badges come from the local index, so they update live after an add
   const own = useLiveQuery(async () => {
@@ -77,24 +76,25 @@ export function Results() {
         <>
           <p className="mb-3 text-sm text-stone-500">{resultsLine(cards.length, Boolean(params.get('barcode')))}</p>
           {cards.length > 1 && <RunoutPanel candidates={results} onRanked={setRanked} />}
+          <ShowFilter cards={cards} own={own} value={show} onChange={setShow} />
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {shown.map((c) => (
-              <ReleaseCardView
-                key={c.id}
-                card={c}
-                own={own?.get(c.id)}
-                onPick={() => setPicked(c)}
-                extra={matchOf.get(c.id) && <RunoutMatch result={matchOf.get(c.id)!} />}
-              />
-            ))}
+            {ordered
+              .filter((c) => show === 'all' || kindOf(own?.get(c.id)) === show)
+              .map((c) => (
+                <ReleaseCardView
+                  key={c.id}
+                  card={c}
+                  own={own?.get(c.id)}
+                  onPick={() => navigate(`/release/${c.id}`)}
+                  extra={matchOf.get(c.id) && <RunoutMatch result={matchOf.get(c.id)!} />}
+                />
+              ))}
           </ul>
           <p className="mt-4">
             <DiscogsCredit />
           </p>
         </>
       )}
-
-      {picked && <AddSheet card={picked} onClose={() => setPicked(null)} onScanNext={() => navigate('/scan')} />}
     </Screen>
   )
 }
@@ -144,6 +144,57 @@ function NothingFound({ barcode, mb }: { barcode: string; mb: MbRelease[] }) {
           Scan again
         </Link>
       </div>
+    </div>
+  )
+}
+
+type Show = 'all' | 'mine' | 'other' | 'new'
+
+const kindOf = (o?: Ownership): Exclude<Show, 'all'> => (o?.exactCopies ? 'mine' : o?.otherPressings ? 'other' : 'new')
+
+// Narrow a long list down by what's already in the collection; only shown when it helps
+function ShowFilter({
+  cards,
+  own,
+  value,
+  onChange,
+}: {
+  cards: ReleaseCard[]
+  own?: Map<number, Ownership>
+  value: Show
+  onChange: (s: Show) => void
+}) {
+  if (!own || cards.length < 4) return null
+  const count = (k: Show) => (k === 'all' ? cards.length : cards.filter((c) => kindOf(own.get(c.id)) === k).length)
+  if (count('new') === cards.length && value === 'all') return null
+  const options: [Show, string][] = [
+    ['all', 'All'],
+    ['mine', 'You own'],
+    ['other', 'Other pressing owned'],
+    ['new', 'Not owned'],
+  ]
+  return (
+    <div className="mb-3 flex flex-wrap gap-2">
+      {options.map(([k, label]) => {
+        const n = count(k)
+        if (!n && k !== value) return null
+        const on = k === value
+        return (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(k)}
+            className={`rounded-full px-3 py-1.5 text-sm transition ${
+              on
+                ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                : 'bg-stone-200 text-stone-800 hover:bg-stone-300 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
+            }`}
+          >
+            {label} <span className={on ? 'opacity-70' : 'text-stone-500'}>{n}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

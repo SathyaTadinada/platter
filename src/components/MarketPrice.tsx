@@ -1,13 +1,13 @@
-import type { LibraryItem } from '../db/db'
+import { ArrowUpRight } from 'lucide-react'
 import { useCurrency, usePrice } from '../hooks/prices'
 import { formatMoney } from '../lib/value'
 
 // Short grade for labels: "Very Good Plus (VG+)" -> "VG+"
 const grade = (condition: string) => condition.match(/\(([^)]+)\)/)?.[1]?.replace(/ or .*/, '') ?? condition
 
-export function MarketPrice({ item, mediaCondition }: { item: LibraryItem; mediaCondition?: string }) {
+export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; mediaCondition?: string }) {
   const currency = useCurrency()
-  const { price, loading, failed } = usePrice(item.releaseId, currency)
+  const { price, loading, failed } = usePrice(releaseId, currency)
 
   if (failed) return <p className="px-1 text-sm text-stone-500">Couldn't load prices.</p>
   if (loading || !price || !currency) {
@@ -38,12 +38,13 @@ export function MarketPrice({ item, mediaCondition }: { item: LibraryItem; media
       </dl>
       {price.forSale > 0 && (
         <a
-          href={`https://www.discogs.com/sell/release/${item.releaseId}`}
+          href={`https://www.discogs.com/sell/release/${releaseId}`}
           target="_blank"
           rel="noopener"
-          className="block border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-50 dark:border-stone-800 dark:text-stone-300 dark:hover:bg-stone-800/50"
+          className="flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-accent-700 hover:bg-stone-50 dark:border-stone-800 dark:text-accent-400 dark:hover:bg-stone-800/50"
         >
           See listings on Discogs
+          <ArrowUpRight size={16} aria-hidden />
         </a>
       )}
     </div>
