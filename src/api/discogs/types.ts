@@ -117,7 +117,7 @@ export type CollectionItem = {
 
 export type CollectionPage = { pagination: Pagination; releases: CollectionItem[] }
 
-export type WantItem = { id: number; basic_information: BasicInformation }
+export type WantItem = { id: number; date_added?: string; basic_information: BasicInformation }
 export type WantsPage = { pagination: Pagination; wants: WantItem[] }
 
 export type AddResponse = { instance_id: number; resource_url: string }

@@ -42,7 +42,7 @@ export function ListeningStats() {
         {nudge}
         <Card className="space-y-3">
           <p className="font-semibold">Nothing played yet</p>
-          <p className="text-sm text-stone-500">Tap Played it on a record, or scan one in Play mode when you put it on.</p>
+          <p className="text-sm text-stone-500">Tap Log a play on a record, or scan one in Play mode when you put it on.</p>
           <Link href="/scan?mode=play" className={buttonClass('secondary', 'w-full')}>
             Scan what's playing
           </Link>

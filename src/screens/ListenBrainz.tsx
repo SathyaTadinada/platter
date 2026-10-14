@@ -46,7 +46,7 @@ export function ListenBrainz() {
                 className="size-5 accent-accent-500"
               />
             </label>
-            <p className="text-sm text-stone-500">Each play is sent as the album's tracks, ending when you tapped Played it.</p>
+            <p className="text-sm text-stone-500">Each play is sent as the album's tracks, ending when you logged it.</p>
             <Button variant="secondary" className="w-full" onClick={() => db.settings.delete(LISTENBRAINZ_KEY)}>
               Disconnect
             </Button>

@@ -22,7 +22,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
 - Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes, and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
-- Listening log: tap Played it on a record, or scan it in Play mode, to bump its Play Count and Last Played fields. Every play is also kept on the device, with undo
+- Listening log: tap Log a play on a record, or scan it in Play mode, to bump its Play Count and Last Played fields. Every play is also kept on the device, with undo
 - Listening stats: plays by month, most played, recently played, and records that haven't been on in a year
 - Sort by most played, recently played, or location
 - Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks

@@ -7,13 +7,14 @@ import { AddForm, type Added } from '../components/AddForm'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Identifiers } from '../components/Identifiers'
 import { MarketPrice } from '../components/MarketPrice'
+import { ShareButton } from '../components/ShareButton'
 import { RecordRow, statCard } from '../components/stats'
 import { buttonClass, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { discogsUrl } from '../lib/format'
-import { joinArtists } from '../lib/library'
+import { joinArtists, wantFromRelease } from '../lib/library'
 import { Cover } from './Collection'
 import { Tracklist } from './Record'
 
@@ -50,7 +51,7 @@ export function Release({ id }: { id: string }) {
         await db.wants.delete(releaseId)
       } else {
         await addWant(client, username, releaseId)
-        await db.wants.put({ releaseId, masterId: r.master_id ?? 0 })
+        await db.wants.put(wantFromRelease(r))
       }
     } catch (e) {
       setError((e as Error).message)
@@ -70,6 +71,7 @@ export function Release({ id }: { id: string }) {
 
   const item = { cover: r.images?.[0]?.uri, thumb: r.images?.[0]?.uri150 ?? r.thumb }
   const label = r.labels?.[0]
+  const digital = (r.formats ?? []).length > 0 && r.formats.every((f) => f.name === 'File')
   const where = [r.country, r.released?.slice(0, 4) || r.year || null].filter(Boolean).join(' · ')
   const format = r.formats
     ?.map((f) =>
@@ -84,7 +86,13 @@ export function Release({ id }: { id: string }) {
   )
 
   return (
-    <Screen title={r.title} back={back} width="wide" backdrop={item.cover ?? item.thumb}>
+    <Screen
+      title={r.title}
+      back={back}
+      width="wide"
+      backdrop={item.cover ?? item.thumb}
+      actions={<ShareButton url={discogsUrl(r.uri)} title={`${joinArtists(r.artists)} – ${r.title}`} />}
+    >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
         <div className="space-y-6">
           <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
@@ -186,12 +194,18 @@ export function Release({ id }: { id: string }) {
             </Section>
 
             <Section title="Market">
-              <MarketPrice releaseId={releaseId} />
+              {digital ? (
+                <p className="px-1 text-sm text-stone-500">Digital releases can't be sold on Discogs.</p>
+              ) : (
+                <MarketPrice releaseId={releaseId} />
+              )}
             </Section>
 
-            <Section title="Barcode and other identifiers">
-              <Identifiers identifiers={r.identifiers ?? []} />
-            </Section>
+            {(r.identifiers?.length ?? 0) > 0 && (
+              <Section title="Barcode and other identifiers">
+                <Identifiers identifiers={r.identifiers} />
+              </Section>
+            )}
 
             <div className="lg:hidden">{tracklist}</div>
 

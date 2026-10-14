@@ -107,6 +107,17 @@ export function Field({
   const [draft, setDraft] = useState(value)
   const [saved, setSaved] = useState(false)
   const notesRef = useRef<HTMLTextAreaElement>(null)
+  const dateRef = useRef<HTMLInputElement>(null)
+  const [pickingDate, setPickingDate] = useState(false)
+  useEffect(() => {
+    if (!pickingDate) return
+    dateRef.current?.focus()
+    try {
+      dateRef.current?.showPicker()
+    } catch {
+      // not everywhere; focus is enough
+    }
+  }, [pickingDate])
   useEffect(() => setDraft(value), [value])
   useEffect(() => {
     if (!saved) return
@@ -189,15 +200,27 @@ export function Field({
     case 'date':
       return (
         <Row label={field.name} saved={saved}>
-          <input
-            type="date"
-            aria-label={field.name}
-            value={isoDate.test(draft) ? draft : ''}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => commit(draft)}
-            onKeyDown={blurOnEnter}
-            className={`${inline} ml-auto block w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
-          />
+          {/* an empty date input shows a greyed-out today in Safari, which reads as a real
+              value; show "Add" like the other fields until it's picked */}
+          {isoDate.test(draft) || pickingDate ? (
+            <input
+              ref={dateRef}
+              type="date"
+              aria-label={field.name}
+              value={isoDate.test(draft) ? draft : ''}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => {
+                setPickingDate(false)
+                commit(draft)
+              }}
+              onKeyDown={blurOnEnter}
+              className={`${inline} ml-auto block h-10 w-auto! max-w-full appearance-none [&::-webkit-date-and-time-value]:text-right`}
+            />
+          ) : (
+            <button type="button" onClick={() => setPickingDate(true)} className={`${inline} font-normal! text-stone-400`}>
+              Add
+            </button>
+          )}
         </Row>
       )
 

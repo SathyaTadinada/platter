@@ -9,6 +9,7 @@ import { CoverSheet } from '../components/CoverSheet'
 import { Identifiers } from '../components/Identifiers'
 import { MarketPrice } from '../components/MarketPrice'
 import { PlayButton } from '../components/PlayButton'
+import { ShareButton } from '../components/ShareButton'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
@@ -110,7 +111,13 @@ export function Record({ id }: { id: string }) {
   )
 
   return (
-    <Screen title={item.title} back={back} width="wide" backdrop={item.cover ?? item.thumb}>
+    <Screen
+      title={item.title}
+      back={back}
+      width="wide"
+      backdrop={item.cover ?? item.thumb}
+      actions={<ShareButton url={url} title={`${item.artist} – ${item.title}`} />}
+    >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
         {/* on wide screens the tracklist sits under the cover so the column isn't empty */}
         <div className="space-y-6">

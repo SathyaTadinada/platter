@@ -10,7 +10,7 @@ export function usePlaySummary(item: LibraryItem) {
     ? `Played ${row.count === 1 ? 'once' : `${row.count} times`}${row.last ? `, last ${dayAgo(row.last)}` : ''}`
     : row?.last
       ? `Last played ${dayAgo(row.last)}`
-      : 'Not played yet'
+      : 'No plays yet'
 }
 
 export function PlaySummary({ item, className }: { item: LibraryItem; className?: string }) {
@@ -29,7 +29,7 @@ export function PlayButton({ item }: { item: LibraryItem }) {
         className="inline-flex min-h-10 items-center gap-2 rounded-full bg-stone-900 px-4 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 dark:bg-accent-500 dark:text-stone-950"
       >
         <Disc3 size={18} className={busy ? 'animate-spin' : ''} aria-hidden />
-        Played it
+        Log a play
       </button>
       <span className="text-sm text-stone-500">{summary}</span>
     </div>

@@ -156,11 +156,16 @@ export function Scan() {
       />
       <div className="lg:grid lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-8">
         <div>
-          <div className="relative mx-auto aspect-[4/5] max-h-[55dvh] w-full overflow-hidden rounded-3xl bg-stone-900 lg:aspect-[3/4] lg:max-h-none">
+          {/* dark while there's a picture in it; otherwise it follows the theme */}
+          <div
+            className={`relative mx-auto aspect-[4/5] max-h-[55dvh] w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
+              on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'
+            }`}
+          >
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
 
             {!on && !still && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-stone-300">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-stone-600 dark:text-stone-300">
                 <ScanBarcode size={48} aria-hidden />
                 <p className="text-sm">Point the camera at the barcode</p>
                 <button type="button" onClick={start} className={buttonClass('primary', 'bg-accent-500! text-stone-950!')}>

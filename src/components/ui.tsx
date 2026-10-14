@@ -1,3 +1,4 @@
+import { canGoBack } from '../lib/nav'
 import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { Link, useLocation } from 'wouter'
@@ -208,5 +209,5 @@ export function IconButton({ label, children, className = '', ...props }: Button
 // Goes back in history when there is somewhere to go, otherwise to a fallback
 export function useBack(fallback: string) {
   const [, navigate] = useLocation()
-  return () => (history.state !== null && history.length > 1 ? history.back() : navigate(fallback))
+  return () => (canGoBack() ? history.back() : navigate(fallback))
 }

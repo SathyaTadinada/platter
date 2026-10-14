@@ -69,6 +69,7 @@ function initialState(): State {
     wants: [
       {
         id: 10176645,
+        date_added: '2026-09-20T18:00:00-07:00',
         basic_information: {
           id: 10176645,
           master_id: 29002,
@@ -76,7 +77,7 @@ function initialState(): State {
           year: 1986,
           artists: [{ name: 'Genesis' }],
           labels: [],
-          formats: [],
+          formats: [{ name: 'CD', qty: '1', descriptions: ['Album', 'Club Edition'] }],
         },
       },
     ],

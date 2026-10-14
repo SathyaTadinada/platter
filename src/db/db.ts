@@ -38,7 +38,17 @@ export type LibraryItem = OwnedItem & {
   originalCover?: string // set when the user picked a different cover
   originalThumb?: string
 }
-export type WantItem = { releaseId: number; masterId: number }
+export type WantItem = {
+  releaseId: number
+  masterId: number
+  // enough to list it; missing on wants synced before the wantlist page existed
+  title?: string
+  artist?: string
+  thumb?: string
+  year?: number
+  format?: string
+  dateAdded?: string
+}
 export type Setting = { key: string; value: unknown }
 
 // A cover the user picked from the release's other Discogs images

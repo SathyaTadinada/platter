@@ -5,6 +5,7 @@ import {
   Disc3,
   Download,
   FileUp,
+  Heart,
   LayoutGrid,
   List as ListIcon,
   SquareCheckBig,
@@ -303,6 +304,9 @@ export function Collection() {
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
       </IconButton>
       <span className="mx-1 hidden h-6 w-px bg-stone-200 lg:block dark:bg-stone-800" aria-hidden />
+      <button type="button" onClick={() => navigate('/wantlist')} className={headerButton}>
+        <Heart size={18} aria-hidden /> Wantlist
+      </button>
       <button type="button" onClick={() => navigate('/import')} className={headerButton}>
         <FileUp size={18} aria-hidden /> Import CSV
       </button>
@@ -319,6 +323,7 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
+            { label: 'Wantlist', icon: <Heart size={18} />, onSelect: () => navigate('/wantlist') },
             { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}

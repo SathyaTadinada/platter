@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Route, Switch, useLocation } from 'wouter'
+import { Route, Switch, useLocation, useSearch } from 'wouter'
 import { loadSession } from './auth/auth'
 import { finishOAuth } from './auth/oauthFlow'
 import { BottomNav, SideNav } from './components/Nav'
@@ -12,6 +12,7 @@ import { stopPriceCheck } from './hooks/prices'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
+import { trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
 import { Batch } from './screens/Batch'
@@ -28,6 +29,7 @@ import { Setup } from './screens/Setup'
 import { ListenBrainz } from './screens/ListenBrainz'
 import { NowPlaying } from './screens/NowPlaying'
 import { Stats } from './screens/Stats'
+import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
 
 type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
@@ -83,6 +85,9 @@ export default function App() {
 
 function Routes({ error }: { error?: string }) {
   const { session } = useSession()
+  const [path] = useLocation()
+  const search = useSearch()
+  useEffect(() => trackLocation(path, search), [path, search])
 
   if (!session) {
     return (
@@ -111,6 +116,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/setup" component={Setup} />
             <Route path="/settings" component={Settings} />
             <Route path="/crates" component={Crates} />
+            <Route path="/wantlist" component={Wantlist} />
             <Route path="/stats" component={Stats} />
             <Route path="/play" component={NowPlaying} />
             <Route path="/listenbrainz" component={ListenBrainz} />

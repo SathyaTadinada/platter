@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Hash, History, Music2, ScanBarcode, type LucideIcon } from 'lucide-react'
+import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
@@ -14,7 +14,7 @@ type Mode = 'barcode' | 'catno' | 'title'
 
 const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
   { id: 'barcode', label: 'Barcode', Icon: ScanBarcode },
-  { id: 'catno', label: 'Catalog #', Icon: Hash },
+  { id: 'catno', label: 'Catalog #', Icon: Tag },
   { id: 'title', label: 'Artist & title', Icon: Music2 },
 ]
 const iconFor = Object.fromEntries(modes.map((m) => [m.id, m.Icon])) as Record<Mode, LucideIcon>
@@ -137,7 +137,8 @@ export function Search() {
           </form>
         </div>
 
-        <div className="mt-8 space-y-2 lg:mt-0">
+        {/* a line between the two lists when both are there */}
+        <div className="mt-8 lg:mt-0 [&>*+*]:border-t [&>*+*]:border-stone-200 [&>*+*]:pt-6 dark:[&>*+*]:border-stone-800">
           <RecentSearches />
           <RecentlyAdded />
         </div>
@@ -150,7 +151,13 @@ function RecentSearches() {
   const recent = useLiveQuery(async () => ((await db.settings.get(RECENT_SEARCHES_KEY))?.value as RecentSearch[] | undefined) ?? [], [])
   if (!recent?.length) return null
   return (
-    <Section title="Recent searches">
+    <section className="mb-6">
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">Recent searches</h2>
+        <button type="button" onClick={clearSearches} className="text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
+          Clear
+        </button>
+      </div>
       <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
         {recent.map((r) => {
           const Icon = iconFor[r.kind] ?? History
@@ -166,10 +173,7 @@ function RecentSearches() {
           )
         })}
       </ul>
-      <button type="button" onClick={clearSearches} className="px-1 text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
-        Clear
-      </button>
-    </Section>
+    </section>
   )
 }
 

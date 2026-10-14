@@ -19,15 +19,36 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
   const money = (n: number) => formatMoney(n, currency)
   const suggested = mediaCondition ? price.suggested?.[mediaCondition] : undefined
   const rows: [string, string][] = []
-  if (suggested !== undefined) rows.push([`Suggested for ${grade(mediaCondition!)}`, money(suggested)])
+  // with every grade on show, the copy's own grade is highlighted there instead
+  const ladder = Object.entries(price.suggested ?? {})
+  if (suggested !== undefined && ladder.length < 2) rows.push([`Suggested for ${grade(mediaCondition!)}`, money(suggested)])
   if (price.forSale > 0 && price.lowest !== null) {
     rows.push(['Lowest listing', money(price.lowest)])
     rows.push(['For sale', `${price.forSale} cop${price.forSale === 1 ? 'y' : 'ies'}`])
   }
-  if (!rows.length) return <p className="px-1 text-sm text-stone-500">Nobody's selling a copy right now.</p>
+  if (!rows.length && ladder.length < 2) return <p className="px-1 text-sm text-stone-500">Nobody's selling a copy right now.</p>
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+      {ladder.length >= 2 && (
+        <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+          <p className="mb-2 text-sm text-stone-600 dark:text-stone-400">Suggested by condition</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {ladder.map(([condition, amount]) => {
+              const mine = condition === mediaCondition
+              return (
+                <div
+                  key={condition}
+                  className={`rounded-lg px-2 py-1.5 text-center ${mine ? 'bg-accent-100 ring-1 ring-accent-500 dark:bg-accent-500/20' : 'bg-stone-100 dark:bg-stone-800'}`}
+                >
+                  <p className="text-xs text-stone-500">{grade(condition)}</p>
+                  <p className="text-sm font-semibold tabular-nums">{formatMoney(amount, currency, { whole: true })}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
       <dl className="divide-y divide-stone-200 dark:divide-stone-800">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-baseline justify-between gap-3 px-4 py-2.5">

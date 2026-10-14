@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* dark mode follows a class on <html> (see lib/theme.ts) instead of the system setting alone */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-accent-50: #fffbeb;
   --color-accent-100: #fef3c7;
@@ -103,6 +106,12 @@ body {
 ::selection {
   background-color: var(--color-accent-500);
   color: var(--color-stone-950);
+}
+
+/* Safari pads the inside of date inputs, which pushes the text off center */
+input[type='date']::-webkit-datetime-edit,
+input[type='date']::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
 }
 
 dialog::backdrop {

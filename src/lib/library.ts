@@ -1,5 +1,5 @@
-import type { CollectionField, CollectionItem, Folder, Release, SearchResult } from '../api/discogs/types'
-import type { LibraryItem } from '../db/db'
+import type { CollectionField, CollectionItem, Folder, Release, SearchResult, WantItem as ApiWant } from '../api/discogs/types'
+import type { LibraryItem, WantItem } from '../db/db'
 import { cleanArtist, describeFormats, splitTitle } from './format'
 import { valueBracket } from './value'
 
@@ -41,6 +41,33 @@ export function toLibraryItem(x: CollectionItem): LibraryItem {
     dateAdded: x.date_added,
     rating: x.rating,
     fields,
+  }
+}
+
+export function wantFromApi(w: ApiWant): WantItem {
+  const b = w.basic_information
+  return {
+    releaseId: w.id,
+    masterId: b.master_id,
+    title: b.title,
+    artist: joinArtists(b.artists),
+    thumb: realImage(b.thumb),
+    year: b.year || undefined,
+    format: describeFormats(b.formats),
+    dateAdded: w.date_added,
+  }
+}
+
+export function wantFromRelease(r: Release, now = new Date()): WantItem {
+  return {
+    releaseId: r.id,
+    masterId: r.master_id ?? 0,
+    title: r.title,
+    artist: joinArtists(r.artists),
+    thumb: realImage(r.images?.[0]?.uri150 ?? r.thumb),
+    year: r.year || undefined,
+    format: describeFormats(r.formats),
+    dateAdded: now.toISOString(),
   }
 }
 

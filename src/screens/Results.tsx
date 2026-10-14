@@ -53,7 +53,11 @@ export function Results() {
   const cards = useMemo(() => results.map(toCard), [results])
   const matchOf = useMemo(() => new Map(ranked?.map((r) => [r.item.id, r.result])), [ranked])
   // in runout order once something has been typed
-  const ordered = ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards
+  // digital releases are rarely the one in your hands, so they go last
+  const ordered = (ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards)
+    .map((c, i) => ({ c, i, file: isDigital(c) }))
+    .sort((a, b) => Number(a.file) - Number(b.file) || a.i - b.i)
+    .map(({ c }) => c)
 
   // badges come from the local index, so they update live after an add
   const own = useLiveQuery(async () => {
@@ -197,4 +201,9 @@ function ShowFilter({
       })}
     </div>
   )
+}
+
+const isDigital = (c: ReleaseCard) => {
+  const names = c.raw.formats?.map((f) => f.name) ?? c.raw.format ?? []
+  return names.length > 0 && names[0] === 'File' && !names.some((n) => n === 'Vinyl' || n === 'CD' || n === 'Cassette')
 }

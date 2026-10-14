@@ -29,11 +29,33 @@ describe('sync', () => {
   })
 
   it('indexes the wantlist', async () => {
-    const withOne = { ...wants, wants: [{ id: 5, basic_information: { master_id: 50 } }] }
+    const want = {
+      id: 5,
+      date_added: '2026-10-01T10:00:00-07:00',
+      basic_information: {
+        id: 5,
+        master_id: 50,
+        title: 'Invisible Touch',
+        year: 1986,
+        thumb: 'https://i.discogs.com/t.jpg',
+        artists: [{ name: 'Genesis' }],
+        labels: [],
+        formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', 'Album'] }],
+      },
+    }
+    const withOne = { ...wants, wants: [want] }
     const { fn } = routeFetch([['/wants', () => json(withOne)]])
     const c = makeClient(fn)
     await syncWants(c, 'platter-test')
-    expect(await db.wants.get(5)).toEqual({ releaseId: 5, masterId: 50 })
+    expect(await db.wants.get(5)).toMatchObject({
+      releaseId: 5,
+      masterId: 50,
+      title: 'Invisible Touch',
+      artist: 'Genesis',
+      year: 1986,
+      format: 'Vinyl, LP, Album',
+      dateAdded: '2026-10-01T10:00:00-07:00',
+    })
     expect(await getSetting('wantsSyncedAt')).toBeTypeOf('number')
   })
 })

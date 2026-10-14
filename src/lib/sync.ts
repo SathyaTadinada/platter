@@ -2,7 +2,7 @@ import type { DiscogsClient } from '../api/discogs/client'
 import { getCollectionPage, getWantsPage } from '../api/discogs/endpoints'
 import { db, getSetting, setSetting, type LibraryItem, type WantItem } from '../db/db'
 import { applyCoverChoices } from './covers'
-import { toLibraryItem } from './library'
+import { toLibraryItem, wantFromApi } from './library'
 
 export const SYNC_MAX_AGE = 6 * 60 * 60 * 1000
 
@@ -40,7 +40,7 @@ export async function syncWants(client: DiscogsClient, username: string, onProgr
     const r = await getWantsPage(client, username, page)
     return {
       pages: r.pagination.pages,
-      items: r.wants.map((w) => ({ releaseId: w.id, masterId: w.basic_information.master_id })),
+      items: r.wants.map(wantFromApi),
     }
   }, onProgress)
   await db.transaction('rw', db.wants, async () => {

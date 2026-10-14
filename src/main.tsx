@@ -5,8 +5,11 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { applyAccent } from './lib/accent'
+import { applyTheme, watchSystemTheme } from './lib/theme'
 
 applyAccent()
+applyTheme()
+watchSystemTheme()
 registerSW({ immediate: true })
 
 // iOS can leave the page scrolled after the keyboard closes, which pushes the

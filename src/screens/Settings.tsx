@@ -1,5 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Boxes, Check, Radio, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
+import {
+  Boxes,
+  Check,
+  Heart,
+  MonitorSmartphone,
+  Moon,
+  Radio,
+  Sun,
+  Disc3,
+  Download,
+  FileUp,
+  Info,
+  ListChecks,
+  LogOut,
+  MonitorDown,
+  RefreshCw,
+  Upload,
+} from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
@@ -15,6 +32,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
+import { getTheme, setTheme, type Theme } from '../lib/theme'
 import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 import { timeAgo } from '../lib/time'
 
@@ -107,7 +125,7 @@ export function Settings() {
             <List>
               <Row
                 icon={<Disc3 size={20} />}
-                label={stats ? `${plural(stats.records, 'record')}, ${stats.wants} on your wantlist` : 'Collection'}
+                label={stats ? plural(stats.records, 'record') : 'Collection'}
                 detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
                 trailing={
                   <button
@@ -121,6 +139,7 @@ export function Settings() {
                   </button>
                 }
               />
+              <Row icon={<Heart size={20} />} label="Wantlist" value={stats ? String(stats.wants) : undefined} href="/wantlist" />
               <Row icon={<Boxes size={20} />} label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
               <Row
                 icon={<ListChecks size={20} />}
@@ -146,8 +165,8 @@ export function Settings() {
             </Section>
           )}
 
-          <Section title="Accent color">
-            <AccentPicker />
+          <Section title="Appearance">
+            <Appearance />
           </Section>
 
           <Section title="Import and backup">
@@ -197,10 +216,37 @@ function Tile({ icon, label, onClick }: { icon: React.ReactNode; label: string; 
   )
 }
 
-function AccentPicker() {
+function Appearance() {
   const [accent, setLocal] = useState<AccentId>(getAccent)
+  const [theme, setThemeLocal] = useState<Theme>(getTheme)
   return (
-    <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+    <div className="space-y-4 rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+      <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-xl bg-stone-100 p-1 dark:bg-stone-800">
+        {(
+          [
+            ['system', 'System', MonitorSmartphone],
+            ['light', 'Light', Sun],
+            ['dark', 'Dark', Moon],
+          ] as const
+        ).map(([t, label, Icon]) => (
+          <button
+            key={t}
+            type="button"
+            role="radio"
+            aria-checked={theme === t}
+            onClick={() => {
+              setTheme(t)
+              setThemeLocal(t)
+            }}
+            className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-medium ${
+              theme === t ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
+            }`}
+          >
+            <Icon size={16} aria-hidden />
+            {label}
+          </button>
+        ))}
+      </div>
       <div role="radiogroup" aria-label="Accent color" className="grid grid-cols-5 gap-3 sm:grid-cols-10">
         {ACCENTS.map((a) => (
           <button

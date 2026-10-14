@@ -30,15 +30,19 @@ export function Toggle<T extends string>({ options, value, onChange }: { options
   )
 }
 
-// A record with cover, title and artist; opens the record unless onClick is given
+type RowItem = Pick<LibraryItem, 'instanceId' | 'title' | 'artist' | 'cover' | 'thumb'>
+
+// A record with cover, title, and artist; opens the record unless given somewhere else to go
 export function RecordRow({
   item,
   detail,
+  href,
   onClick,
   children,
 }: {
-  item: LibraryItem
+  item: RowItem
   detail?: string
+  href?: string
   onClick?: () => void
   children?: ReactNode
 }) {
@@ -58,7 +62,7 @@ export function RecordRow({
       {inner}
     </button>
   ) : (
-    <Link href={`/collection/${item.instanceId}`} className={className}>
+    <Link href={href ?? `/collection/${item.instanceId}`} className={className}>
       {inner}
     </Link>
   )

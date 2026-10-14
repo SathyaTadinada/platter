@@ -2,6 +2,7 @@ import { ChartLine, Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcod
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
+import { inSearchArea, lastSearchHref } from '../lib/nav'
 import { ProfileLink } from './Profile'
 
 const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
@@ -14,20 +15,28 @@ const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
 
 function useCurrent() {
   const [path] = useLocation()
-  return (href: string) => (href === '/' ? path === '/' || path.startsWith('/collection') : path.startsWith(href))
+  return (href: string) =>
+    href === '/' ? path === '/' || path.startsWith('/collection') : href === '/search' ? inSearchArea(path) : path.startsWith(href)
+}
+
+// Search goes back to the last results or release; tapping it again from there starts over
+function useHref() {
+  const isCurrent = useCurrent()
+  return (href: string) => (href !== '/search' ? href : isCurrent(href) ? '/search' : lastSearchHref())
 }
 
 // Phones and tablets: tab bar at the bottom, part of the layout (not fixed),
 // so the iOS keyboard can't leave it stranded mid-screen.
 export function BottomNav() {
   const isCurrent = useCurrent()
+  const hrefOf = useHref()
   return (
     <nav className="shrink-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-stone-800 dark:bg-stone-950">
       <ul className="mx-auto flex max-w-xl">
         {tabs.map(({ href, label, Icon }) => (
           <li key={href} className="flex-1">
             <Link
-              href={href}
+              href={hrefOf(href)}
               aria-current={isCurrent(href) ? 'page' : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
                 isCurrent(href) ? 'text-stone-900 dark:text-accent-400' : 'text-stone-500'
@@ -56,6 +65,7 @@ function loadCollapsed() {
 // Desktop: sidebar, collapsible to icons only
 export function SideNav() {
   const isCurrent = useCurrent()
+  const hrefOf = useHref()
   const { session } = useSession()
   const [collapsed, setCollapsed] = useState(loadCollapsed)
 
@@ -95,7 +105,7 @@ export function SideNav() {
         {tabs.map(({ href, label, Icon }) => (
           <li key={href}>
             <Link
-              href={href}
+              href={hrefOf(href)}
               aria-current={isCurrent(href) ? 'page' : undefined}
               title={collapsed ? label : undefined}
               className={`flex items-center gap-3 rounded-lg py-2 font-medium ${collapsed ? 'justify-center px-2.5' : 'px-3'} ${
