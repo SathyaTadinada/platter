@@ -505,7 +505,7 @@ function ListRow({ item, price, selected, onSelect }: { item: LibraryItem; price
         item={item}
         selected={selected}
         onSelect={onSelect}
-        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-amber-50 dark:bg-amber-950/30' : ''}`}
+        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent-500/10' : ''}`}
       >
         {onSelect && <Tick on={selected} />}
         <Cover item={item} small className="size-14 shrink-0 rounded-lg" />

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Boxes, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
+import { Boxes, Check, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
@@ -14,6 +14,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
+import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
 import { timeAgo } from '../lib/time'
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -130,6 +131,10 @@ export function Settings() {
           </Section>
         </div>
         <div>
+          <Section title="Appearance">
+            <AccentPicker />
+          </Section>
+
           <Section title="Import and backup">
             <List>
               <Row icon={<FileUp size={20} />} label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
@@ -174,5 +179,36 @@ function Tile({ icon, label, onClick }: { icon: React.ReactNode; label: string; 
       <span className="text-stone-500">{icon}</span>
       {label}
     </button>
+  )
+}
+
+function AccentPicker() {
+  const [accent, setLocal] = useState<AccentId>(getAccent)
+  return (
+    <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+      <p className="mb-3 text-sm font-medium">Accent color</p>
+      <div role="radiogroup" aria-label="Accent color" className="flex flex-wrap gap-3">
+        {ACCENTS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            role="radio"
+            aria-checked={accent === a.id}
+            aria-label={a.label}
+            title={a.label}
+            onClick={() => {
+              setAccent(a.id)
+              setLocal(a.id)
+            }}
+            className={`flex size-9 items-center justify-center rounded-full transition hover:scale-110 ${
+              accent === a.id ? 'ring-2 ring-stone-900 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-stone-900' : ''
+            }`}
+            style={{ backgroundColor: a.swatch }}
+          >
+            {accent === a.id && <Check size={18} strokeWidth={3} className="text-stone-950" aria-hidden />}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

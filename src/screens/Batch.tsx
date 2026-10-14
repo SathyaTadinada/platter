@@ -237,7 +237,7 @@ export function Batch() {
                   checked={dropWants}
                   onChange={(e) => setDropWants(e.target.checked)}
                   disabled={adding}
-                  className="size-4 accent-amber-500"
+                  className="size-4 accent-accent-500"
                 />
                 Remove {readyWanted === 1 ? 'it' : `the ${readyWanted}`} from my wantlist
               </label>

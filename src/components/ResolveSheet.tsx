@@ -6,7 +6,7 @@ import type { QueueItem } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { toCard } from '../lib/format'
 import type { Ranked } from '../lib/runout'
-import { ReleaseCardView } from './ReleaseCardView'
+import { DiscogsCredit, ReleaseCardView } from './ReleaseCardView'
 import { RunoutMatch, RunoutPanel } from './RunoutPanel'
 import { Notice, Spinner } from './ui'
 
@@ -79,11 +79,14 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
         {!busy && !results && !list.length && <p className="text-sm text-stone-500">Search by artist and title, or catalog number.</p>}
         {!busy && !results && list.length > 1 && <RunoutPanel candidates={list} onRanked={setRanked} />}
         {!busy && list.length > 0 && (
-          <ul className="grid grid-cols-1 gap-3">
-            {ordered.map(({ item: r, result }) => (
-              <ReleaseCardView key={r.id} card={toCard(r)} onPick={() => onPick(r)} extra={result && <RunoutMatch result={result} />} />
-            ))}
-          </ul>
+          <>
+            <ul className="grid grid-cols-1 gap-3">
+              {ordered.map(({ item: r, result }) => (
+                <ReleaseCardView key={r.id} card={toCard(r)} onPick={() => onPick(r)} extra={result && <RunoutMatch result={result} />} />
+              ))}
+            </ul>
+            <DiscogsCredit />
+          </>
         )}
       </div>
     </dialog>

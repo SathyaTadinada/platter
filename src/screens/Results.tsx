@@ -6,7 +6,7 @@ import type { SearchParams, SearchResult } from '../api/discogs/types'
 import { coverArtUrl, searchMbBarcode, type MbRelease } from '../api/musicbrainz'
 import { AddSheet } from '../components/AddSheet'
 import { RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
-import { ReleaseCardView } from '../components/ReleaseCardView'
+import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
 import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
@@ -88,6 +88,9 @@ export function Results() {
               />
             ))}
           </ul>
+          <p className="mt-4">
+            <DiscogsCredit />
+          </p>
         </>
       )}
 

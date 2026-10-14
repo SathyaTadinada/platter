@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  byMonth,
   change,
   chartPaths,
   distribution,
@@ -160,6 +161,24 @@ describe('totalsBy', () => {
       { label: 'Rock', total: 20 },
       { label: 'Pop', total: 10 },
       { label: 'Other', total: 6 },
+    ])
+  })
+})
+
+describe('byMonth', () => {
+  it('totals the last few months, including empty ones', () => {
+    const rows = [
+      { date: '2026-10-02', amount: 20 },
+      { date: '2026-10-20T10:00:00-07:00', amount: 5 },
+      { date: '2026-08-15', amount: 12 },
+      { date: '2025-01-01', amount: 99 },
+      { date: 'soon', amount: 1 },
+    ]
+    const m = byMonth(rows, 3, new Date(2026, 9, 14))
+    expect(m.map((x) => [x.month, x.total])).toEqual([
+      ['2026-08', 12],
+      ['2026-09', 0],
+      ['2026-10', 25],
     ])
   })
 })

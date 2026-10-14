@@ -134,7 +134,7 @@ export function Import() {
                 type="checkbox"
                 checked={skipOwned}
                 onChange={(e) => setSkipOwned(e.target.checked)}
-                className="mt-1 size-4 accent-amber-500"
+                className="mt-1 size-4 accent-accent-500"
               />
               <span className="text-sm">
                 <span className="font-medium">Skip the {plural(ownedCount, 'record')} you already have</span>

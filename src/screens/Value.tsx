@@ -3,14 +3,17 @@ import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { Card, Screen, Section, Spinner } from '../components/ui'
+import type { Folder } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
+import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { recordCollectionValue } from '../lib/pricing'
 import {
+  byMonth,
   change,
   chartPaths,
   distribution,
@@ -46,6 +49,8 @@ export function Value() {
 
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
+  const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
+  const folders = useCollectionMeta().data?.folders ?? []
 
   const valued = useMemo(() => {
     if (!items || !prices) return []
@@ -81,30 +86,15 @@ export function Value() {
                       />
                     </div>
                   )}
-                  <RangeBar
-                    min={current.data.snap.min}
-                    median={current.data.snap.median}
-                    max={current.data.snap.max}
-                    low={current.data.raw.minimum}
-                    high={current.data.raw.maximum}
-                  />
+                  <p className="mt-3 text-sm text-stone-500 tabular-nums">
+                    Low {current.data.raw.minimum} · High {current.data.raw.maximum}
+                  </p>
                 </>
               ) : current.loading ? (
                 <p className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-stone-200 dark:bg-stone-800" />
               ) : (
                 <p className="mt-1 text-sm">Couldn't get this from Discogs right now.</p>
               )}
-              <p className="mt-4 text-xs text-stone-500">
-                From recent sales on Discogs.{' '}
-                <a
-                  href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
-                  target="_blank"
-                  rel="noopener"
-                  className="underline underline-offset-2"
-                >
-                  Data provided by Discogs.
-                </a>
-              </p>
             </div>
           </Section>
 
@@ -119,6 +109,10 @@ export function Value() {
           </Section>
 
           <PaidVsNow items={items} valued={valued} paidField={paidField} money={money} />
+
+          <Section title="By month">
+            <Monthly items={items} paidField={paidField} dateField={dateField} money={money} />
+          </Section>
         </div>
 
         <div>
@@ -137,9 +131,6 @@ export function Value() {
                           </span>
                         )}
                       </RecordRow>
-                      <div className="mx-3 mb-2 -mt-1 ml-17 h-1 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
-                        <div className="h-full rounded-full bg-accent-500" style={{ width: pct(value.amount, valued[0].value.amount) }} />
-                      </div>
                     </li>
                   ))}
                 </ul>
@@ -154,18 +145,23 @@ export function Value() {
                 <Breakdown valued={valued} money={money} />
               </Section>
 
-              <Section title="By genre">
-                <Bars
-                  rows={totalsBy(
-                    valued.map((v) => ({ row: v.item, amount: v.value.amount })),
-                    (i) => (i.genres.length ? i.genres : ['No genre']),
-                  ).map((g) => ({ label: g.label, amount: g.total, text: money(g.total, true) }))}
-                />
+              <Section title="Where the value is">
+                <GroupTotals valued={valued} folders={folders} money={money} />
               </Section>
             </>
           )}
         </div>
       </div>
+      <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
+        <a
+          href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
+          target="_blank"
+          rel="noopener"
+          className="text-stone-500 underline underline-offset-2"
+        >
+          Data provided by Discogs.
+        </a>
+      </footer>
     </Screen>
   )
 }
@@ -190,25 +186,6 @@ function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: number; 
       </span>
       {suffix && <span className="text-stone-500">{suffix}</span>}
     </span>
-  )
-}
-
-// Where the median sits between Discogs' low and high estimates
-function RangeBar({ min, median, max, low, high }: { min: number; median: number; max: number; low: string; high: string }) {
-  const at = max > min ? ((median - min) / (max - min)) * 100 : 50
-  return (
-    <div className="mt-4">
-      <div className="relative h-2 rounded-full bg-gradient-to-r from-stone-200 via-accent-500/40 to-stone-200 dark:from-stone-800 dark:to-stone-800">
-        <span
-          className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-accent-500 shadow dark:border-stone-900"
-          style={{ left: `${at}%` }}
-        />
-      </div>
-      <div className="mt-1.5 flex justify-between text-xs text-stone-500 tabular-nums">
-        <span>Low {low}</span>
-        <span>High {high}</span>
-      </div>
-    </div>
   )
 }
 
@@ -412,7 +389,7 @@ function Breakdown({ valued, money }: { valued: Valued[]; money: Money }) {
   )
 }
 
-function Bars({ rows }: { rows: { label: string; amount: number; text: string }[] }) {
+function BarList({ rows }: { rows: { label: string; amount: number; text: string }[] }) {
   const most = Math.max(...rows.map((r) => r.amount))
   return (
     <Card className="space-y-2.5">
@@ -427,6 +404,110 @@ function Bars({ rows }: { rows: { label: string; amount: number; text: string }[
           </div>
         </div>
       ))}
+    </Card>
+  )
+}
+
+function Toggle<T extends string>({ options, value, onChange }: { options: [T, string][]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div role="tablist" className="mb-4 inline-flex gap-1 rounded-lg bg-stone-100 p-0.5 dark:bg-stone-800">
+      {options.map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          role="tab"
+          aria-selected={value === v}
+          onClick={() => onChange(v)}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            value === v ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+type Grouping = 'genre' | 'decade' | 'crate'
+
+function GroupTotals({ valued, folders, money }: { valued: Valued[]; folders: Folder[]; money: Money }) {
+  const [by, setBy] = useState<Grouping>('genre')
+  const crate = new Map(folders.map((f) => [f.id, f.name]))
+  const keys: Record<Grouping, (i: LibraryItem) => string[]> = {
+    genre: (i) => (i.genres.length ? i.genres : ['No genre']),
+    decade: (i) => [i.year ? `${Math.floor(i.year / 10) * 10}s` : 'Unknown'],
+    crate: (i) => [crate.get(i.folderId) ?? 'Uncategorized'],
+  }
+  const rows = totalsBy(
+    valued.map((v) => ({ row: v.item, amount: v.value.amount })),
+    keys[by],
+  )
+  return (
+    <Card>
+      <Toggle
+        options={[
+          ['genre', 'Genre'],
+          ['decade', 'Decade'],
+          ['crate', 'Crate'],
+        ]}
+        value={by}
+        onChange={setBy}
+      />
+      <BarList rows={rows.map((g) => ({ label: g.label, amount: g.total, text: money(g.total, true) }))} />
+    </Card>
+  )
+}
+
+// Money spent (purchase price by purchase date, or date added) or records added, per month
+function Monthly({ items, paidField, dateField, money }: { items: LibraryItem[]; paidField?: number; dateField?: number; money: Money }) {
+  const canSpend = paidField !== undefined
+  const [show, setShow] = useState<'spent' | 'added'>(canSpend ? 'spent' : 'added')
+  const rows =
+    show === 'spent' && paidField !== undefined
+      ? items.flatMap((i) => {
+          const amount = parseMoney(i.fields[paidField])
+          const date = (dateField !== undefined && i.fields[dateField]) || i.dateAdded
+          return amount !== undefined ? [{ date, amount }] : []
+        })
+      : items.map((i) => ({ date: i.dateAdded, amount: 1 }))
+  const months = byMonth(rows, 12)
+  const most = Math.max(...months.map((m) => m.total))
+  const sum = months.reduce((n, m) => n + m.total, 0)
+  const text = (n: number) => (show === 'spent' ? money(n, true) : String(n))
+  return (
+    <Card>
+      {canSpend && (
+        <Toggle
+          options={[
+            ['spent', 'Spent'],
+            ['added', 'Records added'],
+          ]}
+          value={show}
+          onChange={setShow}
+        />
+      )}
+      <p className="mb-3 text-sm">
+        <span className="text-xl font-bold tabular-nums">{text(sum)}</span>{' '}
+        <span className="text-stone-500">{show === 'spent' ? 'spent' : 'added'} in the last 12 months</span>
+      </p>
+      <div className="flex h-28 items-end gap-1">
+        {months.map((m) => (
+          <div key={m.month} className="group flex h-full flex-1 flex-col justify-end" title={`${m.label}: ${text(m.total)}`}>
+            <span
+              className="w-full rounded-t-md bg-accent-500/80 group-hover:bg-accent-500"
+              style={{ height: m.total ? pct(m.total, most) : 0 }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-1 border-t border-stone-200 pt-1 dark:border-stone-800">
+        {months.map((m, i) => (
+          <span key={m.month} className="flex-1 text-center text-[0.625rem] text-stone-500">
+            {i % 2 === 1 ? m.label : ''}
+          </span>
+        ))}
+      </div>
     </Card>
   )
 }

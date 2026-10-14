@@ -15,7 +15,7 @@ export function Cover({ src, size = 'size-20' }: { src?: string; size?: string }
 export function Badges({ own }: { own?: Ownership }) {
   if (!own) return null
   const badges: [string, string][] = []
-  if (own.exactCopies) badges.push(['You own this', 'bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200'])
+  if (own.exactCopies) badges.push(['You own this', 'bg-accent-100 text-accent-700 dark:bg-accent-500/20 dark:text-accent-400'])
   else if (own.otherPressings)
     badges.push(['You own another pressing', 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300'])
   if (own.inWantlist) badges.push(['In your wantlist', 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200'])
@@ -45,8 +45,8 @@ export function ReleaseSummary({ card }: { card: ReleaseCard }) {
   )
 }
 
-// Discogs API terms ask for this next to any data from them
-export function DiscogsCredit({ url }: { url: string }) {
+// Discogs API terms ask for this next to any data from them: once per list or page is enough
+export function DiscogsCredit({ url = 'https://www.discogs.com' }: { url?: string }) {
   return (
     <a href={url} target="_blank" rel="noopener" className="text-xs text-stone-500 underline underline-offset-2">
       Data provided by Discogs.
@@ -75,9 +75,6 @@ export function ReleaseCardView({
           {extra}
         </div>
       </button>
-      <div className="border-t border-stone-100 px-3 py-1.5 dark:border-stone-800">
-        <DiscogsCredit url={card.discogsUrl} />
-      </div>
     </li>
   )
 }

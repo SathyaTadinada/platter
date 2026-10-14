@@ -164,3 +164,22 @@ export function totalsBy<T>(rows: { row: T; amount: number }[], keys: (row: T) =
   const rest = sorted.slice(top - 1).reduce((n, g) => n + g.total, 0)
   return [...sorted.slice(0, top - 1), { label: 'Other', total: rest }]
 }
+
+export type MonthTotal = { month: string; label: string; total: number }
+
+// Totals for each of the last `months` months (oldest first), empty months included.
+// Dates are YYYY-MM-DD or ISO strings; anything older or unparseable is skipped.
+export function byMonth(rows: { date: string; amount: number }[], months = 12, now = new Date()): MonthTotal[] {
+  const out: MonthTotal[] = []
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    out.push({ month, label: d.toLocaleDateString(undefined, { month: 'short' }), total: 0 })
+  }
+  const index = new Map(out.map((m, i) => [m.month, i]))
+  for (const r of rows) {
+    const i = index.get(r.date.slice(0, 7))
+    if (i !== undefined) out[i].total += r.amount
+  }
+  return out
+}
