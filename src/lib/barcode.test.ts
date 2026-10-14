@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { barcodeVariants, expandUpcE, hasValidCheckDigit } from './barcode'
+import { barcodeVariants, expandUpcE, formatBarcodeInput, hasValidCheckDigit } from './barcode'
 
 describe('hasValidCheckDigit', () => {
   it.each(['075678164125', '5012394144777', '0075678164125', '96385074'])('accepts %s', (c) => {
@@ -18,6 +18,21 @@ describe('expandUpcE', () => {
   it('rejects bad input', () => {
     expect(expandUpcE('21234505')).toBeNull()
     expect(expandUpcE('0123')).toBeNull()
+  })
+})
+
+describe('formatBarcodeInput', () => {
+  it('groups like a printed UPC-A while typing', () => {
+    expect(formatBarcodeInput('0')).toBe('0')
+    expect(formatBarcodeInput('075678')).toBe('0 75678')
+    expect(formatBarcodeInput('07567816')).toBe('0 75678 16')
+    expect(formatBarcodeInput('075678164125')).toBe('0 75678 16412 5')
+  })
+  it('switches to EAN-13 grouping at 13 digits', () => {
+    expect(formatBarcodeInput('5012394144777')).toBe('5 012394 144777')
+  })
+  it('ignores anything that is not a digit and stops at 13', () => {
+    expect(formatBarcodeInput('0-75678 x16412 5 99')).toBe('0 756781 641259')
   })
 })
 

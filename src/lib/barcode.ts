@@ -38,3 +38,18 @@ export function barcodeVariants(raw: string): string[] {
   }
   return [...new Set(out)].filter(Boolean)
 }
+
+// Groups digits the way they're printed under the bars, as the user types:
+// UPC-A "0 75678 16412 5", EAN-13 "5 012394 144777".
+export function formatBarcodeInput(raw: string): string {
+  const d = digitsOnly(raw).slice(0, 13)
+  const groups = d.length === 13 ? [1, 6, 6] : [1, 5, 5, 1]
+  const out: string[] = []
+  let i = 0
+  for (const g of groups) {
+    if (i >= d.length) break
+    out.push(d.slice(i, i + g))
+    i += g
+  }
+  return out.join(' ')
+}
