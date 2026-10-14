@@ -1,0 +1,6 @@
+dist
+public/ocr
+tests/fixtures
+package-lock.json
+.github
+*.md
