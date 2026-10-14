@@ -43,7 +43,15 @@ async function start(): Promise<Ready> {
       return { state: 'ready', session: null, error: (e as Error).message }
     }
   }
-  return { state: 'ready', session: (await loadSession()) ?? null }
+  const session = (await loadSession()) ?? null
+  if (session?.kind === 'demo') await import('./demo')
+  // a shared ?demo link opens the demo, unless someone is already signed in
+  if (!session && new URLSearchParams(location.search).has('demo')) {
+    const { enterDemo } = await import('./demo')
+    history.replaceState(null, '', '/')
+    return { state: 'ready', session: await enterDemo() }
+  }
+  return { state: 'ready', session }
 }
 
 // module-level so it runs once, even if the component mounts twice
@@ -107,7 +115,29 @@ function Routes({ error }: { error?: string }) {
 }
 
 // Full-height layout: only the middle scrolls, so the nav never moves.
+function DemoBar() {
+  const { session, auth, setSession } = useSession()
+  const [, navigate] = useLocation()
+  if (session?.kind !== 'demo') return null
+  async function leave() {
+    await auth?.signOut()
+    navigate('/', { replace: true })
+    setSession(null)
+  }
+  return (
+    <div className="flex shrink-0 items-center justify-center gap-3 bg-accent-500 px-4 pt-[env(safe-area-inset-top)] text-sm text-stone-950">
+      <p className="py-1.5">
+        <b>Demo</b> · sample collection, nothing is saved to Discogs
+      </p>
+      <button type="button" onClick={leave} className="rounded-md bg-stone-950/10 px-2 py-0.5 font-medium hover:bg-stone-950/20">
+        Exit
+      </button>
+    </div>
+  )
+}
+
 function Shell({ children }: { children: ReactNode }) {
+  const { session } = useSession()
   const [path] = useLocation()
   const scroller = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -115,18 +145,22 @@ function Shell({ children }: { children: ReactNode }) {
   }, [path])
 
   return (
-    <div className="flex h-dvh flex-col lg:flex-row">
-      <SideNav />
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none">
-          {children}
-        </main>
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">
-          <Toaster />
-          <StatusBar />
+    <div className="flex h-dvh flex-col">
+      <DemoBar />
+      {/* the demo bar already covers the status bar area */}
+      <div className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--header-inset:0px]' : ''}`}>
+        <SideNav />
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none">
+            {children}
+          </main>
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">
+            <Toaster />
+            <StatusBar />
+          </div>
         </div>
+        <BottomNav />
       </div>
-      <BottomNav />
     </div>
   )
 }

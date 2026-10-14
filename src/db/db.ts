@@ -4,7 +4,7 @@ import type { Metadata } from '../lib/metadata'
 
 export type Session = {
   id: 'current'
-  kind: 'token' | 'oauth'
+  kind: 'token' | 'oauth' | 'demo'
   token: string
   secret?: string // OAuth token secret
   username: string

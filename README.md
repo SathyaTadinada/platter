@@ -2,7 +2,7 @@
 
 Scan the barcode on a record and add it to your Discogs collection. Platter is a static web app you can install to your home screen. It talks to Discogs straight from your browser, and your Discogs sign-in stays on your device.
 
-Live at [platter.tadinada.com](https://platter.tadinada.com).
+Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](https://platter.tadinada.com/?demo).
 
 ## What it does
 
@@ -17,12 +17,13 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 - Falls back to MusicBrainz when Discogs doesn't know a barcode
 - Tells pressings apart by the runout: type what's etched in the dead wax, or read it from a photo, and candidates are ranked against Discogs' Matrix / Runout data, allowing for lookalike characters (O/0, I/1, S/5, B/8) and partial transcriptions
 - Reads catalog numbers off a photo of the spine
-
-Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.
 - Create, rename, and delete crates
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
 - Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes, and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
+- A demo with a sample collection, for trying it without a Discogs account
+
+Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.
 
 ## How it works
 
@@ -48,7 +49,7 @@ npm run typecheck
 
 `npm run dev` serves the app only, so log in with a personal access token locally. The signing route (`/api/sign`) only exists on the deployed Worker.
 
-Open `http://localhost:5173/?demo` to try the UI without a Discogs account. Demo mode signs in a fake user and answers API calls from the test fixtures. It only exists in dev builds.
+`/?demo` opens the demo. It keeps a sample collection in IndexedDB and answers collection, folder, and field calls locally; database lookups (search, releases, marketplace) go to Discogs unauthenticated, so search results come back without thumbnails.
 
 To re-record test fixtures, put a token in `.env` (see `.env.example`) and run `npm run fixtures`. Your username and collection are replaced with placeholders before anything is written.
 

@@ -31,8 +31,20 @@ export function Avatar({ src, name, size = 'size-9' }: { src?: string; name: str
 
 // Avatar and username, linking to the Discogs profile
 export function ProfileLink({ detail, className = '', compact }: { detail?: string; className?: string; compact?: boolean }) {
-  const { username } = useSignedIn()
+  const { username, session } = useSignedIn()
   const profile = useProfile()
+  // the demo has no Discogs profile to link to
+  if (session.kind === 'demo') {
+    return (
+      <span className={`flex min-w-0 items-center gap-3 ${className}`} title={compact ? 'Demo' : undefined}>
+        <Avatar name="D" />
+        <span className={compact ? 'sr-only' : 'min-w-0'}>
+          <span className="block truncate font-medium">Demo</span>
+          {detail && <span className="block truncate text-sm text-stone-500">Sample collection</span>}
+        </span>
+      </span>
+    )
+  }
   return (
     <a
       href={profileUrl(username)}

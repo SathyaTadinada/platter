@@ -48,8 +48,20 @@ export function oauthAuth(token: string, secret: string, identity: Identity, fet
   }
 }
 
+// The demo talks to Discogs signed out; its own collection is simulated locally
+export function demoAuth(identity: Identity): Auth {
+  return {
+    kind: 'demo',
+    getAuthHeaders: async () => ({}),
+    getAuthHeadersBatch: async (reqs) => reqs.map(() => ({})),
+    getIdentity: () => identity,
+    signOut: wipeLocalData,
+  }
+}
+
 export function authFromSession(s: Session): Auth {
   const identity = { username: s.username, id: s.userId }
+  if (s.kind === 'demo') return demoAuth(identity)
   return s.kind === 'oauth' ? oauthAuth(s.token, s.secret ?? '', identity) : tokenAuth(s.token, identity)
 }
 

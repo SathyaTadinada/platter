@@ -25,6 +25,7 @@ export function Settings() {
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const install = useInstallPrompt()
+  const demo = session.kind === 'demo'
   const crates = useCollectionMeta().data?.folders.length
 
   const stats = useLiveQuery(async () => ({
@@ -77,18 +78,22 @@ export function Settings() {
               </li>
               {confirming ? (
                 <li className="space-y-3 px-4 py-3">
-                  <p className="text-sm">Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected.</p>
+                  <p className="text-sm">
+                    {demo
+                      ? 'Leave the demo? Changes to the sample collection are discarded.'
+                      : "Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected."}
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="secondary" onClick={() => setConfirming(false)}>
                       Cancel
                     </Button>
                     <Button variant="danger" onClick={signOut}>
-                      Sign out
+                      {demo ? 'Leave demo' : 'Sign out'}
                     </Button>
                   </div>
                 </li>
               ) : (
-                <Row icon={<LogOut size={20} />} label="Sign out" danger onClick={() => setConfirming(true)} />
+                <Row icon={<LogOut size={20} />} label={demo ? 'Leave demo' : 'Sign out'} danger onClick={() => setConfirming(true)} />
               )}
             </List>
           </Section>

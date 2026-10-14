@@ -5,10 +5,6 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 
-if (import.meta.env.DEV && (location.search.includes('demo') || sessionStorage.getItem('demo'))) {
-  await (await import('./dev/demo')).enableDemo()
-}
-
 registerSW({ immediate: true })
 
 // iOS can leave the page scrolled after the keyboard closes, which pushes the

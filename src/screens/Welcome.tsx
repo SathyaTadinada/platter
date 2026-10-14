@@ -12,6 +12,12 @@ export function Welcome({ error }: { error?: string }) {
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
 
+  const { setSession } = useSession()
+  async function tryDemo() {
+    const { enterDemo } = await import('../demo')
+    setSession(await enterDemo())
+  }
+
   async function logIn() {
     setStarting(true)
     setStartError(null)
@@ -39,13 +45,15 @@ export function Welcome({ error }: { error?: string }) {
               <Button className="w-full" onClick={logIn} disabled={starting}>
                 {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
               </Button>
-              <button
-                type="button"
-                onClick={() => setUseToken(true)}
-                className="block w-full py-2 text-center text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-              >
-                Use a personal access token
-              </button>
+              <p className="flex items-center justify-center gap-2 py-1 text-sm text-stone-500">
+                <button type="button" onClick={() => setUseToken(true)} className="py-1 hover:text-stone-700 dark:hover:text-stone-300">
+                  Use a personal access token
+                </button>
+                <span aria-hidden>·</span>
+                <button type="button" onClick={tryDemo} className="py-1 hover:text-stone-700 dark:hover:text-stone-300">
+                  Try the demo
+                </button>
+              </p>
             </>
           )}
         </div>
