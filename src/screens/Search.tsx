@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLocation, useSearch } from 'wouter'
 import { Button, Screen } from '../components/ui'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
-import { digitsOnly } from '../lib/barcode'
+import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
 
 type Mode = 'barcode' | 'catno' | 'title'
@@ -62,23 +62,44 @@ export function Search() {
         {mode === 'barcode' && (
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Barcode number</span>
-            <input className={input} inputMode="numeric" autoComplete="off" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="e.g. 0 75678 16412 5" />
+            <input
+              className={input}
+              inputMode="numeric"
+              autoComplete="off"
+              value={barcode}
+              onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
+              placeholder="e.g. 0 75678 16412 5"
+            />
           </label>
         )}
         {mode === 'catno' && (
           <>
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Catalog number</span>
-              <input className={input} autoCapitalize="characters" autoComplete="off" value={catno} onChange={(e) => setCatno(e.target.value)} placeholder="e.g. PB 41447" />
+              <input
+                className={input}
+                autoCapitalize="characters"
+                autoComplete="off"
+                value={catno}
+                onChange={(e) => setCatno(e.target.value)}
+                placeholder="e.g. PB 41447"
+              />
             </label>
             {/* spines are usually printed sideways, so try both ways round */}
             <ReadPhotoButton label="Read it from the spine" rotations={[90, 270, 0]} onText={(t) => setSpine(catnoCandidates(t))} />
             {spine && (
               <div className="space-y-1.5">
-                <p className="text-xs text-stone-500">{spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}</p>
+                <p className="text-xs text-stone-500">
+                  {spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {spine.map((c) => (
-                    <button key={c} type="button" onClick={() => setCatno(c)} className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800">
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCatno(c)}
+                      className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800"
+                    >
                       {c}
                     </button>
                   ))}

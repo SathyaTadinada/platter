@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { RefreshCw } from 'lucide-react'
+import { Boxes, Disc3, Download, FileUp, Info, ListChecks, LogOut, MonitorDown, RefreshCw, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
@@ -64,82 +64,108 @@ export function Settings() {
   }
 
   return (
-    <Screen title="Settings">
-      <Section title="Account">
-        <List>
-          <li>
-            <ProfileLink
-              detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'}
-              className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+    <Screen title="Settings" width="wide">
+      <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+        <div>
+          <Section title="Account">
+            <List>
+              <li>
+                <ProfileLink
+                  detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'}
+                  className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                />
+              </li>
+              {confirming ? (
+                <li className="space-y-3 px-4 py-3">
+                  <p className="text-sm">Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" onClick={() => setConfirming(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="danger" onClick={signOut}>
+                      Sign out
+                    </Button>
+                  </div>
+                </li>
+              ) : (
+                <Row icon={<LogOut size={20} />} label="Sign out" danger onClick={() => setConfirming(true)} />
+              )}
+            </List>
+          </Section>
+
+          <Section title="Collection">
+            <List>
+              <Row
+                icon={<Disc3 size={20} />}
+                label={stats ? `${plural(stats.records, 'record')}, ${plural(stats.wants, 'want')}` : 'Collection'}
+                detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
+                trailing={
+                  <button
+                    type="button"
+                    aria-label="Sync now"
+                    disabled={sync.running}
+                    onClick={() => sync.sync(true)}
+                    className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
+                  >
+                    <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
+                  </button>
+                }
+              />
+              <Row icon={<Boxes size={20} />} label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
+              <Row
+                icon={<ListChecks size={20} />}
+                label="Collection fields"
+                value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.length} set up` : undefined}
+                href="/setup"
+              />
+            </List>
+            {sync.error && <Notice tone="error">{sync.error}</Notice>}
+          </Section>
+        </div>
+        <div>
+          <Section title="Import and backup">
+            <List>
+              <Row icon={<FileUp size={20} />} label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
+            </List>
+            <div className="grid grid-cols-2 gap-3">
+              <Tile icon={<Download size={22} />} label="Export backup" onClick={doExport} />
+              <Tile icon={<Upload size={22} />} label="Import backup" onClick={() => fileRef.current?.click()} />
+            </div>
+            {message && <Notice tone={message.tone}>{message.text}</Notice>}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) doImport(f)
+                e.target.value = ''
+              }}
             />
-          </li>
-          {confirming ? (
-            <li className="space-y-3 px-4 py-3">
-              <p className="text-sm">Sign out? This clears Platter's data on this device. Your Discogs collection isn't affected.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="secondary" onClick={() => setConfirming(false)}>
-                  Cancel
-                </Button>
-                <Button variant="danger" onClick={signOut}>
-                  Sign out
-                </Button>
-              </div>
-            </li>
-          ) : (
-            <Row label="Sign out" danger onClick={() => setConfirming(true)} />
-          )}
-        </List>
-      </Section>
+          </Section>
 
-      <Section title="Collection">
-        <List>
-          <Row
-            label={stats ? `${plural(stats.records, 'record')}, ${plural(stats.wants, 'want')}` : 'Collection'}
-            detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
-            trailing={
-              <button
-                type="button"
-                aria-label="Sync now"
-                disabled={sync.running}
-                onClick={() => sync.sync(true)}
-                className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
-                <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
-              </button>
-            }
-          />
-          <Row label="Crates" value={crates !== undefined ? String(crates) : undefined} href="/crates" />
-          <Row label="Collection fields" value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.length} set up` : undefined} href="/setup" />
-        </List>
-        {sync.error && <Notice tone="error">{sync.error}</Notice>}
-      </Section>
-
-      <Section title="Import and backup">
-        <List>
-          <Row label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
-          <Row label="Export backup" onClick={doExport} />
-          <Row label="Import backup" onClick={() => fileRef.current?.click()} />
-        </List>
-        {message && <Notice tone={message.tone}>{message.text}</Notice>}
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) doImport(f)
-            e.target.value = ''
-          }}
-        />
-      </Section>
-
-      <Section>
-        <List>
-          {install && <Row label="Install Platter" onClick={install} />}
-          <Row label="About and privacy" href="/about" />
-        </List>
-      </Section>
+          <Section>
+            <List>
+              {install && <Row icon={<MonitorDown size={20} />} label="Install Platter" onClick={install} />}
+              <Row icon={<Info size={20} />} label="About and privacy" href="/about" />
+            </List>
+          </Section>
+        </div>
+      </div>
     </Screen>
+  )
+}
+
+function Tile({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl bg-white text-sm font-medium ring-1 ring-stone-200 hover:bg-stone-50 active:bg-stone-100 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800/50"
+    >
+      <span className="text-stone-500">{icon}</span>
+      {label}
+    </button>
   )
 }

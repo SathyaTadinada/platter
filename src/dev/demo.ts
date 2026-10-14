@@ -28,7 +28,8 @@ const json = (data: unknown, status = 200) =>
 function route(url: string, method: string, body?: BodyInit | null): Response {
   if (url.includes('musicbrainz.org')) return json(mb)
   if (url.includes('/oauth/identity')) return json(identity)
-  if (url.endsWith('/users/platter-test')) return json({ username: 'platter-test', uri: 'https://www.discogs.com/user/platter-test', curr_abbr: 'USD' })
+  if (url.endsWith('/users/platter-test'))
+    return json({ username: 'platter-test', uri: 'https://www.discogs.com/user/platter-test', curr_abbr: 'USD' })
   if (url.includes('/database/search')) {
     if (/barcode=0?075678164125/.test(url)) return json(searchBarcode)
     if (url.includes('barcode=')) return json(searchFuzzy)
@@ -40,7 +41,8 @@ function route(url: string, method: string, body?: BodyInit | null): Response {
     const { name } = JSON.parse(String(body ?? '{}')) as { name?: string }
     return json({ id: Number(url.match(/folders\/(\d+)$/)?.[1] ?? Date.now() % 100000), name, count: 0 })
   }
-  if (method === 'GET' && /api\.discogs\.com\/releases\/\d+$/.test(url)) return url.endsWith(`/${release.id}`) ? json(release) : json({ message: 'Not in demo data' }, 404)
+  if (method === 'GET' && /api\.discogs\.com\/releases\/\d+$/.test(url))
+    return url.endsWith(`/${release.id}`) ? json(release) : json({ message: 'Not in demo data' }, 404)
   if (method === 'POST' && /\/releases\/\d+$/.test(url)) return json({ instance_id: Date.now(), resource_url: url }, 201)
   if (method === 'POST' || method === 'DELETE') return json(null, 204)
   if (url.includes('/collection/folders/0/releases')) return json(collection)

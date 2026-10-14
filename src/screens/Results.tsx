@@ -36,7 +36,9 @@ export function Results() {
     const barcode = params.get('barcode')
     if (barcode) return lookupBarcode(barcode, { searchDiscogs: search, searchMb: (b) => searchMbBarcode(b) })
     const catno = params.get('catno')
-    const p: SearchParams = catno ? { catno } : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
+    const p: SearchParams = catno
+      ? { catno }
+      : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
     return { kind: 'search', results: await search(p) }
   }, [qs, client])
 
@@ -61,9 +63,7 @@ export function Results() {
       {state.data?.kind === 'musicbrainz' && <MbNotice mb={state.data.mb} />}
 
       {state.data?.kind === 'none' && <NothingFound barcode={state.data.barcode} mb={state.data.mb} />}
-      {state.data?.kind === 'search' && !cards.length && (
-        <Notice tone="info">No results. Try fewer words or check the spelling.</Notice>
-      )}
+      {state.data?.kind === 'search' && !cards.length && <Notice tone="info">No results. Try fewer words or check the spelling.</Notice>}
 
       {cards.length > 0 && (
         <>
@@ -96,7 +96,12 @@ function resultsLine(n: number, barcode: boolean): string {
 function MbNotice({ mb }: { mb: MbRelease }) {
   return (
     <div className="mb-4 flex gap-3 rounded-2xl bg-stone-100 p-3 dark:bg-stone-900">
-      <img src={coverArtUrl(mb.mbid)} alt="" className="size-16 shrink-0 rounded-lg object-cover" onError={(e) => (e.currentTarget.hidden = true)} />
+      <img
+        src={coverArtUrl(mb.mbid)}
+        alt=""
+        className="size-16 shrink-0 rounded-lg object-cover"
+        onError={(e) => (e.currentTarget.hidden = true)}
+      />
       <p className="text-sm text-stone-700 dark:text-stone-300">
         This barcode isn't on Discogs. Showing results for <b>{mb.artist}</b> – <b>{mb.title}</b>
         {mb.date ? ` (${mb.date.slice(0, 4)})` : ''} from MusicBrainz.
@@ -111,9 +116,12 @@ function NothingFound({ barcode, mb }: { barcode: string; mb: MbRelease[] }) {
   return (
     <div className="space-y-4">
       <Notice tone="info">
-        No match on Discogs for {barcode}.{guess ? ` MusicBrainz lists it as ${guess.artist} – ${guess.title}, but that isn't on Discogs either.` : ''}
+        No match on Discogs for {barcode}.
+        {guess ? ` MusicBrainz lists it as ${guess.artist} – ${guess.title}, but that isn't on Discogs either.` : ''}
       </Notice>
-      <p className="text-sm text-stone-600 dark:text-stone-400">Older records often aren't listed by barcode. Try the catalog number from the spine or label.</p>
+      <p className="text-sm text-stone-600 dark:text-stone-400">
+        Older records often aren't listed by barcode. Try the catalog number from the spine or label.
+      </p>
       <div className="grid gap-2">
         <Link href="/search?mode=catno" className={buttonClass('primary')}>
           Search by catalog number

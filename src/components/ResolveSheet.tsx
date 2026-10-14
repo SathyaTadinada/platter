@@ -53,7 +53,12 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
         <h2 id="resolve-title" className="text-lg font-bold">
           {item.barcode ? `Which release is ${item.barcode}?` : 'Pick a release'}
         </h2>
-        <button type="button" aria-label="Close" onClick={onClose} className="-mr-2 rounded-full p-2 hover:bg-stone-200 dark:hover:bg-stone-800">
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="-mr-2 rounded-full p-2 hover:bg-stone-200 dark:hover:bg-stone-800"
+        >
           <X size={20} />
         </button>
       </div>

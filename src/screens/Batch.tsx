@@ -90,7 +90,11 @@ export function Batch() {
           Clear added
         </button>
       )}
-      <button type="button" onClick={() => setConfirmClear(true)} className="rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 dark:text-red-400">
+      <button
+        type="button"
+        onClick={() => setConfirmClear(true)}
+        className="rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 dark:text-red-400"
+      >
         Clear all
       </button>
     </>
@@ -144,7 +148,14 @@ export function Batch() {
         <Section title={`Check these (${groups.attention.length})`}>
           <List>
             {groups.attention.map((i) => (
-              <Row key={i.id} item={i} dupe={dupes.has(i.barcode ?? '')} onResolve={() => setResolving(i)} onRemove={() => remove(i.id!)} onRetry={() => retryFailed().then(kick)} />
+              <Row
+                key={i.id}
+                item={i}
+                dupe={dupes.has(i.barcode ?? '')}
+                onResolve={() => setResolving(i)}
+                onRemove={() => remove(i.id!)}
+                onRetry={() => retryFailed().then(kick)}
+              />
             ))}
           </List>
         </Section>
@@ -221,7 +232,13 @@ export function Batch() {
             )}
             {readyWanted > 0 && (
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={dropWants} onChange={(e) => setDropWants(e.target.checked)} disabled={adding} className="size-4 accent-amber-500" />
+                <input
+                  type="checkbox"
+                  checked={dropWants}
+                  onChange={(e) => setDropWants(e.target.checked)}
+                  disabled={adding}
+                  className="size-4 accent-amber-500"
+                />
                 Remove {readyWanted === 1 ? 'it' : `the ${readyWanted}`} from my wantlist
               </label>
             )}
@@ -311,7 +328,19 @@ function metaSummary(m: Metadata, currency: string): string {
   return [cond, formatPrice(m.price, currency), m.store, m.location].filter(Boolean).join(' · ')
 }
 
-function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onResolve, onRemove, onRetry, onEdit, currency = 'USD' }: RowProps) {
+function Row({
+  item,
+  dupe,
+  online = true,
+  ownedExact,
+  ownedOther,
+  wanted,
+  onResolve,
+  onRemove,
+  onRetry,
+  onEdit,
+  currency = 'USD',
+}: RowProps) {
   const r = item.release
   const meta = r ? [r.label, r.catno, r.year].filter(Boolean).join(' · ') : ''
 
@@ -371,7 +400,9 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
         {r && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{r.artist}</p>}
         {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         {status && <p className="text-xs text-stone-500">{status}</p>}
-        {item.meta && hasMetadata(item.meta) && item.status !== 'added' && <p className="truncate text-xs text-stone-600 dark:text-stone-400">{metaSummary(item.meta, currency)}</p>}
+        {item.meta && hasMetadata(item.meta) && item.status !== 'added' && (
+          <p className="truncate text-xs text-stone-600 dark:text-stone-400">{metaSummary(item.meta, currency)}</p>
+        )}
         {(dupe || ownedExact || ownedOther || wanted || item.source === 'csv') && item.status !== 'added' && (
           <div className="mt-1 flex flex-wrap gap-1">
             {ownedExact && <Badge tone="warn">Already in collection</Badge>}
@@ -388,25 +419,46 @@ function Row({ item, dupe, online = true, ownedExact, ownedOther, wanted, onReso
   return (
     <li className="flex items-center gap-1 pr-2">
       {onResolve ? (
-        <button type="button" onClick={onResolve} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/50">
+        <button
+          type="button"
+          onClick={onResolve}
+          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/50"
+        >
           {body}
-          <span className="shrink-0 text-sm font-semibold text-stone-700 dark:text-stone-300">{item.status === 'ready' ? 'Change' : 'Pick'}</span>
+          <span className="shrink-0 text-sm font-semibold text-stone-700 dark:text-stone-300">
+            {item.status === 'ready' ? 'Change' : 'Pick'}
+          </span>
         </button>
       ) : (
         <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5">{body}</div>
       )}
       {onEdit && (
-        <button type="button" aria-label="Details" onClick={onEdit} className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800">
+        <button
+          type="button"
+          aria-label="Details"
+          onClick={onEdit}
+          className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
           <Pencil size={17} />
         </button>
       )}
       {onRetry && item.status === 'failed' && (
-        <button type="button" aria-label="Retry" onClick={onRetry} className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800">
+        <button
+          type="button"
+          aria-label="Retry"
+          onClick={onRetry}
+          className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
           <RotateCw size={18} />
         </button>
       )}
       {onRemove && (
-        <button type="button" aria-label="Remove from batch" onClick={onRemove} className="rounded-full p-2 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800">
+        <button
+          type="button"
+          aria-label="Remove from batch"
+          onClick={onRemove}
+          className="rounded-full p-2 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
           <X size={18} />
         </button>
       )}

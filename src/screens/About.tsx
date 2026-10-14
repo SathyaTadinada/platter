@@ -13,7 +13,7 @@ export function About() {
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>No accounts, analytics or tracking.</p>
+          <p>No accounts, analytics, or tracking.</p>
           <p>
             Your sign-in and everything Platter saves are kept in this browser. Requests go straight from your device to Discogs, and to
             MusicBrainz when a barcode isn't on Discogs.
@@ -35,8 +35,8 @@ export function About() {
 
       <Section>
         <p className="text-xs text-stone-500">
-          This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. ‘Discogs’ is a trademark of
-          Zink Media, LLC.
+          This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. ‘Discogs’ is a trademark of Zink
+          Media, LLC.
         </p>
       </Section>
     </Screen>

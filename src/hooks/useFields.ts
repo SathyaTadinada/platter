@@ -25,7 +25,10 @@ export function useFieldSuggestions(matches: ReturnType<typeof useFieldMatches>,
           const v = i.fields[id]?.trim()
           if (v) counts.set(v, (counts.get(v) ?? 0) + 1)
         }
-        return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([v]) => v).slice(0, 30)
+        return [...counts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([v]) => v)
+          .slice(0, 30)
       })
     }, [ids.join(',')]) ?? keys.map(() => [])
   )

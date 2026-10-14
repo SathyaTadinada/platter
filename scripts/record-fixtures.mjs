@@ -40,7 +40,10 @@ await save('search-barcode', search)
 // Discogs barcode search is fuzzy: a made-up code still returns unrelated releases
 await save('search-fuzzy', await get(`${api}/database/search?barcode=000000000017&type=release&per_page=5`))
 await save('search-catno', await get(`${api}/database/search?catno=PB%2041447&type=release&per_page=5`))
-await save('search-title', await get(`${api}/database/search?artist=Rick%20Astley&release_title=Never%20Gonna%20Give%20You%20Up&type=release&per_page=5`))
+await save(
+  'search-title',
+  await get(`${api}/database/search?artist=Rick%20Astley&release_title=Never%20Gonna%20Give%20You%20Up&type=release&per_page=5`),
+)
 await save('release-cd', await get(`${api}/releases/10176645`))
 await save('release-vinyl', await get(`${api}/releases/249504`))
 await save('master-versions', await get(`${api}/masters/29002/versions?per_page=5`))

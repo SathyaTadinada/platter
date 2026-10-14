@@ -111,8 +111,8 @@ export function Crates() {
           {confirmDelete.count > 0 ? (
             <>
               <p className="text-sm">
-                {confirmDelete.name} has {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'}. Move them to another crate first; Discogs
-                only deletes empty ones.
+                {confirmDelete.name} has {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'}. Move them to another crate
+                first; Discogs only deletes empty ones.
               </p>
               <Button variant="secondary" className="w-full" onClick={() => setConfirmDelete(null)}>
                 OK
@@ -125,7 +125,10 @@ export function Crates() {
                 <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
                   Cancel
                 </Button>
-                <Button variant="danger" onClick={() => run(() => deleteFolder(client, username, confirmDelete.id)).then(() => setConfirmDelete(null))}>
+                <Button
+                  variant="danger"
+                  onClick={() => run(() => deleteFolder(client, username, confirmDelete.id)).then(() => setConfirmDelete(null))}
+                >
                   Delete
                 </Button>
               </div>

@@ -14,7 +14,7 @@ none,Nobody,Broken,,LP,,,,Catalog,,,,
 const fields = fieldsFixture.fields as CollectionField[]
 
 describe('parseCsv', () => {
-  it('handles quotes, doubled quotes, commas and CRLF', () => {
+  it('handles quotes, doubled quotes, commas, and CRLF', () => {
     expect(parseCsv('a,"b, c","d ""e"""\r\n1,2,3\r\n')).toEqual([
       ['a', 'b, c', 'd "e"'],
       ['1', '2', '3'],
@@ -91,6 +91,11 @@ describe('fieldValueFits', () => {
     const media = fields.find((f) => f.name === 'Media Condition')!
     expect(fieldValueFits(media, 'Mint (M)')).toBe(true)
     expect(fieldValueFits(media, 'Pretty good')).toBe(false)
-    expect(fieldValueFits(fields.find((f) => f.name === 'Notes')!, 'anything')).toBe(true)
+    expect(
+      fieldValueFits(
+        fields.find((f) => f.name === 'Notes')!,
+        'anything',
+      ),
+    ).toBe(true)
   })
 })

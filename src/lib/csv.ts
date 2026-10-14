@@ -76,7 +76,11 @@ export function parseDiscogsExport(text: string): ParsedImport {
     rating: col('rating'),
   }
   const fieldCols = head
-    .map((h, i) => ({ name: h.trim().replace(/^collection\s+/i, ''), i, isField: /^collection\s+/i.test(h.trim()) && norm(h) !== 'collectionfolder' }))
+    .map((h, i) => ({
+      name: h.trim().replace(/^collection\s+/i, ''),
+      i,
+      isField: /^collection\s+/i.test(h.trim()) && norm(h) !== 'collectionfolder',
+    }))
     .filter((f) => f.isField)
 
   const get = (r: string[], i: number) => (i >= 0 ? (r[i] ?? '').trim() : '')

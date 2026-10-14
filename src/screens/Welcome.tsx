@@ -39,7 +39,11 @@ export function Welcome({ error }: { error?: string }) {
               <Button className="w-full" onClick={logIn} disabled={starting}>
                 {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
               </Button>
-              <button type="button" onClick={() => setUseToken(true)} className="block w-full py-2 text-center text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
+              <button
+                type="button"
+                onClick={() => setUseToken(true)}
+                className="block w-full py-2 text-center text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+              >
                 Use a personal access token
               </button>
             </>
@@ -73,7 +77,11 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
       navigate('/setup', { replace: true })
       setSession(session)
     } catch (err) {
-      setError(err instanceof DiscogsError && err.status === 401 ? "Discogs didn't accept that token. Check you copied all of it." : (err as Error).message)
+      setError(
+        err instanceof DiscogsError && err.status === 401
+          ? "Discogs didn't accept that token. Check you copied all of it."
+          : (err as Error).message,
+      )
     } finally {
       setBusy(false)
     }
@@ -85,7 +93,9 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
         <li>
           Open <ExternalLink href="https://www.discogs.com/settings/developers">Discogs developer settings</ExternalLink>
         </li>
-        <li>Agree to the API terms and choose <b>Generate new token</b></li>
+        <li>
+          Agree to the API terms and choose <b>Generate new token</b>
+        </li>
         <li>Copy the token and paste it here</li>
       </ol>
       <form onSubmit={submit} className="space-y-3">

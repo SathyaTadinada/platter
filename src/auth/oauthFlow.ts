@@ -65,7 +65,11 @@ export async function finishOAuth(search: string, fetchFn: typeof fetch = fetch)
     throw new SignInError('Sign-in expired or was started in another browser. Try again.')
   }
   const params = await signStep(
-    { token: pending.token, tokenSecret: pending.secret, requests: [{ method: 'POST', url: ACCESS_TOKEN, oauth: { oauth_verifier: verifier } }] },
+    {
+      token: pending.token,
+      tokenSecret: pending.secret,
+      requests: [{ method: 'POST', url: ACCESS_TOKEN, oauth: { oauth_verifier: verifier } }],
+    },
     fetchFn,
   )
   const body = await discogsStep(`${ACCESS_TOKEN}?${query(params)}`, 'POST', fetchFn)

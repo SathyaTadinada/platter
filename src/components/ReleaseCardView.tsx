@@ -16,7 +16,8 @@ export function Badges({ own }: { own?: Ownership }) {
   if (!own) return null
   const badges: [string, string][] = []
   if (own.exactCopies) badges.push(['You own this', 'bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200'])
-  else if (own.otherPressings) badges.push(['You own another pressing', 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300'])
+  else if (own.otherPressings)
+    badges.push(['You own another pressing', 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300'])
   if (own.inWantlist) badges.push(['In your wantlist', 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200'])
   if (!badges.length) return null
   return (
@@ -53,7 +54,17 @@ export function DiscogsCredit({ url }: { url: string }) {
   )
 }
 
-export function ReleaseCardView({ card, own, onPick, extra }: { card: ReleaseCard; own?: Ownership; onPick: () => void; extra?: React.ReactNode }) {
+export function ReleaseCardView({
+  card,
+  own,
+  onPick,
+  extra,
+}: {
+  card: ReleaseCard
+  own?: Ownership
+  onPick: () => void
+  extra?: React.ReactNode
+}) {
   return (
     <li className="min-w-0 rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       <button type="button" onClick={onPick} className="flex w-full gap-3 p-3 text-left active:bg-stone-50 dark:active:bg-stone-800/50">

@@ -13,22 +13,36 @@ export function useProfile() {
 export function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; size?: string }) {
   const [broken, setBroken] = useState(false)
   return src && !broken ? (
-    <img src={src} alt="" onError={() => setBroken(true)} className={`${size} shrink-0 rounded-full bg-stone-200 object-cover dark:bg-stone-800`} />
+    <img
+      src={src}
+      alt=""
+      onError={() => setBroken(true)}
+      className={`${size} shrink-0 rounded-full bg-stone-200 object-cover dark:bg-stone-800`}
+    />
   ) : (
-    <span className={`${size} flex shrink-0 items-center justify-center rounded-full bg-stone-200 text-sm font-semibold uppercase dark:bg-stone-800`} aria-hidden>
+    <span
+      className={`${size} flex shrink-0 items-center justify-center rounded-full bg-stone-200 text-sm font-semibold uppercase dark:bg-stone-800`}
+      aria-hidden
+    >
       {name.charAt(0)}
     </span>
   )
 }
 
 // Avatar and username, linking to the Discogs profile
-export function ProfileLink({ detail, className = '' }: { detail?: string; className?: string }) {
+export function ProfileLink({ detail, className = '', compact }: { detail?: string; className?: string; compact?: boolean }) {
   const { username } = useSignedIn()
   const profile = useProfile()
   return (
-    <a href={profileUrl(username)} target="_blank" rel="noopener" className={`flex min-w-0 items-center gap-3 ${className}`}>
+    <a
+      href={profileUrl(username)}
+      target="_blank"
+      rel="noopener"
+      title={compact ? username : undefined}
+      className={`flex min-w-0 items-center gap-3 ${className}`}
+    >
       <Avatar src={profile?.avatar_url} name={username} />
-      <span className="min-w-0">
+      <span className={compact ? 'sr-only' : 'min-w-0'}>
         <span className="block truncate font-medium">{username}</span>
         {detail && <span className="block truncate text-sm text-stone-500">{detail}</span>}
       </span>

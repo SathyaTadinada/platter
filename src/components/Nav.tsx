@@ -1,4 +1,5 @@
-import { Disc3, LibraryBig, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
+import { Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
 import { ProfileLink } from './Profile'
@@ -41,35 +42,79 @@ export function BottomNav() {
   )
 }
 
-// Desktop: sidebar
+const COLLAPSED_KEY = 'platter.sidebarCollapsed'
+
+function loadCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+// Desktop: sidebar, collapsible to icons only
 export function SideNav() {
   const isCurrent = useCurrent()
   const { session } = useSession()
+  const [collapsed, setCollapsed] = useState(loadCollapsed)
+
+  function toggle() {
+    setCollapsed(!collapsed)
+    try {
+      localStorage.setItem(COLLAPSED_KEY, collapsed ? '0' : '1')
+    } catch {
+      // not important
+    }
+  }
+
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
+
   return (
-    <nav className="hidden w-60 shrink-0 flex-col border-r border-stone-200 bg-white px-3 py-5 lg:flex dark:border-stone-800 dark:bg-stone-950">
-      <Link href="/" className="mb-7 flex items-center gap-2.5 px-3 text-2xl font-bold tracking-tight">
-        <Disc3 size={30} className="text-accent-500" aria-hidden />
-        Platter
-      </Link>
-      <ul className="space-y-1">
+    <nav
+      className={`hidden shrink-0 flex-col border-r border-stone-200 bg-white py-5 transition-[width] lg:flex dark:border-stone-800 dark:bg-stone-950 ${
+        collapsed ? 'w-[4.5rem] items-center px-2' : 'w-64 px-3'
+      }`}
+    >
+      <div className={`mb-8 flex items-center ${collapsed ? 'flex-col gap-3' : 'justify-between pr-1 pl-3'}`}>
+        <Link href="/" className="flex items-center gap-2.5 text-[1.75rem] font-bold tracking-tight" aria-label="Platter">
+          <Disc3 size={34} className="text-accent-500" aria-hidden />
+          {!collapsed && 'Platter'}
+        </Link>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-900 dark:hover:text-stone-100"
+        >
+          <ToggleIcon size={20} />
+        </button>
+      </div>
+      <ul className={`space-y-1 ${collapsed ? '' : 'w-full'}`}>
         {tabs.map(({ href, label, Icon }) => (
           <li key={href}>
             <Link
               href={href}
               aria-current={isCurrent(href) ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 font-medium ${
+              title={collapsed ? label : undefined}
+              className={`flex items-center gap-3 rounded-lg py-2 font-medium ${collapsed ? 'justify-center px-2.5' : 'px-3'} ${
                 isCurrent(href)
                   ? 'bg-stone-100 text-stone-900 dark:bg-stone-900 dark:text-accent-400'
                   : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-900'
               }`}
             >
               <Icon size={20} aria-hidden />
-              {label}
+              {collapsed ? <span className="sr-only">{label}</span> : label}
             </Link>
           </li>
         ))}
       </ul>
-      {session && <ProfileLink className="mt-auto rounded-lg px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-900" />}
+      {session && (
+        <ProfileLink
+          compact={collapsed}
+          className={`mt-auto rounded-lg py-2 hover:bg-stone-100 dark:hover:bg-stone-900 ${collapsed ? 'justify-center px-1.5' : 'px-3'}`}
+        />
+      )}
     </nav>
   )
 }

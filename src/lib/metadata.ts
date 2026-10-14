@@ -22,7 +22,12 @@ export const mergeMetadata = (...layers: (Metadata | undefined)[]): Metadata =>
 export function formatPrice(raw: string | undefined, currency: string, locale?: string): string | undefined {
   const t = raw?.trim()
   if (!t) return undefined
-  const n = Number(t.replace(/[^\d.,-]/g, '').replace(/,(?=\d{3}\b)/g, '').replace(',', '.'))
+  const n = Number(
+    t
+      .replace(/[^\d.,-]/g, '')
+      .replace(/,(?=\d{3}\b)/g, '')
+      .replace(',', '.'),
+  )
   if (!Number.isFinite(n) || !/\d/.test(t)) return t
   try {
     return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n)
@@ -75,9 +80,11 @@ export function planFieldWrites(meta: Metadata, matches: FieldMatch[], opts: { c
   }
 
   const bought = [loose.date, loose.store && `from ${loose.store}`, loose.price && `for ${loose.price}`].filter(Boolean)
-  const lines = [meta.notes?.trim(), bought.length ? `Bought ${bought.join(' ')}` : undefined, loose.location && `Location: ${loose.location}`].filter(
-    (l): l is string => Boolean(l),
-  )
+  const lines = [
+    meta.notes?.trim(),
+    bought.length ? `Bought ${bought.join(' ')}` : undefined,
+    loose.location && `Location: ${loose.location}`,
+  ].filter((l): l is string => Boolean(l))
   const moved = (['price', 'store', 'date', 'location'] as const).filter((k) => loose[k]).map((k) => LABELS[k])
 
   if (lines.length) {

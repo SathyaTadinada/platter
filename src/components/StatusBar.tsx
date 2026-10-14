@@ -34,7 +34,10 @@ export function StatusBar() {
     const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
     text = `Discogs rate limit, continuing in ${s}s`
   } else if (run) {
-    text = run.kind === 'lookup' ? `Looking up scans (${Math.min(run.done + 1, run.total)} of ${run.total})` : `Adding to your collection (${Math.min(run.done + 1, run.total)} of ${run.total})`
+    text =
+      run.kind === 'lookup'
+        ? `Looking up scans (${Math.min(run.done + 1, run.total)} of ${run.total})`
+        : `Adding to your collection (${Math.min(run.done + 1, run.total)} of ${run.total})`
   } else if (sync.running) {
     text = sync.total > 1 ? `${sync.label} (page ${sync.done} of ${sync.total})` : `${sync.label}…`
   }
@@ -42,7 +45,9 @@ export function StatusBar() {
 
   return (
     <div role="status" className="pointer-events-none flex justify-center px-4">
-      <p className="rounded-full bg-stone-900 px-4 py-2 text-xs font-medium text-stone-100 shadow-lg dark:bg-accent-500 dark:text-stone-950">{text}</p>
+      <p className="rounded-full bg-stone-900 px-4 py-2 text-xs font-medium text-stone-100 shadow-lg dark:bg-accent-500 dark:text-stone-950">
+        {text}
+      </p>
     </div>
   )
 }

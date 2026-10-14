@@ -118,7 +118,12 @@ export function rankByRunout<T>(items: T[], inputs: string[], identifiersOf: (it
 export function runoutCandidates(text: string): string[] {
   const lines = text
     .split(/\n+/)
-    .map((l) => l.replace(/[^A-Za-z0-9\s\-/.]/g, ' ').replace(/\s+/g, ' ').trim())
+    .map((l) =>
+      l
+        .replace(/[^A-Za-z0-9\s\-/.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
     .filter((l) => normalize(l).length >= 3 && /\d/.test(l))
   return [...new Set(lines)].sort((a, b) => normalize(b).length - normalize(a).length).slice(0, 8)
 }

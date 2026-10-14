@@ -23,7 +23,11 @@ describe('formatPrice', () => {
 
 describe('mergeMetadata', () => {
   it('lets later layers win, ignoring blanks', () => {
-    expect(mergeMetadata({ store: 'Amoeba', date: '2026-10-14' }, { store: '', price: '20' })).toEqual({ store: 'Amoeba', date: '2026-10-14', price: '20' })
+    expect(mergeMetadata({ store: 'Amoeba', date: '2026-10-14' }, { store: '', price: '20' })).toEqual({
+      store: 'Amoeba',
+      date: '2026-10-14',
+      price: '20',
+    })
     expect(hasMetadata({ notes: ' ' })).toBe(false)
   })
 })

@@ -7,19 +7,45 @@ const token = process.env.DISCOGS_TOKEN
 if (!token) throw new Error('DISCOGS_TOKEN missing')
 
 const albums = [
-  ['Pink Floyd', 'The Dark Side Of The Moon'], ['Fleetwood Mac', 'Rumours'], ['Michael Jackson', 'Thriller'],
-  ['The Beatles', 'Abbey Road'], ['Miles Davis', 'Kind Of Blue'], ['Nirvana', 'Nevermind'],
-  ['Radiohead', 'OK Computer'], ['Daft Punk', 'Discovery'], ['Kendrick Lamar', 'To Pimp A Butterfly'],
-  ['Amy Winehouse', 'Back To Black'], ['Led Zeppelin', 'Led Zeppelin IV'], ['David Bowie', 'The Rise And Fall Of Ziggy Stardust'],
-  ['Marvin Gaye', "What's Going On"], ['Stevie Wonder', 'Songs In The Key Of Life'], ['Joni Mitchell', 'Blue'],
-  ['Carole King', 'Tapestry'], ['John Coltrane', 'A Love Supreme'], ['Bob Marley & The Wailers', 'Legend'],
-  ['Prince', 'Purple Rain'], ['Taylor Swift', 'Folklore'], ['Tame Impala', 'Currents'],
-  ['Adele', '21'], ['Herbie Hancock', 'Head Hunters'], ['Dave Brubeck Quartet', 'Time Out'],
-  ['Norah Jones', 'Come Away With Me'], ['The Strokes', 'Is This It'], ['Bon Iver', 'For Emma, Forever Ago'],
-  ['Kraftwerk', 'Autobahn'], ['Talking Heads', 'Remain In Light'], ['The Velvet Underground', 'The Velvet Underground & Nico'],
-  ['Simon & Garfunkel', 'Bridge Over Troubled Water'], ['Queen', 'A Night At The Opera'], ['The Beach Boys', 'Pet Sounds'],
-  ['Lauryn Hill', 'The Miseducation Of Lauryn Hill'], ['Portishead', 'Dummy'], ['Massive Attack', 'Mezzanine'],
-  ['Björk', 'Homogenic'], ['Vampire Weekend', 'Vampire Weekend'], ['Bill Evans Trio', 'Waltz For Debby'],
+  ['Pink Floyd', 'The Dark Side Of The Moon'],
+  ['Fleetwood Mac', 'Rumours'],
+  ['Michael Jackson', 'Thriller'],
+  ['The Beatles', 'Abbey Road'],
+  ['Miles Davis', 'Kind Of Blue'],
+  ['Nirvana', 'Nevermind'],
+  ['Radiohead', 'OK Computer'],
+  ['Daft Punk', 'Discovery'],
+  ['Kendrick Lamar', 'To Pimp A Butterfly'],
+  ['Amy Winehouse', 'Back To Black'],
+  ['Led Zeppelin', 'Led Zeppelin IV'],
+  ['David Bowie', 'The Rise And Fall Of Ziggy Stardust'],
+  ['Marvin Gaye', "What's Going On"],
+  ['Stevie Wonder', 'Songs In The Key Of Life'],
+  ['Joni Mitchell', 'Blue'],
+  ['Carole King', 'Tapestry'],
+  ['John Coltrane', 'A Love Supreme'],
+  ['Bob Marley & The Wailers', 'Legend'],
+  ['Prince', 'Purple Rain'],
+  ['Taylor Swift', 'Folklore'],
+  ['Tame Impala', 'Currents'],
+  ['Adele', '21'],
+  ['Herbie Hancock', 'Head Hunters'],
+  ['Dave Brubeck Quartet', 'Time Out'],
+  ['Norah Jones', 'Come Away With Me'],
+  ['The Strokes', 'Is This It'],
+  ['Bon Iver', 'For Emma, Forever Ago'],
+  ['Kraftwerk', 'Autobahn'],
+  ['Talking Heads', 'Remain In Light'],
+  ['The Velvet Underground', 'The Velvet Underground & Nico'],
+  ['Simon & Garfunkel', 'Bridge Over Troubled Water'],
+  ['Queen', 'A Night At The Opera'],
+  ['The Beach Boys', 'Pet Sounds'],
+  ['Lauryn Hill', 'The Miseducation Of Lauryn Hill'],
+  ['Portishead', 'Dummy'],
+  ['Massive Attack', 'Mezzanine'],
+  ['Björk', 'Homogenic'],
+  ['Vampire Weekend', 'Vampire Weekend'],
+  ['Bill Evans Trio', 'Waltz For Debby'],
   ['Beyoncé', 'Lemonade'],
 ]
 
@@ -37,10 +63,17 @@ async function search(artist, title) {
 
 // small deterministic "random" so the fixture is stable between runs
 let seed = 42
-const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647
 const pick = (arr) => arr[Math.floor(rand() * arr.length)]
 
-const grades = ['Mint (M)', 'Near Mint (NM or M-)', 'Near Mint (NM or M-)', 'Very Good Plus (VG+)', 'Very Good Plus (VG+)', 'Very Good (VG)']
+const grades = [
+  'Mint (M)',
+  'Near Mint (NM or M-)',
+  'Near Mint (NM or M-)',
+  'Very Good Plus (VG+)',
+  'Very Good Plus (VG+)',
+  'Very Good (VG)',
+]
 const shelves = ['Shelf A', 'Shelf B', 'Cabinet', 'Living room']
 
 const releases = []

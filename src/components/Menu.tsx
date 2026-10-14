@@ -34,7 +34,10 @@ export function Menu({ label, items }: { label: string; items: MenuItem[] }) {
         <MoreHorizontal size={20} />
       </button>
       {open && (
-        <div role="menu" className="absolute top-full right-0 z-30 mt-1 min-w-56 overflow-hidden rounded-xl bg-white py-1 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        <div
+          role="menu"
+          className="absolute top-full right-0 z-30 mt-1 min-w-56 overflow-hidden rounded-xl bg-white py-1 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
+        >
           {items.map((item) => (
             <button
               key={item.label}

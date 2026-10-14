@@ -55,7 +55,10 @@ export function Spinner({ label = 'Loading' }: { label?: string }) {
   )
 }
 
-const widths = { narrow: 'max-w-xl', wide: 'max-w-5xl', full: 'max-w-7xl' }
+// Every page shares one container so titles line up; narrow pages just keep
+// their content to a readable width, left-aligned
+const container = 'mx-auto w-full max-w-7xl px-4 lg:px-8'
+const widths = { narrow: 'max-w-2xl', wide: 'max-w-6xl', full: '' }
 
 // Page with a header that stays put and covers the status bar area,
 // so scrolled content never shows through behind the clock.
@@ -90,7 +93,7 @@ export function Screen({
           backdrop ? 'bg-stone-50/70 dark:bg-stone-950/70' : 'bg-stone-50/95 dark:bg-stone-950/95'
         }`}
       >
-        <div className={`mx-auto flex min-h-14 w-full items-center gap-1 px-4 lg:px-8 ${widths[width]}`}>
+        <div className={`${container} flex min-h-14 items-center gap-1 lg:min-h-16`}>
           {back && (
             <button
               type="button"
@@ -101,12 +104,18 @@ export function Screen({
               <ChevronLeft />
             </button>
           )}
-          <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight">{title}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>
           {actions}
         </div>
-        {toolbar && <div className={`mx-auto w-full px-4 pb-3 lg:px-8 ${widths[width]}`}>{toolbar}</div>}
+        {toolbar && (
+          <div className={`${container} pb-3`}>
+            <div className={widths[width]}>{toolbar}</div>
+          </div>
+        )}
       </header>
-      <div className={`mx-auto w-full px-4 pt-4 pb-8 lg:px-8 lg:pt-6 ${widths[width]}`}>{children}</div>
+      <div className={`${container} pt-4 pb-8 lg:pt-6`}>
+        <div className={widths[width]}>{children}</div>
+      </div>
     </div>
   )
 }
@@ -121,7 +130,11 @@ export function Section({ title, children }: { title?: string; children: ReactNo
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800 ${className}`}>{children}</div>
+  return (
+    <div className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800 ${className}`}>
+      {children}
+    </div>
+  )
 }
 
 // Grouped list, like iOS settings
@@ -134,6 +147,7 @@ export function List({ children }: { children: ReactNode }) {
 }
 
 type RowProps = {
+  icon?: ReactNode
   label: ReactNode
   detail?: ReactNode
   value?: ReactNode
@@ -143,9 +157,10 @@ type RowProps = {
   danger?: boolean
 }
 
-export function Row({ label, detail, value, trailing, href, onClick, danger }: RowProps) {
+export function Row({ icon, label, detail, value, trailing, href, onClick, danger }: RowProps) {
   const body = (
     <>
+      {icon && <span className={`shrink-0 ${danger ? 'text-red-600 dark:text-red-400' : 'text-stone-500'}`}>{icon}</span>}
       <div className="min-w-0 flex-1">
         <p className={`truncate ${danger ? 'text-red-600 dark:text-red-400' : ''}`}>{label}</p>
         {detail && <p className="truncate text-sm text-stone-500">{detail}</p>}

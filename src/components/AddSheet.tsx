@@ -217,16 +217,29 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
             <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} parts={['conditions']} />
 
             <div>
-              <button type="button" onClick={toggleMore} aria-expanded={more} className="flex w-full items-center justify-between py-1 text-sm font-medium">
+              <button
+                type="button"
+                onClick={toggleMore}
+                aria-expanded={more}
+                className="flex w-full items-center justify-between py-1 text-sm font-medium"
+              >
                 <span>
                   More details
-                  {!more && hasMetadata({ ...meta, mediaCondition: undefined, sleeveCondition: undefined }) && <span className="text-stone-500"> · filled in</span>}
+                  {!more && hasMetadata({ ...meta, mediaCondition: undefined, sleeveCondition: undefined }) && (
+                    <span className="text-stone-500"> · filled in</span>
+                  )}
                 </span>
                 <ChevronDown size={18} className={`transition ${more ? 'rotate-180' : ''}`} aria-hidden />
               </button>
               {more && (
                 <div className="pt-2">
-                  <MetadataForm value={meta} onChange={setMeta} matches={matches} currency={currency} parts={['price', 'date', 'store', 'location', 'notes']} />
+                  <MetadataForm
+                    value={meta}
+                    onChange={setMeta}
+                    matches={matches}
+                    currency={currency}
+                    parts={['price', 'date', 'store', 'location', 'notes']}
+                  />
                 </div>
               )}
             </div>

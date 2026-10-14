@@ -33,7 +33,9 @@ export default defineConfig({
         // OCR files are big and only needed when someone reads a runout or spine;
         // cache them the first time they're used instead
         globIgnores: ['ocr/**'],
-        runtimeCaching: [{ urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'), handler: 'CacheFirst', options: { cacheName: 'ocr' } }],
+        runtimeCaching: [
+          { urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'), handler: 'CacheFirst', options: { cacheName: 'ocr' } },
+        ],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/index.html',
         // handled by the Worker, never the app shell

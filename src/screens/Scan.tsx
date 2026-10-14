@@ -6,7 +6,7 @@ import { InstallHint } from '../components/InstallHint'
 import { Button, buttonClass, Notice, Screen } from '../components/ui'
 import { db } from '../db/db'
 import { useQueue } from '../hooks/queue'
-import { digitsOnly } from '../lib/barcode'
+import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { enqueueBarcode } from '../lib/queue'
 import { useScanner } from '../scanner/useScanner'
 import { FieldNudge } from './FieldNudge'
@@ -110,7 +110,11 @@ export function Scan() {
   )
 
   const modeSwitch = (
-    <div role="tablist" aria-label="Scan mode" className="grid grid-cols-2 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800">
+    <div
+      role="tablist"
+      aria-label="Scan mode"
+      className="grid grid-cols-2 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800"
+    >
       {(
         [
           ['single', 'One at a time'],
@@ -133,7 +137,7 @@ export function Scan() {
 
   return (
     <Screen title="Scan" width="wide" toolbar={modeSwitch}>
-      {/* no `capture` attribute, so phones offer camera, photo library and files */}
+      {/* no `capture` attribute, so phones offer camera, photo library, and files */}
       <input
         ref={fileRef}
         type="file"
@@ -165,7 +169,9 @@ export function Scan() {
                 <div className="h-1/2 w-[90%] rounded-2xl border-2 border-white/80 shadow-[0_0_0_9999px_rgb(0_0_0/0.35)]" />
               </div>
             )}
-            {on && state === 'starting' && <p className="absolute inset-0 flex items-center justify-center text-stone-300">Starting camera…</p>}
+            {on && state === 'starting' && (
+              <p className="absolute inset-0 flex items-center justify-center text-stone-300">Starting camera…</p>
+            )}
 
             {flash && (
               <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center px-3" role="status">
@@ -208,12 +214,22 @@ export function Scan() {
                 />
                 <div className="absolute right-3 bottom-5 flex items-center gap-2">
                   {zoom.levels.length > 0 && (
-                    <button type="button" onClick={scanner.cycleZoom} aria-label="Zoom" className="min-w-11 rounded-full bg-black/55 px-2.5 py-2.5 text-sm font-semibold text-white">
+                    <button
+                      type="button"
+                      onClick={scanner.cycleZoom}
+                      aria-label="Zoom"
+                      className="min-w-11 rounded-full bg-black/55 px-2.5 py-2.5 text-sm font-semibold text-white"
+                    >
                       {zoom.value}×
                     </button>
                   )}
                   {cameras.length > 1 && (
-                    <button type="button" onClick={scanner.switchCamera} aria-label="Switch camera" className="rounded-full bg-black/55 p-2.5 text-white">
+                    <button
+                      type="button"
+                      onClick={scanner.switchCamera}
+                      aria-label="Switch camera"
+                      className="rounded-full bg-black/55 p-2.5 text-white"
+                    >
                       <SwitchCamera size={22} />
                     </button>
                   )}
@@ -244,7 +260,9 @@ export function Scan() {
               </div>
             )}
           </div>
-          {live && scanner.currentLabel && cameras.length > 1 && <p className="mt-2 text-center text-xs text-stone-500">{scanner.currentLabel}</p>}
+          {live && scanner.currentLabel && cameras.length > 1 && (
+            <p className="mt-2 text-center text-xs text-stone-500">{scanner.currentLabel}</p>
+          )}
 
           {mode === 'batch' && (
             <Link href="/batch" className={buttonClass(waiting ? 'primary' : 'secondary', 'mt-4 w-full')}>
@@ -286,7 +304,17 @@ export function Scan() {
   )
 }
 
-function ManualBarcode({ label, button, onSubmit, inline }: { label: string; button: string; onSubmit: (code: string) => void; inline?: boolean }) {
+function ManualBarcode({
+  label,
+  button,
+  onSubmit,
+  inline,
+}: {
+  label: string
+  button: string
+  onSubmit: (code: string) => void
+  inline?: boolean
+}) {
   const [value, setValue] = useState('')
   const code = digitsOnly(value)
   return (
@@ -303,7 +331,7 @@ function ManualBarcode({ label, button, onSubmit, inline }: { label: string; but
         <span className="mb-1 block text-sm font-medium">{label}</span>
         <input
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setValue(formatBarcodeInput(e.target.value))}
           inputMode="numeric"
           autoComplete="off"
           placeholder="e.g. 0 75678 16412 5"

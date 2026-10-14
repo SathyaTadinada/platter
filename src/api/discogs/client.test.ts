@@ -16,10 +16,15 @@ describe('RateLimiter', () => {
   it('waits once the window is full', async () => {
     let t = 0
     const waits: number[] = []
-    const lim = new RateLimiter(2, 60_000, () => t, async (ms) => {
-      waits.push(ms)
-      t += ms
-    })
+    const lim = new RateLimiter(
+      2,
+      60_000,
+      () => t,
+      async (ms) => {
+        waits.push(ms)
+        t += ms
+      },
+    )
     await lim.take()
     t = 10_000
     await lim.take()

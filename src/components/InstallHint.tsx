@@ -9,7 +9,8 @@ export const isStandalone = () =>
   matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
 
 // Every browser on iOS uses Safari's engine, and they all install through Share
-export const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
+export const isIos = () =>
+  /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
 
 // Chrome, Edge and Android browsers offer a real install prompt; keep hold of it
 let deferred: InstallEvent | null = null
@@ -65,8 +66,8 @@ export function InstallHint() {
       {ios ? (
         <>
           <p className="text-sm text-stone-600 dark:text-stone-400">
-            Tap <Share className="inline align-text-bottom" size={16} aria-label="Share" />, then <b>Add to Home Screen</b>. Otherwise iOS may clear
-            Platter's data if you don't open it for a while, which signs you out.
+            Tap <Share className="inline align-text-bottom" size={16} aria-label="Share" />, then <b>Add to Home Screen</b>. Otherwise iOS
+            may clear Platter's data if you don't open it for a while, which signs you out.
           </p>
         </>
       ) : (

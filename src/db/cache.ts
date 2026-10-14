@@ -13,5 +13,8 @@ export async function writeCache(key: string, data: unknown, now = Date.now()): 
 }
 
 export async function pruneCache(maxAge = DISCOGS_MAX_AGE, now = Date.now()): Promise<number> {
-  return db.cache.where('fetchedAt').below(now - maxAge).delete()
+  return db.cache
+    .where('fetchedAt')
+    .below(now - maxAge)
+    .delete()
 }

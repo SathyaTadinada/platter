@@ -1,5 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { addToFolder, editInstance, getFields, getOwnedInstances, getProfile, removeWant, searchReleases, setFieldValue } from '../api/discogs/endpoints'
+import {
+  addToFolder,
+  editInstance,
+  getFields,
+  getOwnedInstances,
+  getProfile,
+  removeWant,
+  searchReleases,
+  setFieldValue,
+} from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
 import { db, getSetting, setSetting } from '../db/db'
@@ -22,7 +31,7 @@ type Ctx = {
 
 const QueueContext = createContext<Ctx | null>(null)
 const JOB_KEY = 'batchAddJob' // remembered so adding resumes after a reload
-export const SHARED_KEY = 'batchShared' // store, date and location for the whole batch
+export const SHARED_KEY = 'batchShared' // store, date, and location for the whole batch
 
 const useOnline = () => {
   const [online, setOnline] = useState(navigator.onLine)
@@ -75,7 +84,12 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         ownedInstances: async (releaseId) => (await getOwnedInstances(client, u, releaseId)).releases,
       }
       try {
-        const hadCsv = (await db.queue.where('status').equals('ready').filter((i) => i.source === 'csv').count()) > 0
+        const hadCsv =
+          (await db.queue
+            .where('status')
+            .equals('ready')
+            .filter((i) => i.source === 'csv')
+            .count()) > 0
         const wants = new Set((await db.wants.toArray()).map((w) => w.releaseId))
         const r = await addReady(deps, { ...job, wants, onProgress: (done, total) => setRun({ kind: 'add', done, total }) })
         if (r.end === 'offline') {

@@ -18,7 +18,12 @@ describe('runBulk', () => {
 
   it('stops when asked', async () => {
     let stop = false
-    const r = await runBulk([1, 2, 3], async () => (stop = true), undefined, () => stop)
+    const r = await runBulk(
+      [1, 2, 3],
+      async () => (stop = true),
+      undefined,
+      () => stop,
+    )
     expect(r.done).toEqual([1])
   })
 })

@@ -84,7 +84,7 @@ export const FIELD_SPECS: FieldSpec[] = [
     type: 'textarea',
     builtIn: false,
     aliases: ['shelf', 'storage', 'where'],
-    why: 'Where it\'s kept',
+    why: "Where it's kept",
     setup: 'Text Area, or a Dropdown of your shelves',
   },
   {

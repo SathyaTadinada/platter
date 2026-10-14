@@ -33,11 +33,9 @@ export const getMasterVersions = (c: DiscogsClient, masterId: number, page = 1) 
 export const getOwnedInstances = (c: DiscogsClient, username: string, releaseId: number) =>
   c.get<CollectionPage>(`${u(username)}/collection/releases/${releaseId}`)
 
-export const getFolders = (c: DiscogsClient, username: string) =>
-  c.get<FoldersResponse>(`${u(username)}/collection/folders`)
+export const getFolders = (c: DiscogsClient, username: string) => c.get<FoldersResponse>(`${u(username)}/collection/folders`)
 
-export const getFields = (c: DiscogsClient, username: string) =>
-  c.get<FieldsResponse>(`${u(username)}/collection/fields`)
+export const getFields = (c: DiscogsClient, username: string) => c.get<FieldsResponse>(`${u(username)}/collection/fields`)
 
 export const getCollectionPage = (c: DiscogsClient, username: string, page: number) =>
   c.get<CollectionPage>(`${u(username)}/collection/folders/0/releases`, { per_page: 100, page })
@@ -48,13 +46,7 @@ export const getWantsPage = (c: DiscogsClient, username: string, page: number) =
 export const addToFolder = (c: DiscogsClient, username: string, folderId: number, releaseId: number) =>
   c.request<AddResponse>('POST', `${u(username)}/collection/folders/${folderId}/releases/${releaseId}`)
 
-export const setFieldValue = (
-  c: DiscogsClient,
-  username: string,
-  target: InstanceTarget,
-  fieldId: number,
-  value: string,
-) =>
+export const setFieldValue = (c: DiscogsClient, username: string, target: InstanceTarget, fieldId: number, value: string) =>
   c.request<null>(
     'POST',
     `${u(username)}/collection/folders/${target.folderId}/releases/${target.releaseId}/instances/${target.instanceId}/fields/${fieldId}`,

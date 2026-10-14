@@ -40,7 +40,13 @@ function useIdentifiers(ids: number[], enabled: boolean) {
 
 // Lets the user type (or photograph) the runout of each side and ranks the
 // candidates by how well Discogs' Matrix / Runout entries match.
-export function RunoutPanel({ candidates, onRanked }: { candidates: SearchResult[]; onRanked: (r: Ranked<SearchResult>[] | null) => void }) {
+export function RunoutPanel({
+  candidates,
+  onRanked,
+}: {
+  candidates: SearchResult[]
+  onRanked: (r: Ranked<SearchResult>[] | null) => void
+}) {
   const [open, setOpen] = useState(false)
   const [sides, setSides] = useState(['', ''])
   const [suggestions, setSuggestions] = useState<string[] | null>(null)
@@ -111,10 +117,19 @@ export function RunoutPanel({ candidates, onRanked }: { candidates: SearchResult
       <ReadPhotoButton label="Read it from a photo" onText={(t) => setSuggestions(runoutCandidates(t))} />
       {suggestions && (
         <div className="space-y-1.5">
-          <p className="text-xs text-stone-500">{suggestions.length ? 'Found in the photo. Tap one to use it:' : "Couldn't read any text. Try closer, with light across the grooves."}</p>
+          <p className="text-xs text-stone-500">
+            {suggestions.length
+              ? 'Found in the photo. Tap one to use it:'
+              : "Couldn't read any text. Try closer, with light across the grooves."}
+          </p>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((s) => (
-              <button key={s} type="button" onClick={() => fillNext(s)} className="rounded-full bg-stone-100 px-3 py-1 font-mono text-sm dark:bg-stone-800">
+              <button
+                key={s}
+                type="button"
+                onClick={() => fillNext(s)}
+                className="rounded-full bg-stone-100 px-3 py-1 font-mono text-sm dark:bg-stone-800"
+              >
                 {s}
               </button>
             ))}
@@ -122,7 +137,11 @@ export function RunoutPanel({ candidates, onRanked }: { candidates: SearchResult
         </div>
       )}
 
-      {done < ids.length && <p className="text-xs text-stone-500">Checking runouts on Discogs: {done} of {ids.length}</p>}
+      {done < ids.length && (
+        <p className="text-xs text-stone-500">
+          Checking runouts on Discogs: {done} of {ids.length}
+        </p>
+      )}
     </Card>
   )
 }

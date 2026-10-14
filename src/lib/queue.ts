@@ -12,7 +12,17 @@ import { mergeMetadata, planFieldWrites, type Metadata } from './metadata'
 
 export function summaryFromSearch(r: SearchResult): ReleaseSummary {
   const c = toCard(r)
-  return { id: c.id, masterId: c.masterId, title: c.title, artist: c.artist, thumb: c.thumb, label: c.label, catno: c.catno, year: c.year, format: c.format }
+  return {
+    id: c.id,
+    masterId: c.masterId,
+    title: c.title,
+    artist: c.artist,
+    thumb: c.thumb,
+    label: c.label,
+    catno: c.catno,
+    year: c.year,
+    format: c.format,
+  }
 }
 
 // ---- adding to the queue ----
@@ -32,7 +42,15 @@ export async function enqueueCsv(rows: ImportRow[], plan: ImportPlan, now = Date
       createdAt: now + i, // keeps file order
       source: 'csv',
       status: 'ready',
-      release: { id: r.releaseId, title: r.title || `Release ${r.releaseId}`, artist: r.artist, label: r.label, catno: r.catno, year: r.year, format: r.format },
+      release: {
+        id: r.releaseId,
+        title: r.title || `Release ${r.releaseId}`,
+        artist: r.artist,
+        label: r.label,
+        catno: r.catno,
+        year: r.year,
+        format: r.format,
+      },
       folderId: r.folderName ? plan.folderMap[r.folderName]?.id : undefined,
       rating: r.rating,
       fields,
@@ -72,10 +90,22 @@ export async function lookupPending(lookup: (barcode: string) => Promise<LookupR
     try {
       const r = await lookup(item.barcode ?? '')
       const results = r.kind === 'none' ? [] : r.results
-      const guess = r.kind === 'musicbrainz' ? `${r.mb.artist} – ${r.mb.title}` : r.kind === 'none' && r.mb[0] ? `${r.mb[0].artist} – ${r.mb[0].title}` : undefined
+      const guess =
+        r.kind === 'musicbrainz'
+          ? `${r.mb.artist} – ${r.mb.title}`
+          : r.kind === 'none' && r.mb[0]
+            ? `${r.mb[0].artist} – ${r.mb[0].title}`
+            : undefined
       const via = r.kind === 'none' ? undefined : r.kind
       if (results.length === 1) {
-        await db.queue.update(item.id!, { status: 'ready', candidates: results, via, guess, release: summaryFromSearch(results[0]), raw: results[0] })
+        await db.queue.update(item.id!, {
+          status: 'ready',
+          candidates: results,
+          via,
+          guess,
+          release: summaryFromSearch(results[0]),
+          raw: results[0],
+        })
       } else if (results.length > 1) {
         await db.queue.update(item.id!, { status: 'choose', candidates: results, via, guess })
       } else {
@@ -145,7 +175,10 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       }
 
       if (item.raw) await db.collection.put({ ...itemFromSearch(item.raw, instanceId, folderId), fields: saved })
-      await db.queue.update(item.id!, { status: 'added', warning: problems.length ? `Added, but some details didn't save: ${problems[0]}` : undefined })
+      await db.queue.update(item.id!, {
+        status: 'added',
+        warning: problems.length ? `Added, but some details didn't save: ${problems[0]}` : undefined,
+      })
       added++
     } catch (e) {
       if (e instanceof OfflineError) {
@@ -163,7 +196,11 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
 // Turns the batch's shared details plus each record's own into field values.
 // CSV rows already carry their own fields and are left alone.
 export async function applyBatchDetails(shared: Metadata, matches: FieldMatch[], currency: string) {
-  const ready = await db.queue.where('status').equals('ready').filter((i) => i.source !== 'csv').toArray()
+  const ready = await db.queue
+    .where('status')
+    .equals('ready')
+    .filter((i) => i.source !== 'csv')
+    .toArray()
   for (const item of ready) {
     const plan = planFieldWrites(mergeMetadata(shared, item.meta), matches, { currency })
     await db.queue.update(item.id!, { fields: plan.writes, dropped: plan.dropped })

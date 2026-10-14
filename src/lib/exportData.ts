@@ -23,13 +23,17 @@ export async function importLocalData(file: unknown): Promise<number> {
     throw new Error("This doesn't look like a Platter export.")
   }
   let count = 0
-  await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
-    for (const name of TABLES) {
-      const rows = f.tables?.[name]
-      if (!Array.isArray(rows)) continue
-      await db.table(name).bulkPut(rows)
-      count += rows.length
-    }
-  })
+  await db.transaction(
+    'rw',
+    TABLES.map((t) => db.table(t)),
+    async () => {
+      for (const name of TABLES) {
+        const rows = f.tables?.[name]
+        if (!Array.isArray(rows)) continue
+        await db.table(name).bulkPut(rows)
+        count += rows.length
+      }
+    },
+  )
   return count
 }

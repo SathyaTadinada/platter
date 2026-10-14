@@ -113,12 +113,15 @@ function FieldRow({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-semibold">{spec.name}</p>
           <p className="text-sm text-stone-600 dark:text-stone-400">{spec.why}</p>
-          {field && source === 'name' && field.name !== spec.name && <p className="text-sm text-stone-500">Using your field "{field.name}".</p>}
+          {field && source === 'name' && field.name !== spec.name && (
+            <p className="text-sm text-stone-500">Using your field "{field.name}".</p>
+          )}
           {!field && source === 'none' && <p className="text-sm text-stone-500">{spec.setup}</p>}
           {!field && source === 'manual' && <p className="text-sm text-stone-500">Turned off.</p>}
           {wrongType && (
             <p className="text-sm text-amber-700 dark:text-amber-400">
-              This field is a {field.type === 'dropdown' ? 'Dropdown' : 'Text Area'}; Platter expects a {spec.type === 'dropdown' ? 'Dropdown' : 'Text Area'}.
+              This field is a {field.type === 'dropdown' ? 'Dropdown' : 'Text Area'}; Platter expects a{' '}
+              {spec.type === 'dropdown' ? 'Dropdown' : 'Text Area'}.
             </p>
           )}
           <label className="block pt-1">
