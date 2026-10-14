@@ -7,6 +7,9 @@ import App from './App'
 import { applyAccent } from './lib/accent'
 import { applyTheme, watchSystemTheme } from './lib/theme'
 
+if ((navigator as { standalone?: boolean }).standalone || matchMedia('(display-mode: standalone)').matches)
+  document.documentElement.classList.add('standalone')
+
 applyAccent()
 applyTheme()
 watchSystemTheme()

@@ -13,6 +13,9 @@
   }
 }
 
+/* Installed to the home screen (class set in main.tsx; iOS doesn't always match display-mode) */
+@custom-variant standalone (&:where(.standalone, .standalone *));
+
 @theme {
   --color-accent-50: #fffbeb;
   --color-accent-100: #fef3c7;
