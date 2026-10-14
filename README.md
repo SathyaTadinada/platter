@@ -4,7 +4,7 @@ Scan your records and add them to your Discogs collection. Platter runs entirely
 
 Work in progress.
 
-Platter uses the Discogs API but is not affiliated with, sponsored or endorsed by Discogs.
+This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. ‘Discogs’ is a trademark of Zink Media, LLC.
 
 ## Development
 
