@@ -31,14 +31,16 @@ export function Identifiers({ identifiers }: { identifiers: Identifier[] }) {
               type="button"
               onClick={() => copy(id.value)}
               title="Copy"
-              className="group flex w-full items-baseline gap-3 px-4 py-2.5 text-left hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+              className="group flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
             >
-              <span className="w-32 shrink-0 text-sm text-stone-500">
-                {id.type}
-                {id.description && <span className="block text-xs">{id.description}</span>}
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs text-stone-500">
+                  {id.type}
+                  {id.description && ` · ${id.description}`}
+                </span>
+                <span className="mt-0.5 block font-mono text-sm break-words">{value}</span>
               </span>
-              <span className="min-w-0 flex-1 text-right font-mono text-sm break-words">{value}</span>
-              <Copy size={14} className="shrink-0 self-center text-stone-500 opacity-60 group-hover:opacity-100" aria-hidden />
+              <Copy size={16} className="shrink-0 text-stone-500 opacity-60 group-hover:opacity-100" aria-hidden />
             </button>
           </li>
         )

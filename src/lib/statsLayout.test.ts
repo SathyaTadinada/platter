@@ -10,11 +10,12 @@ describe('value layout', () => {
     expect(normalize(null)).toEqual(defaultLayout())
   })
 
-  it('moves a section one place, staying in bounds', () => {
+  it('moves a section to a new position, staying in bounds', () => {
     const l = defaultLayout()
-    expect(move(l, 'paid', -1).order.slice(0, 2)).toEqual(['paid', 'overTime'])
+    expect(move(l, 'paid', 0).order.slice(0, 2)).toEqual(['paid', 'overTime'])
+    expect(move(l, 'overTime', 3).order.slice(0, 4)).toEqual(['paid', 'month', 'top', 'overTime'])
     expect(move(l, 'overTime', -1)).toBe(l)
-    expect(move(l, 'breakdown', 1)).toBe(l)
+    expect(move(l, 'breakdown', 6)).toBe(l)
   })
 
   it('hides and shows', () => {

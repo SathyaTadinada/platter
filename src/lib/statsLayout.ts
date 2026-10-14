@@ -23,12 +23,11 @@ export function normalize(l: Partial<Layout> | null | undefined): Layout {
   return { order: [...new Set(order)], hidden: [...new Set(hidden)] }
 }
 
-export function move(l: Layout, key: SectionKey, by: -1 | 1): Layout {
-  const order = [...l.order]
-  const i = order.indexOf(key)
-  const j = i + by
-  if (i < 0 || j < 0 || j >= order.length) return l
-  ;[order[i], order[j]] = [order[j], order[i]]
+// move a section to another position, shifting the ones in between
+export function move(l: Layout, key: SectionKey, to: number): Layout {
+  const order = l.order.filter((k) => k !== key)
+  if (order.length === l.order.length || to < 0 || to > order.length) return l
+  order.splice(to, 0, key)
   return { ...l, order }
 }
 
