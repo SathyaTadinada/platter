@@ -5,12 +5,14 @@
 import { header, signParams } from './oauth'
 
 type RateLimiter = { limit(opts: { key: string }): Promise<{ success: boolean }> }
+type Fetcher = { fetch(req: Request): Promise<Response> }
 
 interface Env {
   DISCOGS_CONSUMER_KEY: string
   DISCOGS_CONSUMER_SECRET: string
   SIGN_LIMITER: RateLimiter
   AUTH_LIMITER: RateLimiter
+  ASSETS: Fetcher
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -100,6 +102,14 @@ async function sign(req: Request, env: Env): Promise<Response> {
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(req.url)
+    if (pathname.startsWith('/assets/')) {
+      // A file that isn't there (an old build's chunk, or a new one mid-deploy) would
+      // otherwise get the app's index.html, with the year-long cache header assets
+      // get, and the browser would keep using that page as the script.
+      const res = await env.ASSETS.fetch(req)
+      if (!res.headers.get('Content-Type')?.startsWith('text/html')) return res
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
+    }
     switch (pathname) {
       case '/api/sign':
         return sign(req, env)
