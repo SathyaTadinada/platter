@@ -39,7 +39,7 @@ export function FilterSheet({ facets, filters, count, onChange, onClose }: Props
       </div>
 
       <div className="min-h-0 flex-auto space-y-6 overflow-y-auto px-5 py-4">
-        <Group title="Folder" options={facets.folder} selected={filters.folder !== undefined ? String(filters.folder) : undefined} onPick={(v) => set('folder', Number(v))} hideSingle />
+        <Group title="Crate" options={facets.folder} selected={filters.folder !== undefined ? String(filters.folder) : undefined} onPick={(v) => set('folder', Number(v))} hideSingle />
         <Group title="Format" options={facets.format} selected={filters.format} onPick={(v) => set('format', v)} hideSingle />
         <Group title="Format details" options={facets.tag} selected={filters.tag} onPick={(v) => set('tag', v)} />
         <Group title="Genre" options={facets.genre} selected={filters.genre} onPick={(v) => set('genre', v)} />

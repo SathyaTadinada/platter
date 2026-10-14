@@ -174,7 +174,7 @@ export function Batch() {
         <div className="sticky bottom-3 z-10 mt-4">
           <div className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
             <label className="flex items-center justify-between gap-3 text-sm">
-              <span className="shrink-0 font-medium">Add to folder</span>
+              <span className="shrink-0 font-medium">Add to crate</span>
               <select
                 value={folderId ?? ''}
                 onChange={(e) => setFolderId(Number(e.target.value))}
@@ -189,7 +189,7 @@ export function Batch() {
               </select>
             </label>
             {groups.ready.some((i) => i.source === 'csv' && i.folderId) && (
-              <p className="text-xs text-stone-500">Imported records whose folder name matched one of yours go to that folder instead.</p>
+              <p className="text-xs text-stone-500">Imported records go to the crate named in the file when you have one.</p>
             )}
             {readyWanted > 0 && (
               <label className="flex items-center gap-2 text-sm">

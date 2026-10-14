@@ -11,7 +11,7 @@ import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollect
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { discogsUrl } from '../lib/format'
-import { Cover } from './Library'
+import { Cover } from './Collection'
 
 export function Record({ id }: { id: string }) {
   const instanceId = Number(id)
@@ -129,7 +129,7 @@ export function Record({ id }: { id: string }) {
           <div className="mt-6">
             <Section title="Your copy">
               <div className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
-                <FieldRow label="Folder">
+                <FieldRow label="Crate">
                   <select
                     value={item.folderId}
                     onChange={(e) => moveTo(Number(e.target.value))}
@@ -157,7 +157,7 @@ export function Record({ id }: { id: string }) {
                 <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
                   {[...related.copies, ...related.pressings].map((o) => (
                     <li key={o.instanceId}>
-                      <Link href={`/library/${o.instanceId}`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                      <Link href={`/collection/${o.instanceId}`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
                         <Cover item={o} small className="size-11 shrink-0 rounded-md" />
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{o.releaseId === item.releaseId ? 'Another copy of this pressing' : o.format || 'Another pressing'}</p>
@@ -171,18 +171,14 @@ export function Record({ id }: { id: string }) {
             ) : null}
 
             <Section title="Tracklist">
-              {release.loading && !r ? <Spinner label="Loading tracklist" /> : r ? <Tracklist release={r} /> : <p className="text-sm text-stone-500">Couldn't load the tracklist.</p>}
+              {release.loading && !r ? <Spinner label="Loading tracklist" /> : r ? <Tracklist release={r} /> : <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>}
             </Section>
 
             <Section>
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <a href={url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 font-medium underline underline-offset-2">
-                  View on Discogs <ExternalIcon size={14} aria-hidden />
-                </a>
-                <a href={url} target="_blank" rel="noopener" className="text-stone-500 underline underline-offset-2">
-                  Data provided by Discogs.
-                </a>
-              </div>
+              <a href={url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-stone-500 underline underline-offset-2">
+                Data provided by Discogs.
+                <ExternalIcon size={14} aria-hidden />
+              </a>
             </Section>
 
             <Section>
@@ -199,7 +195,11 @@ export function Record({ id }: { id: string }) {
                   </div>
                 </div>
               ) : (
-                <Button variant="ghost" className="w-full text-red-600! dark:text-red-400!" onClick={() => setConfirmRemove(true)}>
+                <Button
+                  variant="ghost"
+                  className="w-full text-red-600! hover:bg-red-50! active:bg-red-100! dark:text-red-400! dark:hover:bg-red-950/40! dark:active:bg-red-950/60!"
+                  onClick={() => setConfirmRemove(true)}
+                >
                   Remove from collection
                 </Button>
               )}

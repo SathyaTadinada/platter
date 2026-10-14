@@ -34,7 +34,8 @@ function route(url: string, method: string): Response {
     if (url.includes('catno=')) return json(searchCatno)
     return json(searchTitle)
   }
-  if (method === 'GET' && /api\.discogs\.com\/releases\/\d+$/.test(url)) return json(release)
+  // only one release is recorded; others report no data rather than borrowing its tracklist
+  if (method === 'GET' && /api\.discogs\.com\/releases\/\d+$/.test(url)) return url.endsWith(`/${release.id}`) ? json(release) : json({ message: 'Not in demo data' }, 404)
   if (method === 'POST' && /\/releases\/\d+$/.test(url)) return json({ instance_id: Date.now(), resource_url: url }, 201)
   if (method === 'POST' || method === 'DELETE') return json(null, 204)
   if (url.includes('/collection/folders/0/releases')) return json(collection)

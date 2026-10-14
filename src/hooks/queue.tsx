@@ -83,7 +83,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
         if (r.failed) toast(`Added ${n(r.added)}. ${r.failed} couldn't be added; see the batch for details.`, { tone: 'error' })
         else if (r.added) toast(`Added ${n(r.added)} to your collection.`, { tone: 'success' })
-        // CSV rows have no search result to build library entries from, so refresh
+        // CSV rows have no search result to build collection entries from, so refresh
         if (hadCsv && r.added) sync(true)
       } finally {
         busy.current = false

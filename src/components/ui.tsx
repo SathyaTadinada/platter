@@ -144,7 +144,9 @@ export function Row({ label, detail, value, trailing, href, onClick, danger }: R
     </>
   )
   const cls = 'flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left'
-  const interactive = 'hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800'
+  const interactive = danger
+    ? 'hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-950/40 dark:active:bg-red-950/60'
+    : 'hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800'
   return (
     <li>
       {href ? (

@@ -54,7 +54,7 @@ export function Import() {
     <Screen title="Import a CSV" back="/settings">
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
-          Add every record from a Discogs collection export to your collection, with folders, conditions, notes and ratings where they match yours. It
+          Add every record from a Discogs collection export to your collection, with crates, conditions, notes and ratings where they match yours. It
           works with your own export or one someone shared with you.
         </p>
         <p className="text-sm text-stone-500">
@@ -115,10 +115,10 @@ export function Import() {
                 </li>
               )}
               {rated > 0 && <li>Copies {plural(rated, 'rating')}</li>}
-              {matchedFolders.length > 0 && <li>Uses your folders: {matchedFolders.map(([, f]) => f.name).join(', ')}</li>}
+              {matchedFolders.length > 0 && <li>Uses your crates: {matchedFolders.map(([, f]) => f.name).join(', ')}</li>}
               {loaded.plan.missingFolders.length > 0 && (
                 <li className="text-stone-500">
-                  No folder called {loaded.plan.missingFolders.join(', ')}; those go to the folder you pick in the batch.
+                  No crate called {loaded.plan.missingFolders.join(', ')}; those go to the crate you pick in the batch.
                 </li>
               )}
             </ul>

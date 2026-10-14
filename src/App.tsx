@@ -16,7 +16,7 @@ import { About } from './screens/About'
 import { Batch } from './screens/Batch'
 import { Import } from './screens/Import'
 import { Results } from './screens/Results'
-import { Library } from './screens/Library'
+import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
@@ -86,8 +86,8 @@ function Routes({ error }: { error?: string }) {
       <QueueProvider>
         <Shell>
           <Switch>
-            <Route path="/" component={Library} />
-            <Route path="/library/:id">{(p) => <Record id={p.id} />}</Route>
+            <Route path="/" component={Collection} />
+            <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
             <Route path="/scan" component={Scan} />
             <Route path="/batch" component={Batch} />
             <Route path="/import" component={Import} />
@@ -96,7 +96,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/setup" component={Setup} />
             <Route path="/settings" component={Settings} />
             <Route path="/about" component={About} />
-            <Route component={Library} />
+            <Route component={Collection} />
           </Switch>
         </Shell>
       </QueueProvider>

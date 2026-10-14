@@ -138,7 +138,7 @@ export function AddSheet({ card, onClose, onScanNext }: Props) {
             {!o?.inWantlist && o?.wantsOtherPressing && <Notice tone="info">A different pressing of this is on your wantlist.</Notice>}
 
             <label className="block">
-              <span className="mb-1 block text-sm font-medium">Folder</span>
+              <span className="mb-1 block text-sm font-medium">Crate</span>
               <select
                 className="min-h-12 w-full rounded-xl border border-stone-300 bg-transparent px-3 dark:border-stone-700"
                 value={folderId ?? ''}

@@ -33,7 +33,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         const message = (e as Error).message
         setState({ ...idle, error: message })
-        toast(`Couldn't update your library from Discogs. ${message}`, { tone: 'error', action: { label: 'Retry', onClick: () => syncRef.current(true) } })
+        toast(`Couldn't update your collection from Discogs. ${message}`, { tone: 'error', action: { label: 'Retry', onClick: () => syncRef.current(true) } })
       } finally {
         busy.current = false
       }

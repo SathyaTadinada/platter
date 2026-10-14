@@ -39,7 +39,7 @@ function loadView(): View {
   }
 }
 
-export function Library() {
+export function Collection() {
   const { client, username } = useSignedIn()
   const sync = useSync()
   const search = useSearch()
@@ -101,7 +101,7 @@ export function Library() {
   function shuffle() {
     if (!filtered.length) return
     const pick = filtered[Math.floor(Math.random() * filtered.length)]
-    navigate(`/library/${pick.instanceId}`)
+    navigate(`/collection/${pick.instanceId}`)
   }
 
   function exportCsv() {
@@ -233,11 +233,11 @@ export function Library() {
   } else if (!fresh) {
     // Discogs asks apps not to show data more than 6 hours old
     body = sync.running ? (
-      <Spinner label={sync.total > 1 ? `Updating your library (${sync.done} of ${sync.total})` : 'Updating your library'} />
+      <Spinner label={sync.total > 1 ? `Updating your collection (${sync.done} of ${sync.total})` : 'Updating your collection'} />
     ) : (
       <div className="space-y-3 py-6">
         <Notice tone={sync.error ? 'error' : 'info'}>
-          {sync.error ? `Couldn't update your library: ${sync.error}` : 'Your library needs a refresh from Discogs.'}
+          {sync.error ? `Couldn't update your collection: ${sync.error}` : 'Your collection needs a refresh from Discogs.'}
         </Notice>
         <Button onClick={() => sync.sync(true)}>Refresh now</Button>
       </div>
@@ -312,7 +312,7 @@ export function Library() {
 
   return (
     <Screen
-      title={selected ? (selected.size ? `${selected.size} selected` : 'Select records') : 'Library'}
+      title={selected ? (selected.size ? `${selected.size} selected` : 'Select records') : 'Collection'}
       width="full"
       actions={actions}
       toolbar={items?.length && fresh ? toolbar : undefined}
@@ -333,7 +333,7 @@ function Tap({ item, onSelect, selected, className, children }: Selectable & { i
       {children}
     </button>
   ) : (
-    <Link href={`/library/${item.instanceId}`} className={className}>
+    <Link href={`/collection/${item.instanceId}`} className={className}>
       {children}
     </Link>
   )
@@ -430,7 +430,7 @@ function LoadMore({ onVisible }: { onVisible: () => void }) {
 function ActiveFilters({ filters, facets, onChange }: { filters: Filters; facets: ReturnType<typeof buildFacets> | null; onChange: (f: Filters) => void }) {
   const chips: { key: string; label: string; clear: () => void }[] = []
   const folderName = facets?.folder.find((o) => o.value === String(filters.folder))?.label
-  if (filters.folder !== undefined) chips.push({ key: 'folder', label: folderName ?? 'Folder', clear: () => onChange({ ...filters, folder: undefined }) })
+  if (filters.folder !== undefined) chips.push({ key: 'folder', label: folderName ?? 'Crate', clear: () => onChange({ ...filters, folder: undefined }) })
   for (const k of ['format', 'tag', 'genre', 'style'] as const) {
     const v = filters[k]
     if (v) chips.push({ key: k, label: v, clear: () => onChange({ ...filters, [k]: undefined }) })
@@ -514,14 +514,14 @@ function BulkBar({
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <label className="relative">
-              <span className={buttonClass('secondary', 'w-full')}>Move to…</span>
+              <span className={buttonClass('secondary', 'w-full')}>Move to crate…</span>
               <select
-                aria-label="Move to folder"
+                aria-label="Move to crate"
                 value=""
                 onChange={(e) => e.target.value && run('move', Number(e.target.value))}
                 className="absolute inset-0 opacity-0"
               >
-                <option value="">Move to…</option>
+                <option value="">Move to crate…</option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}

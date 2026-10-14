@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
 
 const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: '/', label: 'Library', Icon: LibraryBig },
+  { href: '/', label: 'Collection', Icon: LibraryBig },
   { href: '/scan', label: 'Scan', Icon: ScanBarcode },
   { href: '/search', label: 'Search', Icon: Search },
   { href: '/settings', label: 'Settings', Icon: Settings2 },
@@ -11,7 +11,7 @@ const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
 
 function useCurrent() {
   const [path] = useLocation()
-  return (href: string) => (href === '/' ? path === '/' || path.startsWith('/library') : path.startsWith(href))
+  return (href: string) => (href === '/' ? path === '/' || path.startsWith('/collection') : path.startsWith(href))
 }
 
 // Phones and tablets: tab bar at the bottom, part of the layout (not fixed),

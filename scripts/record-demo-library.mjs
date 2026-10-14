@@ -41,7 +41,7 @@ const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
 const pick = (arr) => arr[Math.floor(rand() * arr.length)]
 
 const grades = ['Mint (M)', 'Near Mint (NM or M-)', 'Near Mint (NM or M-)', 'Very Good Plus (VG+)', 'Very Good Plus (VG+)', 'Very Good (VG)']
-const shelves = ['Shelf A', 'Shelf B', 'Crate 1', 'Living room']
+const shelves = ['Shelf A', 'Shelf B', 'Cabinet', 'Living room']
 
 const releases = []
 for (const [i, [artist, title]] of albums.entries()) {

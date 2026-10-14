@@ -6,15 +6,15 @@ Live at [platter.tadinada.com](https://platter.tadinada.com).
 
 ## What it does
 
-- Browse your collection: grid or list, search across artist, title, label, genre and your own notes, filter by folder, format, genre, style, decade, rating or any custom field, sort and shuffle
-- Record pages with tracklist, rating, folder and editable custom fields
+- Browse your collection: grid or list, search across artist, title, label, genre and your own notes, filter by crate (Discogs folders), format, genre, style, decade, rating or any custom field, sort and shuffle
+- Record pages with tracklist, rating, crate and editable custom fields
 - Export any filtered view as a CSV in the same columns Discogs uses
 - Scan a barcode with your phone camera, or type a barcode, catalog number, or artist and title
 - Shows matching releases with cover, label, catalog number, country, year and format
 - Warns if you already own that pressing, notes if you own another pressing of the same album, and flags wantlist hits (with an option to remove them after adding)
 - Falls back to MusicBrainz when Discogs doesn't know a barcode
 - Batch mode: scan one record after another without stopping. Scans wait in an on-device queue that survives reloads and works offline, get looked up in the background, and are added together after a quick review
-- Import a Discogs collection export (CSV) into your collection, with folders, conditions, notes and ratings, for moving collections between accounts or sharing them
+- Import a Discogs collection export (CSV) into your collection, with crates, conditions, notes and ratings, for moving collections between accounts or sharing them
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
 
 ## How it works
