@@ -1,5 +1,5 @@
-import { Camera, Flashlight, FlashlightOff, Keyboard, ScanBarcode, SwitchCamera } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { Flashlight, FlashlightOff, ImageUp, Keyboard, ScanBarcode, SwitchCamera } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
 import { Button, buttonClass, Notice, Screen } from '../components/ui'
@@ -11,30 +11,81 @@ import { FieldNudge } from './FieldNudge'
 // the session so "Scan next" goes straight back to scanning.
 let cameraWanted = false
 
+// A still image being read: a photo the user picked, or a frame from the shutter
+type Still = { url: string; status: 'reading' | 'failed' }
+
 export function Scan() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [, navigate] = useLocation()
   const [on, setOn] = useState(cameraWanted)
+  const [still, setStill] = useState<Still | null>(null)
   const onCode = useCallback((code: string) => navigate(`/results?barcode=${code}`), [navigate])
   const scanner = useScanner(videoRef, onCode, on)
   const { state, torch, zoom, cameras } = scanner
+
+  const stillUrl = still?.url
+  useEffect(() => () => void (stillUrl && URL.revokeObjectURL(stillUrl)), [stillUrl])
 
   const start = () => {
     cameraWanted = true
     setOn(true)
   }
 
+  async function readStill(image: Blob) {
+    setStill({ url: URL.createObjectURL(image), status: 'reading' })
+    try {
+      const { decodeImage } = await import('../scanner/zxing')
+      const code = await decodeImage(image)
+      if (code) return onCode(code)
+    } catch {
+      // fall through to the failed state
+    }
+    setStill((s) => s && { ...s, status: 'failed' })
+  }
+
+  // Grabs the current frame at full resolution; slower to read than the live
+  // scan but tries harder (rotation, both binarizers)
+  function shutter() {
+    const v = videoRef.current
+    if (!v?.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = v.videoWidth
+    canvas.height = v.videoHeight
+    canvas.getContext('2d')!.drawImage(v, 0, 0)
+    canvas.toBlob((b) => b && readStill(b), 'image/jpeg', 0.92)
+  }
+
   const blocked = state === 'denied' || state === 'unavailable' || state === 'error'
-  const live = state === 'scanning'
+  const live = state === 'scanning' && !still
+
+  const chooseButton = (
+    <Button variant="secondary" className="w-full" onClick={() => fileRef.current?.click()}>
+      <ImageUp size={20} aria-hidden />
+      Choose a photo
+    </Button>
+  )
 
   return (
     <Screen title="Scan" width="wide">
+      {/* no `capture` attribute, so phones offer camera, photo library and files */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) readStill(f)
+          e.target.value = ''
+        }}
+      />
       <div className="lg:grid lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-8">
         <div>
           <div className="relative mx-auto aspect-[3/4] max-h-[60dvh] w-full overflow-hidden rounded-3xl bg-stone-900 lg:max-h-none">
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
 
-            {!on && (
+            {!on && !still && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center text-stone-300">
                 <ScanBarcode size={48} aria-hidden />
                 <p className="text-sm">Point your camera at the barcode on the back of the sleeve.</p>
@@ -51,40 +102,70 @@ export function Scan() {
             )}
             {on && state === 'starting' && <p className="absolute inset-0 flex items-center justify-center text-stone-300">Starting camera…</p>}
 
+            {still && (
+              <div className="absolute inset-0 bg-stone-950">
+                <img src={still.url} alt="" className="size-full object-contain" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 p-6 text-center text-white">
+                  {still.status === 'reading' ? (
+                    <>
+                      <span className="size-12 animate-spin rounded-full border-4 border-white/30 border-t-white" aria-hidden />
+                      <p className="font-medium">Reading barcode…</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">No barcode found in that image.</p>
+                      <p className="text-sm text-white/80">Fill the frame with the barcode and keep it sharp, or type the number in.</p>
+                      <Button variant="secondary" onClick={() => setStill(null)}>
+                        {on ? 'Back to camera' : 'OK'}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {live && (
-              <div className="absolute inset-x-3 bottom-3 flex items-center justify-end gap-2">
-                {zoom.levels.length > 0 && (
-                  <button type="button" onClick={scanner.cycleZoom} aria-label="Zoom" className="min-w-12 rounded-full bg-black/55 px-3 py-2.5 text-sm font-semibold text-white">
-                    {zoom.value}×
-                  </button>
-                )}
+              <>
+                <button
+                  type="button"
+                  onClick={shutter}
+                  aria-label="Take photo"
+                  className="absolute bottom-4 left-1/2 size-16 -translate-x-1/2 rounded-full border-4 border-white bg-white/25 transition active:scale-90 active:bg-white/60"
+                />
+                <div className="absolute right-3 bottom-5 flex items-center gap-2">
+                  {zoom.levels.length > 0 && (
+                    <button type="button" onClick={scanner.cycleZoom} aria-label="Zoom" className="min-w-11 rounded-full bg-black/55 px-2.5 py-2.5 text-sm font-semibold text-white">
+                      {zoom.value}×
+                    </button>
+                  )}
+                  {cameras.length > 1 && (
+                    <button type="button" onClick={scanner.switchCamera} aria-label="Switch camera" className="rounded-full bg-black/55 p-2.5 text-white">
+                      <SwitchCamera size={22} />
+                    </button>
+                  )}
+                </div>
                 {torch.supported && (
                   <button
                     type="button"
                     onClick={scanner.toggleTorch}
                     aria-pressed={torch.on}
                     aria-label="Flashlight"
-                    className={`rounded-full p-2.5 ${torch.on ? 'bg-accent-500 text-stone-950' : 'bg-black/55 text-white'}`}
+                    className={`absolute bottom-5 left-3 rounded-full p-2.5 ${torch.on ? 'bg-accent-500 text-stone-950' : 'bg-black/55 text-white'}`}
                   >
                     {torch.on ? <Flashlight size={22} /> : <FlashlightOff size={22} />}
                   </button>
                 )}
-                {cameras.length > 1 && (
-                  <button type="button" onClick={scanner.switchCamera} aria-label="Switch camera" className="rounded-full bg-black/55 p-2.5 text-white">
-                    <SwitchCamera size={22} />
-                  </button>
-                )}
-              </div>
+              </>
             )}
 
-            {blocked && (
+            {blocked && !still && (
               <div className="absolute inset-0 flex items-center p-4">
                 <Notice tone="warn">
                   {state === 'denied'
-                    ? 'Camera access is off. Allow it for this site in your browser settings, or take a photo or type the barcode instead.'
+                    ? 'Camera access is off. Allow it for this site in your browser settings, or choose a photo or type the barcode instead.'
                     : state === 'error'
                       ? 'The scanner stopped unexpectedly. Reload the page, or type the barcode instead.'
-                      : 'No camera available. Take a photo or type the barcode instead.'}
+                      : 'No camera available. Choose a photo or type the barcode instead.'}
                 </Notice>
               </div>
             )}
@@ -96,70 +177,20 @@ export function Scan() {
               <Keyboard size={20} aria-hidden />
               Type it in
             </Link>
-            <PhotoButton />
+            {chooseButton}
           </div>
         </div>
 
         <div className="mt-6 space-y-4 lg:mt-0">
           <div className="hidden space-y-4 lg:block">
             <ManualBarcode />
-            <PhotoButton />
+            {chooseButton}
           </div>
           <InstallHint />
           <FieldNudge />
         </div>
       </div>
     </Screen>
-  )
-}
-
-// Opens the phone's own camera app, which focuses up close far better than a
-// live browser stream, then decodes the still photo.
-function PhotoButton() {
-  const [, navigate] = useLocation()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
-
-  async function onFile(file: File) {
-    setBusy(true)
-    setFailed(false)
-    try {
-      const { decodeImage } = await import('../scanner/zxing')
-      const code = await decodeImage(file)
-      if (code) navigate(`/results?barcode=${code}`)
-      else setFailed(true)
-    } catch {
-      setFailed(true)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <>
-      <Button variant="secondary" className="w-full" disabled={busy} onClick={() => inputRef.current?.click()}>
-        <Camera size={20} aria-hidden />
-        {busy ? 'Reading…' : 'Take a photo'}
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) onFile(f)
-          e.target.value = ''
-        }}
-      />
-      {failed && (
-        <div className="col-span-2">
-          <Notice tone="warn">No barcode found in that photo. Fill the frame with the barcode and keep it sharp, or type the number in.</Notice>
-        </div>
-      )}
-    </>
   )
 }
 
