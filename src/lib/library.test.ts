@@ -54,7 +54,9 @@ describe('toLibraryItem', () => {
 
 describe('joinArtists', () => {
   it('spaces joiners like Discogs shows them', () => {
-    expect(joinArtists([{ name: 'Frédéric Chopin', join: ',' }, { name: 'Christoph Eschenbach' }])).toBe('Frédéric Chopin, Christoph Eschenbach')
+    expect(joinArtists([{ name: 'Frédéric Chopin', join: ',' }, { name: 'Christoph Eschenbach' }])).toBe(
+      'Frédéric Chopin, Christoph Eschenbach',
+    )
     expect(joinArtists([{ name: 'Simon', join: '&' }, { name: 'Garfunkel' }])).toBe('Simon & Garfunkel')
     expect(joinArtists([{ name: 'A', join: 'Feat.' }, { name: 'B' }])).toBe('A Feat. B')
     expect(joinArtists([{ name: 'A', join: '' }, { name: 'B (2)' }])).toBe('A, B')
@@ -143,6 +145,9 @@ describe('facets', () => {
   it('names folders and lists field values', () => {
     const f = facets(items, q(), folders, fields)
     expect(f.folder.map((o) => o.label).sort()).toEqual(['Shelf', 'Uncategorized'])
+    // empty crates are still listed
+    const withEmpty = facets(items, q(), [...folders, { id: 9, name: 'Empty', count: 0 }], fields)
+    expect(withEmpty.folder.find((o) => o.label === 'Empty')?.count).toBe(0)
     expect(f.fields.map((x) => x.field.name)).toContain('Location')
   })
 })
@@ -150,7 +155,10 @@ describe('facets', () => {
 describe('query in the URL', () => {
   it('round-trips', () => {
     const query = q({ q: 'blue note', sort: 'year', filters: { genre: 'Jazz', decade: 1950, rating: 3, fields: { 4: 'Shelf A' } } })
-    expect(parseQuery(serializeQuery(query))).toEqual({ ...query, filters: { ...query.filters, folder: undefined, format: undefined, tag: undefined, style: undefined } })
+    expect(parseQuery(serializeQuery(query))).toEqual({
+      ...query,
+      filters: { ...query.filters, folder: undefined, format: undefined, tag: undefined, style: undefined },
+    })
     expect(activeFilterCount(query.filters)).toBe(4)
   })
 

@@ -1,5 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowDownUp, Check, Disc3, Download, FileUp, LayoutGrid, List as ListIcon, ListChecks, RefreshCw, Search, Shuffle, SlidersHorizontal, X } from 'lucide-react'
+import {
+  ArrowDownUp,
+  Check,
+  Disc3,
+  Download,
+  FileUp,
+  LayoutGrid,
+  List as ListIcon,
+  ListChecks,
+  RefreshCw,
+  Search,
+  Shuffle,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance } from '../api/discogs/endpoints'
@@ -90,6 +104,7 @@ export function Collection() {
   const fresh = syncedAt !== undefined && Date.now() - syncedAt < SYNC_MAX_AGE
   const nFilters = activeFilterCount(query.filters)
   const searching = Boolean(query.q) || nFilters > 0
+  const onlyCrate = !query.q && nFilters === 1 && query.filters.folder !== undefined
 
   function toggleView() {
     const next = view === 'grid' ? 'list' : 'grid'
@@ -130,7 +145,12 @@ export function Collection() {
           className="min-h-11 w-full rounded-xl border border-stone-300 bg-white pr-9 pl-10 text-base dark:border-stone-700 dark:bg-stone-900 [&::-webkit-search-cancel-button]:hidden"
         />
         {text && (
-          <button type="button" aria-label="Clear search" onClick={() => setText('')} className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-400">
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setText('')}
+            className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-400"
+          >
             <X size={18} />
           </button>
         )}
@@ -163,7 +183,11 @@ export function Collection() {
           <SlidersHorizontal size={16} aria-hidden />
           Filters{nFilters ? ` · ${nFilters}` : ''}
         </button>
-        {items && <span className="ml-auto text-sm text-stone-500 tabular-nums">{searching ? `${filtered.length} of ${items.length}` : items.length}</span>}
+        {items && (
+          <span className="ml-auto text-sm text-stone-500 tabular-nums">
+            {searching ? `${filtered.length} of ${items.length}` : items.length}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -215,7 +239,9 @@ export function Collection() {
     </>
   )
 
-  const actions = selected ? selectActions : (
+  const actions = selected ? (
+    selectActions
+  ) : (
     <>
       <IconButton label="Pick a random record" onClick={shuffle} disabled={!filtered.length}>
         <Shuffle size={20} />
@@ -227,7 +253,12 @@ export function Collection() {
         label="More"
         items={[
           { label: 'Select records', icon: <ListChecks size={18} />, onSelect: () => setSelected(new Set()), disabled: !filtered.length },
-          { label: sync.running ? 'Refreshing…' : 'Refresh from Discogs', icon: <RefreshCw size={18} />, onSelect: () => sync.sync(true), disabled: sync.running },
+          {
+            label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
+            icon: <RefreshCw size={18} />,
+            onSelect: () => sync.sync(true),
+            disabled: sync.running,
+          },
           { label: 'Import a CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
           {
             label: searching ? `Export these ${filtered.length} as CSV` : 'Export as CSV',
@@ -274,8 +305,16 @@ export function Collection() {
   } else if (!filtered.length) {
     body = (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <p className="text-lg font-semibold">No matches</p>
-        <p className="text-stone-500">Try a different search or clear the filters.</p>
+        {onlyCrate ? (
+          <p className="text-lg font-semibold">
+            Nothing in {facets?.folder.find((o) => o.value === String(query.filters.folder))?.label ?? 'this crate'} yet
+          </p>
+        ) : (
+          <>
+            <p className="text-lg font-semibold">No matches</p>
+            <p className="text-stone-500">Try a different search or clear the filters.</p>
+          </>
+        )}
         <Button
           variant="secondary"
           onClick={() => {
@@ -297,13 +336,23 @@ export function Collection() {
             {view === 'grid' ? (
               <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {g.items.map((i) => (
-                  <GridTile key={i.instanceId} item={i} selected={selected?.has(i.instanceId)} onSelect={selected ? () => toggle(i.instanceId) : undefined} />
+                  <GridTile
+                    key={i.instanceId}
+                    item={i}
+                    selected={selected?.has(i.instanceId)}
+                    onSelect={selected ? () => toggle(i.instanceId) : undefined}
+                  />
                 ))}
               </ul>
             ) : (
               <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
                 {g.items.map((i) => (
-                  <ListRow key={i.instanceId} item={i} selected={selected?.has(i.instanceId)} onSelect={selected ? () => toggle(i.instanceId) : undefined} />
+                  <ListRow
+                    key={i.instanceId}
+                    item={i}
+                    selected={selected?.has(i.instanceId)}
+                    onSelect={selected ? () => toggle(i.instanceId) : undefined}
+                  />
                 ))}
               </ul>
             )}
@@ -311,7 +360,12 @@ export function Collection() {
         ))}
         {filtered.length > limit && <LoadMore onVisible={() => setLimit((n) => n + PAGE)} />}
         <footer className="mt-4 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
-          <a href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} target="_blank" rel="noopener" className="text-stone-500 underline underline-offset-2">
+          <a
+            href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
+            target="_blank"
+            rel="noopener"
+            className="text-stone-500 underline underline-offset-2"
+          >
             Data provided by Discogs.
           </a>
         </footer>
@@ -328,7 +382,15 @@ export function Collection() {
     >
       {body}
       {selected && selected.size > 0 && <BulkBar count={selected.size} folders={folders} onRun={bulk} />}
-      {filtersOpen && facets && <FilterSheet facets={facets} filters={query.filters} count={filtered.length} onChange={setFilters} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && facets && (
+        <FilterSheet
+          facets={facets}
+          filters={query.filters}
+          count={filtered.length}
+          onChange={setFilters}
+          onClose={() => setFiltersOpen(false)}
+        />
+      )}
     </Screen>
   )
 }
@@ -336,7 +398,13 @@ export function Collection() {
 type Selectable = { selected?: boolean; onSelect?: () => void }
 
 // In select mode a tap toggles the record instead of opening it
-function Tap({ item, onSelect, selected, className, children }: Selectable & { item: LibraryItem; className: string; children: React.ReactNode }) {
+function Tap({
+  item,
+  onSelect,
+  selected,
+  className,
+  children,
+}: Selectable & { item: LibraryItem; className: string; children: React.ReactNode }) {
   return onSelect ? (
     <button type="button" onClick={onSelect} aria-pressed={selected} className={`w-full text-left ${className}`}>
       {children}
@@ -410,7 +478,15 @@ function ListRow({ item, selected, onSelect }: { item: LibraryItem } & Selectabl
   )
 }
 
-export function Cover({ item, className = '', small }: { item: Pick<LibraryItem, 'cover' | 'thumb'>; className?: string; small?: boolean }) {
+export function Cover({
+  item,
+  className = '',
+  small,
+}: {
+  item: Pick<LibraryItem, 'cover' | 'thumb'>
+  className?: string
+  small?: boolean
+}) {
   const src = small ? (item.thumb ?? item.cover) : (item.cover ?? item.thumb)
   return src ? (
     <img src={src} alt="" loading="lazy" decoding="async" className={`bg-stone-200 object-cover dark:bg-stone-800 ${className}`} />
@@ -436,16 +512,31 @@ function LoadMore({ onVisible }: { onVisible: () => void }) {
 }
 
 // Chips for active filters, each removable
-function ActiveFilters({ filters, facets, onChange }: { filters: Filters; facets: ReturnType<typeof buildFacets> | null; onChange: (f: Filters) => void }) {
+function ActiveFilters({
+  filters,
+  facets,
+  onChange,
+}: {
+  filters: Filters
+  facets: ReturnType<typeof buildFacets> | null
+  onChange: (f: Filters) => void
+}) {
   const chips: { key: string; label: string; clear: () => void }[] = []
   const folderName = facets?.folder.find((o) => o.value === String(filters.folder))?.label
-  if (filters.folder !== undefined) chips.push({ key: 'folder', label: folderName ?? 'Crate', clear: () => onChange({ ...filters, folder: undefined }) })
+  if (filters.folder !== undefined)
+    chips.push({ key: 'folder', label: folderName ?? 'Crate', clear: () => onChange({ ...filters, folder: undefined }) })
   for (const k of ['format', 'tag', 'genre', 'style'] as const) {
     const v = filters[k]
     if (v) chips.push({ key: k, label: v, clear: () => onChange({ ...filters, [k]: undefined }) })
   }
-  if (filters.decade !== undefined) chips.push({ key: 'decade', label: filters.decade ? `${filters.decade}s` : 'Year unknown', clear: () => onChange({ ...filters, decade: undefined }) })
-  if (filters.rating) chips.push({ key: 'rating', label: `${'★'.repeat(filters.rating)}+`, clear: () => onChange({ ...filters, rating: undefined }) })
+  if (filters.decade !== undefined)
+    chips.push({
+      key: 'decade',
+      label: filters.decade ? `${filters.decade}s` : 'Year unknown',
+      clear: () => onChange({ ...filters, decade: undefined }),
+    })
+  if (filters.rating)
+    chips.push({ key: 'rating', label: `${'★'.repeat(filters.rating)}+`, clear: () => onChange({ ...filters, rating: undefined }) })
   for (const [id, v] of Object.entries(filters.fields)) {
     chips.push({
       key: `f${id}`,

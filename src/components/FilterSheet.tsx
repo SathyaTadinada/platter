@@ -33,26 +33,59 @@ export function FilterSheet({ facets, filters, count, onChange, onClose }: Props
         <h2 id="filters-title" className="text-lg font-bold">
           Filters
         </h2>
-        <button type="button" aria-label="Close" onClick={onClose} className="-mr-2 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800">
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="-mr-2 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800"
+        >
           <X size={20} />
         </button>
       </div>
 
       <div className="min-h-0 flex-auto space-y-6 overflow-y-auto px-5 py-4">
-        <Group title="Crate" options={facets.folder} selected={filters.folder !== undefined ? String(filters.folder) : undefined} onPick={(v) => set('folder', Number(v))} hideSingle />
+        <Group
+          title="Crate"
+          options={facets.folder}
+          selected={filters.folder !== undefined ? String(filters.folder) : undefined}
+          onPick={(v) => set('folder', Number(v))}
+          hideSingle
+        />
         <Group title="Format" options={facets.format} selected={filters.format} onPick={(v) => set('format', v)} hideSingle />
         <Group title="Format details" options={facets.tag} selected={filters.tag} onPick={(v) => set('tag', v)} />
         <Group title="Genre" options={facets.genre} selected={filters.genre} onPick={(v) => set('genre', v)} />
         <Group title="Style" options={facets.style} selected={filters.style} onPick={(v) => set('style', v)} />
-        <Group title="Decade" options={facets.decade} selected={filters.decade !== undefined ? String(filters.decade) : undefined} onPick={(v) => set('decade', Number(v))} />
-        <Group title="Rating" options={facets.rating} selected={filters.rating ? String(filters.rating) : undefined} onPick={(v) => set('rating', Number(v))} />
+        <Group
+          title="Decade"
+          options={facets.decade}
+          selected={filters.decade !== undefined ? String(filters.decade) : undefined}
+          onPick={(v) => set('decade', Number(v))}
+        />
+        <Group
+          title="Rating"
+          options={facets.rating}
+          selected={filters.rating ? String(filters.rating) : undefined}
+          onPick={(v) => set('rating', Number(v))}
+        />
         {facets.fields.map(({ field, options }) => (
-          <Group key={field.id} title={field.name} options={options} selected={filters.fields[field.id]} onPick={(v) => setField(field.id, v)} />
+          <Group
+            key={field.id}
+            title={field.name}
+            options={options}
+            selected={filters.fields[field.id]}
+            onPick={(v) => setField(field.id, v)}
+          />
         ))}
       </div>
 
       <div className="grid grid-cols-2 gap-2 border-t border-stone-200 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] dark:border-stone-800">
-        <Button variant="secondary" onClick={() => onChange({ fields: {} })}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            onChange({ fields: {} })
+            onClose()
+          }}
+        >
           Clear all
         </Button>
         <Button onClick={onClose}>{count === 1 ? 'Show 1 record' : `Show ${count} records`}</Button>
@@ -75,12 +108,11 @@ function Group({
   hideSingle?: boolean // nothing to choose between
 }) {
   const [all, setAll] = useState(false)
-  if (!options.length || (hideSingle && options.length < 2 && !selected)) return null
+  if ((!options.length && !selected) || (hideSingle && options.length < 2 && !selected)) return null
   const shown = all ? options : options.slice(0, SHOW)
   // keep the selected option visible even when it's past the cut
   if (selected && !shown.some((o) => o.value === selected)) {
-    const sel = options.find((o) => o.value === selected)
-    if (sel) shown.push(sel)
+    shown.push(options.find((o) => o.value === selected) ?? { value: selected, label: selected, count: 0 })
   }
   return (
     <section>
@@ -96,7 +128,9 @@ function Group({
               onClick={() => onPick(o.value)}
               disabled={!on && o.count === 0}
               className={`rounded-full px-3 py-1.5 text-sm transition disabled:opacity-40 ${
-                on ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950' : 'bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
+                on
+                  ? 'bg-stone-900 text-white dark:bg-accent-500 dark:text-stone-950'
+                  : 'bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
               }`}
             >
               {o.label} <span className={on ? 'opacity-70' : 'text-stone-500'}>{o.count}</span>

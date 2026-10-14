@@ -139,11 +139,7 @@ export const activeFilterCount = (f: Filters) =>
 
 // ---- filtering ----
 
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 export const decadeOf = (year: number) => (year ? Math.floor(year / 10) * 10 : 0)
 
@@ -198,7 +194,8 @@ const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensiti
 
 export function sortItems(items: LibraryItem[], sort: SortKey): LibraryItem[] {
   const out = [...items]
-  const tie = (a: LibraryItem, b: LibraryItem) => byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
+  const tie = (a: LibraryItem, b: LibraryItem) =>
+    byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
   const cmp: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
     added: (a, b) => b.dateAdded.localeCompare(a.dateAdded),
     'added-old': (a, b) => a.dateAdded.localeCompare(b.dateAdded),
@@ -257,7 +254,9 @@ export type FacetOption = { value: string; label: string; count: number }
 function count(values: string[][]): FacetOption[] {
   const m = new Map<string, number>()
   for (const vs of values) for (const v of new Set(vs)) m.set(v, (m.get(v) ?? 0) + 1)
-  return [...m.entries()].map(([value, n]) => ({ value, label: value, count: n })).sort((a, b) => b.count - a.count || byText(a.value, b.value))
+  return [...m.entries()]
+    .map(([value, n]) => ({ value, label: value, count: n }))
+    .sort((a, b) => b.count - a.count || byText(a.value, b.value))
 }
 
 export type Facets = {
@@ -292,7 +291,14 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
   }))
 
   return {
-    folder: count(without('folder').map((i) => [String(i.folderId)])).map((o) => ({ ...o, label: folderName.get(o.value) ?? 'Folder' })),
+    // every crate, even empty ones, so any of them can be picked
+    folder: (() => {
+      const counted = new Map(count(without('folder').map((i) => [String(i.folderId)])).map((o) => [o.value, o.count]))
+      const ids = new Set([...folders.map((f) => String(f.id)), ...counted.keys()])
+      return [...ids]
+        .map((id) => ({ value: id, label: folderName.get(id) ?? 'Crate', count: counted.get(id) ?? 0 }))
+        .sort((a, b) => b.count - a.count || byText(a.label, b.label))
+    })(),
     format: count(without('format').map((i) => i.formatNames)),
     tag: count(without('tag').map((i) => i.formatTags)),
     genre: count(without('genre').map((i) => i.genres)),
@@ -318,7 +324,19 @@ const csvCell = (v: string | number) => {
 // Same columns as the Discogs collection export, so the file opens the same way
 export function toCsv(items: LibraryItem[], folders: Folder[], fields: CollectionField[]): string {
   const folderName = new Map(folders.map((f) => [f.id, f.name]))
-  const head = ['Catalog#', 'Artist', 'Title', 'Label', 'Format', 'Rating', 'Released', 'release_id', 'CollectionFolder', 'Date Added', ...fields.map((f) => `Collection ${f.name}`)]
+  const head = [
+    'Catalog#',
+    'Artist',
+    'Title',
+    'Label',
+    'Format',
+    'Rating',
+    'Released',
+    'release_id',
+    'CollectionFolder',
+    'Date Added',
+    ...fields.map((f) => `Collection ${f.name}`),
+  ]
   const rows = items.map((i) => [
     i.catno ?? '',
     i.artist,
