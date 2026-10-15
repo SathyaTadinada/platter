@@ -143,6 +143,14 @@ export class DiscogsClient {
       try {
         res = await this.fetchFn(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
       } catch {
+        // Discogs sends 429s without CORS headers, so a busy rate limit looks like a
+        // network error. If the device thinks it's online, wait and try again.
+        if (navigator.onLine !== false && attempt < RETRY_DELAYS.length - 1) {
+          const wait = RETRY_DELAYS[attempt]
+          this.setStatus({ waitUntil: this.now() + wait })
+          await this.sleep(wait)
+          continue
+        }
         throw new OfflineError()
       }
 

@@ -495,7 +495,7 @@ function Monthly({
         <Toggle
           options={[
             ['spent', 'Spent'],
-            ['added', 'Records added'],
+            ['added', 'Added'],
           ]}
           value={show}
           onChange={setShow}

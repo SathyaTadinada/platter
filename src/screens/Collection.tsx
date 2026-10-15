@@ -690,6 +690,7 @@ function BulkBar({
   const [confirm, setConfirm] = useState(false)
   const [progress, setProgress] = useState<string | null>(null)
   const records = `${count} record${count === 1 ? '' : 's'}`
+  const compact = 'sm:min-h-10 sm:px-3.5 sm:text-sm'
 
   async function run(kind: 'remove' | 'move', folderId?: number) {
     const verb = kind === 'remove' ? 'Removing' : 'Moving'
@@ -701,7 +702,8 @@ function BulkBar({
 
   return (
     <div className="sticky bottom-3 z-10 mt-4">
-      <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      {/* full width on phones; on bigger screens just as wide as its buttons */}
+      <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
         {progress ? (
           <p className="py-2 text-center text-sm font-medium" role="status">
             {progress}
@@ -720,8 +722,8 @@ function BulkBar({
           </div>
         ) : (
           <div className="flex gap-2">
-            <label className="relative min-w-0 flex-1">
-              <span className={buttonClass('secondary', 'w-full whitespace-nowrap')}>Move to crate…</span>
+            <label className="relative min-w-0 flex-1 sm:flex-none">
+              <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>Move to crate…</span>
               <CrateSelect
                 ariaLabel="Move to crate"
                 value={undefined}
@@ -731,10 +733,10 @@ function BulkBar({
                 className="absolute inset-0 opacity-0"
               />
             </label>
-            <Button variant="secondary" onClick={onExport}>
+            <Button variant="secondary" onClick={onExport} className={compact}>
               Export
             </Button>
-            <Button variant="danger" onClick={() => setConfirm(true)}>
+            <Button variant="danger" onClick={() => setConfirm(true)} className={compact}>
               Remove
             </Button>
           </div>

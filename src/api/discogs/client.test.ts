@@ -74,6 +74,16 @@ describe('DiscogsClient', () => {
     await expect(getIdentity(client(fn))).rejects.toBeInstanceOf(OfflineError)
   })
 
+  it('retries a failed fetch while online, since 429s arrive without CORS headers', async () => {
+    let n = 0
+    const fn = (async () => {
+      if (n++ < 2) throw new TypeError('Failed to fetch')
+      return json({ id: 1, username: 'someone' })
+    }) as typeof fetch
+    await expect(getIdentity(client(fn))).resolves.toMatchObject({ username: 'someone' })
+    expect(n).toBe(3)
+  })
+
   it('caches GETs that ask for it', async () => {
     const { fn, calls } = routeFetch([['/releases/', () => json(release)]])
     const c = client(fn)
