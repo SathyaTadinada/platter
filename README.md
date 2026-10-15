@@ -33,7 +33,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
 - Listening log: tap Log a play on a record, or scan it in Play mode, to bump its Play Count and Last Played fields. Every play is also kept on the device, with undo
 - Listening stats: plays by month, most played, recently played, and records that haven't been on in a year
-- The Value charts can be dragged into a different order or hidden (Edit on the Stats tab)
+- Pick which Value charts show and drag them into the order you want
 - Share on the Stats tab makes a picture of your collection's numbers to post or send
 - Sort by most played, recently played, or location
 - Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks

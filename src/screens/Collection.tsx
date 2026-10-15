@@ -4,7 +4,6 @@ import {
   Check,
   Disc3,
   Download,
-  FileUp,
   Heart,
   LayoutGrid,
   List as ListIcon,
@@ -32,6 +31,7 @@ import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
 import { useListening } from '../hooks/plays'
 import { dayAgo } from '../lib/time'
+import { download, today } from '../lib/download'
 import { checkPrices, useCurrency, useFreshPrices, usePriceCheck } from '../hooks/prices'
 import {
   activeFilterCount,
@@ -169,12 +169,7 @@ export function Collection() {
   }
 
   function exportCsv() {
-    const url = URL.createObjectURL(new Blob([toCsv(filtered, folders, fields)], { type: 'text/csv' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${username}-collection-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    download(`${username}-collection-${today()}.csv`, toCsv(filtered, folders, fields), 'text/csv')
   }
 
   const toolbar = (
@@ -311,9 +306,6 @@ export function Collection() {
       <button type="button" onClick={() => navigate('/wantlist')} className={headerButton}>
         <Heart size={18} aria-hidden /> Wantlist
       </button>
-      <button type="button" onClick={() => navigate('/import')} className={headerButton}>
-        <FileUp size={18} aria-hidden /> Import collection
-      </button>
       <button type="button" onClick={exportCsv} disabled={!filtered.length} className={headerButton}>
         <Download size={18} aria-hidden /> {exportLabel}
       </button>
@@ -327,7 +319,6 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
-            { label: 'Import collection', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}
         />

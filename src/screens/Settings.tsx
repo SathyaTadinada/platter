@@ -8,6 +8,7 @@ import {
   Sun,
   Disc3,
   Download,
+  FileDown,
   FileUp,
   Info,
   ListChecks,
@@ -28,11 +29,13 @@ import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useAsync } from '../hooks/useAsync'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
+import { download, today } from '../lib/download'
 import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
 import { getTheme, setTheme, type Theme } from '../lib/theme'
 import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
+import { toCsv } from '../lib/library'
 import { timeAgo } from '../lib/time'
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -46,7 +49,8 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const install = useInstallPrompt()
   const demo = session.kind === 'demo'
-  const crates = useCollectionMeta().data?.folders.length
+  const meta = useCollectionMeta().data
+  const crates = meta?.folders.length
   const lb = useLiveQuery(async () => (await db.settings.get(LISTENBRAINZ_KEY))?.value as ListenBrainzSettings | undefined)
 
   const stats = useLiveQuery(async () => ({
@@ -67,14 +71,13 @@ export function Settings() {
     setSession(null)
   }
 
-  async function doExport() {
-    const data = await exportLocalData()
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `platter-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+  async function exportBackup() {
+    download(`platter-${today()}.json`, JSON.stringify(await exportLocalData(), null, 2), 'application/json')
+  }
+
+  async function exportCollection() {
+    const items = await db.collection.toArray()
+    download(`${session.username}-collection-${today()}.csv`, toCsv(items, meta?.folders ?? [], meta?.fields ?? []), 'text/csv')
   }
 
   async function doImport(file: File) {
@@ -170,11 +173,27 @@ export function Settings() {
           <Section title="Your data">
             <List>
               <Row icon={<FileUp size={20} />} label="Import collection" detail="From a Discogs export file" href="/import" />
+              <Row
+                icon={<FileDown size={20} />}
+                label="Export collection"
+                detail="A CSV in the same format as Discogs"
+                onClick={exportCollection}
+              />
             </List>
-            <div className="grid grid-cols-2 gap-3">
-              <Tile icon={<Download size={22} />} label="Export backup" onClick={doExport} />
-              <Tile icon={<Upload size={22} />} label="Import backup" onClick={() => fileRef.current?.click()} />
-            </div>
+            <List>
+              <Row
+                icon={<Download size={20} />}
+                label="Back up Platter data"
+                detail="Plays and anything else not on Discogs"
+                onClick={exportBackup}
+              />
+              <Row
+                icon={<Upload size={20} />}
+                label="Restore a backup"
+                detail="From a Platter backup file"
+                onClick={() => fileRef.current?.click()}
+              />
+            </List>
             {message && <Notice tone={message.tone}>{message.text}</Notice>}
             <input
               ref={fileRef}
@@ -198,19 +217,6 @@ export function Settings() {
         </div>
       </div>
     </Screen>
-  )
-}
-
-function Tile({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl bg-white text-sm font-medium ring-1 ring-stone-200 hover:bg-stone-50 active:bg-stone-100 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800/50"
-    >
-      <span className="text-stone-500">{icon}</span>
-      {label}
-    </button>
   )
 }
 

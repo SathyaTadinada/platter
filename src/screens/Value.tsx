@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Link } from 'wouter'
 import { TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
-import { ChartBoard } from '../components/ChartBoard'
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Card, Section, Spinner } from '../components/ui'
 import type { Folder } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
@@ -12,7 +12,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { recordCollectionValue } from '../lib/pricing'
-import type { SectionKey } from '../lib/statsLayout'
+import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
 import {
   byMonth,
   change,
@@ -38,7 +38,7 @@ type Valued = { item: LibraryItem; value: RecordValue }
 type Money = (n: number, whole?: boolean) => string
 
 // The Value view of the Stats tab
-export function ValueStats({ editing = false }: { editing?: boolean }) {
+export function ValueStats() {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
   const items = useLiveQuery(() => db.collection.toArray(), [])
@@ -50,6 +50,7 @@ export function ValueStats({ editing = false }: { editing?: boolean }) {
     [client, username, currency],
   )
 
+  const layout = useSyncExternalStore(subscribeLayout, getLayout)
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
@@ -76,7 +77,7 @@ export function ValueStats({ editing = false }: { editing?: boolean }) {
           {series.length >= 2 ? (
             <Chart series={series} money={(n) => money(n, true)} />
           ) : (
-            <p className="text-sm text-stone-500">Check back in a couple of days. Platter saves the value once a day to draw this.</p>
+            <p className="text-sm text-stone-500">Platter saves the value each day you open it, so this fills in after a couple of days.</p>
           )}
         </Card>
       </Section>
@@ -153,7 +154,15 @@ export function ValueStats({ editing = false }: { editing?: boolean }) {
   return (
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
-      <ChartBoard first={first} sections={sections} editing={editing} />
+      {/* sections flow down two columns on wide screens, in the order picked in "Choose charts" */}
+      <div className="lg:columns-2 lg:gap-x-8 [&>*]:break-inside-avoid">
+        <div>{first}</div>
+        {layout.order
+          .filter((k) => !layout.hidden.includes(k) && sections[k])
+          .map((k) => (
+            <div key={k}>{sections[k]}</div>
+          ))}
+      </div>
       <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
         <a
           href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
@@ -269,7 +278,25 @@ function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: number) 
 
 function PaidVsNow({ items, valued, paidField, money }: { items: LibraryItem[]; valued: Valued[]; paidField?: number; money: Money }) {
   const paid = paidTotal(items, paidField)
-  if (!paid.count || paidField === undefined) return null
+  if (!paid.count || paidField === undefined)
+    return (
+      <Section title="Paid vs now">
+        <Card>
+          <p className="text-sm text-stone-500">
+            {paidField === undefined ? (
+              <>
+                This needs a Purchase Price field.{' '}
+                <Link href="/setup" className="font-medium underline underline-offset-2">
+                  Set it up
+                </Link>
+              </>
+            ) : (
+              'Fill in Purchase Price on your records to see what you paid next to what they go for now.'
+            )}
+          </p>
+        </Card>
+      </Section>
+    )
 
   const rows = valued
     .map((v) => ({ ...v, paid: parseMoney(v.item.fields[paidField]) }))
@@ -442,7 +469,9 @@ function Monthly({
   currency: string
 }) {
   const canSpend = paidField !== undefined
-  const [show, setShow] = useState<'spent' | 'added'>(canSpend ? 'spent' : 'added')
+  // start on records added when there's nothing to add up yet
+  const anySpent = canSpend && items.some((i) => parseMoney(i.fields[paidField]) !== undefined)
+  const [show, setShow] = useState<'spent' | 'added'>(anySpent ? 'spent' : 'added')
   const rows =
     show === 'spent' && paidField !== undefined
       ? items.flatMap((i) => {

@@ -78,7 +78,7 @@ export function ListeningStats() {
         </Section>
 
         <Section title="Most played">
-          <List rows={stats.mostPlayed.slice(0, TOP)} right={(r) => `${r.count}×`} />
+          <List rows={stats.mostPlayed.slice(0, TOP)} right={(r) => `${r.count} ${r.count === 1 ? 'play' : 'plays'}`} />
         </Section>
       </div>
 
