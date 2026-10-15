@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'Platter',
         short_name: 'Platter',
-        description: "Catalog your records on Discogs. Scan a barcode and it's in your collection.",
+        description: 'Add records to your Discogs collection by scanning their barcodes.',
         theme_color: '#1c1917',
         background_color: '#1c1917',
         display: 'standalone',
