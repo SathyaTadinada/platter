@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { ChartBoard } from '../components/ChartBoard'
 import { Card, Section, Spinner } from '../components/ui'
 import type { Folder } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
@@ -11,7 +12,7 @@ import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { recordCollectionValue } from '../lib/pricing'
-import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
+import type { SectionKey } from '../lib/statsLayout'
 import {
   byMonth,
   change,
@@ -37,7 +38,7 @@ type Valued = { item: LibraryItem; value: RecordValue }
 type Money = (n: number, whole?: boolean) => string
 
 // The Value view of the Stats tab
-export function ValueStats() {
+export function ValueStats({ editing = false }: { editing?: boolean }) {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
   const items = useLiveQuery(() => db.collection.toArray(), [])
@@ -49,7 +50,6 @@ export function ValueStats() {
     [client, username, currency],
   )
 
-  const layout = useSyncExternalStore(subscribeLayout, getLayout)
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
@@ -121,45 +121,39 @@ export function ValueStats() {
     ),
   }
 
+  const first = (
+    <Section>
+      <div className={`${card} p-4`}>
+        <p className="text-sm text-stone-500">Estimated value</p>
+        {current.data ? (
+          <>
+            <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">{current.data.raw.median}</p>
+            {series.length >= 2 && (
+              <div className="mt-2">
+                <Delta
+                  {...change(series[0].median, current.data.snap.median)}
+                  money={(n) => money(n, true)}
+                  suffix={`since ${shortDate(series[0])}`}
+                />
+              </div>
+            )}
+            <p className="mt-3 text-sm text-stone-500 tabular-nums">
+              Low {current.data.raw.minimum} · High {current.data.raw.maximum}
+            </p>
+          </>
+        ) : current.loading ? (
+          <p className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-stone-200 dark:bg-stone-800" />
+        ) : (
+          <p className="mt-1 text-sm">Couldn't get this from Discogs right now.</p>
+        )}
+      </div>
+    </Section>
+  )
+
   return (
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
-      {/* sections flow down two columns on wide screens, in the order picked in "Choose charts" */}
-      <div className="lg:columns-2 lg:gap-x-8 [&>*]:break-inside-avoid">
-        <div>
-          <Section>
-            <div className={`${card} p-4`}>
-              <p className="text-sm text-stone-500">Estimated value</p>
-              {current.data ? (
-                <>
-                  <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">{current.data.raw.median}</p>
-                  {series.length >= 2 && (
-                    <div className="mt-2">
-                      <Delta
-                        {...change(series[0].median, current.data.snap.median)}
-                        money={(n) => money(n, true)}
-                        suffix={`since ${shortDate(series[0])}`}
-                      />
-                    </div>
-                  )}
-                  <p className="mt-3 text-sm text-stone-500 tabular-nums">
-                    Low {current.data.raw.minimum} · High {current.data.raw.maximum}
-                  </p>
-                </>
-              ) : current.loading ? (
-                <p className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-stone-200 dark:bg-stone-800" />
-              ) : (
-                <p className="mt-1 text-sm">Couldn't get this from Discogs right now.</p>
-              )}
-            </div>
-          </Section>
-        </div>
-        {layout.order
-          .filter((k) => !layout.hidden.includes(k) && sections[k])
-          .map((k) => (
-            <div key={k}>{sections[k]}</div>
-          ))}
-      </div>
+      <ChartBoard first={first} sections={sections} editing={editing} />
       <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
         <a
           href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
