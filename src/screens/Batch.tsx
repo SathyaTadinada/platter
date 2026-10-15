@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'wouter'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CrateSelect } from '../components/CrateSelect'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
@@ -128,17 +129,9 @@ export function Batch() {
   return (
     <Screen title="Batch" back="/scan" width="wide" actions={actions}>
       {confirmClear && (
-        <div className="mb-4 space-y-3 rounded-2xl bg-red-50 p-4 dark:bg-red-950/40">
-          <p className="text-sm">Clear the batch? Records already added stay in your collection.</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={() => setConfirmClear(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={() => clear('all')}>
-              Clear batch
-            </Button>
-          </div>
-        </div>
+        <ConfirmDialog title="Clear the batch?" action="Clear" onConfirm={() => clear('all')} onCancel={() => setConfirmClear(false)}>
+          Records already added stay in your collection.
+        </ConfirmDialog>
       )}
 
       {!online && groups.waiting.length > 0 && (

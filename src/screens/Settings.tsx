@@ -20,9 +20,10 @@ import {
 import { useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
-import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
+import { List, Notice, Row, Screen, Section } from '../components/ui'
 import { db, getSetting } from '../db/db'
 import { stopPriceCheck } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
@@ -91,6 +92,16 @@ export function Settings() {
 
   return (
     <Screen title="Settings" width="wide">
+      {confirming && (
+        <ConfirmDialog
+          title={demo ? 'Leave the demo?' : 'Sign out?'}
+          action={demo ? 'Leave' : 'Sign out'}
+          onConfirm={signOut}
+          onCancel={() => setConfirming(false)}
+        >
+          {demo ? 'Anything you changed in it is thrown away.' : "Platter's data on this device gets deleted. Nothing changes on Discogs."}
+        </ConfirmDialog>
+      )}
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
         <div>
           <Section title="Account">
@@ -101,25 +112,7 @@ export function Settings() {
                   className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
                 />
               </li>
-              {confirming ? (
-                <li className="space-y-3 px-4 py-3">
-                  <p className="text-sm">
-                    {demo
-                      ? 'Leave the demo? Anything you changed is thrown away.'
-                      : "Sign out? Platter's data on this device gets deleted. Nothing changes on Discogs."}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="secondary" onClick={() => setConfirming(false)}>
-                      Cancel
-                    </Button>
-                    <Button variant="danger" onClick={signOut}>
-                      {demo ? 'Leave demo' : 'Sign out'}
-                    </Button>
-                  </div>
-                </li>
-              ) : (
-                <Row icon={<LogOut size={20} />} label={demo ? 'Leave demo' : 'Sign out'} danger onClick={() => setConfirming(true)} />
-              )}
+              <Row icon={<LogOut size={20} />} label={demo ? 'Leave demo' : 'Sign out'} danger onClick={() => setConfirming(true)} />
             </List>
           </Section>
 

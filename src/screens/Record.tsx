@@ -5,6 +5,7 @@ import { Link, useLocation } from 'wouter'
 import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/discogs/endpoints'
 import type { CollectionField, Release } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CoverSheet } from '../components/CoverSheet'
 import { Identifiers } from '../components/Identifiers'
 import { ListenLinks } from '../components/ListenLinks'
@@ -36,6 +37,7 @@ export function Record({ id }: { id: string }) {
   const release = useAsync(() => (item ? getRelease(client, item.releaseId) : Promise.resolve(undefined)), [item?.releaseId])
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const [pickingCover, setPickingCover] = useState(false)
 
   // other copies of this release, and other pressings of the same album
@@ -90,6 +92,7 @@ export function Record({ id }: { id: string }) {
 
   async function remove() {
     setError(null)
+    setRemoving(true)
     try {
       await deleteInstance(client, username, target)
       await db.collection.delete(instanceId)
@@ -97,6 +100,9 @@ export function Record({ id }: { id: string }) {
       navigate('/', { replace: true })
     } catch (e) {
       setError((e as Error).message)
+      setConfirmRemove(false)
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -245,32 +251,29 @@ export function Record({ id }: { id: string }) {
             </Section>
 
             <Section>
-              {confirmRemove ? (
-                <div className="space-y-3 rounded-2xl bg-red-50 p-4 dark:bg-red-950/40">
-                  <p className="text-sm">Remove this copy from your Discogs collection? Its notes and other details are deleted too.</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="secondary" onClick={() => setConfirmRemove(false)}>
-                      Cancel
-                    </Button>
-                    <Button variant="danger" onClick={remove}>
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  className="w-full text-red-600! hover:bg-red-50! active:bg-red-100! dark:text-red-400! dark:hover:bg-red-950/40! dark:active:bg-red-950/60!"
-                  onClick={() => setConfirmRemove(true)}
-                >
-                  Remove from collection
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                className="w-full text-red-600! hover:bg-red-50! active:bg-red-100! dark:text-red-400! dark:hover:bg-red-950/40! dark:active:bg-red-950/60!"
+                onClick={() => setConfirmRemove(true)}
+              >
+                Remove from collection
+              </Button>
             </Section>
           </div>
         </div>
       </div>
       {pickingCover && <CoverSheet item={item} release={r} onClose={() => setPickingCover(false)} />}
+      {confirmRemove && (
+        <ConfirmDialog
+          title="Remove this record?"
+          action="Remove"
+          busy={removing ? 'Removing…' : null}
+          onConfirm={remove}
+          onCancel={() => setConfirmRemove(false)}
+        >
+          It comes out of your Discogs collection, along with its notes and other details.
+        </ConfirmDialog>
+      )}
     </Screen>
   )
 }

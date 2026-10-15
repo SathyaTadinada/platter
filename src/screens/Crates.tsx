@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'wouter'
 import { deleteFolder, renameFolder } from '../api/discogs/endpoints'
 import type { Folder } from '../api/discogs/types'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { NewCrateDialog } from '../components/CrateSelect'
 import { Button, IconButton, Notice, Screen, Spinner } from '../components/ui'
 import { useSignedIn } from '../hooks/session'
@@ -106,36 +107,20 @@ export function Crates() {
         ))}
       </ul>
 
-      {confirmDelete && (
-        <div className="mt-4 space-y-3 rounded-2xl bg-red-50 p-4 dark:bg-red-950/40">
-          {confirmDelete.count > 0 ? (
-            <>
-              <p className="text-sm">
-                {confirmDelete.name} has {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'}. Move them to another crate
-                first; Discogs only deletes empty ones.
-              </p>
-              <Button variant="secondary" className="w-full" onClick={() => setConfirmDelete(null)}>
-                OK
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm">Delete {confirmDelete.name}?</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => run(() => deleteFolder(client, username, confirmDelete.id)).then(() => setConfirmDelete(null))}
-                >
-                  Delete
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      {confirmDelete &&
+        (confirmDelete.count > 0 ? (
+          <ConfirmDialog title={`${confirmDelete.name} isn't empty`} onCancel={() => setConfirmDelete(null)}>
+            Move its {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'} to another crate first. Discogs only deletes empty
+            crates.
+          </ConfirmDialog>
+        ) : (
+          <ConfirmDialog
+            title={`Delete ${confirmDelete.name}?`}
+            action="Delete"
+            onConfirm={() => run(() => deleteFolder(client, username, confirmDelete.id)).then(() => setConfirmDelete(null))}
+            onCancel={() => setConfirmDelete(null)}
+          />
+        ))}
 
       {creating && <NewCrateDialog onClose={() => setCreating(false)} onCreated={() => setCreating(false)} />}
     </Screen>

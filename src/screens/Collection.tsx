@@ -19,6 +19,7 @@ import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance } from '../api/discogs/endpoints'
 import type { Folder } from '../api/discogs/types'
 import { FilterSheet } from '../components/FilterSheet'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CrateSelect } from '../components/CrateSelect'
 import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
@@ -702,24 +703,24 @@ function BulkBar({
 
   return (
     <div className="sticky bottom-3 z-10 mt-4">
+      {confirm && (
+        <ConfirmDialog
+          title={`Remove ${records}?`}
+          action="Remove"
+          busy={progress}
+          onConfirm={() => run('remove')}
+          onCancel={() => setConfirm(false)}
+        >
+          {count === 1 ? 'It comes' : 'They come'} out of your Discogs collection, along with {count === 1 ? 'its' : 'their'} notes and
+          other details.
+        </ConfirmDialog>
+      )}
       {/* full width on phones; on bigger screens just as wide as its buttons */}
       <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
-        {progress ? (
+        {progress && !confirm ? (
           <p className="py-2 text-center text-sm font-medium" role="status">
             {progress}
           </p>
-        ) : confirm ? (
-          <div className="space-y-2">
-            <p className="text-sm">Remove {records} from your Discogs collection? Their notes and other details are deleted too.</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={() => setConfirm(false)}>
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={() => run('remove')}>
-                Remove
-              </Button>
-            </div>
-          </div>
         ) : (
           <div className="flex gap-2">
             <label className="relative min-w-0 flex-1 sm:flex-none">
