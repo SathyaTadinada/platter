@@ -1,10 +1,10 @@
 // Which sections of the Value view are shown, and in what order. Kept per device.
 
 export const VALUE_SECTIONS = [
-  ['overTime', 'Over time'],
-  ['paid', 'Paid vs now'],
   ['month', 'By month'],
   ['top', 'Most valuable'],
+  ['overTime', 'Over time'],
+  ['paid', 'Paid vs now'],
   ['price', 'By price'],
   ['breakdown', 'Breakdown'],
 ] as const

@@ -168,8 +168,8 @@ export function Collection() {
     navigate(`/collection/${pick.instanceId}`)
   }
 
-  function exportCsv() {
-    download(`${username}-collection-${today()}.csv`, toCsv(filtered, folders, fields), 'text/csv')
+  function exportCsv(items = filtered) {
+    download(`${username}-collection-${today()}.csv`, toCsv(items, folders, fields), 'text/csv')
   }
 
   const toolbar = (
@@ -306,7 +306,7 @@ export function Collection() {
       <button type="button" onClick={() => navigate('/wantlist')} className={headerButton}>
         <Heart size={18} aria-hidden /> Wantlist
       </button>
-      <button type="button" onClick={exportCsv} disabled={!filtered.length} className={headerButton}>
+      <button type="button" onClick={() => exportCsv()} disabled={!filtered.length} className={headerButton}>
         <Download size={18} aria-hidden /> {exportLabel}
       </button>
       <div className="lg:hidden">
@@ -319,7 +319,7 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
-            { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
+            { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
           ]}
         />
       </div>
@@ -440,7 +440,14 @@ export function Collection() {
       toolbar={items?.length && fresh ? toolbar : undefined}
     >
       {body}
-      {selected && selected.size > 0 && <BulkBar count={selected.size} folders={folders} onRun={bulk} />}
+      {selected && selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          folders={folders}
+          onRun={bulk}
+          onExport={() => exportCsv(filtered.filter((i) => selected.has(i.instanceId)))}
+        />
+      )}
       {filtersOpen && facets && (
         <FilterSheet
           facets={facets}
@@ -673,9 +680,11 @@ function BulkBar({
   count,
   folders,
   onRun,
+  onExport,
 }: {
   count: number
   folders: Folder[]
+  onExport: () => void
   onRun: (kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) => Promise<void>
 }) {
   const [confirm, setConfirm] = useState(false)
@@ -710,9 +719,9 @@ function BulkBar({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <label className="relative">
-              <span className={buttonClass('secondary', 'w-full')}>Move to crate…</span>
+          <div className="flex gap-2">
+            <label className="relative min-w-0 flex-1">
+              <span className={buttonClass('secondary', 'w-full whitespace-nowrap')}>Move to crate…</span>
               <CrateSelect
                 ariaLabel="Move to crate"
                 value={undefined}
@@ -722,6 +731,9 @@ function BulkBar({
                 className="absolute inset-0 opacity-0"
               />
             </label>
+            <Button variant="secondary" onClick={onExport}>
+              Export
+            </Button>
             <Button variant="danger" onClick={() => setConfirm(true)}>
               Remove
             </Button>

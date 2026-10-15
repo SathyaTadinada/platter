@@ -1,7 +1,7 @@
 import { canGoBack } from '../lib/nav'
-import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, TriangleAlert } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -126,10 +126,28 @@ export function Screen({
   )
 }
 
-export function Section({ title, children }: { title?: string; children: ReactNode }) {
+// info: a note about the section, behind an (i) next to the title
+export function Section({ title, info, children }: { title?: string; info?: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(false)
   return (
     <section className="mb-6">
-      {title && <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">{title}</h2>}
+      {title && (
+        <div className="mb-2 flex items-center gap-1 px-1">
+          <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">{title}</h2>
+          {info && (
+            <button
+              type="button"
+              aria-label={`About ${title.toLowerCase()}`}
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
+              className={`-my-1.5 rounded-full p-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 ${open ? 'text-stone-900 dark:text-stone-100' : 'text-stone-500'}`}
+            >
+              <Info size={14} />
+            </button>
+          )}
+        </div>
+      )}
+      {info && open && <p className="mb-3 px-1 text-sm text-stone-500">{info}</p>}
       <div className="space-y-3">{children}</div>
     </section>
   )

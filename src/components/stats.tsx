@@ -54,7 +54,7 @@ export function RecordRow({
         <span className="block truncate text-sm font-medium">{item.title}</span>
         <span className="block truncate text-xs text-stone-500">{detail ?? item.artist}</span>
       </span>
-      {children && <span className="shrink-0 text-right">{children}</span>}
+      {children && <span className="shrink-0 pl-3 text-right">{children}</span>}
     </>
   )
   return onClick ? (
@@ -85,20 +85,23 @@ export function MonthBars({
         {months.map((m) => (
           <div
             key={m.month}
-            className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
-            title={`${m.label}: ${text(m.total)}`}
+            className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
+            aria-label={`${m.label}: ${text(m.total)}`}
           >
             {m.total > 0 && <span className="text-[0.625rem] font-semibold whitespace-nowrap tabular-nums">{short(m.total)}</span>}
-            <span className="w-full rounded-t-md bg-accent/80 group-hover:bg-accent" style={{ height: m.total ? pct(m.total, most) : 0 }} />
+            <span className="w-full rounded-t-md bg-accent/80" style={{ height: m.total ? pct(m.total, most) : 0 }} />
           </div>
         ))}
       </div>
-      <div className="mt-1 flex gap-1 border-t border-stone-200 pt-1 dark:border-stone-800">
-        {months.map((m, i) => (
-          <span key={m.month} className="flex-1 text-center text-[0.625rem] text-stone-500">
-            {i % 2 === 1 ? m.label : ''}
-          </span>
-        ))}
+      {/* every month where there's room, every other one on narrow cards */}
+      <div className="@container mt-1 border-t border-stone-200 pt-1 dark:border-stone-800">
+        <div className="flex gap-1">
+          {months.map((m, i) => (
+            <span key={m.month} className="min-w-0 flex-1 text-center text-[0.625rem] text-stone-500">
+              <span className={i % 2 === 1 ? '' : 'invisible @md:visible'}>{m.label}</span>
+            </span>
+          ))}
+        </div>
       </div>
     </>
   )

@@ -151,8 +151,7 @@ export function Settings() {
             </List>
             {sync.error && <Notice tone="error">{sync.error}</Notice>}
           </Section>
-        </div>
-        <div>
+
           {!demo && (
             <Section title="Listening">
               <List>
@@ -165,7 +164,8 @@ export function Settings() {
               </List>
             </Section>
           )}
-
+        </div>
+        <div>
           <Section title="Appearance">
             <Appearance />
           </Section>

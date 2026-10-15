@@ -89,7 +89,14 @@ export function ValueStats() {
       </Section>
     ),
     top: valued.length > 0 && (
-      <Section title="Most valuable">
+      <Section
+        title="Most valuable"
+        info={
+          anySuggested
+            ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
+            : "These are the cheapest copies for sale on Discogs. Fill in your seller settings on Discogs to get prices for your copy's condition."
+        }
+      >
         <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${card}`}>
           {valued.slice(0, TOP).map(({ item, value }) => (
             <li key={item.instanceId}>
@@ -103,11 +110,6 @@ export function ValueStats() {
             </li>
           ))}
         </ul>
-        <p className="px-1 text-xs text-stone-500">
-          {anySuggested
-            ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
-            : "These are the cheapest copies for sale on Discogs. Fill in your seller settings on Discogs to get prices for your copy's condition."}
-        </p>
       </Section>
     ),
     price: valued.length > 0 && (
@@ -155,7 +157,7 @@ export function ValueStats() {
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
       {/* sections flow down two columns on wide screens, in the order picked in "Choose charts" */}
-      <div className="lg:columns-2 lg:gap-x-8 [&>*]:break-inside-avoid">
+      <div className="lg:columns-2 lg:gap-x-8 [&>*]:inline-block [&>*]:w-full [&>*]:break-inside-avoid [&>*]:align-top">
         <div>{first}</div>
         {layout.order
           .filter((k) => !layout.hidden.includes(k) && sections[k])

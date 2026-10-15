@@ -12,9 +12,9 @@ describe('value layout', () => {
 
   it('moves a section to a new position, staying in bounds', () => {
     const l = defaultLayout()
-    expect(move(l, 'paid', 0).order.slice(0, 2)).toEqual(['paid', 'overTime'])
-    expect(move(l, 'overTime', 3).order.slice(0, 4)).toEqual(['paid', 'month', 'top', 'overTime'])
-    expect(move(l, 'overTime', -1)).toBe(l)
+    expect(move(l, 'paid', 0).order.slice(0, 2)).toEqual(['paid', 'month'])
+    expect(move(l, 'month', 3).order.slice(0, 4)).toEqual(['top', 'overTime', 'paid', 'month'])
+    expect(move(l, 'month', -1)).toBe(l)
     expect(move(l, 'breakdown', 6)).toBe(l)
   })
 
