@@ -67,7 +67,7 @@ export type Release = {
   labels: { name: string; catno: string }[]
   formats: SearchFormat[]
   identifiers: Identifier[]
-  images?: { type: string; uri: string; uri150: string }[]
+  images?: { type: string; uri: string; uri150: string; width?: number; height?: number }[]
   thumb?: string
 }
 

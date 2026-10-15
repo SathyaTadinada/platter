@@ -3,12 +3,11 @@ import type { CollectionField } from '../api/discogs/types'
 import { useFieldSuggestions } from '../hooks/useFields'
 import { inline, Row } from './CopyDetails'
 import { DateInput } from './DateInput'
+import { PriceInput } from './PriceInput'
 import { fieldFor, type FieldKey, type FieldMatch } from '../lib/fields'
 import type { Metadata } from '../lib/metadata'
 
 type Part = 'conditions' | 'price' | 'date' | 'store' | 'location' | 'notes'
-
-const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 
 type Props = {
   value: Metadata
@@ -77,32 +76,12 @@ export function MetadataForm({ value, onChange, matches, parts = ['conditions', 
         {shown('conditions') && condition('sleeveCondition', field('sleeveCondition'))}
         {shown('price') && (
           <Row label={label('Purchase Price', 'purchasePrice')}>
-            <input
-              aria-label="Purchase price"
-              value={value.price ?? ''}
-              onChange={(e) => set('price', e.target.value)}
-              inputMode="decimal"
-              placeholder="Add"
-              className={inline}
-            />
+            <PriceInput aria-label="Purchase price" value={value.price ?? ''} onChange={(v) => set('price', v)} />
           </Row>
         )}
         {shown('date') && (
           <Row label={label('Purchase Date', 'purchaseDate')}>
-            <DateInput
-              value={value.date ?? ''}
-              onChange={(v) => set('date', v)}
-              label="Purchase date"
-              extra={
-                <button
-                  type="button"
-                  onClick={() => set('date', today())}
-                  className="rounded-lg px-2 py-2 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-800"
-                >
-                  Today
-                </button>
-              }
-            />
+            <DateInput value={value.date ?? ''} onChange={(v) => set('date', v)} label="Purchase date" />
           </Row>
         )}
         {shown('store') && (

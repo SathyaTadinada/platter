@@ -8,6 +8,7 @@ import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Identifiers } from '../components/Identifiers'
 import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
+import { PhotosSheet } from '../components/PhotosSheet'
 import { ShareButton } from '../components/ShareButton'
 import { toast } from '../components/Toaster'
 import { RecordRow, statCard } from '../components/stats'
@@ -28,6 +29,7 @@ export function Release({ id }: { id: string }) {
   const release = useAsync(() => getRelease(client, releaseId), [client, releaseId])
   const [added, setAdded] = useState<Added | null>(null)
   const [wantBusy, setWantBusy] = useState(false)
+  const [viewingPhotos, setViewingPhotos] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const r = release.data
@@ -117,7 +119,18 @@ export function Release({ id }: { id: string }) {
     >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
         <div className="space-y-6">
-          <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
+          <div>
+            <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
+            {(r.images?.length ?? 0) > 1 && (
+              <button
+                type="button"
+                onClick={() => setViewingPhotos(true)}
+                className="mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
+              >
+                {r.images!.length} photos
+              </button>
+            )}
+          </div>
           <div className="hidden lg:block">{tracklist}</div>
         </div>
 
@@ -224,6 +237,7 @@ export function Release({ id }: { id: string }) {
           </div>
         </div>
       </div>
+      {viewingPhotos && <PhotosSheet release={r} onClose={() => setViewingPhotos(false)} />}
     </Screen>
   )
 }

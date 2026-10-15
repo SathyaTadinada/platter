@@ -90,3 +90,23 @@ export function usePrice(releaseId: number | undefined, currency: string | undef
   }, [client, releaseId, currency, missing])
   return { price: fresh, loading: !failed && (entry === undefined || missing), failed }
 }
+
+// Records added since the last sync have no price yet; fetch just those, shortly after
+// they show up. Older prices are refreshed by the sync as before.
+export function useNewRecordPrices() {
+  const { client } = useSignedIn()
+  const currency = useCurrency()
+  const check = usePriceCheck()
+  const missing = useLiveQuery(async () => {
+    if (!currency) return []
+    const priced = new Set((await db.prices.toArray()).filter((p) => p.currency === currency).map((p) => p.releaseId))
+    const ids = (await db.collection.toArray()).map((i) => i.releaseId).filter((id) => !priced.has(id))
+    return [...new Set(ids)].sort((a, b) => a - b)
+  }, [currency])
+  const key = missing?.join(',') ?? ''
+  useEffect(() => {
+    if (!key || !currency || check.running || check.error) return
+    const t = setTimeout(() => checkPrices(client, key.split(',').map(Number), currency), 3000)
+    return () => clearTimeout(t)
+  }, [key, currency, client, check.running, check.error])
+}

@@ -69,8 +69,9 @@ export const getMarketplaceStats = (c: DiscogsClient, releaseId: number, currenc
 export const getPriceSuggestions = (c: DiscogsClient, releaseId: number) =>
   c.get<PriceSuggestions>(`/marketplace/price_suggestions/${releaseId}`)
 
-export const getCollectionValue = (c: DiscogsClient, username: string) =>
-  c.get<CollectionValue>(`${u(username)}/collection/value`, undefined, DISCOGS_MAX_AGE)
+// fresh skips the cache, e.g. after records were added or removed
+export const getCollectionValue = (c: DiscogsClient, username: string, fresh = false) =>
+  c.get<CollectionValue>(`${u(username)}/collection/value`, undefined, fresh ? 1 : DISCOGS_MAX_AGE)
 
 export type InstanceTarget = { folderId: number; releaseId: number; instanceId: number }
 

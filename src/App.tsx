@@ -13,6 +13,7 @@ import { stopPriceCheck } from './hooks/prices'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
+import { useNewRecordPrices } from './hooks/prices'
 import { trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
@@ -159,6 +160,7 @@ function DemoBar() {
 // wrong at launch, which left a gap under the tab bar and let the whole page scroll.
 // Only the middle scrolls, so the header and tab bar never move.
 function Shell({ children }: { children: ReactNode }) {
+  useNewRecordPrices()
   const { session } = useSession()
   const [path] = useLocation()
   const scroller = useRef<HTMLElement>(null)

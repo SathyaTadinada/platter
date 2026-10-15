@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CrateSelect } from '../components/CrateSelect'
+import { inline } from '../components/CopyDetails'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
 import { formatDay } from '../components/DateInput'
@@ -16,6 +17,7 @@ import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import { formatBarcodeInput } from '../lib/barcode'
+import { toCard } from '../lib/format'
 import { formatPrice, hasMetadata, type Metadata } from '../lib/metadata'
 import { chooseRelease, retryFailed } from '../lib/queue'
 
@@ -129,7 +131,7 @@ export function Batch() {
   }
 
   return (
-    <Screen title="Batch" back="/scan" width="wide" actions={actions}>
+    <Screen title="Batch" back="/scan" width="wide" actions={actions} fill>
       {confirmClear && (
         <ConfirmDialog title="Clear the batch?" action="Clear" onConfirm={() => clear('all')} onCancel={() => setConfirmClear(false)}>
           Records already added stay in your collection.
@@ -173,12 +175,6 @@ export function Batch() {
 
       {groups.ready.length > 0 && (
         <Section title={`Ready to add (${groups.ready.length})`}>
-          {shared && groups.ready.some((i) => i.source !== 'csv') && (
-            <div>
-              <p className="mb-2 px-1 text-sm font-medium">Same for every record</p>
-              <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
-            </div>
-          )}
           <List>
             {groups.ready.map((i) => (
               <Row
@@ -195,6 +191,15 @@ export function Batch() {
               />
             ))}
           </List>
+          {shared && groups.ready.some((i) => i.source !== 'csv') && (
+            <div className="pt-3">
+              <div className="mb-2 px-1">
+                <p className="text-sm font-medium">For all records</p>
+                <p className="text-xs text-stone-500">Each record above gets these unless you set its own.</p>
+              </div>
+              <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
+            </div>
+          )}
         </Section>
       )}
 
@@ -209,16 +214,16 @@ export function Batch() {
       )}
 
       {groups.ready.length > 0 && (
-        <div className="sticky bottom-3 z-10 mt-4">
+        <div className="sticky bottom-3 z-10 mt-auto pt-4">
           <div className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-            <label className="flex items-center justify-between gap-3 text-sm">
-              <span className="shrink-0 font-medium">Add to crate</span>
+            <label className="flex items-center gap-3 pl-1 text-sm">
+              <span className="shrink-0 text-stone-500">Crate</span>
               <CrateSelect
                 value={folderId}
                 folders={folders}
                 onChange={setFolderId}
                 disabled={adding || !folders.length}
-                className="min-h-10 min-w-0 rounded-lg border border-stone-300 bg-transparent px-2 dark:border-stone-700"
+                className={`${inline} cursor-pointer appearance-none text-base [text-align-last:right]`}
               />
             </label>
             {groups.ready.some((i) => i.source === 'csv' && i.folderId) && (
@@ -338,6 +343,10 @@ function Row({
   currency = 'USD',
 }: RowProps) {
   const r = item.release
+  // not picked yet: the releases sharing a barcode are nearly always the same album, so
+  // its cover and name help tell which record this is
+  const guess = !r && item.candidates?.length ? toCard(item.candidates[0]) : undefined
+  const thumb = r?.thumb ?? guess?.thumb
   const meta = r ? [r.label, r.catno, r.year].filter(Boolean).join(' · ') : ''
 
   let status: React.ReactNode = null
@@ -384,16 +393,16 @@ function Row({
 
   const body = (
     <>
-      {r?.thumb ? (
-        <img src={r.thumb} alt="" loading="lazy" className="size-12 shrink-0 rounded-md bg-stone-200 object-cover dark:bg-stone-800" />
+      {thumb ? (
+        <img src={thumb} alt="" loading="lazy" className="size-12 shrink-0 rounded-md bg-stone-200 object-cover dark:bg-stone-800" />
       ) : (
         <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-stone-200 text-stone-400 dark:bg-stone-800">
           {item.status === 'failed' ? <CircleAlert size={20} aria-hidden /> : <Disc3 size={20} aria-hidden />}
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{r ? r.title : item.barcode && formatBarcodeInput(item.barcode)}</p>
-        {r && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{r.artist}</p>}
+        <p className="truncate font-medium">{r ? r.title : (guess?.title ?? (item.barcode && formatBarcodeInput(item.barcode)))}</p>
+        {(r ?? guess) && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{(r ?? guess)!.artist}</p>}
         {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
         {status && <p className="text-xs text-stone-500">{status}</p>}
         {item.meta && hasMetadata(item.meta) && item.status !== 'added' && (
@@ -479,7 +488,11 @@ function DetailsSheet({
   const ref = useRef<HTMLDialogElement>(null)
   const [meta, setMeta] = useState<Metadata>(item.meta ?? {})
   useEffect(() => {
-    if (ref.current && !ref.current.open) ref.current.showModal()
+    if (ref.current && !ref.current.open) {
+      ref.current.showModal()
+      // the browser focuses the first field otherwise, which opens it on some devices
+      ref.current.focus()
+    }
   }, [])
   const sharedText = [shared.date && formatDay(shared.date), shared.store, shared.location].filter(Boolean).join(' · ')
 
@@ -489,7 +502,8 @@ function DetailsSheet({
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       aria-labelledby="details-title"
-      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
+      tabIndex={-1}
+      className="m-0 mt-auto max-h-[90dvh] focus:outline-none w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
     >
       <div className="space-y-4 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
         <div>

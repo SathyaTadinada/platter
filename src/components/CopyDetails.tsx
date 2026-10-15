@@ -5,6 +5,7 @@ import type { LibraryItem } from '../db/db'
 import { useFieldSuggestions } from '../hooks/useFields'
 import type { FieldKey, FieldMatch } from '../lib/fields'
 import { formatPrice } from '../lib/metadata'
+import { PriceInput } from './PriceInput'
 import { CrateSelect } from './CrateSelect'
 import { DateInput } from './DateInput'
 
@@ -208,16 +209,28 @@ export function Field({
         </Row>
       )
 
+    case 'price':
+      return (
+        <Row label={field.name} saved={saved}>
+          <PriceInput
+            aria-label={field.name}
+            value={draft}
+            onChange={setDraft}
+            onBlur={() => commit(formatPrice(draft, currency) ?? '')}
+            onKeyDown={blurOnEnter}
+          />
+        </Row>
+      )
+
     default:
       return (
         <Row label={field.name} saved={saved}>
           <input
             aria-label={field.name}
             value={draft}
-            inputMode={kind === 'price' ? 'decimal' : undefined}
             placeholder="Add"
             onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => commit(kind === 'price' ? (formatPrice(draft, currency) ?? '') : draft.trim())}
+            onBlur={() => commit(draft.trim())}
             onKeyDown={blurOnEnter}
             list={suggestions.length ? `${id}-s` : undefined}
             autoComplete="off"

@@ -72,6 +72,7 @@ export function Screen({
   toolbar,
   width = 'narrow',
   backdrop,
+  fill,
 }: {
   title: ReactNode
   back?: string | (() => void)
@@ -80,6 +81,7 @@ export function Screen({
   toolbar?: ReactNode // stays pinned under the title
   width?: keyof typeof widths
   backdrop?: string // image shown blurred behind the top of the page
+  fill?: boolean // content stretches to the bottom of the screen, so something can sit there with mt-auto
 }) {
   const [, navigate] = useLocation()
   // the browser tab (and history menu) names the page
@@ -87,7 +89,7 @@ export function Screen({
     document.title = typeof title === 'string' && title ? `${title} · Platter` : 'Platter'
   }, [title])
   return (
-    <div className="relative isolate">
+    <div className={`relative isolate ${fill ? 'flex min-h-full flex-col' : ''}`}>
       {backdrop && (
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] overflow-hidden" aria-hidden>
           <img src={backdrop} alt="" className="size-full scale-125 object-cover opacity-40 blur-3xl saturate-150 dark:opacity-30" />
@@ -119,8 +121,8 @@ export function Screen({
           </div>
         )}
       </header>
-      <div className={`${container} pt-4 pb-8 lg:pt-6`}>
-        <div className={widths[width]}>{children}</div>
+      <div className={`${container} pt-4 pb-8 lg:pt-6 ${fill ? 'flex flex-1 flex-col' : ''}`}>
+        <div className={`${widths[width]} ${fill ? 'flex w-full flex-1 flex-col' : ''}`}>{children}</div>
       </div>
     </div>
   )

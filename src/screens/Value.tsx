@@ -47,7 +47,7 @@ export function ValueStats() {
   const matches = useFieldMatches()
   const current = useAsync(
     () => (currency ? recordCollectionValue(client, username, currency) : Promise.resolve(undefined)),
-    [client, username, currency],
+    [client, username, currency, items?.length],
   )
 
   const layout = useSyncExternalStore(subscribeLayout, getLayout)
@@ -131,7 +131,8 @@ export function ValueStats() {
         {current.data ? (
           <>
             <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">{current.data.raw.median}</p>
-            {series.length >= 2 && (
+            {/* nothing to say when it hasn't moved */}
+            {series.length >= 2 && Math.abs(current.data.snap.median - series[0].median) >= 1 && (
               <div className="mt-2">
                 <Delta
                   {...change(series[0].median, current.data.snap.median)}
