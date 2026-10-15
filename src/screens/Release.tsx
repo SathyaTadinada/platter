@@ -9,8 +9,9 @@ import { Identifiers } from '../components/Identifiers'
 import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
 import { ShareButton } from '../components/ShareButton'
+import { toast } from '../components/Toaster'
 import { RecordRow, statCard } from '../components/stats'
-import { buttonClass, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { buttonClass, IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -50,9 +51,11 @@ export function Release({ id }: { id: string }) {
       if (own?.wanted) {
         await removeWant(client, username, releaseId)
         await db.wants.delete(releaseId)
+        toast('Removed from your wantlist')
       } else {
         await addWant(client, username, releaseId)
         await db.wants.put(wantFromRelease(r))
+        toast('Added to your wantlist', { tone: 'success' })
       }
     } catch (e) {
       setError((e as Error).message)
@@ -98,7 +101,19 @@ export function Release({ id }: { id: string }) {
       back={back}
       width="wide"
       backdrop={item.cover ?? item.thumb}
-      actions={<ShareButton url={discogsUrl(r.uri)} title={`${joinArtists(r.artists)} – ${r.title}`} />}
+      actions={
+        <>
+          <IconButton
+            label={own?.wanted ? 'Remove from wantlist' : 'Add to wantlist'}
+            aria-pressed={own?.wanted}
+            disabled={wantBusy}
+            onClick={toggleWant}
+          >
+            <Heart size={20} className={own?.wanted ? 'fill-current text-red-500' : ''} />
+          </IconButton>
+          <ShareButton url={discogsUrl(r.uri)} title={`${joinArtists(r.artists)} – ${r.title}`} />
+        </>
+      }
     >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
         <div className="space-y-6">
@@ -124,29 +139,13 @@ export function Release({ id }: { id: string }) {
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {copyCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent dark:bg-accent/20">
-                <Check size={16} aria-hidden />
-                {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
-              </span>
-            )}
-            <button
-              type="button"
-              disabled={wantBusy}
-              onClick={toggleWant}
-              aria-pressed={own?.wanted}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
-                own?.wanted
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
-                  : 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
-              }`}
-            >
-              <Heart size={16} className={own?.wanted ? 'fill-current' : ''} aria-hidden />
-              {own?.wanted ? 'On your wantlist' : 'Add to wantlist'}
-            </button>
-          </div>
-          <div className="mt-3">
+          {copyCount > 0 && (
+            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent dark:bg-accent/20">
+              <Check size={16} aria-hidden />
+              {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
+            </p>
+          )}
+          <div className="mt-4">
             <ListenLinks releaseId={releaseId} artist={joinArtists(r.artists)} title={r.title} identifiers={r.identifiers} />
           </div>
           {error && (
