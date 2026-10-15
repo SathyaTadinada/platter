@@ -1,7 +1,10 @@
 import type { CollectionField, CollectionItem, Folder, Release, SearchResult, WantItem as ApiWant } from '../api/discogs/types'
 import type { LibraryItem, WantItem } from '../db/db'
-import { cleanArtist, describeFormats, splitTitle } from './format'
+import { ALL_MEDIA, cleanArtist, describeFormats, splitTitle } from './format'
 import { valueBracket } from './value'
+
+// what the Format filter offers; "All Media" isn't a format (see format.ts)
+const formatNames = (formats: { name: string }[] = []) => [...new Set(formats.map((f) => f.name))].filter((n) => n !== ALL_MEDIA)
 
 // ---- building items ----
 
@@ -34,7 +37,7 @@ export function toLibraryItem(x: CollectionItem): LibraryItem {
     label: b.labels[0]?.name,
     catno: b.labels[0]?.catno && b.labels[0].catno !== 'none' ? b.labels[0].catno : undefined,
     format: describeFormats(b.formats) ?? '',
-    formatNames: [...new Set(b.formats.map((f) => f.name))],
+    formatNames: formatNames(b.formats),
     formatTags: [...new Set(b.formats.flatMap((f) => f.descriptions ?? []))],
     genres: b.genres ?? [],
     styles: b.styles ?? [],
@@ -87,7 +90,7 @@ export function itemFromRelease(r: Release, instanceId: number, folderId: number
     label: label?.name,
     catno: label?.catno && label.catno !== 'none' ? label.catno : undefined,
     format: describeFormats(r.formats) ?? '',
-    formatNames: [...new Set((r.formats ?? []).map((f) => f.name))],
+    formatNames: formatNames(r.formats),
     formatTags: [...new Set((r.formats ?? []).flatMap((f) => f.descriptions ?? []))],
     genres: r.genres ?? [],
     styles: r.styles ?? [],
@@ -114,7 +117,7 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
     label: r.label?.[0],
     catno: r.catno && r.catno !== 'none' ? r.catno : undefined,
     format: describeFormats(formats, r.format) ?? '',
-    formatNames: [...new Set(formats.map((f) => f.name))],
+    formatNames: formatNames(formats),
     formatTags: [...new Set(formats.flatMap((f) => f.descriptions ?? []))],
     genres: (r as { genre?: string[] }).genre ?? [],
     styles: (r as { style?: string[] }).style ?? [],

@@ -51,17 +51,14 @@ export function ListenLinks({
     <div className="flex flex-wrap items-center gap-1.5">
       <Headphones size={16} className="mr-1 text-stone-500" aria-hidden />
       <span className="sr-only">Listen on</span>
-      <button type="button" disabled={busy} onClick={() => openExact('apple')} className={pill}>
-        Apple Music
-      </button>
       <a href={links.spotify} target="_blank" rel="noopener" className={pill}>
         Spotify
       </a>
+      <button type="button" disabled={busy} onClick={() => openExact('apple')} className={pill}>
+        Apple Music
+      </button>
       <a href={links.youtube} target="_blank" rel="noopener" className={pill}>
         YouTube Music
-      </a>
-      <a href={links.bandcamp} target="_blank" rel="noopener" className={pill}>
-        Bandcamp
       </a>
       <button type="button" disabled={busy} onClick={() => openExact('all')} className={pill}>
         All services

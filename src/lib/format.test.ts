@@ -17,6 +17,14 @@ describe('format', () => {
   it('describes formats with quantity and details', () => {
     expect(describeFormats([{ name: 'Vinyl', qty: '2', descriptions: ['LP', 'Album'], text: 'Red' }])).toBe('2× Vinyl, LP, Album, Red')
     expect(describeFormats(undefined, ['Vinyl', 'LP', 'Vinyl'])).toBe('Vinyl, LP')
+    // "All Media" holds notes for the whole release, not a format of its own
+    expect(
+      describeFormats([
+        { name: 'Vinyl', qty: '1', descriptions: ['LP'] },
+        { name: 'CD', qty: '1', descriptions: ['Album'] },
+        { name: 'All Media', qty: '1', descriptions: ['Limited Edition'] },
+      ]),
+    ).toBe('Vinyl, LP + CD, Album · Limited Edition')
   })
 
   it('builds a card from a real search result', () => {

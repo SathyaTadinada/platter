@@ -25,17 +25,25 @@ export function splitTitle(full: string): { artist: string; title: string } {
   return { artist: cleanArtist(full.slice(0, i)), title: full.slice(i + 3) }
 }
 
+// Discogs files notes about a whole multi-format release ("Limited Edition" on a box
+// with an LP and a CD) under a pseudo-format called "All Media"
+export const ALL_MEDIA = 'All Media'
+
 export function describeFormats(formats?: SearchFormat[], fallback?: string[]): string | undefined {
   if (formats?.length) {
-    return formats
+    const extras = (f: SearchFormat) => [...(f.descriptions ?? []), ...(f.text ? [f.text] : [])]
+    const media = formats
+      .filter((f) => f.name !== ALL_MEDIA)
       .map((f) => {
         const qty = Number(f.qty) > 1 ? `${f.qty}× ` : ''
-        const extra = [...(f.descriptions ?? []), ...(f.text ? [f.text] : [])]
+        const extra = extras(f)
         return qty + f.name + (extra.length ? `, ${extra.join(', ')}` : '')
       })
       .join(' + ')
+    const whole = formats.filter((f) => f.name === ALL_MEDIA).flatMap(extras)
+    return [media, whole.join(', ')].filter(Boolean).join(' · ') || undefined
   }
-  if (fallback?.length) return [...new Set(fallback)].join(', ')
+  if (fallback?.length) return [...new Set(fallback.filter((f) => f !== ALL_MEDIA))].join(', ') || undefined
 }
 
 export function discogsUrl(uri: string): string {

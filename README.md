@@ -29,7 +29,7 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Sort by most played, recently played, or location
 - Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks
 - Light, dark, or system theme, and a choice of accent color
-- Streaming links: Apple Music and album.link (every service) for the exact album, looked up only when tapped, plus searches on Spotify, YouTube Music, and Bandcamp
+- Streaming links: Apple Music and album.link (every service) for the exact album, looked up only when tapped, plus searches on Spotify and YouTube Music
 - A demo with a sample collection, for trying it without a Discogs account
 
 Text recognition runs on the device with Tesseract. Its engine and English data are served from Platter's own domain and only downloaded the first time they're used.

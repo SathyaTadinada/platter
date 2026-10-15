@@ -11,7 +11,6 @@ export function searchLinks(artist: string, title: string) {
   return {
     spotify: `https://open.spotify.com/search/${q(artist, title)}/albums`,
     youtube: `https://music.youtube.com/search?q=${q(artist, title)}`,
-    bandcamp: `https://bandcamp.com/search?q=${q(artist, title)}&item_type=a`,
     apple: `https://music.apple.com/search?term=${q(artist, title)}`,
   }
 }

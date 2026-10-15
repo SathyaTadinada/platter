@@ -51,7 +51,7 @@ export function Import() {
   const rated = loaded ? loaded.parsed.rows.filter((r) => r.rating).length : 0
 
   return (
-    <Screen title="Import a CSV" back="/settings">
+    <Screen title="Import collection" back="/settings">
       <Section>
         <p className="text-stone-600 dark:text-stone-400">
           Add records from a Discogs collection export, yours or someone else's. Crates, conditions, notes, and ratings are copied over if
@@ -83,7 +83,7 @@ export function Import() {
       ) : (
         <Button variant={loaded ? 'secondary' : 'primary'} className="w-full" onClick={() => fileRef.current?.click()}>
           <FileUp size={20} aria-hidden />
-          {loaded ? 'Choose a different file' : 'Choose CSV file'}
+          {loaded ? 'Choose a different file' : 'Choose file'}
         </Button>
       )}
 

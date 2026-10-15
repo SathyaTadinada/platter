@@ -15,7 +15,6 @@ describe('searchLinks', () => {
   it('searches each service for artist and title', () => {
     const l = searchLinks('Laufey', 'Bewitched')
     expect(l.spotify).toBe('https://open.spotify.com/search/Laufey%20Bewitched/albums')
-    expect(l.bandcamp).toContain('q=Laufey%20Bewitched')
   })
 })
 

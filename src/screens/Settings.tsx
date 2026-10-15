@@ -169,7 +169,7 @@ export function Settings() {
 
           <Section title="Your data">
             <List>
-              <Row icon={<FileUp size={20} />} label="Import a Discogs CSV" detail="Add records from a collection export" href="/import" />
+              <Row icon={<FileUp size={20} />} label="Import collection" detail="From a Discogs export file" href="/import" />
             </List>
             <div className="grid grid-cols-2 gap-3">
               <Tile icon={<Download size={22} />} label="Export backup" onClick={doExport} />

@@ -285,7 +285,7 @@ export function Collection() {
     </>
   )
 
-  const exportLabel = searching ? `Export these ${filtered.length}` : 'Export CSV'
+  const exportLabel = searching ? `Export these ${filtered.length}` : 'Export collection'
 
   // Phones get the everyday actions plus a menu; desktop has room for all of them
   const actions = selected ? (
@@ -312,7 +312,7 @@ export function Collection() {
         <Heart size={18} aria-hidden /> Wantlist
       </button>
       <button type="button" onClick={() => navigate('/import')} className={headerButton}>
-        <FileUp size={18} aria-hidden /> Import CSV
+        <FileUp size={18} aria-hidden /> Import collection
       </button>
       <button type="button" onClick={exportCsv} disabled={!filtered.length} className={headerButton}>
         <Download size={18} aria-hidden /> {exportLabel}
@@ -327,7 +327,7 @@ export function Collection() {
               onSelect: () => sync.sync(true),
               disabled: sync.running,
             },
-            { label: 'Import CSV', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
+            { label: 'Import collection', icon: <FileUp size={18} />, onSelect: () => navigate('/import') },
             { label: exportLabel, icon: <Download size={18} />, onSelect: exportCsv, disabled: !filtered.length },
           ]}
         />
@@ -355,13 +355,13 @@ export function Collection() {
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <Disc3 size={48} className="text-stone-400" aria-hidden />
         <p className="text-lg font-semibold">No records yet</p>
-        <p className="max-w-xs text-stone-500">Scan a record or import a CSV to get started.</p>
+        <p className="max-w-xs text-stone-500">Scan a record or import a collection to get started.</p>
         <div className="mt-2 flex gap-2">
           <Link href="/scan" className={buttonClass('primary')}>
             Scan a record
           </Link>
           <Link href="/import" className={buttonClass('secondary')}>
-            Import a CSV
+            Import collection
           </Link>
         </div>
       </div>
