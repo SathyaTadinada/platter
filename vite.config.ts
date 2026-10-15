@@ -31,8 +31,8 @@ export default defineConfig({
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,wasm}'],
         // OCR files are big and only needed when someone reads a runout or spine;
-        // cache them the first time they're used instead
-        globIgnores: ['ocr/**'],
+        // cache them the first time they're used instead. og.png is only for link previews.
+        globIgnores: ['ocr/**', 'og.png'],
         runtimeCaching: [
           { urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'), handler: 'CacheFirst', options: { cacheName: 'ocr' } },
           // The page itself comes from the network when there is one, so opening the app
