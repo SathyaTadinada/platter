@@ -10,6 +10,7 @@ import {
   setFieldValue,
 } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
+import { holdBackground } from '../lib/task'
 import { toast } from '../components/Toaster'
 import { db, getSetting, setSetting } from '../db/db'
 import { lookupBarcode } from '../lib/lookup'
@@ -60,12 +61,14 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   const lookups = useCallback(async () => {
     if (!client || busy.current || !navigator.onLine) return
     busy.current = true
+    const release = holdBackground()
     try {
       const search = (p: Parameters<typeof searchReleases>[1]) => searchReleases(client, p).then((r) => r.results)
       await lookupPending((b) => lookupBarcode(b, { searchDiscogs: search, searchMb: (x) => searchMbBarcode(x) }), {
         onProgress: (done, total) => setRun(total ? { kind: 'lookup', done, total } : null),
       })
     } finally {
+      release()
       busy.current = false
       setRun(null)
     }
@@ -75,6 +78,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
     async (job: AddJob) => {
       if (!client || !session || busy.current) return
       busy.current = true
+      const release = holdBackground()
       const u = session.username
       const deps: AddDeps = {
         addToFolder: async (folderId, releaseId) => (await addToFolder(client, u, folderId, releaseId)).instance_id,
@@ -103,6 +107,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         // CSV rows have no search result to build collection entries from, so refresh
         if (hadCsv && r.added) sync(true)
       } finally {
+        release()
         busy.current = false
         setRun(null)
       }

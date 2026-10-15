@@ -14,3 +14,18 @@ export function subscribeTask(f: () => void) {
   listeners.add(f)
   return () => listeners.delete(f)
 }
+
+// Background work (price checks) waits while something the user started is running, so
+// the rate limit goes to that first. holdBackground() returns the release.
+let holds = 0
+
+export function holdBackground() {
+  holds++
+  let released = false
+  return () => {
+    if (!released) holds--
+    released = true
+  }
+}
+
+export const backgroundHeld = () => holds > 0 || text !== null

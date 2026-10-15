@@ -4,6 +4,7 @@ import type { DiscogsClient } from '../api/discogs/client'
 import { useProfile } from '../components/Profile'
 import { db } from '../db/db'
 import { backgroundGapMs, fetchPrice } from '../lib/pricing'
+import { backgroundHeld } from '../lib/task'
 import { isFresh, type PriceEntry } from '../lib/value'
 import { useSignedIn } from './session'
 
@@ -31,8 +32,8 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
   set({ running: true, done: 0, total: todo.length, error: null })
   try {
     for (const id of todo) {
-      // anything else going on goes first
-      while (client.status.active > 0 && !stopRequested) await sleep(500)
+      // anything else going on goes first, including the gaps between a bulk action's requests
+      while ((client.status.active > 0 || backgroundHeld()) && !stopRequested) await sleep(500)
       if (stopRequested) break
       const { requests } = await fetchPrice(client, id, currency)
       set({ done: state.done + 1 })
