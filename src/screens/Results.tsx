@@ -8,7 +8,7 @@ import { coverArtUrl, searchMbBarcode, type MbRelease } from '../api/musicbrainz
 import { ResultFilterSheet } from '../components/ResultFilterSheet'
 import { RunoutButton, RunoutMatch, RunoutPanel } from '../components/RunoutPanel'
 import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
-import { Button, buttonClass, Notice, Screen, Spinner } from '../components/ui'
+import { Button, buttonClass, Notice, Screen, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -30,6 +30,8 @@ export function Results() {
   const qs = useSearch()
   const params = new URLSearchParams(qs)
   const [, navigate] = useLocation()
+  // back to wherever the search came from (Search or Scan)
+  const back = useBack('/search')
   const [show, setShow] = useState<Show>('all')
   const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
   const [runoutOpen, setRunoutOpen] = useState(false)
@@ -100,7 +102,7 @@ export function Results() {
   }, [state.data, loaded])
 
   return (
-    <Screen title={describeQuery(params) || 'Results'} back={params.get('barcode') ? '/scan' : '/search'} width="wide">
+    <Screen title={describeQuery(params) || 'Results'} back={back} width="wide">
       {state.loading && <Spinner label="Searching Discogs" />}
       {state.error && <Notice tone="error">{state.error.message}</Notice>}
 
