@@ -2,9 +2,10 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'wouter'
+import type { Folder } from '../api/discogs/types'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CrateSelect } from '../components/CrateSelect'
-import { inline } from '../components/CopyDetails'
+import { inline, Row as FieldRow } from '../components/CopyDetails'
 import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
 import { formatDay } from '../components/DateInput'
@@ -52,6 +53,7 @@ export function Batch() {
   }
 
   const folders = meta.data?.folders ?? []
+
   useEffect(() => {
     if (folderId !== undefined || !folders.length) return
     getSetting<number>('lastFolderId').then((last) =>
@@ -68,6 +70,18 @@ export function Batch() {
       added: list.filter((i) => i.status === 'added').reverse(), // newest first
     }
   }, [items])
+
+  // the batch crate first, then any crates individual records were moved to
+  const readyByCrate = (() => {
+    const by = new Map<number | undefined, QueueItem[]>()
+    for (const i of groups.ready) {
+      const f = i.folderId ?? folderId
+      by.set(f, [...(by.get(f) ?? []), i])
+    }
+    return [...by]
+      .sort(([a], [b]) => Number(b === folderId) - Number(a === folderId))
+      .map(([id, items]) => ({ folder: folders.find((f) => f.id === id), items }))
+  })()
 
   // the same barcode twice in one batch is usually a double scan
   const dupes = useMemo(() => {
@@ -175,22 +189,34 @@ export function Batch() {
 
       {groups.ready.length > 0 && (
         <Section title={`Ready to add (${groups.ready.length})`}>
-          <List>
-            {groups.ready.map((i) => (
-              <Row
-                key={i.id}
-                item={i}
-                dupe={dupes.has(i.barcode ?? '')}
-                ownedExact={Boolean(i.release && owned?.releases.has(i.release.id))}
-                ownedOther={Boolean(i.release?.masterId && owned?.masters.has(i.release.masterId) && !owned?.releases.has(i.release.id))}
-                wanted={Boolean(i.release && wants?.has(i.release.id))}
-                onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
-                onRemove={adding ? undefined : () => remove(i.id!)}
-                onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
-                currency={currency}
-              />
-            ))}
-          </List>
+          {readyByCrate.map(({ folder, items: list }) => (
+            <div key={folder?.id ?? 'batch'}>
+              {/* only split up once records go to more than one crate */}
+              {readyByCrate.length > 1 && (
+                <p className="mb-1.5 px-1 text-sm font-medium">
+                  {folder?.name ?? 'Crate'} <span className="font-normal text-stone-500">· {list.length}</span>
+                </p>
+              )}
+              <List>
+                {list.map((i) => (
+                  <Row
+                    key={i.id}
+                    item={i}
+                    dupe={dupes.has(i.barcode ?? '')}
+                    ownedExact={Boolean(i.release && owned?.releases.has(i.release.id))}
+                    ownedOther={Boolean(
+                      i.release?.masterId && owned?.masters.has(i.release.masterId) && !owned?.releases.has(i.release.id),
+                    )}
+                    wanted={Boolean(i.release && wants?.has(i.release.id))}
+                    onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
+                    onRemove={adding ? undefined : () => remove(i.id!)}
+                    onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
+                    currency={currency}
+                  />
+                ))}
+              </List>
+            </div>
+          ))}
           {shared && groups.ready.some((i) => i.source !== 'csv') && (
             <div className="pt-3">
               <div className="mb-2 px-1">
@@ -217,7 +243,7 @@ export function Batch() {
         <div className="sticky bottom-3 z-10 mt-auto pt-4">
           <div className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
             <label className="flex items-center gap-3 pl-1 text-sm">
-              <span className="shrink-0 text-stone-500">Crate</span>
+              <span className="shrink-0 text-stone-500">{readyByCrate.length > 1 ? 'Default crate' : 'Crate'}</span>
               <CrateSelect
                 value={folderId}
                 folders={folders}
@@ -266,8 +292,9 @@ export function Batch() {
           shared={shared ?? {}}
           matches={matches}
           onClose={() => setEditing(null)}
-          onSave={async (meta) => {
-            await db.queue.update(editing.id!, { meta })
+          folders={folders}
+          onSave={async (meta, crate) => {
+            await db.queue.update(editing.id!, { meta, folderId: crate })
             setEditing(null)
           }}
         />
@@ -476,17 +503,20 @@ function DetailsSheet({
   item,
   shared,
   matches,
+  folders,
   onSave,
   onClose,
 }: {
   item: QueueItem
   shared: Metadata
   matches: ReturnType<typeof useFieldMatches>
-  onSave: (m: Metadata) => void
+  folders: Folder[]
+  onSave: (m: Metadata, folderId: number | undefined) => void
   onClose: () => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const [meta, setMeta] = useState<Metadata>(item.meta ?? {})
+  const [folderId, setFolderId] = useState(item.folderId) // undefined: whatever the batch uses
   useEffect(() => {
     if (ref.current && !ref.current.open) {
       ref.current.showModal()
@@ -512,13 +542,25 @@ function DetailsSheet({
           </h2>
           <p className="truncate text-sm text-stone-500">{item.release?.artist}</p>
         </div>
+        <List>
+          <FieldRow label="Crate">
+            <CrateSelect
+              value={folderId}
+              folders={folders}
+              onChange={setFolderId}
+              onClear={() => setFolderId(undefined)}
+              placeholder="Same as batch"
+              className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
+            />
+          </FieldRow>
+        </List>
         <MetadataForm value={meta} onChange={setMeta} matches={matches} />
         {sharedText && <p className="text-xs text-stone-500">Batch values: {sharedText}. Anything entered here replaces them.</p>}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => onSave(meta)}>Save</Button>
+          <Button onClick={() => onSave(meta, folderId)}>Save</Button>
         </div>
       </div>
     </dialog>

@@ -13,6 +13,7 @@ export function CrateSelect({
   folders,
   onChange,
   onCreated,
+  onClear,
   className = '',
   placeholder,
   disabled,
@@ -22,6 +23,7 @@ export function CrateSelect({
   folders: Folder[]
   onChange: (id: number) => void
   onCreated?: () => void
+  onClear?: () => void // picking the placeholder option
   className?: string
   placeholder?: string
   disabled?: boolean
@@ -34,7 +36,7 @@ export function CrateSelect({
         aria-label={ariaLabel}
         value={value ?? ''}
         disabled={disabled}
-        onChange={(e) => (e.target.value === NEW ? setCreating(true) : e.target.value && onChange(Number(e.target.value)))}
+        onChange={(e) => (e.target.value === NEW ? setCreating(true) : e.target.value ? onChange(Number(e.target.value)) : onClear?.())}
         className={className}
       >
         {placeholder && <option value="">{placeholder}</option>}
