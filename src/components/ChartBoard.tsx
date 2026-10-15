@@ -73,7 +73,7 @@ function Editor({
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} accessibility={{ announcements }}>
         <SortableContext items={visible} strategy={rectSortingStrategy}>
-          <div className="grid gap-4 lg:grid-cols-2 lg:gap-x-8">
+          <div className="grid gap-4 md:grid-cols-2 lg:gap-x-8">
             <Frame title="Estimated value">{first}</Frame>
             {visible.map((k) => (
               <Tile key={k} id={k}>
