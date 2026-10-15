@@ -4,6 +4,13 @@ Catalog your records on Discogs. Point your phone at a barcode and Platter finds
 
 Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](https://platter.tadinada.com/?demo).
 
+<p>
+  <img src="docs/collection.webp" width="200" alt="The collection as a grid of covers">
+  <img src="docs/record.webp" width="200" alt="A record page">
+  <img src="docs/stats.webp" width="200" alt="The Value view of the Stats tab">
+  <img src="docs/tour.gif" width="200" alt="Opening a record, then the Stats tab">
+</p>
+
 ## What it does
 
 - Browse your collection as a grid or list, and search across artist, title, label, genre, and your own notes
@@ -26,6 +33,8 @@ Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](
 - Checks which Discogs custom collection fields you have and walks you through adding the rest
 - Listening log: tap Log a play on a record, or scan it in Play mode, to bump its Play Count and Last Played fields. Every play is also kept on the device, with undo
 - Listening stats: plays by month, most played, recently played, and records that haven't been on in a year
+- The Value charts can be dragged into a different order or hidden (Edit on the Stats tab)
+- Share on the Stats tab makes a picture of your collection's numbers to post or send
 - Sort by most played, recently played, or location
 - Optional ListenBrainz scrobbling: paste your token and each play is sent as the album's tracks
 - Light, dark, or system theme, and a choice of accent color
@@ -69,7 +78,7 @@ To re-record test fixtures, put a token in `.env` (see `.env.example`) and run `
 Platter runs on the Cloudflare Workers free plan.
 
 1. Fork the repo and change the `routes` entry in `wrangler.jsonc` to your own domain, or remove it to use a `workers.dev` address.
-2. Update `ALLOWED_ORIGINS` in `worker/index.ts` to match.
+2. Update `ALLOWED_ORIGINS` in `worker/index.ts` and the `og:` tags in `index.html` to match.
 3. Register an app at [discogs.com/settings/developers](https://www.discogs.com/settings/developers) with the callback URL `https://<your domain>/auth/callback`.
 4. Log in to Cloudflare and store the app's key and secret:
 
