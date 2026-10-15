@@ -5,10 +5,19 @@ Catalog your records on Discogs. Point your phone at a barcode and Platter finds
 Live at [platter.tadinada.com](https://platter.tadinada.com), or [try the demo](https://platter.tadinada.com/?demo).
 
 <p>
-  <img src="docs/collection.webp" width="200" alt="The collection as a grid of covers">
-  <img src="docs/record.webp" width="200" alt="A record page">
-  <img src="docs/stats.webp" width="200" alt="The Value view of the Stats tab">
-  <img src="docs/tour.gif" width="200" alt="Opening a record, then the Stats tab">
+  <img src="docs/tour.gif" width="220" alt="Browsing the collection, opening a record, then the Stats tab">
+  <img src="docs/collection.webp" width="220" alt="The collection as a grid of covers">
+  <img src="docs/record.webp" width="220" alt="A record page">
+  <img src="docs/stats.webp" width="220" alt="The Value view of the Stats tab">
+</p>
+
+On a computer:
+
+<p>
+  <img src="docs/desktop-collection.webp" width="440" alt="The collection on a wide screen">
+  <img src="docs/desktop-record.webp" width="440" alt="A record page on a wide screen">
+  <img src="docs/desktop-stats.webp" width="440" alt="The Value view on a wide screen">
+  <img src="docs/desktop-listening.webp" width="440" alt="The Listening view in dark mode">
 </p>
 
 ## What it does
