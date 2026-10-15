@@ -271,7 +271,7 @@ export function Record({ id }: { id: string }) {
           onConfirm={remove}
           onCancel={() => setConfirmRemove(false)}
         >
-          It comes out of your Discogs collection, along with its notes and other details.
+          This removes it from your Discogs collection, including its notes and other details.
         </ConfirmDialog>
       )}
     </Screen>

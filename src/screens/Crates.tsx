@@ -110,8 +110,8 @@ export function Crates() {
       {confirmDelete &&
         (confirmDelete.count > 0 ? (
           <ConfirmDialog title={`${confirmDelete.name} isn't empty`} onCancel={() => setConfirmDelete(null)}>
-            Move its {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'} to another crate first. Discogs only deletes empty
-            crates.
+            Move its {confirmDelete.count} record{confirmDelete.count === 1 ? '' : 's'} to another crate first. Discogs can only delete
+            empty crates.
           </ConfirmDialog>
         ) : (
           <ConfirmDialog

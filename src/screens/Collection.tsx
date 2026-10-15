@@ -32,6 +32,7 @@ import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
 import { useListening } from '../hooks/plays'
 import { dayAgo } from '../lib/time'
+import { setTask } from '../lib/task'
 import { download, today } from '../lib/download'
 import { checkPrices, useCurrency, useFreshPrices, usePriceCheck } from '../hooks/prices'
 import {
@@ -242,6 +243,9 @@ export function Collection() {
       return next
     })
 
+  // only what's still in the collection, so the count drops as records are removed
+  const chosenCount = selected ? filtered.filter((i) => selected.has(i.instanceId)).length : 0
+
   async function bulk(kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) {
     const chosen = filtered.filter((i) => selected?.has(i.instanceId))
     const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
@@ -270,10 +274,10 @@ export function Collection() {
     <>
       <button
         type="button"
-        onClick={() => setSelected(new Set(selected?.size === filtered.length ? [] : filtered.map((i) => i.instanceId)))}
+        onClick={() => setSelected(new Set(chosenCount === filtered.length ? [] : filtered.map((i) => i.instanceId)))}
         className="rounded-lg px-2 py-1.5 text-sm font-medium"
       >
-        {selected?.size === filtered.length ? 'Select none' : 'Select all'}
+        {chosenCount === filtered.length ? 'Select none' : 'Select all'}
       </button>
       <button type="button" onClick={() => setSelected(null)} className="rounded-lg px-2 py-1.5 text-sm font-semibold">
         Done
@@ -347,7 +351,7 @@ export function Collection() {
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <Disc3 size={48} className="text-stone-400" aria-hidden />
         <p className="text-lg font-semibold">No records yet</p>
-        <p className="max-w-xs text-stone-500">Scan a record or import a collection to get started.</p>
+        <p className="max-w-xs text-balance text-stone-500">Scan a record or import a collection to get started.</p>
         <div className="mt-2 flex gap-2">
           <Link href="/scan" className={buttonClass('primary')}>
             Scan a record
@@ -435,15 +439,15 @@ export function Collection() {
 
   return (
     <Screen
-      title={selected ? (selected.size ? `${selected.size} selected` : 'Select records') : 'Collection'}
+      title={selected ? (chosenCount ? `${chosenCount} selected` : 'Select records') : 'Collection'}
       width="full"
       actions={actions}
       toolbar={items?.length && fresh ? toolbar : undefined}
     >
       {body}
-      {selected && selected.size > 0 && (
+      {selected && chosenCount > 0 && (
         <BulkBar
-          count={selected.size}
+          count={chosenCount}
           folders={folders}
           onRun={bulk}
           onExport={() => exportCsv(filtered.filter((i) => selected.has(i.instanceId)))}
@@ -689,39 +693,37 @@ function BulkBar({
   onRun: (kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) => Promise<void>
 }) {
   const [confirm, setConfirm] = useState(false)
-  const [progress, setProgress] = useState<string | null>(null)
+  const [running, setRunning] = useState(false)
   const records = `${count} record${count === 1 ? '' : 's'}`
   const compact = 'sm:min-h-10 sm:px-3.5 sm:text-sm'
 
+  // progress goes to the status pill at the bottom; the bar steps aside meanwhile
   async function run(kind: 'remove' | 'move', folderId?: number) {
     const verb = kind === 'remove' ? 'Removing' : 'Moving'
-    setProgress(`${verb}…`)
-    await onRun(kind, folderId, (d, t) => setProgress(`${verb} ${d} of ${t}…`))
-    setProgress(null)
     setConfirm(false)
+    setRunning(true)
+    setTask(`${verb}…`)
+    try {
+      await onRun(kind, folderId, (d, t) => d < t && setTask(`${verb} ${d + 1} of ${t}`))
+    } finally {
+      setTask(null)
+      setRunning(false)
+    }
   }
+
+  if (running) return null
 
   return (
     <div className="sticky bottom-3 z-10 mt-4">
       {confirm && (
-        <ConfirmDialog
-          title={`Remove ${records}?`}
-          action="Remove"
-          busy={progress}
-          onConfirm={() => run('remove')}
-          onCancel={() => setConfirm(false)}
-        >
-          {count === 1 ? 'It comes' : 'They come'} out of your Discogs collection, along with {count === 1 ? 'its' : 'their'} notes and
-          other details.
+        <ConfirmDialog title={`Remove ${records}?`} action="Remove" onConfirm={() => run('remove')} onCancel={() => setConfirm(false)}>
+          This removes {count === 1 ? 'it' : 'them'} from your Discogs collection, including {count === 1 ? 'its' : 'their'} notes and other
+          details.
         </ConfirmDialog>
       )}
       {/* full width on phones; on bigger screens just as wide as its buttons */}
       <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
-        {progress && !confirm ? (
-          <p className="py-2 text-center text-sm font-medium" role="status">
-            {progress}
-          </p>
-        ) : (
+        {
           <div className="flex gap-2">
             <label className="relative min-w-0 flex-1 sm:flex-none">
               <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>Move to crate…</span>
@@ -741,7 +743,7 @@ function BulkBar({
               Remove
             </Button>
           </div>
-        )}
+        }
       </div>
     </div>
   )

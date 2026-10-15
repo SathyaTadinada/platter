@@ -3,6 +3,7 @@ import type { DiscogsClient } from '../api/discogs/client'
 import { useSession } from '../hooks/session'
 import { useQueue } from '../hooks/queue'
 import { useSync } from '../hooks/sync'
+import { getTask, subscribeTask } from '../lib/task'
 
 const idle = { active: 0, waitUntil: null }
 
@@ -26,13 +27,14 @@ export function StatusBar() {
   const status = useClientStatus(client)
   const sync = useSync()
   const { run } = useQueue()
+  const task = useSyncExternalStore(subscribeTask, getTask)
   const waiting = status.waitUntil !== null
   const now = useNow(waiting)
 
+  // what's running, with any rate-limit wait added on, so it's all in one pill
   let text = ''
-  if (waiting) {
-    const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
-    text = `Waiting on Discogs (${s}s)`
+  if (task) {
+    text = task
   } else if (run) {
     text =
       run.kind === 'lookup'
@@ -40,6 +42,10 @@ export function StatusBar() {
         : `Adding to your collection (${Math.min(run.done + 1, run.total)} of ${run.total})`
   } else if (sync.running) {
     text = sync.total > 1 ? `${sync.label} (page ${sync.done} of ${sync.total})` : `${sync.label}…`
+  }
+  if (waiting) {
+    const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
+    text = text ? `${text.replace(/…$/, '')} · waiting on Discogs (${s}s)` : `Waiting on Discogs (${s}s)`
   }
   if (!text) return null
 

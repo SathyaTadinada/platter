@@ -112,7 +112,9 @@ export function Batch() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Disc3 size={48} className="text-stone-400" aria-hidden />
           <p className="text-lg font-semibold">Batch is empty</p>
-          <p className="max-w-xs text-stone-500">Scan several records in a row and add them together, or import a collection.</p>
+          <p className="max-w-xs text-balance text-stone-500">
+            Scan several records in a row and add them together, or import a collection.
+          </p>
           <div className="mt-2 flex gap-2">
             <Link href="/scan?mode=batch" className={buttonClass('primary')}>
               Start scanning
