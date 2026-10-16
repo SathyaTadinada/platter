@@ -11,7 +11,7 @@ import { itemFromRelease } from '../lib/library'
 import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
-import { Button, Notice } from './ui'
+import { Button, List, Notice } from './ui'
 
 export type Added = { folder: string; instanceId: number; problems: string[] }
 
@@ -96,7 +96,7 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
 
   return (
     <div className="space-y-3">
-      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+      <List>
         <Row label="Crate">
           <CrateSelect
             value={folderId}
@@ -122,7 +122,7 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
             />
           )
         })}
-      </ul>
+      </List>
       {(error || folders.error) && <Notice tone="error">{error ?? folders.error?.message}</Notice>}
       <Button className="w-full" onClick={add} disabled={busy || !folderId}>
         {busy ? 'Adding…' : 'Add to collection'}

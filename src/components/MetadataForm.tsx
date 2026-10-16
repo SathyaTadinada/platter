@@ -6,6 +6,7 @@ import { DateInput } from './DateInput'
 import { PriceInput } from './PriceInput'
 import { fieldFor, type FieldKey, type FieldMatch } from '../lib/fields'
 import type { Metadata } from '../lib/metadata'
+import { List } from './ui'
 
 type Part = 'conditions' | 'price' | 'date' | 'store' | 'location' | 'notes'
 
@@ -71,7 +72,7 @@ export function MetadataForm({ value, onChange, matches, parts = ['conditions', 
 
   return (
     <div className="space-y-2">
-      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+      <List>
         {shown('conditions') && condition('mediaCondition', field('mediaCondition'))}
         {shown('conditions') && condition('sleeveCondition', field('sleeveCondition'))}
         {shown('price') && (
@@ -138,7 +139,7 @@ export function MetadataForm({ value, onChange, matches, parts = ['conditions', 
             />
           </Row>
         )}
-      </ul>
+      </List>
       {allPurchaseMissing && (
         <p className="px-1 text-xs text-stone-500">
           {notes ? 'Purchase details are saved in Notes' : "You don't have purchase fields or Notes on Discogs, so these won't be saved"}

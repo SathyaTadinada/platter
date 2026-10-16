@@ -5,7 +5,7 @@ import { deleteFolder, renameFolder } from '../api/discogs/endpoints'
 import type { Folder } from '../api/discogs/types'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { NewCrateDialog } from '../components/CrateSelect'
-import { Button, IconButton, Notice, Screen, Spinner } from '../components/ui'
+import { Button, IconButton, List, Notice, Screen, Spinner } from '../components/ui'
 import { useSignedIn } from '../hooks/session'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 
@@ -49,7 +49,7 @@ export function Crates() {
         </div>
       )}
 
-      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+      <List>
         {folders.map((f) => (
           <li key={f.id} className="flex min-h-14 items-center gap-2 px-4 py-2">
             {editing === f.id ? (
@@ -105,7 +105,7 @@ export function Crates() {
             )}
           </li>
         ))}
-      </ul>
+      </List>
 
       {confirmDelete &&
         (confirmDelete.count > 0 ? (

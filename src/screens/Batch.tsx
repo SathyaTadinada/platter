@@ -12,7 +12,7 @@ import { formatDay } from '../components/DateInput'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ResolveSheet } from '../components/ResolveSheet'
 import { Sheet } from '../components/Sheet'
-import { Button, buttonClass, Notice, Screen, Section } from '../components/ui'
+import { Button, buttonClass, List, Notice, Screen, Section } from '../components/ui'
 import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
@@ -315,14 +315,6 @@ export function Batch() {
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </p>
     </Screen>
-  )
-}
-
-function List({ children }: { children: React.ReactNode }) {
-  return (
-    <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
-      {children}
-    </ul>
   )
 }
 

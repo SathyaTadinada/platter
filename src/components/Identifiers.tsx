@@ -2,6 +2,7 @@ import { Copy } from 'lucide-react'
 import type { Identifier } from '../api/discogs/types'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { toast } from './Toaster'
+import { List } from './ui'
 
 async function copy(text: string) {
   try {
@@ -20,7 +21,7 @@ export function Identifiers({ identifiers }: { identifiers: Identifier[] }) {
   if (!identifiers.length) return <p className="text-sm text-stone-500">Nothing listed on Discogs.</p>
   const sorted = [...identifiers].sort((a, b) => rank(a.type) - rank(b.type))
   return (
-    <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+    <List>
       {sorted.map((id, i) => {
         // spaced barcodes are easier to compare with the one on the sleeve
         const value = id.type === 'Barcode' && /^[\d\s-]+$/.test(id.value) ? formatBarcodeInput(digitsOnly(id.value)) : id.value
@@ -45,6 +46,6 @@ export function Identifiers({ identifiers }: { identifiers: Identifier[] }) {
           </li>
         )
       })}
-    </ul>
+    </List>
   )
 }

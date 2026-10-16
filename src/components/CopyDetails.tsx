@@ -8,6 +8,7 @@ import { formatPrice } from '../lib/metadata'
 import { PriceInput } from './PriceInput'
 import { CrateSelect } from './CrateSelect'
 import { DateInput } from './DateInput'
+import { List } from './ui'
 
 type Kind = 'select' | 'price' | 'date' | 'count' | 'notes' | 'text'
 
@@ -54,7 +55,7 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
   const [stores, locations] = useFieldSuggestions(matches, ['purchasedFrom', 'location'])
 
   return (
-    <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+    <List>
       <Row label="Crate">
         <CrateSelect
           value={item.folderId}
@@ -82,7 +83,7 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
           />
         )
       })}
-    </ul>
+    </List>
   )
 }
 

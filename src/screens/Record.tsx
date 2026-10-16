@@ -14,7 +14,7 @@ import { PlayButton } from '../components/PlayButton'
 import { ShareButton } from '../components/ShareButton'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
-import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { Button, List, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
@@ -207,7 +207,7 @@ export function Record({ id }: { id: string }) {
 
             {related?.copies.length || related?.pressings.length ? (
               <Section title="Also in your collection">
-                <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+                <List>
                   {[...related.copies, ...related.pressings].map((o) => (
                     <li key={o.instanceId}>
                       <Link
@@ -226,7 +226,7 @@ export function Record({ id }: { id: string }) {
                       </Link>
                     </li>
                   ))}
-                </ul>
+                </List>
               </Section>
             ) : null}
 

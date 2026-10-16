@@ -24,7 +24,7 @@ import { CrateSelect } from '../components/CrateSelect'
 import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
 import { Stars } from '../components/Stars'
-import { Button, buttonClass, IconButton, Notice, Screen, Spinner } from '../components/ui'
+import { Button, buttonClass, IconButton, List, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
@@ -403,7 +403,7 @@ export function Collection() {
                 ))}
               </ul>
             ) : (
-              <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+              <List>
                 {g.items.map((i) => (
                   <ListRow
                     key={i.instanceId}
@@ -413,7 +413,7 @@ export function Collection() {
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
                 ))}
-              </ul>
+              </List>
             )}
           </section>
         ))}

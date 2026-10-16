@@ -3,7 +3,7 @@ import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react
 import { useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
-import { Button, Screen, Section } from '../components/ui'
+import { Button, List, Screen, Section } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
@@ -170,7 +170,7 @@ function RecentSearches() {
           Clear
         </button>
       </div>
-      <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+      <List>
         {recent.map((r) => {
           const Icon = iconFor[r.kind] ?? History
           return (
@@ -184,7 +184,7 @@ function RecentSearches() {
             </li>
           )
         })}
-      </ul>
+      </List>
     </section>
   )
 }
@@ -196,7 +196,7 @@ function RecentlyAdded() {
   return (
     <div className="hidden lg:block">
       <Section title="Recently added">
-        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+        <List>
           {items.map((i) => (
             <li key={i.instanceId}>
               <Link
@@ -211,7 +211,7 @@ function RecentlyAdded() {
               </Link>
             </li>
           ))}
-        </ul>
+        </List>
       </Section>
     </div>
   )
