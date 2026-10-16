@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useLocation } from 'wouter'
 import type { DiscogsClient } from '../api/discogs/client'
 import { useSession } from '../hooks/session'
 import { useQueue } from '../hooks/queue'
@@ -21,8 +22,22 @@ function useNow(enabled: boolean) {
   return now
 }
 
+// For a bar pinned to the bottom of a page (the batch's Add bar), as its ref: keeps the
+// status pill and toasts above the bar instead of on top of it
+export function liftStatus(el: HTMLElement | null) {
+  if (!el) return
+  const root = document.documentElement
+  const ro = new ResizeObserver(() => root.style.setProperty('--status-lift', `${el.offsetHeight + 8}px`))
+  ro.observe(el)
+  return () => {
+    ro.disconnect()
+    root.style.removeProperty('--status-lift')
+  }
+}
+
 // Small pill for background work: sync progress and rate-limit waits.
 export function StatusBar() {
+  const [path] = useLocation()
   const { client } = useSession()
   const status = useClientStatus(client)
   const sync = useSync()
@@ -35,7 +50,8 @@ export function StatusBar() {
   let text = ''
   if (task) {
     text = task
-  } else if (run) {
+  } else if (run && !(run.kind === 'add' && path === '/batch')) {
+    // (the batch's own Add button already counts the adds)
     text =
       run.kind === 'lookup'
         ? `Looking up scans (${Math.min(run.done + 1, run.total)} of ${run.total})`

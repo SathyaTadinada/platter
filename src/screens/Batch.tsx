@@ -9,6 +9,7 @@ import { MetadataForm } from '../components/MetadataForm'
 import { useProfile } from '../components/Profile'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ResolveSheet } from '../components/ResolveSheet'
+import { liftStatus } from '../components/StatusBar'
 import { Button, buttonClass, List, Notice, Screen, Section } from '../components/ui'
 import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -28,7 +29,12 @@ export function Batch() {
   const items = useLiveQuery(() => db.queue.orderBy('createdAt').toArray(), [])
   const owned = useLiveQuery(async () => {
     const all = await db.collection.toArray()
-    return { releases: new Set(all.map((c) => c.releaseId)), masters: new Set(all.map((c) => c.masterId).filter(Boolean)) }
+    return {
+      releases: new Set(all.map((c) => c.releaseId)),
+      masters: new Set(all.map((c) => c.masterId).filter(Boolean)),
+      // imported rows come without covers; once a record is in the collection, its cover is known
+      covers: new Map(all.map((c) => [c.releaseId, c.thumb ?? c.cover])),
+    }
   }, [])
   const wants = useLiveQuery(async () => new Set((await db.wants.toArray()).map((w) => w.releaseId)), [])
   const { run, online, kick, startAdding } = useQueue()
@@ -206,6 +212,7 @@ export function Batch() {
                       i.release?.masterId && owned?.masters.has(i.release.masterId) && !owned?.releases.has(i.release.id),
                     )}
                     wanted={Boolean(i.release && wants?.has(i.release.id))}
+                    cover={i.release && owned?.covers.get(i.release.id)}
                     onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
                     onRemove={adding ? undefined : () => remove(i.id!)}
                     onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
@@ -231,7 +238,7 @@ export function Batch() {
         <Section title={`Added (${groups.added.length})`}>
           <List>
             {groups.added.map((i) => (
-              <Row key={i.id} item={i} onRemove={() => remove(i.id!)} />
+              <Row key={i.id} item={i} cover={i.release && owned?.covers.get(i.release.id)} onRemove={() => remove(i.id!)} />
             ))}
           </List>
         </Section>
@@ -239,7 +246,10 @@ export function Batch() {
 
       {groups.ready.length > 0 && (
         <div className="sticky bottom-3 z-10 mt-auto pt-4">
-          <div className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+          <div
+            ref={liftStatus}
+            className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
+          >
             <label className="flex items-center gap-3 pl-1 text-sm">
               <span className="shrink-0 text-stone-500">{readyByCrate.length > 1 ? 'Default crate' : 'Crate'}</span>
               <CrateSelect

@@ -194,7 +194,7 @@ function Shell({ children }: { children: ReactNode }) {
           >
             {children}
           </main>
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+var(--status-lift,0px))] z-30 space-y-2">
             <Toaster />
             <StatusBar />
           </div>

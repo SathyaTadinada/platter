@@ -25,6 +25,7 @@ type RowProps = {
   onRetry?: () => void
   onEdit?: () => void
   currency?: string
+  cover?: string // for rows that came without one
 }
 
 function metaSummary(m: Metadata, currency: string): string {
@@ -44,12 +45,13 @@ export function Row({
   onRetry,
   onEdit,
   currency = 'USD',
+  cover,
 }: RowProps) {
   const r = item.release
   // not picked yet: the releases sharing a barcode are nearly always the same album, so
   // its cover and name help tell which record this is
   const guess = !r && item.candidates?.length ? toCard(item.candidates[0]) : undefined
-  const thumb = r?.thumb ?? guess?.thumb
+  const thumb = r?.thumb ?? guess?.thumb ?? cover
   const meta = r ? [r.label, r.catno, r.year].filter(Boolean).join(' · ') : ''
 
   let status: React.ReactNode = null
