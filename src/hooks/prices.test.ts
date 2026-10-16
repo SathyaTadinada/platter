@@ -38,4 +38,22 @@ describe('checkPrices', () => {
     expect(calls.filter((c) => c.url.includes('/marketplace/stats/'))).toHaveLength(2)
     expect(await db.prices.count()).toBe(2)
   })
+
+  it('runs once when two checks start at the same time', async () => {
+    const { fn, calls } = routeFetch([
+      ['/marketplace/stats/', () => json(stats)],
+      ['/price_suggestions/', () => json({})],
+    ])
+    const k = fakeClock(Date.now())
+    const client = new DiscogsClient(fakeAuth, fn, new RateLimiter(55, 60_000, k.now, k.sleep), k.sleep, k.now)
+
+    let done = false
+    Promise.all([checkPrices(client, [1, 2, 3], 'USD'), checkPrices(client, [1, 2, 3, 4], 'USD')]).then(() => (done = true))
+    for (let i = 0; i < 200 && !done; i++) {
+      await vi.advanceTimersByTimeAsync(1000)
+      await new Promise((r) => setImmediate(r))
+    }
+    expect(done).toBe(true)
+    expect(calls.filter((c) => c.url.includes('/marketplace/stats/'))).toHaveLength(3)
+  })
 })

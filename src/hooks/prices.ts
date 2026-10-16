@@ -14,6 +14,9 @@ type CheckState = { running: boolean; done: number; total: number; error: string
 
 let state: CheckState = { running: false, done: 0, total: 0, error: null }
 let stopRequested = false
+// set before the first await, so a second call that arrives meanwhile (a sync and newly
+// added records, say) doesn't start its own loop
+let busy = false
 const listeners = new Set<() => void>()
 const set = (patch: Partial<CheckState>) => {
   state = { ...state, ...patch }
@@ -23,14 +26,15 @@ const set = (patch: Partial<CheckState>) => {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export async function checkPrices(client: DiscogsClient, releaseIds: number[], currency: string) {
-  if (state.running) return
-  const now = Date.now()
-  const fresh = new Set((await db.prices.toArray()).filter((p) => isFresh(p, currency, now)).map((p) => p.releaseId))
-  const todo = [...new Set(releaseIds)].filter((id) => !fresh.has(id))
-  if (!todo.length) return
-  stopRequested = false
-  set({ running: true, done: 0, total: todo.length, error: null })
+  if (busy) return
+  busy = true
   try {
+    const now = Date.now()
+    const fresh = new Set((await db.prices.toArray()).filter((p) => isFresh(p, currency, now)).map((p) => p.releaseId))
+    const todo = [...new Set(releaseIds)].filter((id) => !fresh.has(id))
+    if (!todo.length) return
+    stopRequested = false
+    set({ running: true, done: 0, total: todo.length, error: null })
     for (const id of todo) {
       // anything else going on goes first, including the gaps between a bulk action's requests
       while ((client.status.active > 0 || backgroundHeld()) && !stopRequested) await sleep(500)
@@ -42,6 +46,8 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     set({ running: false })
   } catch (e) {
     set({ running: false, error: stopRequested ? null : (e as Error).message })
+  } finally {
+    busy = false
   }
 }
 
