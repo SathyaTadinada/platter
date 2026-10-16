@@ -1,6 +1,7 @@
-import { Menu, X } from 'lucide-react'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Menu } from 'lucide-react'
+import { useState, useSyncExternalStore } from 'react'
 import { defaultLayout, getLayout, move, setLayout, subscribeLayout, toggle, VALUE_SECTIONS, type SectionKey } from '../lib/statsLayout'
+import { Sheet } from './Sheet'
 import { Button } from './ui'
 
 const label = Object.fromEntries(VALUE_SECTIONS) as Record<string, string>
@@ -9,12 +10,8 @@ type Drag = { key: SectionKey; from: number; startY: number; dy: number; rowH: n
 
 // Turn the Value view's sections on and off, and drag them into a different order
 export function ChartsSheet({ onClose }: { onClose: () => void }) {
-  const ref = useRef<HTMLDialogElement>(null)
   const layout = useSyncExternalStore(subscribeLayout, getLayout)
   const [drag, setDrag] = useState<Drag | null>(null)
-  useEffect(() => {
-    if (ref.current && !ref.current.open) ref.current.showModal()
-  }, [])
 
   const last = layout.order.length - 1
   const target = drag ? Math.min(last, Math.max(0, drag.from + Math.round(drag.dy / drag.rowH))) : -1
@@ -29,27 +26,20 @@ export function ChartsSheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <dialog
-      ref={ref}
+    <Sheet
+      title="Choose charts"
       onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()}
-      aria-labelledby="charts-title"
-      className="m-0 mt-auto max-h-[85dvh] w-full max-w-none flex-col open:flex rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-md sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
+      width="md"
+      footer={
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" onClick={() => setLayout(defaultLayout())}>
+            Reset
+          </Button>
+          <Button onClick={onClose}>Done</Button>
+        </div>
+      }
     >
-      <div className="flex items-center justify-between border-b border-stone-200 px-5 py-3 dark:border-stone-800">
-        <h2 id="charts-title" className="text-lg font-bold">
-          Choose charts
-        </h2>
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="-mr-2 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800"
-        >
-          <X size={20} />
-        </button>
-      </div>
-      <ul className="min-h-0 flex-auto overflow-y-auto">
+      <ul>
         {layout.order.map((k, i) => {
           const shown = !layout.hidden.includes(k)
           const dragging = drag?.key === k
@@ -97,12 +87,6 @@ export function ChartsSheet({ onClose }: { onClose: () => void }) {
           )
         })}
       </ul>
-      <div className="grid grid-cols-2 gap-2 border-t border-stone-200 px-5 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] dark:border-stone-800">
-        <Button variant="secondary" onClick={() => setLayout(defaultLayout())}>
-          Reset
-        </Button>
-        <Button onClick={onClose}>Done</Button>
-      </div>
-    </dialog>
+    </Sheet>
   )
 }

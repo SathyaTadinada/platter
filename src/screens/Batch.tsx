@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'wouter'
 import type { Folder } from '../api/discogs/types'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -11,6 +11,7 @@ import { useProfile } from '../components/Profile'
 import { formatDay } from '../components/DateInput'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ResolveSheet } from '../components/ResolveSheet'
+import { Sheet } from '../components/Sheet'
 import { Button, buttonClass, Notice, Screen, Section } from '../components/ui'
 import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -514,55 +515,43 @@ function DetailsSheet({
   onSave: (m: Metadata, folderId: number | undefined) => void
   onClose: () => void
 }) {
-  const ref = useRef<HTMLDialogElement>(null)
   const [meta, setMeta] = useState<Metadata>(item.meta ?? {})
   const [folderId, setFolderId] = useState(item.folderId) // undefined: whatever the batch uses
-  useEffect(() => {
-    if (ref.current && !ref.current.open) {
-      ref.current.showModal()
-      // the browser focuses the first field otherwise, which opens it on some devices
-      ref.current.focus()
-    }
-  }, [])
   const sharedText = [shared.date && formatDay(shared.date), shared.store, shared.location].filter(Boolean).join(' · ')
 
   return (
-    <dialog
-      ref={ref}
+    <Sheet
+      title={
+        <>
+          {item.release?.title}
+          <span className="block truncate text-sm font-normal text-stone-500">{item.release?.artist}</span>
+        </>
+      }
       onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()}
-      aria-labelledby="details-title"
-      tabIndex={-1}
-      className="m-0 mt-auto max-h-[90dvh] focus:outline-none w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-stone-900 sm:m-auto sm:max-w-lg sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100"
-    >
-      <div className="space-y-4 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
-        <div>
-          <h2 id="details-title" className="truncate text-lg font-bold">
-            {item.release?.title}
-          </h2>
-          <p className="truncate text-sm text-stone-500">{item.release?.artist}</p>
-        </div>
-        <List>
-          <FieldRow label="Crate">
-            <CrateSelect
-              value={folderId}
-              folders={folders}
-              onChange={setFolderId}
-              onClear={() => setFolderId(undefined)}
-              placeholder="Same as batch"
-              className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
-            />
-          </FieldRow>
-        </List>
-        <MetadataForm value={meta} onChange={setMeta} matches={matches} />
-        {sharedText && <p className="text-xs text-stone-500">Batch values: {sharedText}. Anything entered here replaces them.</p>}
+      bodyClassName="space-y-4 p-5"
+      footer={
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={() => onSave(meta, folderId)}>Save</Button>
         </div>
-      </div>
-    </dialog>
+      }
+    >
+      <List>
+        <FieldRow label="Crate">
+          <CrateSelect
+            value={folderId}
+            folders={folders}
+            onChange={setFolderId}
+            onClear={() => setFolderId(undefined)}
+            placeholder="Same as batch"
+            className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
+          />
+        </FieldRow>
+      </List>
+      <MetadataForm value={meta} onChange={setMeta} matches={matches} />
+      {sharedText && <p className="text-xs text-stone-500">Batch values: {sharedText}. Anything entered here replaces them.</p>}
+    </Sheet>
   )
 }
