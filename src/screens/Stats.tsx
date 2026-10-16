@@ -70,7 +70,10 @@ export function Stats() {
         </>
       }
     >
-      {view === 'value' ? <ValueStats /> : <ListeningStats />}
+      {/* on touch screens, holding a chart to read it shouldn't start selecting text instead */}
+      <div className="pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]">
+        {view === 'value' ? <ValueStats /> : <ListeningStats />}
+      </div>
       {choosing && <ChartsSheet onClose={() => setChoosing(false)} />}
       {sharing && <ShareSheet onClose={() => setSharing(false)} />}
     </Screen>
