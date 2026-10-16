@@ -71,34 +71,32 @@ export function BulkBar({
       )}
       {/* full width on phones; on bigger screens just as wide as its buttons */}
       <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
-        {
-          <div className="flex gap-2">
-            <label className="relative min-w-0 flex-1 sm:flex-none">
-              <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>
-                {/* four buttons only fit on a phone with the short label */}
-                <span className="sm:hidden">Move…</span>
-                <span className="hidden sm:inline">Move to crate…</span>
-              </span>
-              <CrateSelect
-                ariaLabel="Move to crate"
-                value={undefined}
-                placeholder="Move to crate…"
-                folders={folders}
-                onChange={(id) => run('move', id)}
-                className="absolute inset-0 opacity-0"
-              />
-            </label>
-            <Button variant="secondary" onClick={() => setEditing(true)} className={compact}>
-              Edit
-            </Button>
-            <Button variant="secondary" onClick={onExport} className={compact}>
-              Export
-            </Button>
-            <Button variant="danger" onClick={() => setConfirm(true)} className={compact}>
-              Remove
-            </Button>
-          </div>
-        }
+        <div className="flex gap-2">
+          <label className="relative min-w-0 flex-1 sm:flex-none">
+            <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>
+              {/* four buttons only fit on a phone with the short label */}
+              <span className="sm:hidden">Move…</span>
+              <span className="hidden sm:inline">Move to crate…</span>
+            </span>
+            <CrateSelect
+              ariaLabel="Move to crate"
+              value={undefined}
+              placeholder="Move to crate…"
+              folders={folders}
+              onChange={(id) => run('move', id)}
+              className="absolute inset-0 opacity-0"
+            />
+          </label>
+          <Button variant="secondary" onClick={() => setEditing(true)} className={compact}>
+            Edit
+          </Button>
+          <Button variant="secondary" onClick={onExport} className={compact}>
+            Export
+          </Button>
+          <Button variant="danger" onClick={() => setConfirm(true)} className={compact}>
+            Remove
+          </Button>
+        </div>
       </div>
     </div>
   )
