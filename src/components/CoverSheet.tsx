@@ -48,7 +48,7 @@ export function CoverSheet({ item, release, onClose }: { item: LibraryItem; rele
                     className={`relative block w-full overflow-hidden rounded-lg ring-2 ${current ? 'ring-accent' : 'ring-transparent'}`}
                   >
                     <img
-                      src={img.uri150}
+                      src={img.uri150 || img.uri}
                       alt=""
                       loading="lazy"
                       className="aspect-square w-full bg-stone-200 object-cover dark:bg-stone-800"

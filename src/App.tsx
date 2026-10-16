@@ -14,7 +14,7 @@ import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
 import { useNewRecordPrices } from './hooks/prices'
-import { trackLocation } from './lib/nav'
+import { rememberScroll, savedScroll, trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
 import { Batch } from './screens/Batch'
@@ -165,7 +165,20 @@ function Shell({ children }: { children: ReactNode }) {
   const [path] = useLocation()
   const scroller = useRef<HTMLElement>(null)
   useEffect(() => {
-    scroller.current?.scrollTo(0, 0)
+    const el = scroller.current
+    if (!el) return
+    const target = savedScroll()
+    el.scrollTo(0, 0)
+    if (!target) return
+    // the page may still be loading its content; keep trying for a moment
+    const until = Date.now() + 1000
+    let frame = 0
+    const tick = () => {
+      el.scrollTo(0, target)
+      if (Math.abs(el.scrollTop - target) > 1 && Date.now() < until) frame = requestAnimationFrame(tick)
+    }
+    tick()
+    return () => cancelAnimationFrame(frame)
   }, [path])
 
   return (
@@ -175,7 +188,11 @@ function Shell({ children }: { children: ReactNode }) {
       <div className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--header-inset:0px]' : ''}`}>
         <SideNav />
         <div className="relative flex min-h-0 flex-1 flex-col">
-          <main ref={scroller} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size]">
+          <main
+            ref={scroller}
+            onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size]"
+          >
             {children}
           </main>
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 space-y-2">

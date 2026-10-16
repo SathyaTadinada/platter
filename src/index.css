@@ -185,3 +185,41 @@ input[list]::-webkit-calendar-picker-indicator {
 dialog::backdrop {
   background: rgb(0 0 0 / 0.5);
 }
+
+/* Checkboxes drawn here so the tick uses the same color as text on accent buttons
+   (white in light mode, near-black in dark), which native ones can't do */
+input[type='checkbox'] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  border-radius: 0.3rem;
+  border: 1.5px solid var(--color-stone-400);
+  background: transparent;
+  cursor: pointer;
+}
+input[type='checkbox']::before {
+  content: '';
+  width: 0.7em;
+  height: 0.7em;
+  background: var(--color-accent-fg);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transform: scale(0);
+  transition: transform 0.1s;
+}
+input[type='checkbox']:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+input[type='checkbox']:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+  outline-offset: 2px;
+}
+input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

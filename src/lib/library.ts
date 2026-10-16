@@ -161,12 +161,33 @@ export type LibraryQuery = { q: string; sort: SortKey; filters: Filters }
 
 export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', filters: { fields: {} } })
 
+// The sort picked last time is the default, so it sticks without living in the URL
+const SORT_KEY = 'platter.sort'
+
+export function savedSort(): SortKey {
+  try {
+    const v = localStorage.getItem(SORT_KEY)
+    if (SORTS.some((s) => s.key === v)) return v as SortKey
+  } catch {
+    // storage blocked
+  }
+  return 'added'
+}
+
+export function saveSort(sort: SortKey) {
+  try {
+    localStorage.setItem(SORT_KEY, sort)
+  } catch {
+    // only lasts this visit then
+  }
+}
+
 export function parseQuery(search: string): LibraryQuery {
   const p = new URLSearchParams(search)
   const num = (k: string) => (p.get(k) ? Number(p.get(k)) : undefined)
   const fields: Record<number, string> = {}
   for (const [k, v] of p) if (k.startsWith('f.')) fields[Number(k.slice(2))] = v
-  const sort = (SORTS.some((s) => s.key === p.get('sort')) ? p.get('sort') : 'added') as SortKey
+  const sort = (SORTS.some((s) => s.key === p.get('sort')) ? p.get('sort') : savedSort()) as SortKey
   return {
     q: p.get('q') ?? '',
     sort,
@@ -186,7 +207,7 @@ export function parseQuery(search: string): LibraryQuery {
 export function serializeQuery(q: LibraryQuery): string {
   const p = new URLSearchParams()
   if (q.q) p.set('q', q.q)
-  if (q.sort !== 'added') p.set('sort', q.sort)
+  if (q.sort !== savedSort()) p.set('sort', q.sort)
   const f = q.filters
   for (const k of ['folder', 'format', 'tag', 'genre', 'style', 'decade', 'rating'] as const) {
     if (f[k] !== undefined && f[k] !== '') p.set(k, String(f[k]))

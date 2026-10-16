@@ -130,12 +130,7 @@ export function Import() {
 
           {ownedCount > 0 && (
             <label className="flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-              <input
-                type="checkbox"
-                checked={skipOwned}
-                onChange={(e) => setSkipOwned(e.target.checked)}
-                className="mt-1 size-4 accent-accent"
-              />
+              <input type="checkbox" checked={skipOwned} onChange={(e) => setSkipOwned(e.target.checked)} className="mt-1 size-4" />
               <span className="text-sm">
                 <span className="font-medium">Skip the {plural(ownedCount, 'record')} you already have</span>
                 <span className="block text-stone-500">Turn off to add another copy of each.</span>

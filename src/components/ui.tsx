@@ -1,4 +1,4 @@
-import { backTarget } from '../lib/nav'
+import { backIsHistory, backTarget } from '../lib/nav'
 import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -107,7 +107,7 @@ export function Screen({
               type="button"
               aria-label="Back"
               className="-ml-2 rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800"
-              onClick={() => (typeof back === 'function' ? back() : navigate(back))}
+              onClick={() => (typeof back === 'function' ? back() : backIsHistory(back) ? history.back() : navigate(back))}
             >
               <ChevronLeft />
             </button>

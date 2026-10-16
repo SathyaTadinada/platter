@@ -62,7 +62,7 @@ export function ChartsSheet({ onClose }: { onClose: () => void }) {
               }`}
             >
               <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3">
-                <input type="checkbox" checked={shown} onChange={() => setLayout(toggle(layout, k))} className="size-5 accent-accent" />
+                <input type="checkbox" checked={shown} onChange={() => setLayout(toggle(layout, k))} className="size-5" />
                 <span className={shown ? '' : 'text-stone-500'}>{label[k]}</span>
               </label>
               <button

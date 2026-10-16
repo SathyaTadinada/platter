@@ -2,7 +2,7 @@
 
 Scan a record's barcode and add it to your Discogs collection. Platter also tracks what your records are worth and how often you play them. It's a web app you can install to your phone's home screen, and it talks to Discogs directly from your browser.
 
-[platter.tadinada.com](https://platter.tadinada.com) · [try the demo](https://platter.tadinada.com/?demo)
+No Discogs account? [The demo](https://platter.tadinada.com/?demo) has a sample collection to poke around in.
 
 <p>
   <img src="docs/tour.gif" width="195" alt="Browsing the collection, opening a record, then the Stats tab">
@@ -32,7 +32,7 @@ Scan a record's barcode and add it to your Discogs collection. Platter also trac
 
 There's no backend database. Platter stores its data in the browser and calls `api.discogs.com` directly. "Log in with Discogs" uses OAuth, and a small Cloudflare Worker (`worker/`) signs requests with the app secret without ever seeing your data. Personal access tokens skip the Worker entirely.
 
-Other services (MusicBrainz, Cover Art Archive, Apple's iTunes Search, ListenBrainz) are only called when you use the feature that needs them. Text recognition runs on the device with Tesseract.
+Besides Discogs, Platter only contacts MusicBrainz and the Cover Art Archive (for barcodes Discogs doesn't know), Apple's search (to find the exact album when you tap Apple Music or All services), and ListenBrainz if you connect it. The Spotify and YouTube Music buttons are plain search links. Text recognition runs on the device with Tesseract.
 
 ## Development
 

@@ -41,6 +41,7 @@ import {
   filterItems,
   groupItems,
   parseQuery,
+  saveSort,
   serializeQuery,
   SORTS,
   sortItems,
@@ -213,7 +214,10 @@ export function Collection() {
           items={SORTS.map((s) => ({
             label: s.label,
             checked: s.key === query.sort,
-            onSelect: () => setQuery({ ...query, sort: s.key }),
+            onSelect: () => {
+              saveSort(s.key)
+              setQuery({ ...query, sort: s.key })
+            },
           }))}
         />
         <button
