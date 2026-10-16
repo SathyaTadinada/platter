@@ -7,10 +7,11 @@ const DEPTH = 'platterDepth'
 const KEY = 'platterKey' // names the entry, for its scroll position
 const FROM = 'platterFrom' // the page this one was opened from
 const PREV = 'platterPrev' // the page actually behind this one in history
+const RESUME = 'platterResume' // the entry this one picks up from, when the Search tab returns to it
 const LAST_SEARCH = 'platter.lastSearch'
 const SEARCH_AREA = /^\/(search|results|release)(\/|$)/
 
-type NavState = { [DEPTH]?: number; [FROM]?: string; [PREV]?: string; [KEY]?: string }
+type NavState = { [DEPTH]?: number; [FROM]?: string; [PREV]?: string; [KEY]?: string; [RESUME]?: string }
 
 let depth = 0
 let started = false
@@ -26,14 +27,16 @@ export function trackLocation(path: string, search: string) {
   } else {
     depth = started ? depth + 1 : 0
     const prev = started ? current : undefined
-    history.replaceState({ ...s, [DEPTH]: depth, [PREV]: prev, [FROM]: s[FROM] ?? prev, [KEY]: Math.random().toString(36).slice(2) }, '')
+    const key = Math.random().toString(36).slice(2)
+    history.replaceState({ ...s, [DEPTH]: depth, [PREV]: prev, [FROM]: s[FROM] ?? prev, [KEY]: key }, '')
+    if (s[RESUME] && pages.has(s[RESUME])) pages.set(key, pages.get(s[RESUME]))
   }
   started = true
   current = url
 
   if (SEARCH_AREA.test(path)) {
     try {
-      sessionStorage.setItem(LAST_SEARCH, JSON.stringify({ url, from: state()[FROM] }))
+      sessionStorage.setItem(LAST_SEARCH, JSON.stringify({ url, from: state()[FROM], key: state()[KEY] }))
     } catch {
       // not important
     }
@@ -64,7 +67,7 @@ export function backIsHistory(path: string) {
 
 export const inSearchArea = (path: string) => SEARCH_AREA.test(path)
 
-export function lastSearch(): { url: string; from?: string } {
+export function lastSearch(): { url: string; from?: string; key?: string } {
   try {
     const v = JSON.parse(sessionStorage.getItem(LAST_SEARCH) ?? 'null')
     if (v && typeof v.url === 'string') return v
@@ -87,7 +90,8 @@ export function rememberScroll(top: number) {
 // otherwise the top
 export const savedScroll = () => scrolls.get(state()[KEY] ?? '') ?? 0
 
-// Anything else a page wants back when you return to it, like the filters on search results
+// Anything else a page wants back when you return to it, like the filters on search results.
+// Going back to an entry brings it back, and so does returning to the page through the Search tab.
 const pages = new Map<string, unknown>()
 
 export function rememberPage(v: unknown) {
@@ -95,4 +99,7 @@ export function rememberPage(v: unknown) {
   if (k) pages.set(k, v)
 }
 
-export const savedPage = <T>() => pages.get(state()[KEY] ?? '') as T | undefined
+export function savedPage<T>() {
+  const s = state()
+  return (pages.get(s[KEY] ?? '') ?? pages.get(s[RESUME] ?? '')) as T | undefined
+}

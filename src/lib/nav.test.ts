@@ -36,7 +36,7 @@ describe('back navigation', () => {
     go(nav, '/') // Collection tab
 
     const last = nav.lastSearch()
-    expect(last).toEqual({ url: '/release/1', from: '/results?q=currents' })
+    expect(last).toMatchObject({ url: '/release/1', from: '/results?q=currents' })
     go(nav, last.url, { platterFrom: last.from }) // Search tab
 
     const back = nav.backTarget('/search')
@@ -80,5 +80,26 @@ describe('back navigation', () => {
     expect(nav.savedPage()).toBeUndefined()
     history.replaceState(results, '')
     expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
+  })
+
+  it('gives it back after leaving through another tab and returning through Search', async () => {
+    const nav = await fresh()
+    nav.trackLocation('/', '')
+    go(nav, '/results?q=dummy')
+    nav.rememberPage({ filters: { format: 'Vinyl' } })
+    const tab = () => {
+      const last = nav.lastSearch()
+      go(nav, last.url, { platterFrom: last.from, platterResume: last.key })
+    }
+    go(nav, '/') // Collection tab
+    tab()
+    expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
+    // and again, without changing anything in between
+    go(nav, '/')
+    tab()
+    expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
+    // the same search run fresh starts clean
+    go(nav, '/results?q=dummy')
+    expect(nav.savedPage()).toBeUndefined()
   })
 })

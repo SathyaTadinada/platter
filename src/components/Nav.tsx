@@ -26,8 +26,9 @@ function useTarget() {
   const isCurrent = useCurrent()
   return (href: string): { href: string; state?: Record<string, string> } => {
     if (href !== '/search' || isCurrent(href)) return { href }
-    const { url, from } = lastSearch()
-    return { href: url, state: from ? { platterFrom: from } : undefined }
+    const { url, from, key } = lastSearch()
+    const state = { ...(from && { platterFrom: from }), ...(key && { platterResume: key }) }
+    return { href: url, state: Object.keys(state).length ? state : undefined }
   }
 }
 
