@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownUp,
-  Check,
   Disc3,
   Download,
   Heart,
@@ -14,16 +13,12 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance } from '../api/discogs/endpoints'
-import type { Folder } from '../api/discogs/types'
 import { FilterSheet } from '../components/FilterSheet'
-import { ConfirmDialog } from '../components/ConfirmDialog'
-import { CrateSelect } from '../components/CrateSelect'
 import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
-import { Stars } from '../components/Stars'
 import { Button, buttonClass, IconButton, List, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -32,9 +27,8 @@ import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
 import { useListening } from '../hooks/plays'
 import { dayAgo } from '../lib/time'
-import { setTask } from '../lib/task'
 import { download, today } from '../lib/download'
-import { checkPrices, useCurrency, useFreshPrices, usePriceCheck } from '../hooks/prices'
+import { useCurrency, useFreshPrices } from '../hooks/prices'
 import {
   activeFilterCount,
   facets as buildFacets,
@@ -56,6 +50,10 @@ import { runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 import { FieldNudge } from './FieldNudge'
 import { readChoice, writePref } from '../lib/prefs'
+import { PriceCoverage } from '../components/PriceCoverage'
+import { GridTile, ListRow, LoadMore } from './collection/RecordTiles'
+import { ActiveFilters } from './collection/ActiveFilters'
+import { BulkBar } from './collection/BulkBar'
 
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
@@ -458,288 +456,5 @@ export function Collection() {
         />
       )}
     </Screen>
-  )
-}
-
-type Selectable = { selected?: boolean; onSelect?: () => void }
-
-// In select mode a tap toggles the record instead of opening it
-function Tap({
-  item,
-  onSelect,
-  selected,
-  className,
-  children,
-}: Selectable & { item: LibraryItem; className: string; children: React.ReactNode }) {
-  return onSelect ? (
-    <button type="button" onClick={onSelect} aria-pressed={selected} className={`w-full text-left ${className}`}>
-      {children}
-    </button>
-  ) : (
-    <Link href={`/collection/${item.instanceId}`} className={className}>
-      {children}
-    </Link>
-  )
-}
-
-function Tick({ on }: { on?: boolean }) {
-  return (
-    <span
-      className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${
-        on ? 'border-accent bg-accent text-accent-fg' : 'border-white bg-black/30 text-transparent'
-      }`}
-      aria-hidden
-    >
-      <Check size={14} strokeWidth={3} />
-    </span>
-  )
-}
-
-function GridTile({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
-  return (
-    <li className="min-w-0">
-      <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
-        <div className="relative">
-          <Cover
-            item={item}
-            className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${selected ? 'opacity-70 ring-4 ring-accent' : ''}`}
-          />
-          {onSelect && (
-            <span className="absolute top-2 right-2">
-              <Tick on={selected} />
-            </span>
-          )}
-        </div>
-        <p className="mt-2 truncate text-sm font-semibold">{item.title}</p>
-        <p className="truncate text-sm text-stone-500">{item.artist}</p>
-        {note && <p className="text-sm font-medium tabular-nums">{note}</p>}
-      </Tap>
-    </li>
-  )
-}
-
-function ListRow({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
-  const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
-  return (
-    <li>
-      <Tap
-        item={item}
-        selected={selected}
-        onSelect={onSelect}
-        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
-      >
-        {onSelect && <Tick on={selected} />}
-        <Cover item={item} small className="size-14 shrink-0 rounded-lg" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{item.title}</p>
-          <p className="truncate text-sm text-stone-600 dark:text-stone-400">{item.artist}</p>
-          {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
-        </div>
-        {note ? (
-          <span className="shrink-0 text-sm font-semibold tabular-nums">{note}</span>
-        ) : (
-          item.rating > 0 && (
-            <span className="shrink-0">
-              <Stars value={item.rating} size={12} />
-            </span>
-          )
-        )}
-      </Tap>
-    </li>
-  )
-}
-
-export function Cover({
-  item,
-  className = '',
-  small,
-}: {
-  item: Pick<LibraryItem, 'cover' | 'thumb'>
-  className?: string
-  small?: boolean
-}) {
-  const src = small ? (item.thumb ?? item.cover) : (item.cover ?? item.thumb)
-  return src ? (
-    <img src={src} alt="" loading="lazy" decoding="async" className={`bg-stone-200 object-cover dark:bg-stone-800 ${className}`} />
-  ) : (
-    <div className={`flex items-center justify-center bg-stone-200 text-stone-400 dark:bg-stone-800 ${className}`}>
-      <Disc3 size={small ? 20 : 40} aria-hidden />
-    </div>
-  )
-}
-
-// Sorting by value only works for records with a recent price
-export function PriceCoverage({ items, prices, currency }: { items: LibraryItem[]; prices: Map<number, unknown>; currency: string }) {
-  const { client } = useSignedIn()
-  const check = usePriceCheck()
-  const ids = [...new Set(items.map((i) => i.releaseId))]
-  const priced = ids.filter((id) => prices.has(id)).length
-  if (!check.running && priced >= ids.length) return null
-  return (
-    <div className="mb-4 flex items-center gap-3 rounded-xl bg-stone-100 px-3 py-2 text-sm dark:bg-stone-900">
-      {check.running ? (
-        <>
-          <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent text-stone-500" />
-          <span className="tabular-nums">
-            Getting prices · {check.done} of {check.total}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="min-w-0 flex-1">
-            {check.error
-              ? `Couldn't get prices: ${check.error}`
-              : priced
-                ? `Prices for ${priced} of ${ids.length} records.`
-                : 'No prices yet.'}
-          </span>
-          <button type="button" onClick={() => checkPrices(client, ids, currency)} className="shrink-0 font-semibold">
-            {check.error ? 'Try again' : priced ? 'Get the rest' : 'Get prices'}
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
-
-function LoadMore({ onVisible }: { onVisible: () => void }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const cb = useRef(onVisible)
-  cb.current = onVisible
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver((entries) => entries[0].isIntersecting && cb.current(), { rootMargin: '600px' })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-  return <div ref={ref} className="h-10" aria-hidden />
-}
-
-// Chips for active filters, each removable
-function ActiveFilters({
-  filters,
-  facets,
-  onChange,
-}: {
-  filters: Filters
-  facets: ReturnType<typeof buildFacets> | null
-  onChange: (f: Filters) => void
-}) {
-  const chips: { key: string; label: string; clear: () => void }[] = []
-  const folderName = facets?.folder.find((o) => o.value === String(filters.folder))?.label
-  if (filters.folder !== undefined)
-    chips.push({ key: 'folder', label: folderName ?? 'Crate', clear: () => onChange({ ...filters, folder: undefined }) })
-  for (const k of ['format', 'tag', 'genre', 'style'] as const) {
-    const v = filters[k]
-    if (v) chips.push({ key: k, label: v, clear: () => onChange({ ...filters, [k]: undefined }) })
-  }
-  if (filters.decade !== undefined)
-    chips.push({
-      key: 'decade',
-      label: filters.decade ? `${filters.decade}s` : 'Year unknown',
-      clear: () => onChange({ ...filters, decade: undefined }),
-    })
-  if (filters.rating)
-    chips.push({ key: 'rating', label: `${'★'.repeat(filters.rating)}+`, clear: () => onChange({ ...filters, rating: undefined }) })
-  for (const [id, v] of Object.entries(filters.fields)) {
-    chips.push({
-      key: `f${id}`,
-      label: v,
-      clear: () => {
-        const fields = { ...filters.fields }
-        delete fields[Number(id)]
-        onChange({ ...filters, fields })
-      },
-    })
-  }
-  if (!chips.length) return null
-  return (
-    <div className="mb-4 flex flex-wrap gap-2">
-      {chips.map((c) => (
-        <button
-          key={c.key}
-          type="button"
-          onClick={c.clear}
-          className="inline-flex items-center gap-1 rounded-full bg-stone-900 py-1 pr-2 pl-3 text-sm text-white dark:bg-accent dark:text-accent-fg"
-          aria-label={`Remove filter ${c.label}`}
-        >
-          {c.label}
-          <X size={14} aria-hidden />
-        </button>
-      ))}
-      <button type="button" onClick={() => onChange({ fields: {} })} className="px-2 text-sm text-stone-500 underline">
-        Clear all
-      </button>
-    </div>
-  )
-}
-
-// Pinned to the bottom while records are selected
-function BulkBar({
-  count,
-  folders,
-  onRun,
-  onExport,
-}: {
-  count: number
-  folders: Folder[]
-  onExport: () => void
-  onRun: (kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) => Promise<void>
-}) {
-  const [confirm, setConfirm] = useState(false)
-  const [running, setRunning] = useState(false)
-  const records = `${count} record${count === 1 ? '' : 's'}`
-  const compact = 'sm:min-h-10 sm:px-3.5 sm:text-sm'
-
-  // progress goes to the status pill at the bottom; the bar steps aside meanwhile
-  async function run(kind: 'remove' | 'move', folderId?: number) {
-    const verb = kind === 'remove' ? 'Removing' : 'Moving'
-    setConfirm(false)
-    setRunning(true)
-    setTask(`${verb}…`)
-    try {
-      await onRun(kind, folderId, (d, t) => d < t && setTask(`${verb} ${d + 1} of ${t}`))
-    } finally {
-      setTask(null)
-      setRunning(false)
-    }
-  }
-
-  if (running) return null
-
-  return (
-    <div className="sticky bottom-3 z-10 mt-4">
-      {confirm && (
-        <ConfirmDialog title={`Remove ${records}?`} action="Remove" onConfirm={() => run('remove')} onCancel={() => setConfirm(false)}>
-          This removes {count === 1 ? 'it' : 'them'} from your Discogs collection, including {count === 1 ? 'its' : 'their'} notes and other
-          details.
-        </ConfirmDialog>
-      )}
-      {/* full width on phones; on bigger screens just as wide as its buttons */}
-      <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
-        {
-          <div className="flex gap-2">
-            <label className="relative min-w-0 flex-1 sm:flex-none">
-              <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>Move to crate…</span>
-              <CrateSelect
-                ariaLabel="Move to crate"
-                value={undefined}
-                placeholder="Move to crate…"
-                folders={folders}
-                onChange={(id) => run('move', id)}
-                className="absolute inset-0 opacity-0"
-              />
-            </label>
-            <Button variant="secondary" onClick={onExport} className={compact}>
-              Export
-            </Button>
-            <Button variant="danger" onClick={() => setConfirm(true)} className={compact}>
-              Remove
-            </Button>
-          </div>
-        }
-      </div>
-    </div>
   )
 }

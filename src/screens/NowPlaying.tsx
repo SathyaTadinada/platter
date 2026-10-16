@@ -13,7 +13,7 @@ import { useLogPlay } from '../hooks/plays'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { lookupBarcode } from '../lib/lookup'
-import { Cover } from './Collection'
+import { Cover } from '../components/Cover'
 
 // Scan in Play mode lands here: find the copy you own and log a play
 export function NowPlaying() {

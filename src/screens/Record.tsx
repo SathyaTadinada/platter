@@ -22,7 +22,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { discogsUrl } from '../lib/format'
-import { Cover } from './Collection'
+import { Cover } from '../components/Cover'
 
 export function Record({ id }: { id: string }) {
   const instanceId = Number(id)

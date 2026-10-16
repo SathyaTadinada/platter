@@ -8,7 +8,7 @@ import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
 import { clearSearches, RECENT_SEARCHES_KEY, type RecentSearch } from '../lib/recent'
-import { Cover } from './Collection'
+import { Cover } from '../components/Cover'
 import { readChoice, writePref } from '../lib/prefs'
 
 type Mode = 'barcode' | 'catno' | 'title'

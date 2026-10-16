@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'wouter'
 import type { LibraryItem } from '../db/db'
 import type { MonthTotal } from '../lib/value'
-import { Cover } from '../screens/Collection'
+import { Cover } from './Cover'
 
 // Bits shared by the Value and Listening views
 

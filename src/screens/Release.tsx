@@ -18,7 +18,7 @@ import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { discogsUrl } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
-import { Cover } from './Collection'
+import { Cover } from '../components/Cover'
 import { Tracklist } from './Record'
 
 // A Discogs release you looked up: everything the record page shows, plus adding it

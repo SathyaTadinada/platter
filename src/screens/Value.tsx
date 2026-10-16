@@ -27,7 +27,7 @@ import {
   type ValueSnapshot,
 } from '../lib/value'
 import { MonthBars, pct, RecordRow, statCard, Toggle } from '../components/stats'
-import { PriceCoverage } from './Collection'
+import { PriceCoverage } from '../components/PriceCoverage'
 
 const TOP = 10
 const card = statCard
