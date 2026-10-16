@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defaultLayout, move, normalize, toggle } from './statsLayout'
+import { defaultLayout, move, normalize, toggle, type Layout } from './statsLayout'
 
 describe('value layout', () => {
   it('fills in missing and drops unknown sections', () => {
@@ -11,11 +11,11 @@ describe('value layout', () => {
   })
 
   it('moves a section to a new position, staying in bounds', () => {
-    const l = defaultLayout()
-    expect(move(l, 'paid', 0).order.slice(0, 2)).toEqual(['paid', 'month'])
-    expect(move(l, 'month', 3).order.slice(0, 4)).toEqual(['top', 'overTime', 'paid', 'month'])
-    expect(move(l, 'month', -1)).toBe(l)
-    expect(move(l, 'breakdown', 6)).toBe(l)
+    const layout: Layout = { order: ['overTime', 'paid', 'month', 'top', 'price', 'breakdown'], hidden: [] }
+    expect(move(layout, 'month', 0).order.slice(0, 3)).toEqual(['month', 'overTime', 'paid'])
+    expect(move(layout, 'overTime', 2).order.slice(0, 3)).toEqual(['paid', 'month', 'overTime'])
+    expect(move(layout, 'month', -1)).toBe(layout)
+    expect(move(layout, 'month', 6)).toBe(layout)
   })
 
   it('hides and shows', () => {

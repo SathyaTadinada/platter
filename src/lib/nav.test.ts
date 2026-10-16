@@ -49,4 +49,25 @@ describe('back navigation', () => {
     nav.trackLocation('/release/1', '')
     expect(nav.backTarget('/search')).toMatchObject({ to: '/search' })
   })
+
+  it('steps back for a fixed Back target only when that page is right behind', async () => {
+    const nav = await fresh()
+    nav.trackLocation('/', '')
+    go(nav, '/settings')
+    go(nav, '/import')
+    expect(nav.backIsHistory('/settings')).toBe(true)
+    expect(nav.backIsHistory('/scan')).toBe(false)
+  })
+
+  it('remembers scroll per history entry', async () => {
+    const nav = await fresh()
+    nav.trackLocation('/', '')
+    nav.rememberScroll(400)
+    const collection = history.state
+    go(nav, '/collection/1')
+    expect(nav.savedScroll()).toBe(0) // a new page starts at the top
+    nav.rememberScroll(120)
+    history.replaceState(collection, '') // as if Back was pressed
+    expect(nav.savedScroll()).toBe(400)
+  })
 })

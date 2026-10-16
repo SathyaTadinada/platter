@@ -12,6 +12,7 @@ import {
   itemFromSearch,
   joinArtists,
   parseQuery,
+  saveSort,
   serializeQuery,
   sortItems,
   type SortContext,
@@ -189,6 +190,14 @@ describe('query in the URL', () => {
 
   it('falls back to defaults for junk', () => {
     expect(parseQuery('sort=nonsense').sort).toBe('added')
+  })
+
+  it('uses the last sort picked when the URL has none, and keeps others in the URL', () => {
+    saveSort('artist')
+    expect(parseQuery('').sort).toBe('artist')
+    expect(serializeQuery(q({ sort: 'artist' }))).toBe('')
+    expect(serializeQuery(q({ sort: 'added' }))).toBe('sort=added')
+    localStorage.clear()
   })
 })
 
