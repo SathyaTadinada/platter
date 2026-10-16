@@ -70,4 +70,15 @@ describe('back navigation', () => {
     history.replaceState(collection, '') // as if Back was pressed
     expect(nav.savedScroll()).toBe(400)
   })
+
+  it('gives a page back what it saved when you return to it', async () => {
+    const nav = await fresh()
+    nav.trackLocation('/results', 'artist=Bjork')
+    nav.rememberPage({ filters: { format: 'Vinyl' } })
+    const results = history.state
+    go(nav, '/release/7')
+    expect(nav.savedPage()).toBeUndefined()
+    history.replaceState(results, '')
+    expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
+  })
 })

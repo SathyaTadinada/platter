@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SlidersHorizontal } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import type { SearchParams, SearchResult } from '../api/discogs/types'
@@ -16,6 +16,7 @@ import { toCard, type ReleaseCard } from '../lib/format'
 import { lookupBarcode, type LookupResult } from '../lib/lookup'
 import type { Ranked } from '../lib/runout'
 import { computeOwnership, type Ownership } from '../lib/ownership'
+import { rememberPage, savedPage } from '../lib/nav'
 import { rememberSearch } from '../lib/recent'
 import { activeResultFilters, filterResults, resultFacets, type ResultFilters } from '../lib/results'
 
@@ -32,15 +33,21 @@ export function Results() {
   const [, navigate] = useLocation()
   // back to wherever the search came from (Search or Scan)
   const back = useBack('/search')
-  const [show, setShow] = useState<Show>('all')
+  // coming back to these results (from a release, say) brings back the filters and extra pages
+  const [saved] = useState(() => savedPage<Kept>())
+  const [show, setShow] = useState<Show>(saved?.show ?? 'all')
   const [ranked, setRanked] = useState<Ranked<SearchResult>[] | null>(null)
   const [runoutOpen, setRunoutOpen] = useState(false)
-  const [filters, setFilters] = useState<ResultFilters>({})
+  const [filters, setFilters] = useState<ResultFilters>(saved?.filters ?? {})
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [more, setMore] = useState<{ page: number; results: SearchResult[]; loading: boolean }>({ page: 1, results: [], loading: false })
+  const [more, setMore] = useState<More>(saved ? { ...saved.more, loading: false } : { page: 1, results: [], loading: false })
+  useEffect(() => rememberPage({ show, filters, more } satisfies Kept), [show, filters, more])
 
   // a new search starts from scratch
+  const lastQs = useRef(qs)
   useEffect(() => {
+    if (lastQs.current === qs) return
+    lastQs.current = qs
     setFilters({})
     setShow('all')
     setMore({ page: 1, results: [], loading: false })
@@ -223,6 +230,8 @@ function NothingFound({ barcode, mb }: { barcode: string; mb: MbRelease[] }) {
 }
 
 type Show = 'all' | 'mine' | 'other' | 'new'
+type More = { page: number; results: SearchResult[]; loading: boolean }
+type Kept = { show: Show; filters: ResultFilters; more: More }
 
 const kindOf = (o?: Ownership): Exclude<Show, 'all'> => (o?.exactCopies ? 'mine' : o?.otherPressings ? 'other' : 'new')
 

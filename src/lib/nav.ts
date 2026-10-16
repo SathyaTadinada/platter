@@ -86,3 +86,13 @@ export function rememberScroll(top: number) {
 // Where to scroll after a navigation: the saved spot when going back or forward to an entry,
 // otherwise the top
 export const savedScroll = () => scrolls.get(state()[KEY] ?? '') ?? 0
+
+// Anything else a page wants back when you return to it, like the filters on search results
+const pages = new Map<string, unknown>()
+
+export function rememberPage(v: unknown) {
+  const k = state()[KEY]
+  if (k) pages.set(k, v)
+}
+
+export const savedPage = <T>() => pages.get(state()[KEY] ?? '') as T | undefined
