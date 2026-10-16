@@ -32,7 +32,7 @@ No Discogs account? [The demo](https://platter.tadinada.com/?demo) has a sample 
 
 There's no backend database. Platter stores its data in the browser and calls `api.discogs.com` directly. "Log in with Discogs" uses OAuth, and a small Cloudflare Worker (`worker/`) signs requests with the app secret without ever seeing your data. Personal access tokens skip the Worker entirely.
 
-Besides Discogs, Platter only contacts MusicBrainz and the Cover Art Archive (for barcodes Discogs doesn't know), Apple's search (to find the exact album when you tap Apple Music or All services), and ListenBrainz if you connect it. The Spotify and YouTube Music buttons are plain search links. Text recognition runs on the device with Tesseract.
+Platter also uses [MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org) for barcodes Discogs doesn't know, Apple's search to find albums for the streaming links, and [ListenBrainz](https://listenbrainz.org) if you connect it. Photos of runouts and spines are read on the device with [Tesseract](https://github.com/naptha/tesseract.js).
 
 ## Development
 

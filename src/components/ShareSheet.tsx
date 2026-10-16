@@ -7,15 +7,21 @@ import { useCurrency } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { recordCollectionValue } from '../lib/pricing'
-import { CARD, cardFacts, drawCard } from '../lib/shareCard'
+import { CARD, cardFacts, drawCard, type CardTheme } from '../lib/shareCard'
+import { Toggle } from './stats'
 import { formatMoney } from '../lib/value'
 import { toast } from './Toaster'
 import { Button, buttonClass, Spinner } from './ui'
 
-// The light-theme accent, whatever theme the app is in right now
-function cardAccent() {
-  const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-700').trim()
-  return v || '#b45309'
+// The accent shade that reads well on the card, whatever theme the app is in right now
+function cardAccent(theme: CardTheme) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(theme === 'dark' ? '--color-accent-400' : '--color-accent-700')
+  return v.trim() || '#b45309'
+}
+
+const appIsDark = () => {
+  const root = document.documentElement.classList
+  return root.contains('dark') || (!root.contains('light') && matchMedia('(prefers-color-scheme: dark)').matches)
 }
 
 // A picture of the collection's numbers to save or send
@@ -30,6 +36,7 @@ export function ShareSheet({ onClose }: { onClose: () => void }) {
     [client, username, currency],
   )
   const [image, setImage] = useState<{ url: string; file: File } | null>(null)
+  const [theme, setTheme] = useState<CardTheme>(appIsDark() ? 'dark' : 'light')
 
   useEffect(() => {
     if (ref.current && !ref.current.open) ref.current.showModal()
@@ -40,7 +47,7 @@ export function ShareSheet({ onClose }: { onClose: () => void }) {
     if (!ready) return
     const total = value.data && formatMoney(value.data.snap.median, currency, { whole: true })
     const canvas = document.createElement('canvas')
-    drawCard(canvas, cardFacts(username, items, listening.rows, total), cardAccent(), location.host)
+    drawCard(canvas, cardFacts(username, items, listening.rows, total), cardAccent(theme), location.host, theme)
     let url = ''
     canvas.toBlob((blob) => {
       if (!blob) return
@@ -50,7 +57,7 @@ export function ShareSheet({ onClose }: { onClose: () => void }) {
     return () => {
       if (url) URL.revokeObjectURL(url)
     }
-  }, [ready, items, listening, value.data, currency, username])
+  }, [ready, items, listening, value.data, currency, username, theme])
 
   const canShare = Boolean(image && navigator.canShare?.({ files: [image.file] }))
 
@@ -85,6 +92,16 @@ export function ShareSheet({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <div className="min-h-0 flex-auto overflow-y-auto p-5">
+        <div className="flex justify-center">
+          <Toggle
+            options={[
+              ['light', 'Light'],
+              ['dark', 'Dark'],
+            ]}
+            value={theme}
+            onChange={setTheme}
+          />
+        </div>
         <div
           className="mx-auto w-full max-w-72 overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700"
           style={{ aspectRatio: `${CARD.width} / ${CARD.height}` }}

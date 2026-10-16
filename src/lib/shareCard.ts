@@ -50,10 +50,12 @@ export function cardRows(f: CardFacts): [string, string, string?][] {
 
 export const CARD = { width: 1080, height: 1350 }
 
-const PAPER = '#f5f1ea'
-const INK = '#1c1917'
-const MUTED = '#78716c'
-const RULE = '#e2ddd3'
+export type CardTheme = 'light' | 'dark'
+
+const THEMES = {
+  light: { paper: '#f5f1ea', ink: '#1c1917', muted: '#78716c', rule: '#e2ddd3', disc: '#1c1917', groove: '#2e2a27', rim: '#1c1917' },
+  dark: { paper: '#1c1917', ink: '#fafaf9', muted: '#a8a29e', rule: '#2e2a27', disc: '#0c0a09', groove: '#292524', rim: '#44403c' },
+}
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 
 function fit(ctx: CanvasRenderingContext2D, text: string, max: number) {
@@ -63,7 +65,8 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number) {
   return `${t.trimEnd()}…`
 }
 
-export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string, site: string) {
+export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string, site: string, theme: CardTheme = 'light') {
+  const { paper, ink, muted, rule, disc, groove, rim } = THEMES[theme]
   const { width: W, height: H } = CARD
   canvas.width = W
   canvas.height = H
@@ -71,18 +74,24 @@ export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string
   const pad = 96
   const max = W - pad * 2
 
-  ctx.fillStyle = PAPER
+  ctx.fillStyle = paper
   ctx.fillRect(0, 0, W, H)
 
   // a record coming in from the bottom right corner
   const cx = W - 70
   const cy = H - 40
   const R = 330
-  ctx.fillStyle = INK
+  ctx.fillStyle = disc
   ctx.beginPath()
   ctx.arc(cx, cy, R, 0, Math.PI * 2)
   ctx.fill()
-  ctx.strokeStyle = '#2e2a27'
+  // a faint rim so the record doesn't vanish into a dark background
+  ctx.strokeStyle = rim
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.arc(cx, cy, R - 1.5, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.strokeStyle = groove
   ctx.lineWidth = 4
   for (const r of [300, 265, 230, 195, 160]) {
     ctx.beginPath()
@@ -93,22 +102,22 @@ export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string
   ctx.beginPath()
   ctx.arc(cx, cy, 110, 0, Math.PI * 2)
   ctx.fill()
-  ctx.fillStyle = PAPER
+  ctx.fillStyle = paper
   ctx.beginPath()
   ctx.arc(cx, cy, 14, 0, Math.PI * 2)
   ctx.fill()
 
   ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = MUTED
+  ctx.fillStyle = muted
   ctx.font = `500 38px ${FONT}`
   ctx.fillText(fit(ctx, `${f.user}'s collection`, max), pad, pad + 40)
 
-  ctx.fillStyle = INK
+  ctx.fillStyle = ink
   ctx.font = `700 150px ${FONT}`
   ctx.fillText(f.records.toLocaleString(), pad, pad + 210)
   const numberWidth = ctx.measureText(f.records.toLocaleString()).width
   ctx.font = `600 52px ${FONT}`
-  ctx.fillStyle = MUTED
+  ctx.fillStyle = muted
   ctx.fillText(f.records === 1 ? 'record' : 'records', pad + numberWidth + 24, pad + 210)
 
   // lines low enough to reach the record stop short of it
@@ -116,26 +125,26 @@ export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string
 
   let y = pad + 300
   for (const [label, main, sub] of cardRows(f)) {
-    ctx.fillStyle = RULE
+    ctx.fillStyle = rule
     ctx.fillRect(pad, y, max, 2)
     y += 62
-    ctx.fillStyle = MUTED
+    ctx.fillStyle = muted
     ctx.font = `500 32px ${FONT}`
     ctx.fillText(label, pad, y)
     y += 58
-    ctx.fillStyle = INK
+    ctx.fillStyle = ink
     ctx.font = `600 48px ${FONT}`
     ctx.fillText(fit(ctx, main, room(y)), pad, y)
     if (sub) {
       y += 46
-      ctx.fillStyle = MUTED
+      ctx.fillStyle = muted
       ctx.font = `400 34px ${FONT}`
       ctx.fillText(fit(ctx, sub, room(y)), pad, y)
     }
     y += 44
   }
 
-  ctx.fillStyle = MUTED
+  ctx.fillStyle = muted
   ctx.font = `500 30px ${FONT}`
   ctx.fillText(site, pad, H - pad + 20)
   if (f.value) {
