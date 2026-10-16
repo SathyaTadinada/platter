@@ -47,7 +47,7 @@ export function Sheet({
     >
       <div className="flex items-center gap-1 border-b border-stone-200 px-5 py-3 dark:border-stone-800">
         {before}
-        <h2 id={titleId} className="min-w-0 flex-1 truncate text-lg font-bold">
+        <h2 id={titleId} className="min-w-0 flex-1 text-lg font-bold">
           {title}
         </h2>
         <button

@@ -34,7 +34,7 @@ export function DetailsSheet({
     <Sheet
       title={
         <>
-          {item.release?.title}
+          <span className="block truncate">{item.release?.title}</span>
           <span className="block truncate text-sm font-normal text-stone-500">{item.release?.artist}</span>
         </>
       }
