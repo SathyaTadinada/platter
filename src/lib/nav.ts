@@ -1,10 +1,7 @@
-// Navigation memory:
-// - each history entry gets a depth, so Back knows whether there's an app page to go back to
-// - each entry also notes the page it was opened from, so Back goes to that page even when
-//   something else sits behind it in history (see below)
-// - the Search tab remembers where you left it (results, a release), like tabs in iOS apps.
-//   Coming back to it through the tab puts a different page behind it in history, so the
-//   page it was originally opened from travels along and Back still returns there.
+// Navigation memory. Each history entry records its depth (so Back knows whether there's an
+// app page behind it), the page it was opened from, and a key for its scroll position.
+// The Search tab also remembers where you left it, like tabs in iOS apps; coming back to
+// it through the tab brings along the page it was opened from, so Back still goes there.
 
 const DEPTH = 'platterDepth'
 const KEY = 'platterKey' // names the entry, for its scroll position

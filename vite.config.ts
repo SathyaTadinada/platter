@@ -35,10 +35,9 @@ export default defineConfig({
         globIgnores: ['ocr/**', 'og.png'],
         runtimeCaching: [
           { urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'), handler: 'CacheFirst', options: { cacheName: 'ocr' } },
-          // The page itself comes from the network when there is one, so opening the app
-          // gets the current version. iOS reads things like the status bar style from the
-          // page it launches with, and a cached old page would hold those back a whole launch.
-          // Offline, the last page fetched (or the precached one) is used for every route.
+          // Pages come from the network first, so opening the app gets the current version
+          // (iOS takes the status bar style from the page it launches with). Offline, the
+          // last page fetched, or the precached one, is used for every route.
           {
             urlPattern: ({ request, url }) => request.mode === 'navigate' && !url.pathname.startsWith('/api/'),
             handler: 'NetworkFirst',

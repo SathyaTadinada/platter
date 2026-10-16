@@ -61,9 +61,8 @@ export async function fetchPrice(
   return { price: entry, requests }
 }
 
-// Saves today's estimate for the whole collection; one reading per day
-// The collection's value from Discogs, saved as today's reading. Asks Discogs again (instead
-// of using the cached answer) when the record count changed since the last reading.
+// The collection's value from Discogs, saved as today's reading. Skips the cache when the
+// record count has changed since the last reading.
 export async function recordCollectionValue(client: DiscogsClient, username: string, currency: string, now = Date.now()) {
   const count = await db.collection.count()
   const last = await db.valueHistory.orderBy('date').last()

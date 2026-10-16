@@ -13,7 +13,7 @@ import { toast } from './Toaster'
 import { Sheet } from './Sheet'
 import { Button, buttonClass, Spinner } from './ui'
 
-// The accent shade that reads well on the card, whatever theme the app is in right now
+// The accent shade that reads well on a light or dark card
 function cardAccent(theme: CardTheme) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(theme === 'dark' ? '--color-accent-400' : '--color-accent-700')
   return v.trim() || '#b45309'

@@ -103,9 +103,8 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(req.url)
     if (pathname.startsWith('/assets/')) {
-      // A file that isn't there (an old build's chunk, or a new one mid-deploy) would
-      // otherwise get the app's index.html, with the year-long cache header assets
-      // get, and the browser would keep using that page as the script.
+      // A missing file (an old build's chunk) would otherwise get index.html with the
+      // assets' year-long cache header, and the browser would keep it as the script
       const res = await env.ASSETS.fetch(req)
       if (!res.headers.get('Content-Type')?.startsWith('text/html')) return res
       return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })

@@ -91,8 +91,8 @@ export function usePrice(releaseId: number | undefined, currency: string | undef
   return { price: fresh, loading: !failed && (entry === undefined || missing), failed }
 }
 
-// Records added since the last sync have no price yet; fetch just those, shortly after
-// they show up. Older prices are refreshed by the sync as before.
+// Newly added records have no price until the next sync; fetch theirs a few seconds after
+// they show up
 export function useNewRecordPrices() {
   const { client } = useSignedIn()
   const currency = useCurrency()

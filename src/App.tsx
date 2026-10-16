@@ -156,9 +156,8 @@ function DemoBar() {
   )
 }
 
-// Pinned to the screen edges rather than sized with 100dvh: installed on iOS, dvh is
-// wrong at launch, which left a gap under the tab bar and let the whole page scroll.
-// Only the middle scrolls, so the header and tab bar never move.
+// Pinned to the screen edges rather than sized with 100dvh, which installed iOS apps get
+// wrong at launch. Only the middle scrolls, so the header and tab bar stay put.
 function Shell({ children }: { children: ReactNode }) {
   useNewRecordPrices()
   const { session } = useSession()
