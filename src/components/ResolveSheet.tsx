@@ -43,6 +43,7 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
       title={item.barcode ? `Which release is ${formatBarcodeInput(item.barcode ?? '')}?` : 'Pick a release'}
       onClose={onClose}
       width="xl"
+      background="page"
       bodyClassName="space-y-3 px-4 py-4"
     >
       <form onSubmit={search} className="relative">

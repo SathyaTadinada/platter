@@ -2,6 +2,8 @@ import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
 const widths = { md: 'sm:max-w-md', lg: 'sm:max-w-lg', xl: 'sm:max-w-xl' }
+// "page" is the app's own background, so cards inside stand out from it
+const backgrounds = { plain: 'bg-white dark:bg-stone-900', page: 'bg-stone-50 dark:bg-stone-950' }
 
 // A modal that slides up from the bottom on phones and sits in the middle on bigger
 // screens: title bar with a close button, a scrolling body, and an optional footer.
@@ -11,6 +13,7 @@ export function Sheet({
   onClose,
   footer,
   width = 'lg',
+  background = 'plain',
   bodyClassName = '',
   onKeyDown,
   children,
@@ -20,6 +23,7 @@ export function Sheet({
   onClose: () => void
   footer?: ReactNode
   width?: keyof typeof widths
+  background?: keyof typeof backgrounds
   bodyClassName?: string
   onKeyDown?: (e: KeyboardEvent<HTMLDialogElement>) => void
   children: ReactNode
@@ -43,7 +47,7 @@ export function Sheet({
       onClick={(e) => e.target === ref.current && onClose()}
       onKeyDown={onKeyDown}
       aria-labelledby={titleId}
-      className={`m-0 mt-auto max-h-[90dvh] w-full max-w-none flex-col rounded-t-3xl bg-white p-0 text-stone-900 open:flex focus:outline-none sm:m-auto sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100 ${widths[width]}`}
+      className={`m-0 mt-auto max-h-[90dvh] w-full max-w-none flex-col rounded-t-3xl p-0 text-stone-900 open:flex focus:outline-none sm:m-auto sm:rounded-3xl dark:text-stone-100 ${backgrounds[background]} ${widths[width]}`}
     >
       <div className="flex items-center gap-1 border-b border-stone-200 px-5 py-3 dark:border-stone-800">
         {before}
