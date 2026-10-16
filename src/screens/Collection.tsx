@@ -68,7 +68,9 @@ export function Collection() {
   const sync = useSync()
   const search = useSearch()
   const [, navigate] = useLocation()
-  const query = useMemo(() => parseQuery(search), [search])
+  // the saved sort isn't in the URL, so picking one needs its own nudge to re-read the query
+  const [sortPicked, setSortPicked] = useState(0)
+  const query = useMemo(() => parseQuery(search), [search, sortPicked]) // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState(query.q)
   const [view, setView] = useState<View>(loadView)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -205,6 +207,7 @@ export function Collection() {
             checked: s.key === query.sort,
             onSelect: () => {
               saveSort(s.key)
+              setSortPicked((n) => n + 1)
               setQuery({ ...query, sort: s.key })
             },
           }))}
