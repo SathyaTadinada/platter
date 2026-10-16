@@ -269,17 +269,22 @@ export function Collection() {
   async function editFields(changes: Record<number, string>, onProgress: (d: number, t: number) => void) {
     const chosen = filtered.filter((i) => selected?.has(i.instanceId))
     const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
+    let changed = 0
     const r = await runBulk(
       chosen,
       async (i) => {
         const fields = await applyFields(i.fields, changes, (id, v) => setFieldValue(client, username, target(i), id, v))
-        if (fields) await db.collection.update(i.instanceId, { fields })
+        if (!fields) return
+        await db.collection.update(i.instanceId, { fields })
+        changed++
       },
       onProgress,
     )
     const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
-    if (r.failed.length) toast(`Updated ${n(r.done.length)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
-    else toast(`Updated ${n(r.done.length)}.`, { tone: 'success' })
+    const same = r.done.length - changed
+    if (r.failed.length) toast(`Updated ${n(changed)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
+    else if (!changed) toast(`Nothing to change. ${same === 1 ? 'It' : 'They'} already had those values.`, { tone: 'success' })
+    else toast(`Updated ${n(changed)}.${same ? ` ${same} already matched.` : ''}`, { tone: 'success' })
     setSelected(null)
   }
 
