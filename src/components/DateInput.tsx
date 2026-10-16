@@ -9,12 +9,22 @@ export const formatDay = (iso: string) =>
 // with the browser's own picker underneath: tapping the text opens the iOS wheel or the
 // desktop calendar. The native field itself stays invisible, so its segmented editing
 // and highlight colors never show.
-export function DateInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+export function DateInput({
+  value,
+  onChange,
+  label,
+  placeholder = 'Add',
+}: {
+  value: string
+  onChange: (v: string) => void
+  label: string
+  placeholder?: string
+}) {
   const set = isoDate.test(value)
   return (
     <div className="flex items-center justify-end gap-1">
       <label className="relative flex min-h-10 cursor-pointer items-center rounded-lg px-2 hover:bg-stone-100 focus-within:ring-2 focus-within:ring-accent/60 dark:hover:bg-stone-800">
-        <span className={set ? 'font-medium' : 'text-stone-500'}>{set ? formatDay(value) : 'Add'}</span>
+        <span className={set ? 'font-medium' : 'text-stone-500'}>{set ? formatDay(value) : placeholder}</span>
         <input
           type="date"
           aria-label={label}

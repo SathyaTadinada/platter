@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
-import { deleteInstance, editInstance } from '../api/discogs/endpoints'
+import { deleteInstance, editInstance, setFieldValue } from '../api/discogs/endpoints'
 import { FilterSheet } from '../components/FilterSheet'
 import { Menu } from '../components/Menu'
 import { toast } from '../components/Toaster'
@@ -46,7 +46,7 @@ import {
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
 import { formatMoney, valueOf } from '../lib/value'
-import { runBulk } from '../lib/bulk'
+import { applyFields, runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 import { FieldNudge } from './FieldNudge'
 import { readChoice, writePref } from '../lib/prefs'
@@ -266,6 +266,23 @@ export function Collection() {
     setSelected(null)
   }
 
+  async function editFields(changes: Record<number, string>, onProgress: (d: number, t: number) => void) {
+    const chosen = filtered.filter((i) => selected?.has(i.instanceId))
+    const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
+    const r = await runBulk(
+      chosen,
+      async (i) => {
+        const fields = await applyFields(i.fields, changes, (id, v) => setFieldValue(client, username, target(i), id, v))
+        if (fields) await db.collection.update(i.instanceId, { fields })
+      },
+      onProgress,
+    )
+    const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
+    if (r.failed.length) toast(`Updated ${n(r.done.length)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
+    else toast(`Updated ${n(r.done.length)}.`, { tone: 'success' })
+    setSelected(null)
+  }
+
   const selectActions = (
     <>
       <button
@@ -446,7 +463,11 @@ export function Collection() {
           count={chosenCount}
           folders={folders}
           onRun={bulk}
+          onEdit={editFields}
           onExport={() => exportCsv(filtered.filter((i) => selected.has(i.instanceId)))}
+          fields={fields}
+          matches={matches}
+          currency={currency ?? 'USD'}
         />
       )}
       {filtersOpen && facets && (

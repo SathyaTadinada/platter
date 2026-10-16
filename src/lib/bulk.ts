@@ -21,3 +21,16 @@ export async function runBulk<T>(
   }
   return result
 }
+
+// Writes changed field values to one record, skipping any it already has (which saves
+// requests when most of a selection already matches). Returns the record's new fields,
+// or undefined when nothing needed writing.
+export async function applyFields(
+  fields: Record<number, string>,
+  changes: Record<number, string>,
+  write: (fieldId: number, value: string) => Promise<unknown>,
+): Promise<Record<number, string> | undefined> {
+  const todo = Object.entries(changes).filter(([id, v]) => (fields[Number(id)] ?? '') !== v)
+  for (const [id, v] of todo) await write(Number(id), v)
+  return todo.length ? { ...fields, ...Object.fromEntries(todo) } : undefined
+}

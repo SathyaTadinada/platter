@@ -19,6 +19,7 @@ export function PriceInput({
   value,
   onChange,
   className = '',
+  placeholder = 'Add',
   ...props
 }: { value: string; onChange: (v: string) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   const currency = useProfile()?.curr_abbr ?? 'USD'
@@ -36,13 +37,13 @@ export function PriceInput({
       {/* the hidden copy of the text gives the input its width */}
       <span
         className="inline-grid min-w-0 after:invisible after:col-start-1 after:row-start-1 after:font-medium after:whitespace-pre after:content-[attr(data-value)]"
-        data-value={shown || 'Add'}
+        data-value={shown || placeholder}
       >
         <input
           {...props}
           value={shown}
           inputMode="decimal"
-          placeholder="Add"
+          placeholder={placeholder}
           size={1}
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => {
