@@ -5,12 +5,10 @@ import { Button, Card } from './ui'
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }
 
-export const isStandalone = () =>
-  matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
 
 // Every browser on iOS uses Safari's engine, and they all install through Share
-export const isIos = () =>
-  /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
+const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
 
 // Chrome, Edge and Android browsers offer a real install prompt; keep hold of it
 let deferred: InstallEvent | null = null

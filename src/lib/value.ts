@@ -83,11 +83,6 @@ export function valueBracket(amount: number | undefined, money: (n: number) => s
   return `Under ${money(10)}`
 }
 
-// Adds a day's reading, replacing an earlier one from the same day
-export function upsertDaily(history: ValueSnapshot[], snap: ValueSnapshot): ValueSnapshot[] {
-  return [...history.filter((h) => h.date !== snap.date), snap].sort((a, b) => a.date.localeCompare(b.date))
-}
-
 export const localDate = (t: number) => {
   const d = new Date(t)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`

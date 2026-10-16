@@ -4,7 +4,7 @@ import { useListening, useLogPlay } from '../hooks/plays'
 import { dayAgo } from '../lib/time'
 
 // "Played 3 times, last yesterday"
-export function usePlaySummary(item: LibraryItem) {
+function usePlaySummary(item: LibraryItem) {
   const row = useListening()?.rows.find((r) => r.item.instanceId === item.instanceId)
   return row?.count
     ? `Played ${row.count === 1 ? 'once' : `${row.count} times`}${row.last ? `, last ${dayAgo(row.last)}` : ''}`

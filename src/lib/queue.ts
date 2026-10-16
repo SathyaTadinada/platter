@@ -10,7 +10,7 @@ import type { FieldMatch } from './fields'
 import type { LookupResult } from './lookup'
 import { mergeMetadata, planFieldWrites, type Metadata } from './metadata'
 
-export function summaryFromSearch(r: SearchResult): ReleaseSummary {
+function summaryFromSearch(r: SearchResult): ReleaseSummary {
   const c = toCard(r)
   return {
     id: c.id,

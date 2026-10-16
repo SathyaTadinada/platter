@@ -9,7 +9,6 @@ import {
   localDate,
   paidTotal,
   parseMoney,
-  upsertDaily,
   valueBracket,
   valueOf,
   type PriceEntry,
@@ -86,16 +85,6 @@ const snap = (date: string, median: number): ValueSnapshot => ({
   median,
   max: median * 2,
   count: 10,
-})
-
-describe('upsertDaily', () => {
-  it('keeps one reading per day, in order', () => {
-    const h = upsertDaily([snap('2026-10-02', 10), snap('2026-10-01', 9)], snap('2026-10-02', 11))
-    expect(h.map((s) => [s.date, s.median])).toEqual([
-      ['2026-10-01', 9],
-      ['2026-10-02', 11],
-    ])
-  })
 })
 
 describe('localDate', () => {

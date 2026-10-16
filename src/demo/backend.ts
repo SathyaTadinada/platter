@@ -114,7 +114,7 @@ const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits
 
 // A made-up but stable estimate, so the sample collection has a value
 // Made-up plays: most records a few times over the past year or so, some never
-export function demoPlays(items: CollectionItem[], now = Date.now()) {
+function demoPlays(items: CollectionItem[], now = Date.now()) {
   const day = 24 * 60 * 60 * 1000
   // picked by release id, so the local log and the Discogs fields always agree
   return items.flatMap((item) => {
@@ -130,7 +130,7 @@ export function demoPlays(items: CollectionItem[], now = Date.now()) {
   })
 }
 
-export const demoValue = (releaseIds: number[]) => releaseIds.reduce((n, id) => n + 6 + ((id * 7919) % 4500) / 100, 0)
+const demoValue = (releaseIds: number[]) => releaseIds.reduce((n, id) => n + 6 + ((id * 7919) % 4500) / 100, 0)
 export const currentDemoValue = async () => demoValue((await load()).items.map((i) => i.id))
 export const currentDemoPlays = async () => demoPlays((await load()).items)
 

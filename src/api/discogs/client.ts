@@ -1,7 +1,7 @@
 import type { Auth } from '../../auth/types'
 import { DISCOGS_MAX_AGE, readCache, writeCache } from '../../db/cache'
 
-export const API_BASE = 'https://api.discogs.com'
+const API_BASE = 'https://api.discogs.com'
 
 export class DiscogsError extends Error {
   constructor(

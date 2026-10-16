@@ -164,7 +164,7 @@ export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', filters: 
 // The sort picked last time is the default, so it sticks without living in the URL
 const SORT_KEY = 'platter.sort'
 
-export function savedSort(): SortKey {
+function savedSort(): SortKey {
   try {
     const v = localStorage.getItem(SORT_KEY)
     if (SORTS.some((s) => s.key === v)) return v as SortKey

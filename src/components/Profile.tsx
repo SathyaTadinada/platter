@@ -3,14 +3,14 @@ import { getProfile } from '../api/discogs/endpoints'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 
-export const profileUrl = (username: string) => `https://www.discogs.com/user/${encodeURIComponent(username)}`
+const profileUrl = (username: string) => `https://www.discogs.com/user/${encodeURIComponent(username)}`
 
 export function useProfile() {
   const { client, username } = useSignedIn()
   return useAsync(() => getProfile(client, username), [client, username]).data
 }
 
-export function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; size?: string }) {
+function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; size?: string }) {
   const [broken, setBroken] = useState(false)
   return src && !broken ? (
     <img

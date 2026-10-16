@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { baseString, hmacSha1, pct, signHmac } from './oauth'
+import { baseString, header, hmacSha1, pct, signParams } from './oauth'
 
 // Known-good example from Twitter's OAuth 1.0a signing docs
 const example = {
@@ -25,7 +25,7 @@ describe('oauth', () => {
   })
 
   it('matches the reference signature', async () => {
-    const h = await signHmac(example)
+    const h = header(await signParams(example))
     expect(h).toContain('oauth_signature="hCtSmYh%2BiHYCEqBWrE7C7hYmtUk%3D"')
   })
 

@@ -9,7 +9,6 @@ import type {
   FoldersResponse,
   IdentityResponse,
   MarketplaceStats,
-  MasterVersionsResponse,
   PriceSuggestions,
   Release,
   SearchParams,
@@ -28,9 +27,6 @@ export const searchReleases = (c: DiscogsClient, params: SearchParams, page = 1)
   c.get<SearchResponse>('/database/search', { ...params, type: 'release', per_page: 50, page }, DISCOGS_MAX_AGE)
 
 export const getRelease = (c: DiscogsClient, id: number) => c.get<Release>(`/releases/${id}`, undefined, DISCOGS_MAX_AGE)
-
-export const getMasterVersions = (c: DiscogsClient, masterId: number, page = 1) =>
-  c.get<MasterVersionsResponse>(`/masters/${masterId}/versions`, { per_page: 100, page }, DISCOGS_MAX_AGE)
 
 export const getOwnedInstances = (c: DiscogsClient, username: string, releaseId: number) =>
   c.get<CollectionPage>(`${u(username)}/collection/releases/${releaseId}`)

@@ -12,7 +12,7 @@ export function Cover({ src, size = 'size-20' }: { src?: string; size?: string }
   )
 }
 
-export function Badges({ own }: { own?: Ownership }) {
+function Badges({ own }: { own?: Ownership }) {
   if (!own) return null
   const badges: [string, string][] = []
   if (own.exactCopies) badges.push(['You own this', 'bg-accent-100 text-accent dark:bg-accent/20'])

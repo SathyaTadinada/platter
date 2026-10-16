@@ -1,4 +1,4 @@
-import { db, type OwnedItem, type WantItem } from '../db/db'
+import type { OwnedItem, WantItem } from '../db/db'
 
 export type Ownership = {
   exactCopies: number // copies of this exact release
@@ -15,20 +15,4 @@ export function computeOwnership(releaseId: number, masterId: number | undefined
     inWantlist: wants.some((w) => w.releaseId === releaseId),
     wantsOtherPressing: wants.some((w) => w.releaseId !== releaseId && sameMaster(w.masterId)),
   }
-}
-
-export async function checkOwnership(releaseId: number, masterId?: number): Promise<Ownership> {
-  const owned = await db.collection
-    .where('releaseId')
-    .equals(releaseId)
-    .or('masterId')
-    .equals(masterId || -1)
-    .toArray()
-  const wants = await db.wants
-    .where('releaseId')
-    .equals(releaseId)
-    .or('masterId')
-    .equals(masterId || -1)
-    .toArray()
-  return computeOwnership(releaseId, masterId, owned, wants)
 }

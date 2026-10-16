@@ -43,7 +43,7 @@ export function trackLocation(path: string, search: string) {
   }
 }
 
-export function canGoBack() {
+function canGoBack() {
   const d = state()[DEPTH]
   return typeof d === 'number' && d > 0 && history.length > 1
 }

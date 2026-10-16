@@ -46,7 +46,6 @@ await save(
 )
 await save('release-cd', await get(`${api}/releases/10176645`))
 await save('release-vinyl', await get(`${api}/releases/249504`))
-await save('master-versions', await get(`${api}/masters/29002/versions?per_page=5`))
 await save('folders', await get(`${u}/collection/folders`))
 await save('fields', await get(`${u}/collection/fields`))
 await save('owned-none', await get(`${u}/collection/releases/10176645`))

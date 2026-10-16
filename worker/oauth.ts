@@ -67,8 +67,3 @@ export async function signParams(i: SignInput): Promise<Record<string, string>> 
   oauth.oauth_signature = await hmacSha1(`${pct(i.consumerSecret)}&${pct(i.tokenSecret ?? '')}`, base)
   return oauth
 }
-
-// Returns a full Authorization header value signed with HMAC-SHA1.
-export async function signHmac(i: SignInput): Promise<string> {
-  return header(await signParams(i))
-}

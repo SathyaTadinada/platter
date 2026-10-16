@@ -71,19 +71,6 @@ export type Release = {
   thumb?: string
 }
 
-export type MasterVersion = {
-  id: number
-  title: string
-  format?: string
-  label?: string
-  catno?: string
-  country?: string
-  released?: string
-  thumb?: string
-}
-
-export type MasterVersionsResponse = { pagination: Pagination; versions: MasterVersion[] }
-
 export type Folder = { id: number; name: string; count: number }
 export type FoldersResponse = { folders: Folder[] }
 
