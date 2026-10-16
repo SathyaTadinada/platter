@@ -71,3 +71,7 @@ export function toCard(r: SearchResult): ReleaseCard {
     raw: r,
   }
 }
+
+// "Very Good Plus (VG+)" -> "VG+", "Near Mint (NM or M-)" -> "NM"
+export const shortGrade = <T extends string | undefined>(condition: T): T =>
+  (condition?.match(/\(([^)]+)\)/)?.[1].split(' or ')[0] ?? condition) as T

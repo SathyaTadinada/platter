@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import search from '../../tests/fixtures/search-barcode.json'
 import type { SearchResponse } from '../api/discogs/types'
-import { cleanArtist, describeFormats, splitTitle, toCard } from './format'
+import { cleanArtist, describeFormats, shortGrade, splitTitle, toCard } from './format'
 
 describe('format', () => {
+  it('shortens grades to their abbreviation', () => {
+    expect(shortGrade('Very Good Plus (VG+)')).toBe('VG+')
+    expect(shortGrade('Near Mint (NM or M-)')).toBe('NM')
+    expect(shortGrade('Generic')).toBe('Generic')
+    expect(shortGrade(undefined)).toBeUndefined()
+  })
+
   it('splits "Artist - Title"', () => {
     expect(splitTitle('Genesis - Invisible Touch')).toEqual({ artist: 'Genesis', title: 'Invisible Touch' })
     expect(splitTitle('Untitled')).toEqual({ artist: '', title: 'Untitled' })

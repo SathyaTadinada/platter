@@ -19,7 +19,7 @@ import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import { formatBarcodeInput } from '../lib/barcode'
-import { toCard } from '../lib/format'
+import { shortGrade, toCard } from '../lib/format'
 import { formatPrice, hasMetadata, type Metadata } from '../lib/metadata'
 import { chooseRelease, retryFailed } from '../lib/queue'
 
@@ -349,11 +349,8 @@ type RowProps = {
   currency?: string
 }
 
-// "Very Good Plus (VG+)" -> "VG+"
-const grade = (s?: string) => s?.match(/\(([^)]+)\)/)?.[1].split(' or ')[0] ?? s
-
 function metaSummary(m: Metadata, currency: string): string {
-  const cond = [grade(m.mediaCondition), grade(m.sleeveCondition)].filter(Boolean).join('/')
+  const cond = [shortGrade(m.mediaCondition), shortGrade(m.sleeveCondition)].filter(Boolean).join('/')
   return [cond, formatPrice(m.price, currency), m.store, m.location].filter(Boolean).join(' · ')
 }
 

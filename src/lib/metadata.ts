@@ -1,5 +1,6 @@
 import { fieldValueFits } from './csv'
 import { fieldFor, type FieldKey, type FieldMatch } from './fields'
+import { formatMoney, parseMoney } from './value'
 
 // What the user can fill in when adding a record
 export type Metadata = {
@@ -22,18 +23,8 @@ export const mergeMetadata = (...layers: (Metadata | undefined)[]): Metadata =>
 export function formatPrice(raw: string | undefined, currency: string, locale?: string): string | undefined {
   const t = raw?.trim()
   if (!t) return undefined
-  const n = Number(
-    t
-      .replace(/[^\d.,-]/g, '')
-      .replace(/,(?=\d{3}\b)/g, '')
-      .replace(',', '.'),
-  )
-  if (!Number.isFinite(n) || !/\d/.test(t)) return t
-  try {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n)
-  } catch {
-    return t // unknown currency code
-  }
+  const n = parseMoney(t)
+  return n === undefined ? t : formatMoney(n, currency, { locale })
 }
 
 const LABELS: Record<string, string> = {

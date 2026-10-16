@@ -1,9 +1,7 @@
+import { shortGrade } from '../lib/format'
 import { ArrowUpRight } from 'lucide-react'
 import { useCurrency, usePrice } from '../hooks/prices'
 import { formatMoney } from '../lib/value'
-
-// Short grade for labels: "Very Good Plus (VG+)" -> "VG+"
-const grade = (condition: string) => condition.match(/\(([^)]+)\)/)?.[1]?.replace(/ or .*/, '') ?? condition
 
 export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; mediaCondition?: string }) {
   const currency = useCurrency()
@@ -21,7 +19,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
   const rows: [string, string][] = []
   // with every grade on show, the copy's own grade is highlighted there instead
   const ladder = Object.entries(price.suggested ?? {})
-  if (suggested !== undefined && ladder.length < 2) rows.push([`Suggested for ${grade(mediaCondition!)}`, money(suggested)])
+  if (suggested !== undefined && ladder.length < 2) rows.push([`Suggested for ${shortGrade(mediaCondition!)}`, money(suggested)])
   if (price.forSale > 0 && price.lowest !== null) {
     rows.push(['Lowest listing', money(price.lowest)])
     rows.push(['For sale', `${price.forSale} cop${price.forSale === 1 ? 'y' : 'ies'}`])
@@ -41,7 +39,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
                   key={condition}
                   className={`rounded-lg px-2 py-1.5 text-center ${mine ? 'bg-accent-100 ring-1 ring-accent dark:bg-accent/20' : 'bg-stone-100 dark:bg-stone-800'}`}
                 >
-                  <p className="text-xs text-stone-500">{grade(condition)}</p>
+                  <p className="text-xs text-stone-500">{shortGrade(condition)}</p>
                   <p className="text-sm font-semibold tabular-nums">{formatMoney(amount, currency, { whole: true })}</p>
                 </div>
               )
