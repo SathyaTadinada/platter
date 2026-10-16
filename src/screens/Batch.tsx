@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
+import { ChevronRight, CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'wouter'
 import type { Folder } from '../api/discogs/types'
@@ -324,7 +324,7 @@ function Badge({ tone, children }: { tone: 'warn' | 'good' | 'plain'; children: 
     good: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200',
     plain: 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
   }[tone]
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
+  return <span className={`max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${cls}`}>{children}</span>
 }
 
 type RowProps = {
@@ -428,7 +428,7 @@ function Row({
         {(dupe || ownedExact || ownedOther || wanted || item.source === 'csv') && item.status !== 'added' && (
           <div className="mt-1 flex flex-wrap gap-1">
             {ownedExact && <Badge tone="warn">Already in collection</Badge>}
-            {ownedOther && <Badge tone="plain">You own another pressing</Badge>}
+            {ownedOther && <Badge tone="plain">Own another pressing</Badge>}
             {wanted && <Badge tone="good">On your wantlist</Badge>}
             {dupe && <Badge tone="warn">Scanned twice</Badge>}
             {item.source === 'csv' && <Badge tone="plain">Imported</Badge>}
@@ -448,7 +448,15 @@ function Row({
         >
           {body}
           <span className="shrink-0 text-sm font-semibold text-stone-700 dark:text-stone-300">
-            {item.status === 'ready' ? 'Change' : 'Pick'}
+            {item.status === 'ready' ? (
+              <>
+                {/* phones are short on room in this row; the whole row is tappable anyway */}
+                <span className="hidden sm:inline">Change</span>
+                <ChevronRight size={18} className="text-stone-400 sm:hidden" aria-label="Change" />
+              </>
+            ) : (
+              'Pick'
+            )}
           </span>
         </button>
       ) : (
