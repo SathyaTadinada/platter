@@ -62,7 +62,15 @@ export function PhotosSheet({ release, onClose }: { release: Release; onClose: (
         <ul className="grid grid-cols-3 gap-2">
           {images.map((img, i) => (
             <li key={img.uri}>
-              <button type="button" onClick={() => setOpen(i)} className="block w-full overflow-hidden rounded-lg">
+              <button
+                type="button"
+                onClick={(e) => {
+                  // this button goes away, and focus with it; keep it in the sheet so the arrow keys work
+                  e.currentTarget.closest('dialog')?.focus()
+                  setOpen(i)
+                }}
+                className="block w-full overflow-hidden rounded-lg"
+              >
                 <img
                   src={img.uri150 || img.uri}
                   alt=""
