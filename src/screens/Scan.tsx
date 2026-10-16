@@ -10,6 +10,7 @@ import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { enqueueBarcode } from '../lib/queue'
 import { useScanner } from '../scanner/useScanner'
 import { FieldNudge } from './FieldNudge'
+import { readChoice, writePref } from '../lib/prefs'
 
 // The camera only starts after an explicit tap, then stays on for the rest of
 // the session so "Scan next" goes straight back to scanning.
@@ -24,12 +25,7 @@ const MODE_KEY = 'platter.scanMode'
 function loadMode(): Mode {
   const asked = new URLSearchParams(location.search).get('mode')
   if (asked === 'play' || asked === 'batch' || asked === 'single') return asked
-  try {
-    const saved = localStorage.getItem(MODE_KEY)
-    return saved === 'batch' || saved === 'play' ? saved : 'single'
-  } catch {
-    return 'single'
-  }
+  return readChoice<Mode>(MODE_KEY, ['single', 'batch', 'play'], 'single')
 }
 
 export function Scan() {
@@ -63,11 +59,7 @@ export function Scan() {
 
   function switchMode(m: Mode) {
     setMode(m)
-    try {
-      localStorage.setItem(MODE_KEY, m)
-    } catch {
-      // not important
-    }
+    writePref(MODE_KEY, m)
   }
   const { state, torch, zoom, cameras } = scanner
 

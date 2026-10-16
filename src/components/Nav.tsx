@@ -4,6 +4,7 @@ import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
 import { inSearchArea, lastSearch } from '../lib/nav'
 import { ProfileLink } from './Profile'
+import { readPref, writePref } from '../lib/prefs'
 
 const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/', label: 'Collection', Icon: LibraryBig },
@@ -59,13 +60,7 @@ export function BottomNav() {
 
 const COLLAPSED_KEY = 'platter.sidebarCollapsed'
 
-function loadCollapsed() {
-  try {
-    return localStorage.getItem(COLLAPSED_KEY) === '1'
-  } catch {
-    return false
-  }
-}
+const loadCollapsed = () => readPref(COLLAPSED_KEY) === '1'
 
 // Desktop: sidebar, collapsible to icons only
 export function SideNav() {
@@ -76,11 +71,7 @@ export function SideNav() {
 
   function toggle() {
     setCollapsed(!collapsed)
-    try {
-      localStorage.setItem(COLLAPSED_KEY, collapsed ? '0' : '1')
-    } catch {
-      // not important
-    }
+    writePref(COLLAPSED_KEY, collapsed ? '0' : '1')
   }
 
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose

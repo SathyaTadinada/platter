@@ -1,3 +1,5 @@
+import { readPref, writePref } from './prefs'
+
 // Which sections of the Value view are shown, and in what order. Kept per device.
 
 export const VALUE_SECTIONS = [
@@ -43,20 +45,16 @@ const listeners = new Set<() => void>()
 export function getLayout(): Layout {
   if (current) return current
   try {
-    current = normalize(JSON.parse(localStorage.getItem(STORE) ?? 'null'))
+    current = normalize(JSON.parse(readPref(STORE) ?? 'null'))
   } catch {
-    current = defaultLayout()
+    current = defaultLayout() // not valid JSON
   }
   return current
 }
 
 export function setLayout(l: Layout) {
   current = l
-  try {
-    localStorage.setItem(STORE, JSON.stringify(l))
-  } catch {
-    // still applies until reload
-  }
+  writePref(STORE, JSON.stringify(l))
   listeners.forEach((f) => f())
 }
 

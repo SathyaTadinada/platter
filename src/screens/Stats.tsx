@@ -6,17 +6,12 @@ import { ShareSheet } from '../components/ShareSheet'
 import { IconButton, Screen } from '../components/ui'
 import { ListeningStats } from './Listening'
 import { ValueStats } from './Value'
+import { readChoice, writePref } from '../lib/prefs'
 
 type View = 'value' | 'listening'
 const VIEW_KEY = 'platter.statsView'
 
-function savedView(): View {
-  try {
-    return localStorage.getItem(VIEW_KEY) === 'listening' ? 'listening' : 'value'
-  } catch {
-    return 'value'
-  }
-}
+const savedView = () => readChoice<View>(VIEW_KEY, ['value', 'listening'], 'value')
 
 export function Stats() {
   const params = new URLSearchParams(useSearch())
@@ -27,11 +22,7 @@ export function Stats() {
   const view: View = asked === 'listening' || asked === 'value' ? asked : savedView()
 
   function show(v: View) {
-    try {
-      localStorage.setItem(VIEW_KEY, v)
-    } catch {
-      // not important
-    }
+    writePref(VIEW_KEY, v)
     navigate(`/stats?view=${v}`, { replace: true })
   }
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { ReadConfirmer } from './confirm'
+import { readPref, writePref } from '../lib/prefs'
 
 export type ScannerState = 'idle' | 'starting' | 'scanning' | 'denied' | 'unavailable' | 'error'
 
@@ -14,25 +15,15 @@ const CAMERA_KEY = 'platter.camera'
 const PREFERRED = [/triple camera/i, /dual wide camera/i, /dual camera/i]
 
 function pickCamera(cams: Camera[]): string | undefined {
-  try {
-    const saved = localStorage.getItem(CAMERA_KEY)
-    if (saved && cams.some((c) => c.id === saved)) return saved
-  } catch {
-    // storage can be unavailable; fall through
-  }
+  const saved = readPref(CAMERA_KEY)
+  if (saved && cams.some((c) => c.id === saved)) return saved
   for (const re of PREFERRED) {
     const hit = cams.find((c) => re.test(c.label))
     if (hit) return hit.id
   }
 }
 
-function rememberCamera(id: string) {
-  try {
-    localStorage.setItem(CAMERA_KEY, id)
-  } catch {
-    // not important
-  }
-}
+const rememberCamera = (id: string) => writePref(CAMERA_KEY, id)
 
 type Caps = { torch?: boolean; zoom?: { min: number; max: number } }
 

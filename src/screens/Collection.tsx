@@ -55,6 +55,7 @@ import { formatMoney, valueOf } from '../lib/value'
 import { runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 import { FieldNudge } from './FieldNudge'
+import { readChoice, writePref } from '../lib/prefs'
 
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
@@ -62,13 +63,7 @@ const PAGE = 120 // items rendered at a time; more load as you scroll
 const headerButton =
   'hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-40 lg:inline-flex dark:text-stone-300 dark:hover:bg-stone-800'
 
-function loadView(): View {
-  try {
-    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid'
-  } catch {
-    return 'grid'
-  }
-}
+const loadView = () => readChoice<View>(VIEW_KEY, ['grid', 'list'], 'grid')
 
 export function Collection() {
   const { client, username } = useSignedIn()
@@ -158,11 +153,7 @@ export function Collection() {
   function toggleView() {
     const next = view === 'grid' ? 'list' : 'grid'
     setView(next)
-    try {
-      localStorage.setItem(VIEW_KEY, next)
-    } catch {
-      // not important
-    }
+    writePref(VIEW_KEY, next)
   }
 
   function shuffle() {

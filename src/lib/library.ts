@@ -2,6 +2,7 @@ import type { CollectionField, CollectionItem, Folder, Release, SearchResult, Wa
 import type { LibraryItem, WantItem } from '../db/db'
 import { ALL_MEDIA, cleanArtist, describeFormats, splitTitle } from './format'
 import { valueBracket } from './value'
+import { readChoice, writePref } from './prefs'
 
 // what the Format filter offers; "All Media" isn't a format (see format.ts)
 const formatNames = (formats: { name: string }[] = []) => [...new Set(formats.map((f) => f.name))].filter((n) => n !== ALL_MEDIA)
@@ -164,23 +165,13 @@ export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', filters: 
 // The sort picked last time is the default, so it sticks without living in the URL
 const SORT_KEY = 'platter.sort'
 
-function savedSort(): SortKey {
-  try {
-    const v = localStorage.getItem(SORT_KEY)
-    if (SORTS.some((s) => s.key === v)) return v as SortKey
-  } catch {
-    // storage blocked
-  }
-  return 'added'
-}
-
-export function saveSort(sort: SortKey) {
-  try {
-    localStorage.setItem(SORT_KEY, sort)
-  } catch {
-    // only lasts this visit then
-  }
-}
+const savedSort = () =>
+  readChoice<SortKey>(
+    SORT_KEY,
+    SORTS.map((s) => s.key),
+    'added',
+  )
+export const saveSort = (sort: SortKey) => writePref(SORT_KEY, sort)
 
 export function parseQuery(search: string): LibraryQuery {
   const p = new URLSearchParams(search)

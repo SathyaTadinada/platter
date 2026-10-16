@@ -9,6 +9,7 @@ import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
 import { clearSearches, RECENT_SEARCHES_KEY, type RecentSearch } from '../lib/recent'
 import { Cover } from './Collection'
+import { readChoice, writePref } from '../lib/prefs'
 
 type Mode = 'barcode' | 'catno' | 'title'
 
@@ -19,14 +20,7 @@ const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
 ]
 // the last tab picked comes back next time, like the scanner's mode
 const MODE_KEY = 'platter.searchMode'
-function savedMode(): Mode {
-  try {
-    const v = localStorage.getItem(MODE_KEY)
-    return v === 'catno' || v === 'title' ? v : 'barcode'
-  } catch {
-    return 'barcode'
-  }
-}
+const savedMode = () => readChoice<Mode>(MODE_KEY, ['barcode', 'catno', 'title'], 'barcode')
 
 const iconFor = Object.fromEntries(modes.map((m) => [m.id, m.Icon])) as Record<Mode, LucideIcon>
 
@@ -41,11 +35,7 @@ export function Search() {
   })
   function setMode(m: Mode) {
     setModeState(m)
-    try {
-      localStorage.setItem(MODE_KEY, m)
-    } catch {
-      // not important
-    }
+    writePref(MODE_KEY, m)
   }
   const [barcode, setBarcode] = useState(params.get('barcode') ?? '')
   const [catno, setCatno] = useState(params.get('catno') ?? '')

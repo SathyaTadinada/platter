@@ -1,3 +1,5 @@
+import { readChoice, writePref } from './prefs'
+
 // Light, dark, or whatever the system says. A "light" or "dark" class on <html>
 // overrides the system setting (see the dark variant in index.css).
 export type Theme = 'system' | 'light' | 'dark'
@@ -5,15 +7,7 @@ export type Theme = 'system' | 'light' | 'dark'
 const KEY = 'platter.theme'
 const media = () => window.matchMedia('(prefers-color-scheme: dark)')
 
-export function getTheme(): Theme {
-  try {
-    const v = localStorage.getItem(KEY)
-    if (v === 'light' || v === 'dark') return v
-  } catch {
-    // storage blocked
-  }
-  return 'system'
-}
+export const getTheme = () => readChoice<Theme>(KEY, ['system', 'light', 'dark'], 'system')
 
 export function applyTheme(theme: Theme = getTheme()) {
   const dark = theme === 'dark' || (theme === 'system' && media().matches)
@@ -25,11 +19,7 @@ export function applyTheme(theme: Theme = getTheme()) {
 }
 
 export function setTheme(theme: Theme) {
-  try {
-    localStorage.setItem(KEY, theme)
-  } catch {
-    // still applies for this visit
-  }
+  writePref(KEY, theme)
   applyTheme(theme)
 }
 
