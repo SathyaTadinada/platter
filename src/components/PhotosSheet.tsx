@@ -72,7 +72,7 @@ export function PhotosSheet({ release, onClose }: { release: Release; onClose: (
                 className="block w-full overflow-hidden rounded-lg"
               >
                 <img
-                  src={img.uri150 || img.uri}
+                  src={img.uri}
                   alt=""
                   loading="lazy"
                   className="aspect-square w-full bg-stone-200 object-cover dark:bg-stone-800"
