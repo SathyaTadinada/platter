@@ -1,4 +1,5 @@
 import type { SearchResult } from '../api/discogs/types'
+import { ALL_MEDIA } from './format'
 import type { FacetOption } from './library'
 
 // Narrowing down search results by what Discogs says about each release.
@@ -7,7 +8,9 @@ import type { FacetOption } from './library'
 export type ResultFilters = { format?: string; tag?: string; country?: string; decade?: string; genre?: string }
 export type ResultFacetKey = keyof ResultFilters
 
-const formatsOf = (r: SearchResult) => [...new Set(r.formats?.map((f) => f.name) ?? r.format?.slice(0, 1) ?? [])]
+// "All Media" isn't a format (see format.ts), same as in the Collection filter
+const formatsOf = (r: SearchResult) =>
+  [...new Set(r.formats?.map((f) => f.name) ?? r.format?.slice(0, 1) ?? [])].filter((n) => n !== ALL_MEDIA)
 const tagsOf = (r: SearchResult) => {
   const names = new Set(formatsOf(r))
   return [...new Set((r.formats ? r.formats.flatMap((f) => f.descriptions ?? []) : (r.format ?? [])).filter((t) => !names.has(t)))]
