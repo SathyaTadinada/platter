@@ -110,7 +110,10 @@ export function Record({ id }: { id: string }) {
   const r = release.data
   const url = discogsUrl(r?.uri ?? `/release/${item.releaseId}`)
   const pressed = Number(r?.released?.slice(0, 4)) || item.year
-  const where = [r?.country, pressed || null].filter(Boolean).join(' · ')
+  // a reissue's year is when it was pressed; the album's own year goes beside it
+  const first = original && original !== pressed ? original : 0
+  const when = pressed ? (first ? `${pressed} (originally ${first})` : String(pressed)) : first ? `originally ${first}` : null
+  const where = [r?.country, when].filter(Boolean).join(' · ')
   const canPickCover = (r?.images?.length ?? 0) > 1 || Boolean(item.originalCover)
 
   const tracklist = (
@@ -157,8 +160,6 @@ export function Record({ id }: { id: string }) {
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
             {(item.label || item.catno) && <p>{[item.label, item.catno].filter(Boolean).join(' · ')}</p>}
             {where && <p>{where}</p>}
-            {/* a reissue's year is when it was pressed; this is when the album came out */}
-            {original && original !== pressed ? <p>First released in {original}</p> : null}
             {item.format && <p>{item.format}</p>}
           </div>
 
