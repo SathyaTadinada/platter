@@ -16,7 +16,7 @@ import { buttonClass, IconButton, Notice, Screen, Section, Spinner, useBack } fr
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
-import { discogsUrl } from '../lib/format'
+import { cleanLabel, discogsUrl } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
 import { Cover } from '../components/Cover'
 import { Tracklist } from './Record'
@@ -138,7 +138,7 @@ export function Release({ id }: { id: string }) {
           <h2 className="text-2xl font-bold tracking-tight lg:text-3xl">{r.title}</h2>
           <p className="text-lg text-stone-600 dark:text-stone-300">{joinArtists(r.artists)}</p>
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
-            {label && <p>{[label.name, label.catno !== 'none' && label.catno].filter(Boolean).join(' · ')}</p>}
+            {label && <p>{[cleanLabel(label.name), label.catno !== 'none' && label.catno].filter(Boolean).join(' · ')}</p>}
             {where && <p>{where}</p>}
             {format && <p>{format}</p>}
           </div>

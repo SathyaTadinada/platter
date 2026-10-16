@@ -1,4 +1,5 @@
 import type { CollectionField, Folder } from '../api/discogs/types'
+import { cleanLabel } from './format'
 
 // RFC 4180 CSV: quoted fields, doubled quotes, newlines inside quotes, CRLF.
 export function parseCsv(text: string): string[][] {
@@ -106,7 +107,7 @@ export function parseDiscogsExport(text: string): ParsedImport {
       releaseId,
       artist: get(r, c.artist).replace(/\s\(\d+\)/g, ''),
       title: get(r, c.title),
-      label: get(r, c.label).split(',')[0]?.trim() || undefined,
+      label: cleanLabel(get(r, c.label).split(',')[0]?.trim() ?? '') || undefined,
       catno: get(r, c.catno).split(',')[0]?.trim() || undefined,
       format: get(r, c.format) || undefined,
       year: year && year !== '0' ? year : undefined,

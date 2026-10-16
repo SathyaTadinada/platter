@@ -19,6 +19,9 @@ export type ReleaseCard = {
 // "Artist (2)" -> "Artist"; Discogs adds numbers to tell same-named artists apart
 export const cleanArtist = (name: string) => name.replace(/\s\(\d+\)$/, '').replace(/\*$/, '')
 
+// labels get the same numbers ("Darkroom (4)")
+export const cleanLabel = (name: string) => name.replace(/\s\(\d+\)$/, '')
+
 export function splitTitle(full: string): { artist: string; title: string } {
   const i = full.indexOf(' - ')
   if (i < 0) return { artist: '', title: full }
@@ -61,7 +64,7 @@ export function toCard(r: SearchResult): ReleaseCard {
     title,
     thumb: realImage(r.thumb),
     cover: realImage(r.cover_image),
-    label: r.label?.[0],
+    label: r.label?.[0] && cleanLabel(r.label[0]),
     catno: r.catno && r.catno !== 'none' ? r.catno : undefined,
     year: r.year && r.year !== '0' ? r.year : undefined,
     country: r.country,

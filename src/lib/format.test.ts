@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import search from '../../tests/fixtures/search-barcode.json'
 import type { SearchResponse } from '../api/discogs/types'
-import { cleanArtist, describeFormats, shortGrade, splitTitle, toCard } from './format'
+import { cleanArtist, cleanLabel, describeFormats, shortGrade, splitTitle, toCard } from './format'
 
 describe('format', () => {
   it('shortens grades to their abbreviation', () => {
@@ -19,6 +19,11 @@ describe('format', () => {
   it('drops Discogs artist numbering', () => {
     expect(cleanArtist('Nirvana (2)')).toBe('Nirvana')
     expect(cleanArtist('Prince*')).toBe('Prince')
+  })
+
+  it('drops label numbering too', () => {
+    expect(cleanLabel('Darkroom (4)')).toBe('Darkroom')
+    expect(cleanLabel('Epic')).toBe('Epic')
   })
 
   it('describes formats with quantity and details', () => {

@@ -1,6 +1,6 @@
 import type { CollectionField, CollectionItem, Folder, Release, SearchResult, WantItem as ApiWant } from '../api/discogs/types'
 import type { LibraryItem, WantItem } from '../db/db'
-import { ALL_MEDIA, cleanArtist, describeFormats, splitTitle } from './format'
+import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, splitTitle } from './format'
 import { valueBracket } from './value'
 import { readChoice, writePref } from './prefs'
 
@@ -35,7 +35,7 @@ export function toLibraryItem(x: CollectionItem): LibraryItem {
     year: b.year || 0,
     thumb: realImage(b.thumb),
     cover: realImage(b.cover_image),
-    label: b.labels[0]?.name,
+    label: b.labels[0] && cleanLabel(b.labels[0].name),
     catno: b.labels[0]?.catno && b.labels[0].catno !== 'none' ? b.labels[0].catno : undefined,
     format: describeFormats(b.formats) ?? '',
     formatNames: formatNames(b.formats),
@@ -88,7 +88,7 @@ export function itemFromRelease(r: Release, instanceId: number, folderId: number
     year: r.year || 0,
     thumb: realImage(r.images?.[0]?.uri150 ?? r.thumb),
     cover: realImage(r.images?.[0]?.uri),
-    label: label?.name,
+    label: label && cleanLabel(label.name),
     catno: label?.catno && label.catno !== 'none' ? label.catno : undefined,
     format: describeFormats(r.formats) ?? '',
     formatNames: formatNames(r.formats),
@@ -115,7 +115,7 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
     year: Number(r.year) || 0,
     thumb: realImage(r.thumb),
     cover: realImage(r.cover_image),
-    label: r.label?.[0],
+    label: r.label?.[0] && cleanLabel(r.label[0]),
     catno: r.catno && r.catno !== 'none' ? r.catno : undefined,
     format: describeFormats(formats, r.format) ?? '',
     formatNames: formatNames(formats),
