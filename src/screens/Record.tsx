@@ -30,6 +30,7 @@ export function Record({ id }: { id: string }) {
   const back = useBack('/')
   const [, navigate] = useLocation()
   const item = useLiveQuery(() => db.collection.get(instanceId), [instanceId])
+  const original = useLiveQuery(async () => (item?.masterId ? (await db.masters.get(item.masterId))?.year : 0), [item?.masterId])
   const meta = useCollectionMeta()
   const matches = useFieldMatches()
   const currency = useProfile()?.curr_abbr ?? 'USD'
@@ -108,7 +109,8 @@ export function Record({ id }: { id: string }) {
 
   const r = release.data
   const url = discogsUrl(r?.uri ?? `/release/${item.releaseId}`)
-  const where = [r?.country, r?.released?.slice(0, 4) || item.year || null].filter(Boolean).join(' · ')
+  const pressed = Number(r?.released?.slice(0, 4)) || item.year
+  const where = [r?.country, pressed || null].filter(Boolean).join(' · ')
   const canPickCover = (r?.images?.length ?? 0) > 1 || Boolean(item.originalCover)
 
   const tracklist = (
@@ -155,6 +157,8 @@ export function Record({ id }: { id: string }) {
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
             {(item.label || item.catno) && <p>{[item.label, item.catno].filter(Boolean).join(' · ')}</p>}
             {where && <p>{where}</p>}
+            {/* a reissue's year is when it was pressed; this is when the album came out */}
+            {original && original !== pressed ? <p>First released in {original}</p> : null}
             {item.format && <p>{item.format}</p>}
           </div>
 

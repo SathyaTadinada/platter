@@ -37,6 +37,7 @@ export type LibraryItem = OwnedItem & {
   fields: Record<number, string> // custom field id -> value
   originalCover?: string // set when the user picked a different cover
   originalThumb?: string
+  originalYear?: number // when the album first came out, from its master; merged in when read (see masters.ts)
 }
 export type WantItem = {
   releaseId: number
@@ -100,6 +101,9 @@ export type QueueItem = {
   warning?: string // added, but something minor went wrong (e.g. a field didn't save)
 }
 
+// The year an album first came out, from its Discogs master (0 when Discogs doesn't say)
+export type MasterYear = { masterId: number; year: number; at: number }
+
 export class PlatterDB extends Dexie {
   session!: EntityTable<Session, 'id'>
   cache!: EntityTable<CacheEntry, 'key'>
@@ -111,6 +115,7 @@ export class PlatterDB extends Dexie {
   prices!: EntityTable<PriceEntry, 'releaseId'>
   valueHistory!: EntityTable<ValueSnapshot, 'date'>
   plays!: EntityTable<Play, 'id'>
+  masters!: EntityTable<MasterYear, 'masterId'>
 
   constructor(name = 'platter') {
     super(name)
@@ -132,6 +137,7 @@ export class PlatterDB extends Dexie {
     this.version(4).stores({ covers: 'instanceId' })
     this.version(5).stores({ prices: 'releaseId, at', valueHistory: 'date' })
     this.version(6).stores({ plays: '++id, instanceId, at' })
+    this.version(7).stores({ masters: 'masterId, at' })
   }
 }
 

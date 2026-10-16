@@ -28,6 +28,8 @@ export const searchReleases = (c: DiscogsClient, params: SearchParams, page = 1)
 
 export const getRelease = (c: DiscogsClient, id: number) => c.get<Release>(`/releases/${id}`, undefined, DISCOGS_MAX_AGE)
 
+export const getMaster = (c: DiscogsClient, id: number) => c.get<{ id: number; year?: number }>(`/masters/${id}`)
+
 export const getOwnedInstances = (c: DiscogsClient, username: string, releaseId: number) =>
   c.get<CollectionPage>(`${u(username)}/collection/releases/${releaseId}`)
 

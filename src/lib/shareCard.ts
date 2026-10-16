@@ -1,4 +1,5 @@
 import type { LibraryItem } from '../db/db'
+import { yearOf } from './library'
 import type { Listening } from './plays'
 
 // The picture behind "Share" on the Stats tab: a few facts about the collection,
@@ -21,7 +22,8 @@ export function cardFacts(user: string, items: LibraryItem[], rows: Listening[],
   for (const i of items) for (const g of new Set(i.genres)) genres.set(g, (genres.get(g) ?? 0) + 1)
   const [genre] = [...genres].sort((a, b) => b[1] - a[1])
 
-  const oldest = items.filter((i) => i.year > 0).sort((a, b) => a.year - b.year)[0]
+  // the oldest music, not the oldest pressing
+  const oldest = items.filter((i) => yearOf(i) > 0).sort((a, b) => yearOf(a) - yearOf(b))[0]
   const year = String(now.getFullYear())
 
   return {
@@ -30,7 +32,7 @@ export function cardFacts(user: string, items: LibraryItem[], rows: Listening[],
     value,
     mostPlayed: top && { title: top.item.title, artist: top.item.artist, plays: top.count },
     genre: genre && { name: genre[0], count: genre[1] },
-    oldest: oldest && { title: oldest.title, artist: oldest.artist, year: oldest.year },
+    oldest: oldest && { title: oldest.title, artist: oldest.artist, year: yearOf(oldest) },
     addedThisYear: items.filter((i) => i.dateAdded.startsWith(year)).length,
   }
 }

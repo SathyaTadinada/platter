@@ -159,6 +159,17 @@ describe('groupItems', () => {
     const labels = groupItems(sortItems(items, 'year'), 'year').map((g) => g.label)
     expect(labels[0]).toMatch(/^\d{4}s$/)
   })
+
+  it("goes by the album's original year when it's known", () => {
+    // a 2023 reissue of a 1973 album, and a pressing with no year of its own
+    const reissue = { ...items[0], year: 2023, originalYear: 1973 }
+    const undated = { ...items[1], year: 0, originalYear: 2015 }
+    const list = [reissue, undated]
+    expect(filterItems(list, q({ filters: { decade: 1970, fields: {} } }))).toEqual([reissue])
+    expect(filterItems(list, q({ filters: { decade: 2020, fields: {} } }))).toEqual([])
+    expect(groupItems(sortItems(list, 'year-old'), 'year-old').map((g) => g.label)).toEqual(['1970s', '2010s'])
+    expect(facets(list, q({}), folders, fields).decade.map((o) => o.label)).toEqual(['2010s', '1970s'])
+  })
 })
 
 describe('facets', () => {

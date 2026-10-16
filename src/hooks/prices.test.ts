@@ -7,7 +7,7 @@ import { holdBackground } from '../lib/task'
 import { checkPrices } from './prices'
 
 beforeEach(async () => {
-  await Promise.all([db.prices.clear(), db.settings.clear()])
+  await Promise.all([db.prices.clear(), db.settings.clear(), db.collection.clear(), db.masters.clear()])
   vi.useFakeTimers({ toFake: ['setTimeout'] })
 })
 afterEach(() => vi.useRealTimers())
@@ -55,5 +55,25 @@ describe('checkPrices', () => {
     }
     expect(done).toBe(true)
     expect(calls.filter((c) => c.url.includes('/marketplace/stats/'))).toHaveLength(3)
+  })
+
+  it('gets original years after the prices', async () => {
+    const { fn, calls } = routeFetch([
+      ['/marketplace/stats/', () => json(stats)],
+      ['/price_suggestions/', () => json({})],
+      ['/masters/', () => json({ id: 10, year: 1973 })],
+    ])
+    const k = fakeClock(Date.now())
+    const client = new DiscogsClient(fakeAuth, fn, new RateLimiter(55, 60_000, k.now, k.sleep), k.sleep, k.now)
+    await db.collection.bulkPut([{ instanceId: 1, releaseId: 1, masterId: 10, folderId: 1 } as never])
+
+    let done = false
+    checkPrices(client, [1], 'USD').then(() => (done = true))
+    for (let i = 0; i < 100 && !done; i++) {
+      await vi.advanceTimersByTimeAsync(1000)
+      await new Promise((r) => setImmediate(r))
+    }
+    expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/marketplace/stats/1', '/marketplace/price_suggestions/1', '/masters/10'])
+    expect((await db.masters.get(10))?.year).toBe(1973)
   })
 })

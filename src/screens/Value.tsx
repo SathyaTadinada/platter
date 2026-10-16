@@ -8,6 +8,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
+import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
 import { change, formatMoney, valueOf } from '../lib/value'
@@ -24,7 +25,7 @@ const TOP = 10
 export function ValueStats() {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
-  const items = useLiveQuery(() => db.collection.toArray(), [])
+  const items = useLiveQuery(libraryItems, [])
   const history = useLiveQuery(() => db.valueHistory.orderBy('date').toArray(), [])
   const prices = useFreshPrices(currency)
   const matches = useFieldMatches()

@@ -1,10 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
-import { db } from '../db/db'
 import { useListening } from '../hooks/plays'
 import { useCurrency } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
+import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { CARD, cardFacts, drawCard, type CardTheme } from '../lib/shareCard'
 import { Toggle } from './stats'
@@ -28,7 +28,7 @@ const appIsDark = () => {
 export function ShareSheet({ onClose }: { onClose: () => void }) {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
-  const items = useLiveQuery(() => db.collection.toArray(), [])
+  const items = useLiveQuery(libraryItems, [])
   const listening = useListening()
   const value = useAsync(
     () => (currency ? recordCollectionValue(client, username, currency) : Promise.resolve(undefined)),

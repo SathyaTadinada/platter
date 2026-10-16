@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card } from '../../components/ui'
 import type { Folder } from '../../api/discogs/types'
 import type { LibraryItem } from '../../db/db'
+import { decadeOf, yearOf } from '../../lib/library'
 import { distribution, totalsBy } from '../../lib/value'
 import { pct, Toggle } from '../../components/stats'
 import type { Money, Valued } from './shared'
@@ -61,7 +62,7 @@ export function GroupTotals({ valued, folders, money }: { valued: Valued[]; fold
   const crate = new Map(folders.map((f) => [f.id, f.name]))
   const keys: Record<Grouping, (i: LibraryItem) => string[]> = {
     genre: (i) => (i.genres.length ? i.genres : ['No genre']),
-    decade: (i) => [i.year ? `${Math.floor(i.year / 10) * 10}s` : 'Unknown'],
+    decade: (i) => [yearOf(i) ? `${decadeOf(yearOf(i))}s` : 'Unknown'],
     crate: (i) => [crate.get(i.folderId) ?? 'Uncategorized'],
   }
   const amounts = valued.map((v) => ({ row: v.item, amount: v.value.amount }))

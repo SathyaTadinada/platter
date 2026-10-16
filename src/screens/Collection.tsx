@@ -26,6 +26,7 @@ import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
 import { useListening } from '../hooks/plays'
+import { libraryItems } from '../lib/masters'
 import { dayAgo } from '../lib/time'
 import { download, today } from '../lib/download'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
@@ -79,7 +80,7 @@ export function Collection() {
   const [selected, setSelected] = useState<Set<number> | null>(null) // null = not selecting
   const meta = useCollectionMeta()
 
-  const items = useLiveQuery(() => db.collection.toArray(), [])
+  const items = useLiveQuery(libraryItems, [])
   const syncedAt = useLiveQuery(async () => (await db.settings.get('collectionSyncedAt'))?.value as number | undefined, [])
 
   const setQuery = (next: LibraryQuery) => {

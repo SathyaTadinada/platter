@@ -217,13 +217,29 @@ const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 
 export const decadeOf = (year: number) => (year ? Math.floor(year / 10) * 10 : 0)
 
+// When the music is from: the album's original year where known, else this pressing's
+export const yearOf = (i: Pick<LibraryItem, 'year' | 'originalYear'>) => i.originalYear || i.year
+
 // search text per item, worked out once per item object
 const haystacks = new WeakMap<LibraryItem, string>()
 
 function haystack(i: LibraryItem): string {
   let h = haystacks.get(i)
   if (h === undefined) {
-    h = fold([i.title, i.artist, i.label, i.catno, i.year || '', i.format, ...i.genres, ...i.styles, ...Object.values(i.fields)].join(' '))
+    h = fold(
+      [
+        i.title,
+        i.artist,
+        i.label,
+        i.catno,
+        i.year || '',
+        i.originalYear ?? '',
+        i.format,
+        ...i.genres,
+        ...i.styles,
+        ...Object.values(i.fields),
+      ].join(' '),
+    )
     haystacks.set(i, h)
   }
   return h
@@ -237,7 +253,7 @@ function passes(i: LibraryItem, f: Filters, skip?: FacetKey): boolean {
   if (skip !== 'tag' && f.tag && !i.formatTags.includes(f.tag)) return false
   if (skip !== 'genre' && f.genre && !i.genres.includes(f.genre)) return false
   if (skip !== 'style' && f.style && !i.styles.includes(f.style)) return false
-  if (skip !== 'decade' && f.decade !== undefined && decadeOf(i.year) !== f.decade) return false
+  if (skip !== 'decade' && f.decade !== undefined && decadeOf(yearOf(i)) !== f.decade) return false
   if (skip !== 'rating' && f.rating && i.rating < f.rating) return false
   for (const [id, v] of Object.entries(f.fields)) {
     if (skip === `field:${id}`) continue
@@ -282,11 +298,11 @@ export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext 
   const cmp: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
     added: (a, b) => b.dateAdded.localeCompare(a.dateAdded),
     'added-old': (a, b) => a.dateAdded.localeCompare(b.dateAdded),
-    artist: (a, b) => tie(a, b) || a.year - b.year,
+    artist: (a, b) => tie(a, b) || yearOf(a) - yearOf(b),
     title: (a, b) => byText(sortName(a.title), sortName(b.title)) || tie(a, b),
     // unknown years go last either way
-    year: (a, b) => (b.year || -1) - (a.year || -1) || tie(a, b),
-    'year-old': (a, b) => (a.year || 9999) - (b.year || 9999) || tie(a, b),
+    year: (a, b) => (yearOf(b) || -1) - (yearOf(a) || -1) || tie(a, b),
+    'year-old': (a, b) => (yearOf(a) || 9999) - (yearOf(b) || 9999) || tie(a, b),
     rating: (a, b) => b.rating - a.rating || tie(a, b),
     // unpriced last
     value: (a, b) => (ctx.value?.(b) ?? -1) - (ctx.value?.(a) ?? -1) || tie(a, b),
@@ -318,7 +334,7 @@ function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
       return letter(i.title)
     case 'year':
     case 'year-old':
-      return i.year ? `${decadeOf(i.year)}s` : 'Year unknown'
+      return yearOf(i) ? `${decadeOf(yearOf(i))}s` : 'Year unknown'
     case 'rating':
       return i.rating ? `${'★'.repeat(i.rating)}` : 'Not rated'
     case 'value':
@@ -389,7 +405,7 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
   const without = (k: FacetKey) => base.filter((i) => passes(i, q.filters, k))
   const folderName = new Map(folders.map((f) => [String(f.id), f.name]))
 
-  const decade = count(without('decade').map((i) => [String(decadeOf(i.year))]))
+  const decade = count(without('decade').map((i) => [String(decadeOf(yearOf(i)))]))
     .map((o) => ({ ...o, label: o.value === '0' ? 'Unknown' : `${o.value}s` }))
     .sort((a, b) => Number(b.value) - Number(a.value))
 

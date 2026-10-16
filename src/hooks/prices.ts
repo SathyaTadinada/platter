@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { DiscogsClient } from '../api/discogs/client'
 import { useProfile } from '../components/Profile'
 import { db } from '../db/db'
+import { fetchMasterYear, staleMasters } from '../lib/masters'
 import { backgroundGapMs, fetchPrice } from '../lib/pricing'
 import { backgroundHeld } from '../lib/task'
 import { isFresh, type PriceEntry } from '../lib/value'
@@ -32,18 +33,32 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     const now = Date.now()
     const fresh = new Set((await db.prices.toArray()).filter((p) => isFresh(p, currency, now)).map((p) => p.releaseId))
     const todo = [...new Set(releaseIds)].filter((id) => !fresh.has(id))
-    if (!todo.length) return
     stopRequested = false
-    set({ running: true, done: 0, total: todo.length, error: null })
-    for (const id of todo) {
-      // anything else going on goes first, including the gaps between a bulk action's requests
+    // anything else going on goes first, including the gaps between a bulk action's requests
+    const wait = async () => {
       while ((client.status.active > 0 || backgroundHeld()) && !stopRequested) await sleep(500)
-      if (stopRequested) break
-      const { requests } = await fetchPrice(client, id, currency)
-      set({ done: state.done + 1 })
-      await sleep(backgroundGapMs(client) * requests)
+      return !stopRequested
     }
-    set({ running: false })
+    if (todo.length) {
+      set({ running: true, done: 0, total: todo.length, error: null })
+      for (const id of todo) {
+        if (!(await wait())) break
+        const { requests } = await fetchPrice(client, id, currency)
+        set({ done: state.done + 1 })
+        await sleep(backgroundGapMs(client) * requests)
+      }
+      set({ running: false })
+    }
+    // then original years, quietly: they only change how records are grouped by decade
+    try {
+      for (const id of await staleMasters()) {
+        if (!(await wait())) break
+        await fetchMasterYear(client, id)
+        await sleep(backgroundGapMs(client))
+      }
+    } catch {
+      // try again next time
+    }
   } catch (e) {
     set({ running: false, error: stopRequested ? null : (e as Error).message })
   } finally {
