@@ -54,7 +54,7 @@ export function discogsUrl(uri: string): string {
 }
 
 // Discogs uses a placeholder "spacer.gif" when there is no image
-const realImage = (url?: string) => (url && !url.endsWith('spacer.gif') ? url : undefined)
+export const realImage = (url?: string) => (url && !url.endsWith('spacer.gif') ? url : undefined)
 
 export function toCard(r: SearchResult): ReleaseCard {
   const { artist, title } = splitTitle(r.title)

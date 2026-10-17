@@ -11,7 +11,9 @@ import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
 import { Button, buttonClass, Notice, Screen, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
+import { useSearchCovers } from '../hooks/useSearchCovers'
 import { useAsync } from '../hooks/useAsync'
+import { formatBarcodeInput } from '../lib/barcode'
 import { toCard, type ReleaseCard } from '../lib/format'
 import { lookupBarcode, type LookupResult } from '../lib/lookup'
 import type { Ranked } from '../lib/runout'
@@ -96,6 +98,11 @@ export function Results() {
   const matchOf = useMemo(() => new Map(ranked?.map((r) => [r.item.id, r.result])), [ranked])
   // in runout order once something has been typed
   // digital releases are rarely the one in your hands, so they go last
+  // the demo searches signed out, and Discogs leaves the images out of those results
+  const covers = useSearchCovers(
+    cards.filter((c) => !c.thumb).map((c) => c.id),
+    session.kind === 'demo',
+  )
   const ordered = (ranked ? ranked.map((r) => cards.find((c) => c.id === r.item.id)!) : cards)
     .map((c, i) => ({ c, i, file: isDigital(c) }))
     .sort((a, b) => Number(a.file) - Number(b.file) || a.i - b.i)
@@ -109,7 +116,11 @@ export function Results() {
   }, [state.data, loaded])
 
   return (
-    <Screen title={describeQuery(params) || 'Results'} back={back} width="wide">
+    <Screen
+      title={params.get('barcode') ? formatBarcodeInput(params.get('barcode')!) : describeQuery(params) || 'Results'}
+      back={back}
+      width="wide"
+    >
       {state.loading && <Spinner label="Searching Discogs" />}
       {state.error && <Notice tone="error">{state.error.message}</Notice>}
 
@@ -124,8 +135,6 @@ export function Results() {
             {activeResultFilters(filters)
               ? `${cards.length} of ${loaded.length} results`
               : resultsLine(loaded.length, Boolean(params.get('barcode')))}
-            {/* the demo searches Discogs signed out, and Discogs leaves out images then */}
-            {session.kind === 'demo' && <span className="block">Covers only show up when you’re signed in to Discogs.</span>}
           </p>
           <div className="flex flex-wrap gap-2">
             {loaded.length >= 4 && (
@@ -152,7 +161,7 @@ export function Results() {
               .map((c) => (
                 <ReleaseCardView
                   key={c.id}
-                  card={c}
+                  card={c.thumb || !covers.has(c.id) ? c : { ...c, thumb: covers.get(c.id) }}
                   own={own?.get(c.id)}
                   onPick={() => navigate(`/release/${c.id}`)}
                   extra={matchOf.get(c.id) && <RunoutMatch result={matchOf.get(c.id)!} />}

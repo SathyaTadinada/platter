@@ -1,6 +1,6 @@
 import type { CollectionField, CollectionItem, Folder, Release, SearchResult, WantItem as ApiWant } from '../api/discogs/types'
 import type { LibraryItem, WantItem } from '../db/db'
-import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, splitTitle } from './format'
+import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, realImage, splitTitle } from './format'
 import { valueBracket } from './value'
 import { readChoice, writePref } from './prefs'
 
@@ -18,8 +18,6 @@ function joiner(join?: string): string {
 
 export const joinArtists = (artists: { name: string; join?: string }[]) =>
   artists.map((a, i) => cleanArtist(a.name) + (i < artists.length - 1 ? joiner(a.join) : '')).join('')
-
-const realImage = (url?: string) => (url && !url.endsWith('spacer.gif') ? url : undefined)
 
 export function toLibraryItem(x: CollectionItem): LibraryItem {
   const b = x.basic_information
