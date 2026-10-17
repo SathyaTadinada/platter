@@ -37,7 +37,7 @@ export function Search() {
     setModeState(m)
     writePref(MODE_KEY, m)
   }
-  const [barcode, setBarcode] = useState(params.get('barcode') ?? '')
+  const [barcode, setBarcode] = useState(formatBarcodeInput(params.get('barcode') ?? ''))
   const [catno, setCatno] = useState(params.get('catno') ?? '')
   const [artist, setArtist] = useState(params.get('artist') ?? '')
   const [title, setTitle] = useState(params.get('title') ?? '')
@@ -56,6 +56,8 @@ export function Search() {
       if (artist.trim()) q.set('artist', artist.trim())
       if (title.trim()) q.set('title', title.trim())
     }
+    // this page's own address keeps the search, so Back from the results brings it back filled in
+    history.replaceState(history.state, '', `/search?${new URLSearchParams({ mode, ...Object.fromEntries(q) })}`)
     navigate(`/results?${q}`)
   }
 
