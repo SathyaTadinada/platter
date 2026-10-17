@@ -217,9 +217,14 @@ describe('toCsv', () => {
     const csv = toCsv(items.slice(0, 2), folders, fields)
     const [head, first] = csv.split('\n')
     expect(head).toBe(
-      'Catalog#,Artist,Title,Label,Format,Rating,Released,release_id,CollectionFolder,Date Added,Collection Media Condition,Collection Sleeve Condition,Collection Notes,Collection Location',
+      'Catalog#,Artist,Title,Label,Format,Rating,Released,release_id,CollectionFolder,Date Added,Collection Media Condition,Collection Sleeve Condition,Collection Notes,Collection Location,master_id,Original Year',
     )
     expect(first).toContain(String(items[0].releaseId))
     expect(toCsv([{ ...items[0], title: 'Say "Hi", ok' }], folders, [])).toContain('"Say ""Hi"", ok"')
+  })
+
+  it("adds the album's original year after Discogs' columns", () => {
+    const row = toCsv([{ ...items[0], masterId: 10362, originalYear: 1973 }], folders, []).split('\n')[1]
+    expect(row.endsWith(',10362,1973')).toBe(true)
   })
 })

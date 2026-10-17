@@ -37,6 +37,7 @@ import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
 import { getTheme, setTheme, type Theme } from '../lib/theme'
 import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 import { toCsv } from '../lib/library'
+import { libraryItems } from '../lib/masters'
 import { timeAgo } from '../lib/time'
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -77,7 +78,7 @@ export function Settings() {
   }
 
   async function exportCollection() {
-    const items = await db.collection.toArray()
+    const items = await libraryItems()
     download(`${session.username}-collection-${today()}.csv`, toCsv(items, meta?.folders ?? [], meta?.fields ?? []), 'text/csv')
   }
 

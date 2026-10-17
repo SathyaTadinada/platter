@@ -459,6 +459,11 @@ export function toCsv(items: LibraryItem[], folders: Folder[], fields: Collectio
     'CollectionFolder',
     'Date Added',
     ...fields.map((f) => `Collection ${f.name}`),
+    // Platter's own columns go after Discogs' (only Platter imports collection files anyway).
+    // The importer finds columns by name, so new ones can be added on the end; just don't start
+    // one with "Collection ", which marks a custom field.
+    'master_id',
+    'Original Year',
   ]
   const rows = items.map((i) => [
     i.catno ?? '',
@@ -472,6 +477,8 @@ export function toCsv(items: LibraryItem[], folders: Folder[], fields: Collectio
     folderName.get(i.folderId) ?? '',
     i.dateAdded.replace('T', ' ').slice(0, 19),
     ...fields.map((f) => i.fields[f.id] ?? ''),
+    i.masterId || '',
+    i.originalYear || '',
   ])
   return [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\n') + '\n'
 }

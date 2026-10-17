@@ -57,7 +57,16 @@ export async function enqueueCsv(rows: ImportRow[], plan: ImportPlan, now = Date
     }
   })
   await db.queue.bulkAdd(items)
+  await seedMasterYears(rows, now)
   return items.length
+}
+
+// Years that came with the file, for albums Platter doesn't have one for yet
+async function seedMasterYears(rows: ImportRow[], now: number) {
+  const known = new Set((await db.masters.toArray()).map((m) => m.masterId))
+  const seeds = new Map<number, number>()
+  for (const r of rows) if (r.masterId && r.originalYear && !known.has(r.masterId)) seeds.set(r.masterId, r.originalYear)
+  await db.masters.bulkPut([...seeds].map(([masterId, year]) => ({ masterId, year, at: now })))
 }
 
 export async function chooseRelease(id: number, r: SearchResult) {

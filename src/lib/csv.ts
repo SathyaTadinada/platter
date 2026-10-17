@@ -48,6 +48,8 @@ export type ImportRow = {
   folderName?: string
   rating?: number
   fields: Record<string, string> // field name (from "Collection <name>") -> value
+  masterId?: number
+  originalYear?: number // from Platter's own export, so years don't need looking up again
 }
 
 export type ParsedImport = {
@@ -75,6 +77,8 @@ export function parseDiscogsExport(text: string): ParsedImport {
     year: col('released', 'year'),
     folder: col('collectionfolder', 'collection folder', 'folder'),
     rating: col('rating'),
+    master: col('master_id', 'master id', 'masterid'),
+    original: col('original year'),
   }
   const fieldCols = head
     .map((h, i) => ({
@@ -102,6 +106,8 @@ export function parseDiscogsExport(text: string): ParsedImport {
     }
     const rating = Number(get(r, c.rating))
     const year = get(r, c.year)
+    const masterId = Number(get(r, c.master))
+    const originalYear = Number(get(r, c.original))
     rows.push({
       line,
       releaseId,
@@ -114,6 +120,8 @@ export function parseDiscogsExport(text: string): ParsedImport {
       folderName: get(r, c.folder) || undefined,
       rating: rating >= 1 && rating <= 5 ? rating : undefined,
       fields,
+      masterId: Number.isInteger(masterId) && masterId > 0 ? masterId : undefined,
+      originalYear: Number.isInteger(originalYear) && originalYear > 0 ? originalYear : undefined,
     })
   })
   return { rows, fieldColumns: fieldCols.map((f) => f.name), skipped }

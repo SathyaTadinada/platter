@@ -191,4 +191,20 @@ describe('enqueueCsv', () => {
     expect(b.folderId).toBeUndefined()
     expect(b.fields).toEqual({})
   })
+
+  it("keeps album years from Platter's own export, without replacing ones it has", async () => {
+    await db.masters.clear()
+    await db.masters.put({ masterId: 20, year: 1999, at: 1 })
+    const parsed = parseDiscogsExport('release_id,Artist,Title,master_id,Original Year\n1,A,One,10,1973\n2,B,Two,20,2001\n3,C,Three,,\n')
+    expect(parsed.rows.map((r) => [r.masterId, r.originalYear])).toEqual([
+      [10, 1973],
+      [20, 2001],
+      [undefined, undefined],
+    ])
+    await enqueueCsv(parsed.rows, planImport(parsed, [], []), 5)
+    expect(await db.masters.orderBy('masterId').toArray()).toEqual([
+      { masterId: 10, year: 1973, at: 5 },
+      { masterId: 20, year: 1999, at: 1 },
+    ])
+  })
 })
