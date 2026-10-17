@@ -26,6 +26,22 @@ describe('covers', () => {
     expect(await db.covers.count()).toBe(0)
   })
 
+  it('counts picking the original again as going back to it', async () => {
+    await chooseCover(item, 'https://i.discogs.com/back.jpg', 'https://i.discogs.com/back-150.jpg')
+    const changed = (await db.collection.get(item.instanceId))!
+    await chooseCover(changed, item.cover!, item.thumb!)
+    const back = (await db.collection.get(item.instanceId))!
+    expect(back.cover).toBe(item.cover)
+    expect(back.originalCover).toBeUndefined()
+    expect(await db.covers.count()).toBe(0)
+  })
+
+  it("ignores a saved pick that is Discogs' own cover", async () => {
+    await db.covers.put({ instanceId: item.instanceId, cover: item.cover!, thumb: item.thumb! })
+    const [synced] = await applyCoverChoices([item])
+    expect(synced.originalCover).toBeUndefined()
+  })
+
   it('keeps the choice when the collection is synced again', async () => {
     await chooseCover(item, 'https://i.discogs.com/back.jpg', 'https://i.discogs.com/back-150.jpg')
     const [fresh] = await applyCoverChoices([item])
