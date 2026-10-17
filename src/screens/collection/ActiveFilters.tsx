@@ -40,20 +40,25 @@ export function ActiveFilters({
   }
   if (!chips.length) return null
   return (
-    <div className="mb-4 flex flex-wrap gap-2">
+    // one line that scrolls sideways, since it sits in the header and shouldn't make it taller
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
       {chips.map((c) => (
         <button
           key={c.key}
           type="button"
           onClick={c.clear}
-          className="inline-flex items-center gap-1 rounded-full bg-stone-900 py-1 pr-2 pl-3 text-sm text-white dark:bg-accent dark:text-accent-fg"
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-stone-900 py-1 pr-2 pl-3 text-sm text-white dark:bg-accent dark:text-accent-fg"
           aria-label={`Remove filter ${c.label}`}
         >
           {c.label}
           <X size={14} aria-hidden />
         </button>
       ))}
-      <button type="button" onClick={() => onChange({ fields: {} })} className="px-2 text-sm text-stone-500 underline">
+      <button
+        type="button"
+        onClick={() => onChange({ fields: {} })}
+        className="shrink-0 px-2 text-sm whitespace-nowrap text-stone-500 underline"
+      >
         Clear all
       </button>
     </div>

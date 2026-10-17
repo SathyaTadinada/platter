@@ -230,6 +230,8 @@ export function Collection() {
           </span>
         )}
       </div>
+      {/* in the header, so what's filtered stays in view while scrolling */}
+      <ActiveFilters filters={query.filters} facets={facets} onChange={setFilters} />
     </div>
   )
 
@@ -410,7 +412,6 @@ export function Collection() {
     body = (
       <>
         <FieldNudge className="mb-4" />
-        <ActiveFilters filters={query.filters} facets={facets} onChange={setFilters} />
         {byValue && currency && prices && <PriceCoverage items={filtered} prices={prices} currency={currency} />}
         {groups.map((g) => (
           <section key={g.key} className="mb-6">
