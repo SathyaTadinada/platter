@@ -1,4 +1,4 @@
-import { backIsHistory, backTarget } from '../lib/nav'
+import { backTarget } from '../lib/nav'
 import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -85,7 +85,7 @@ export function Screen({
   backdrop?: string // image shown blurred behind the top of the page
   fill?: boolean // content stretches to the bottom of the screen, so something can sit there with mt-auto
 }) {
-  const [, navigate] = useLocation()
+  const goBack = useBack(typeof back === 'string' ? back : undefined)
   // the browser tab (and history menu) names the page
   useEffect(() => {
     document.title = typeof title === 'string' && title ? `${title} · Platter` : 'Platter'
@@ -109,7 +109,7 @@ export function Screen({
               type="button"
               aria-label="Back"
               className="-ml-2 rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800"
-              onClick={() => (typeof back === 'function' ? back() : backIsHistory(back) ? history.back() : navigate(back))}
+              onClick={() => (typeof back === 'function' ? back() : goBack())}
             >
               <ChevronLeft />
             </button>
@@ -232,7 +232,8 @@ export function IconButton({ label, children, className = '', ...props }: Button
 }
 
 // Goes back in history when there is somewhere to go, otherwise to a fallback
-export function useBack(fallback: string) {
+// Back to the previous page in this tab, or to the fallback if there isn't one
+export function useBack(fallback?: string) {
   const [, navigate] = useLocation()
   return () => {
     const t = backTarget(fallback)

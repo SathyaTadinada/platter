@@ -7,6 +7,7 @@ import { Button, List, Screen, Section } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
+import { replaceAddress } from '../lib/nav'
 import { clearSearches, RECENT_SEARCHES_KEY, type RecentSearch } from '../lib/recent'
 import { Cover } from '../components/Cover'
 import { readChoice, writePref } from '../lib/prefs'
@@ -57,7 +58,7 @@ export function Search() {
       if (title.trim()) q.set('title', title.trim())
     }
     // this page's own address keeps the search, so Back from the results brings it back filled in
-    history.replaceState(history.state, '', `/search?${new URLSearchParams({ mode, ...Object.fromEntries(q) })}`)
+    replaceAddress(`/search?${new URLSearchParams({ mode, ...Object.fromEntries(q) })}`)
     navigate(`/results?${q}`)
   }
 

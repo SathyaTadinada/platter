@@ -2,34 +2,28 @@ import { ChartLine, Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcod
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useSession } from '../hooks/session'
-import { inSearchArea, lastSearch } from '../lib/nav'
+import { sectionFor, tabTarget, type Section } from '../lib/nav'
 import { ProfileLink } from './Profile'
 import { readPref, writePref } from '../lib/prefs'
 
-const tabs: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: '/', label: 'Collection', Icon: LibraryBig },
-  { href: '/scan', label: 'Scan', Icon: ScanBarcode },
-  { href: '/search', label: 'Search', Icon: Search },
-  { href: '/stats', label: 'Stats', Icon: ChartLine },
-  { href: '/settings', label: 'Settings', Icon: Settings2 },
+const tabs: { section: Section; label: string; Icon: LucideIcon }[] = [
+  { section: 'collection', label: 'Collection', Icon: LibraryBig },
+  { section: 'scan', label: 'Scan', Icon: ScanBarcode },
+  { section: 'search', label: 'Search', Icon: Search },
+  { section: 'stats', label: 'Stats', Icon: ChartLine },
+  { section: 'settings', label: 'Settings', Icon: Settings2 },
 ]
 
+// a page counts as part of the tab it was opened from
 function useCurrent() {
   const [path] = useLocation()
-  return (href: string) =>
-    href === '/' ? path === '/' || path.startsWith('/collection') : href === '/search' ? inSearchArea(path) : path.startsWith(href)
+  return (section: Section) => sectionFor(path) === section
 }
 
-// Search goes back to the last results or release, along with the page that one was opened
-// from (so its Back button still works); tapping it again from there starts over
+// each tab goes back to where it was left; tapping it again from there goes to its first page
 function useTarget() {
-  const isCurrent = useCurrent()
-  return (href: string): { href: string; state?: Record<string, string> } => {
-    if (href !== '/search' || isCurrent(href)) return { href }
-    const { url, from, key } = lastSearch()
-    const state = { ...(from && { platterFrom: from }), ...(key && { platterResume: key }) }
-    return { href: url, state: Object.keys(state).length ? state : undefined }
-  }
+  const [path] = useLocation()
+  return (section: Section) => tabTarget(section, path)
 }
 
 // Phones and tablets: tab bar at the bottom, part of the layout (not fixed),
@@ -40,13 +34,13 @@ export function BottomNav() {
   return (
     <nav className="shrink-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-stone-800 dark:bg-stone-950">
       <ul className="mx-auto flex max-w-xl">
-        {tabs.map(({ href, label, Icon }) => (
-          <li key={href} className="flex-1">
+        {tabs.map(({ section, label, Icon }) => (
+          <li key={section} className="flex-1">
             <Link
-              {...targetOf(href)}
-              aria-current={isCurrent(href) ? 'page' : undefined}
+              {...targetOf(section)}
+              aria-current={isCurrent(section) ? 'page' : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                isCurrent(href) ? 'text-accent' : 'text-stone-500'
+                isCurrent(section) ? 'text-accent' : 'text-stone-500'
               }`}
             >
               <Icon size={22} aria-hidden />
@@ -99,14 +93,14 @@ export function SideNav() {
         </button>
       </div>
       <ul className={`space-y-1 ${collapsed ? '' : 'w-full'}`}>
-        {tabs.map(({ href, label, Icon }) => (
-          <li key={href}>
+        {tabs.map(({ section, label, Icon }) => (
+          <li key={section}>
             <Link
-              {...targetOf(href)}
-              aria-current={isCurrent(href) ? 'page' : undefined}
+              {...targetOf(section)}
+              aria-current={isCurrent(section) ? 'page' : undefined}
               title={collapsed ? label : undefined}
               className={`flex items-center gap-3 rounded-lg py-2 font-medium ${collapsed ? 'justify-center px-2.5' : 'px-3'} ${
-                isCurrent(href)
+                isCurrent(section)
                   ? 'bg-stone-100 text-accent dark:bg-stone-900'
                   : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-900'
               }`}
