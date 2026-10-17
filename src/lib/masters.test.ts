@@ -15,12 +15,12 @@ beforeEach(async () => {
 })
 
 describe('staleMasters', () => {
-  it('lists each master once, skipping ones checked in the last six hours and records without one', async () => {
+  it('lists each master once, skipping ones checked in the last month and records without one', async () => {
     const now = Date.now()
     await db.collection.bulkPut([item(1, 10, 2023), item(2, 10, 2016), item(3, 20, 0), item(4, 0, 1999), item(5, 30, 2001)])
     await db.masters.bulkPut([
       { masterId: 20, year: 2015, at: now - 60_000 },
-      { masterId: 30, year: 1973, at: now - 7 * 60 * 60 * 1000 },
+      { masterId: 30, year: 1973, at: now - 31 * 24 * 60 * 60 * 1000 },
     ])
     expect((await staleMasters(now)).sort()).toEqual([10, 30])
   })

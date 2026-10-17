@@ -1,15 +1,19 @@
 import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
 import { getMaster } from '../api/discogs/endpoints'
-import { DISCOGS_MAX_AGE } from '../db/cache'
 import { db, type LibraryItem, type MasterYear } from '../db/db'
 
 // A record's year on Discogs is when that pressing came out, so a 2023 reissue of a 1973
 // album says 2023. The album's master has the original year. Platter keeps those years
 // next to the collection and refreshes them in the background, like prices.
+//
+// Release dates are CC0 under the Discogs API terms (prices and images aren't), and an
+// album's year hardly ever changes, so these are checked monthly rather than every six
+// hours, outlast signing out, and travel in Platter's CSV export.
+const RECHECK = 30 * 24 * 60 * 60 * 1000
 
-// Masters in the collection without a year from the last six hours
+// Masters in the collection without a year checked in the last month
 export async function staleMasters(now = Date.now()): Promise<number[]> {
-  const fresh = new Set((await db.masters.toArray()).filter((m) => now - m.at < DISCOGS_MAX_AGE).map((m) => m.masterId))
+  const fresh = new Set((await db.masters.toArray()).filter((m) => now - m.at < RECHECK).map((m) => m.masterId))
   const ids = (await db.collection.toArray()).map((i) => i.masterId).filter((id) => id && !fresh.has(id))
   return [...new Set(ids)]
 }

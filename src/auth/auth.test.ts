@@ -42,9 +42,12 @@ describe('sessions', () => {
   it('saves and signs out, wiping local data', async () => {
     await saveSession({ kind: 'token', token: 'abc', username: 'platter-test', userId: 1 })
     await db.settings.put({ key: 'x', value: 1 })
+    await db.masters.put({ masterId: 10, year: 1973, at: 1 })
     expect(await db.session.get('current')).toBeTruthy()
     await tokenAuth('abc', id).signOut()
     expect(await db.session.get('current')).toBeUndefined()
     expect(await db.settings.count()).toBe(0)
+    // album years stay, so signing back in doesn't look them all up again
+    expect(await db.masters.get(10)).toEqual({ masterId: 10, year: 1973, at: 1 })
   })
 })

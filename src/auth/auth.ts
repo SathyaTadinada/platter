@@ -4,8 +4,12 @@ import type { Auth, Identity, SignableRequest } from './types'
 export class AuthError extends Error {}
 
 async function wipeLocalData() {
+  // album years are public catalog data with nothing about the account, and looking them
+  // all up again is what made signing back in slow
+  const years = await db.masters.toArray()
   await db.delete()
   await db.open()
+  await db.masters.bulkPut(years)
   sessionStorage.clear()
 }
 
