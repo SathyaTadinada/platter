@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { DiscogsError } from '../api/discogs/client'
 import { Disc3 } from 'lucide-react'
@@ -11,6 +11,10 @@ export function Welcome({ error }: { error?: string }) {
   const [useToken, setUseToken] = useState(false)
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
+  // after signing out, the tab would otherwise keep the last page's name
+  useEffect(() => {
+    document.title = 'Platter'
+  }, [])
 
   const { setSession } = useSession()
   async function tryDemo() {
