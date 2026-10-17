@@ -22,29 +22,38 @@ const GRADES = [
   'Fair (F)',
   'Poor (P)',
 ]
-const text = (id: number, name: string): CollectionField => ({
+const text = (id: number, name: string, position: number): CollectionField => ({
   id,
   name,
   type: 'textarea',
-  position: id,
+  position,
   public: false,
   lines: id === 3 ? 3 : 1,
 })
 
+// ordered like a real account's (yours sets the order on Discogs; Notes is a Discogs default
+// that tends to end up last); the ids match the sample collection's notes
 const FIELDS: CollectionField[] = [
   { id: 1, name: 'Media Condition', type: 'dropdown', position: 1, public: false, options: GRADES },
   { id: 2, name: 'Sleeve Condition', type: 'dropdown', position: 2, public: false, options: ['Generic', 'No Cover', ...GRADES] },
-  text(3, 'Notes'),
-  text(4, 'Location'),
-  text(5, 'Purchase Price'),
-  text(6, 'Purchased From'),
-  text(7, 'Purchase Date'),
-  text(8, 'Play Count'),
-  text(9, 'Last Played'),
+  text(5, 'Purchase Price', 3),
+  text(6, 'Purchased From', 4),
+  text(7, 'Purchase Date', 5),
+  text(4, 'Location', 6),
+  text(8, 'Play Count', 7),
+  text(9, 'Last Played', 8),
+  text(3, 'Notes', 9),
 ]
 
-function initialState(): State {
+const DAY = 24 * 60 * 60 * 1000
+
+function initialState(now = Date.now()): State {
   const items = structuredClone((demo as unknown as { releases: CollectionItem[] }).releases)
+  // the sample's dates are fixed; move them so the newest record went in two weeks ago, gaps
+  // kept, or the month charts and "added this year" would empty out as time goes by
+  const shift = now - 14 * DAY - Math.max(...items.map((i) => Date.parse(i.date_added)))
+  const moved = (date: string) => new Date(Date.parse(date) + shift).toISOString()
+  for (const item of items) item.date_added = moved(item.date_added)
   // purchase prices on two out of three records, so "paid vs now" has something to compare
   items.forEach((item, n) => {
     if (n % 3 === 2 || item.notes?.some((x) => x.field_id === 5)) return
@@ -69,7 +78,7 @@ function initialState(): State {
     wants: [
       {
         id: 10176645,
-        date_added: '2026-09-20T18:00:00-07:00',
+        date_added: moved('2026-09-20T18:00:00-07:00'),
         basic_information: {
           id: 10176645,
           master_id: 29002,

@@ -27,7 +27,7 @@ function describeQuery(p: URLSearchParams): string {
 }
 
 export function Results() {
-  const { client } = useSignedIn()
+  const { client, session } = useSignedIn()
   const qs = useSearch()
   const params = new URLSearchParams(qs)
   const [, navigate] = useLocation()
@@ -124,6 +124,8 @@ export function Results() {
             {activeResultFilters(filters)
               ? `${cards.length} of ${loaded.length} results`
               : resultsLine(loaded.length, Boolean(params.get('barcode')))}
+            {/* the demo searches Discogs signed out, and Discogs leaves out images then */}
+            {session.kind === 'demo' && <span className="block">Covers only show up when you’re signed in to Discogs.</span>}
           </p>
           <div className="flex flex-wrap gap-2">
             {loaded.length >= 4 && (

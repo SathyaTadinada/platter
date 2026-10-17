@@ -31,6 +31,27 @@ describe('demo backend', () => {
     expect(folders.map((x: { name: string }) => x.name)).toEqual(['All', 'Uncategorized', 'Shelf'])
   })
 
+  it('dates the sample so the newest record went in two weeks ago', async () => {
+    const { data } = await call(f, 'GET', '/users/demo/collection/folders/0/releases?per_page=100&page=1')
+    const newest = Math.max(...data.releases.map((r: { date_added: string }) => Date.parse(r.date_added)))
+    expect(Math.round((Date.now() - newest) / 86_400_000)).toBe(14)
+  })
+
+  it('lists fields in the same order as a real account', async () => {
+    const { data } = await call(f, 'GET', '/users/demo/collection/fields')
+    expect(data.fields.map((x: { name: string }) => x.name)).toEqual([
+      'Media Condition',
+      'Sleeve Condition',
+      'Purchase Price',
+      'Purchased From',
+      'Purchase Date',
+      'Location',
+      'Play Count',
+      'Last Played',
+      'Notes',
+    ])
+  })
+
   it('has a collection value that follows the records', async () => {
     const before = (await call(f, 'GET', '/users/demo/collection/value')).data
     expect(before.median).toMatch(/^\$[\d,]+\.\d\d$/)
