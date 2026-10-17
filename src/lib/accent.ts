@@ -1,4 +1,4 @@
-import { readChoice, writePref } from './prefs'
+import { readChoice, removePref, writePref } from './prefs'
 
 // Accent colors the user can pick. The shades actually shown, per theme, are in index.css.
 export const ACCENTS = [
@@ -17,19 +17,39 @@ export const ACCENTS = [
 export type AccentId = (typeof ACCENTS)[number]['id']
 
 const KEY = 'platter.accent'
+const DEMO_KEY = 'platter.accent.demo'
+const SCOPE_KEY = 'platter.accentScope'
+const DEFAULT: AccentId = 'amber'
 
-export const getAccent = () =>
-  readChoice<AccentId>(
-    KEY,
-    ACCENTS.map((a) => a.id),
-    'amber',
-  )
+// Your pick belongs to your account. The signed-out pages use the default, and so does
+// each new demo, which keeps its own pick until it's left. The scope is remembered so the
+// right color shows at launch, before the session has loaded.
+type Scope = 'user' | 'demo' | 'none'
+let scope = readChoice<Scope>(SCOPE_KEY, ['user', 'demo', 'none'], 'none')
+
+export const getAccent = (): AccentId =>
+  scope === 'none'
+    ? DEFAULT
+    : readChoice<AccentId>(
+        scope === 'demo' ? DEMO_KEY : KEY,
+        ACCENTS.map((a) => a.id),
+        DEFAULT,
+      )
+
+export function setAccentScope(next: Scope) {
+  if (next === scope) return
+  scope = next
+  writePref(SCOPE_KEY, next)
+  applyAccent()
+}
+
+export const resetDemoAccent = () => removePref(DEMO_KEY)
 
 export function applyAccent(id: AccentId = getAccent()) {
   document.documentElement.dataset.accent = id
 }
 
 export function setAccent(id: AccentId) {
-  writePref(KEY, id)
+  writePref(scope === 'demo' ? DEMO_KEY : KEY, id)
   applyAccent(id)
 }

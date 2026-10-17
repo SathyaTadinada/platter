@@ -1,9 +1,10 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import { DiscogsClient, RateLimiter } from '../api/discogs/client'
 import { getDemoFetch, isDemoLocal } from '../demo/registry'
 import { authFromSession } from '../auth/auth'
 import type { Auth } from '../auth/types'
 import type { Session } from '../db/db'
+import { setAccentScope } from '../lib/accent'
 
 type Ctx = {
   session: Session | null
@@ -16,6 +17,7 @@ const SessionContext = createContext<Ctx | null>(null)
 
 export function SessionProvider({ initial, children }: { initial: Session | null; children: ReactNode }) {
   const [session, setSession] = useState(initial)
+  useLayoutEffect(() => setAccentScope(!session ? 'none' : session.kind === 'demo' ? 'demo' : 'user'), [session])
   const value = useMemo(() => {
     const auth = session ? authFromSession(session) : null
     // signed-out requests get a lower Discogs rate limit (25 a minute)

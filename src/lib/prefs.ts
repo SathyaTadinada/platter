@@ -15,6 +15,14 @@ export function readChoice<T extends string>(key: string, allowed: readonly T[],
   return allowed.includes(v as T) ? (v as T) : fallback
 }
 
+export function removePref(key: string) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // blocked
+  }
+}
+
 export function writePref(key: string, value: string) {
   try {
     localStorage.setItem(key, value)

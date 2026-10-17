@@ -1,5 +1,6 @@
 import { saveSession } from '../auth/auth'
 import { db, type Session } from '../db/db'
+import { resetDemoAccent } from '../lib/accent'
 import { localDate, type ValueSnapshot } from '../lib/value'
 import { createDemoFetch, currentDemoPlays, currentDemoValue, DEMO_USER, resetDemo } from './backend'
 import { setDemoFetch } from './registry'
@@ -29,6 +30,7 @@ async function seedValueHistory(now = Date.now()) {
 export async function enterDemo(): Promise<Session> {
   // start from the sample collection again, even if a demo ran earlier in this tab
   resetDemo()
+  resetDemoAccent()
   await seedValueHistory()
   await db.plays.bulkAdd(await currentDemoPlays())
   return saveSession({ kind: 'demo', token: '', username: DEMO_USER, userId: 0 })
