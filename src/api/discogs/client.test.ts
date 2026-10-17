@@ -48,6 +48,19 @@ describe('DiscogsClient', () => {
     expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe('Discogs token=test')
   })
 
+  it('keeps background waits out of its status, while sharing the rate limit', async () => {
+    const { fn } = routeFetch([['/oauth/identity', () => json(identity)]])
+    const clock = fakeClock()
+    const c = client(fn, clock, new RateLimiter(1, 60_000, clock.now, clock.sleep))
+    const seen: (number | null)[] = []
+    c.subscribe(() => seen.push(c.status.waitUntil))
+    await getIdentity(c.background)
+    await getIdentity(c.background) // waits a minute for the one slot, quietly
+    expect(seen.every((w) => w === null)).toBe(true)
+    await getIdentity(c) // the same slot, so this waits too, and says so
+    expect(seen.some((w) => w !== null)).toBe(true)
+  })
+
   it('retries after a 429', async () => {
     let n = 0
     const fn = (async () => (n++ === 0 ? json({ message: 'slow down' }, 429) : json(identity))) as typeof fetch

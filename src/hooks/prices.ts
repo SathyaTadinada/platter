@@ -11,9 +11,9 @@ import { useSignedIn } from './session'
 
 // One price check at a time, shared by every screen, so it keeps going while
 // you move around the app.
-type CheckState = { running: boolean; done: number; total: number; error: string | null }
+type CheckState = { running: boolean; stage: 'years' | 'prices'; done: number; total: number; error: string | null }
 
-let state: CheckState = { running: false, done: 0, total: 0, error: null }
+let state: CheckState = { running: false, stage: 'prices', done: 0, total: 0, error: null }
 let stopRequested = false
 // set before the first await, so a second call that arrives meanwhile (a sync and newly
 // added records, say) doesn't start its own loop
@@ -39,25 +39,32 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
       while ((client.status.active > 0 || backgroundHeld()) && !stopRequested) await sleep(500)
       return !stopRequested
     }
-    if (todo.length) {
-      set({ running: true, done: 0, total: todo.length, error: null })
+    const bg = client.background
+    // original years first: there's one per album, and the collection's decades depend on them
+    const masters = await staleMasters()
+    if (masters.length) {
+      set({ running: true, stage: 'years', done: 0, total: masters.length, error: null })
+      try {
+        for (const id of masters) {
+          if (!(await wait())) break
+          await fetchMasterYear(bg, id)
+          set({ done: state.done + 1 })
+          await sleep(backgroundGapMs(client))
+        }
+      } catch {
+        // try again next time
+      }
+      set({ running: false })
+    }
+    if (todo.length && !stopRequested) {
+      set({ running: true, stage: 'prices', done: 0, total: todo.length, error: null })
       for (const id of todo) {
         if (!(await wait())) break
-        const { requests } = await fetchPrice(client, id, currency)
+        const { requests } = await fetchPrice(bg, id, currency)
         set({ done: state.done + 1 })
         await sleep(backgroundGapMs(client) * requests)
       }
       set({ running: false })
-    }
-    // then original years, quietly: they only change how records are grouped by decade
-    try {
-      for (const id of await staleMasters()) {
-        if (!(await wait())) break
-        await fetchMasterYear(client, id)
-        await sleep(backgroundGapMs(client))
-      }
-    } catch {
-      // try again next time
     }
   } catch (e) {
     set({ running: false, error: stopRequested ? null : (e as Error).message })

@@ -95,6 +95,13 @@ export class DiscogsClient {
     return this.limiter.perMinute
   }
 
+  // The same client for background work (prices, original years): it shares the rate limit,
+  // but its waits stay out of the status bar, since nobody is waiting on them
+  private bg?: DiscogsClient
+  get background(): DiscogsClient {
+    return (this.bg ??= new DiscogsClient(this.auth, this.fetchFn, this.limiter, this.sleep, this.now, this.local))
+  }
+
   get status(): ClientStatus {
     return this._status
   }

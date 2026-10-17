@@ -57,7 +57,7 @@ describe('checkPrices', () => {
     expect(calls.filter((c) => c.url.includes('/marketplace/stats/'))).toHaveLength(3)
   })
 
-  it('gets original years after the prices', async () => {
+  it('gets original years before the prices', async () => {
     const { fn, calls } = routeFetch([
       ['/marketplace/stats/', () => json(stats)],
       ['/price_suggestions/', () => json({})],
@@ -73,7 +73,7 @@ describe('checkPrices', () => {
       await vi.advanceTimersByTimeAsync(1000)
       await new Promise((r) => setImmediate(r))
     }
-    expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/marketplace/stats/1', '/marketplace/price_suggestions/1', '/masters/10'])
+    expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/masters/10', '/marketplace/stats/1', '/marketplace/price_suggestions/1'])
     expect((await db.masters.get(10))?.year).toBe(1973)
   })
 })
