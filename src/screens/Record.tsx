@@ -256,11 +256,7 @@ export function Record({ id }: { id: string }) {
             </Section>
 
             <Section>
-              <Button
-                variant="ghost"
-                className="w-full text-red-600! hover:bg-red-50! active:bg-red-100! dark:text-red-400! dark:hover:bg-red-950/40! dark:active:bg-red-950/60!"
-                onClick={() => setConfirmRemove(true)}
-              >
+              <Button variant="destructive" className="w-full" onClick={() => setConfirmRemove(true)}>
                 Remove from collection
               </Button>
             </Section>

@@ -30,7 +30,7 @@ export function Row({ label, saved, children, stacked }: { label: string; saved?
     <li className={stacked ? 'px-4 py-3' : 'flex min-h-14 items-center gap-3 px-4 py-1.5'}>
       <span className={`flex shrink-0 items-center gap-1.5 text-sm text-stone-500 ${stacked ? 'mb-1' : 'max-w-[45%]'}`}>
         {label}
-        {saved && <Check size={14} className="text-emerald-600" aria-label="Saved" />}
+        {saved && <Check size={14} className="text-emerald-600 dark:text-emerald-400" aria-label="Saved" />}
       </span>
       {/* every control gets the same width so the column lines up */}
       <div className={stacked ? '' : 'ml-auto w-full max-w-[15rem] min-w-0'}>{children}</div>

@@ -4,12 +4,14 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'danger'
 
 const variants: Record<Variant, string> = {
   primary: 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg active:opacity-80 hover:opacity-90',
   secondary: 'bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-100 active:opacity-80 hover:opacity-90',
   ghost: 'text-stone-700 dark:text-stone-300 active:bg-stone-200 hover:bg-stone-100 dark:active:bg-stone-800 dark:hover:bg-stone-900',
+  // red text for anything that removes or leaves; solid red only for the final yes in a confirmation
+  destructive: 'bg-stone-200 text-red-600 dark:bg-stone-800 dark:text-red-400 active:opacity-80 hover:opacity-90',
   danger: 'bg-red-600 text-white active:opacity-80',
 }
 
@@ -197,9 +199,7 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
     </>
   )
   const cls = 'flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left'
-  const interactive = danger
-    ? 'hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-950/40 dark:active:bg-red-950/60'
-    : 'hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800'
+  const interactive = 'hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800'
   return (
     <li>
       {href ? (

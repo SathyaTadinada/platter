@@ -93,7 +93,7 @@ export function BulkBar({
           <Button variant="secondary" onClick={onExport} className={compact}>
             Export
           </Button>
-          <Button variant="danger" onClick={() => setConfirm(true)} className={compact}>
+          <Button variant="destructive" onClick={() => setConfirm(true)} className={compact}>
             Remove
           </Button>
         </div>

@@ -95,7 +95,7 @@ export function Crates() {
                     <IconButton
                       label={`Delete ${f.name}`}
                       onClick={() => setConfirmDelete(f)}
-                      className="hover:bg-red-50! hover:text-red-600! dark:hover:bg-red-950/40!"
+                      className="hover:text-red-600! dark:hover:text-red-400!"
                     >
                       <Trash2 size={18} />
                     </IconButton>

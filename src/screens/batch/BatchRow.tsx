@@ -89,7 +89,7 @@ export function Row({
       status = item.warning ? (
         <span className="text-amber-700 dark:text-amber-400">{item.warning}</span>
       ) : (
-        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
           <CircleCheck size={14} aria-hidden /> Added
         </span>
       )

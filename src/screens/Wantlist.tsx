@@ -90,7 +90,7 @@ export function Wantlist() {
                 onClick={() => remove(w)}
                 aria-label={`Take ${w.title ?? 'this'} off your wantlist`}
                 title="Take off your wantlist"
-                className="mr-2 shrink-0 rounded-full p-2.5 text-rose-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+                className="mr-2 shrink-0 rounded-full p-2.5 text-red-500 hover:bg-stone-100 dark:hover:bg-stone-800"
               >
                 <Heart size={20} className="fill-current" />
               </button>
