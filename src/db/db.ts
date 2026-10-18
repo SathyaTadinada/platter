@@ -116,6 +116,7 @@ export class PlatterDB extends Dexie {
   valueHistory!: EntityTable<ValueSnapshot, 'date'>
   plays!: EntityTable<Play, 'id'>
   masters!: EntityTable<MasterYear, 'masterId'>
+  barcodes!: EntityTable<{ barcode: string; releaseIds: number[] }, 'barcode'>
 
   constructor(name = 'platter') {
     super(name)
@@ -138,6 +139,7 @@ export class PlatterDB extends Dexie {
     this.version(5).stores({ prices: 'releaseId, at', valueHistory: 'date' })
     this.version(6).stores({ plays: '++id, instanceId, at' })
     this.version(7).stores({ masters: 'masterId, at' })
+    this.version(8).stores({ barcodes: 'barcode' })
   }
 }
 

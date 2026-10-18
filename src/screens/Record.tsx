@@ -23,6 +23,7 @@ import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { discogsUrl } from '../lib/format'
 import { Cover } from '../components/Cover'
+import { rememberRelease } from '../lib/barcodes'
 
 export function Record({ id }: { id: string }) {
   const instanceId = Number(id)
@@ -35,7 +36,12 @@ export function Record({ id }: { id: string }) {
   const matches = useFieldMatches()
   const currency = useProfile()?.curr_abbr ?? 'USD'
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
-  const release = useAsync(() => (item ? getRelease(client, item.releaseId) : Promise.resolve(undefined)), [item?.releaseId])
+  const release = useAsync(async () => {
+    if (!item) return undefined
+    const r = await getRelease(client, item.releaseId)
+    rememberRelease(r) // so scanning this record later in Play mode needs no search
+    return r
+  }, [item?.releaseId])
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [removing, setRemoving] = useState(false)

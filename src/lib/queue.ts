@@ -3,6 +3,7 @@ import type { InstanceTarget } from '../api/discogs/endpoints'
 import type { SearchResult } from '../api/discogs/types'
 import { db, type QueueItem, type ReleaseSummary } from '../db/db'
 import { digitsOnly } from './barcode'
+import { rememberBarcode } from './barcodes'
 import { fieldValueFits, type ImportPlan, type ImportRow } from './csv'
 import { toCard } from './format'
 import { itemFromSearch } from './library'
@@ -184,6 +185,7 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       }
 
       if (item.raw) await db.collection.put({ ...itemFromSearch(item.raw, instanceId, folderId), fields: saved })
+      if (item.barcode) await rememberBarcode(item.barcode, [release.id])
       await db.queue.update(item.id!, {
         status: 'added',
         warning: problems.length ? `Added, but some details didn't save: ${problems[0]}` : undefined,
