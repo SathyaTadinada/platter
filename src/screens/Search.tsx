@@ -87,39 +87,54 @@ export function Search() {
           <form onSubmit={submit} className="space-y-3">
             {mode === 'barcode' && (
               <>
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium">Barcode number</span>
+                <label htmlFor="barcode" className="mb-1 block text-sm font-medium">
+                  Barcode number
+                </label>
+                <div className="flex gap-2">
                   <input
-                    className={input}
+                    id="barcode"
+                    className={`${input} min-w-0 flex-1`}
                     inputMode="numeric"
                     autoComplete="off"
                     value={barcode}
                     onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
                     placeholder="e.g. 5 012394 144777"
                   />
-                </label>
-                {/* the scanner lives on the Scan tab; this opens it set to look a record up */}
-                <Link href="/scan?mode=single" className={buttonClass('secondary', 'w-full')}>
-                  <ScanBarcode size={20} aria-hidden />
-                  Scan it instead
-                </Link>
+                  {/* the scanner lives on the Scan tab; this opens it set to look a record up */}
+                  <Link
+                    href="/scan?mode=single"
+                    aria-label="Scan the barcode"
+                    title="Scan the barcode"
+                    className={buttonClass('secondary', 'w-12 shrink-0 px-0')}
+                  >
+                    <ScanBarcode size={20} aria-hidden />
+                  </Link>
+                </div>
               </>
             )}
             {mode === 'catno' && (
               <>
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium">Catalog number</span>
+                <label htmlFor="catno" className="mb-1 block text-sm font-medium">
+                  Catalog number
+                </label>
+                <div className="flex gap-2">
                   <input
-                    className={input}
+                    id="catno"
+                    className={`${input} min-w-0 flex-1`}
                     autoCapitalize="characters"
                     autoComplete="off"
                     value={catno}
                     onChange={(e) => setCatno(e.target.value)}
                     placeholder="e.g. PB 41447"
                   />
-                </label>
-                {/* spines are usually printed sideways, so try both ways round */}
-                <ReadPhotoButton label="Read it from the spine" rotations={[90, 270, 0]} onText={(t) => setSpine(catnoCandidates(t))} />
+                  {/* spines are usually printed sideways, so try both ways round */}
+                  <ReadPhotoButton
+                    compact
+                    label="Read it from a photo of the spine"
+                    rotations={[90, 270, 0]}
+                    onText={(t) => setSpine(catnoCandidates(t))}
+                  />
+                </div>
                 {spine && (
                   <div className="space-y-1.5">
                     <p className="text-xs text-stone-500">
