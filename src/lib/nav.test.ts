@@ -120,6 +120,17 @@ describe('back navigation', () => {
     expect(nav.backTarget()).toMatchObject({ to: '/' })
   })
 
+  it('opens Scan on the camera rather than where it was left', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/scan')
+    go(nav, '/play?barcode=1')
+    go(nav, '/collection/4')
+    tab(nav, 'stats')
+    tab(nav, 'scan')
+    expect(here()).toBe('/scan')
+  })
+
   it('remembers the tabs across a reload', async () => {
     let nav = await fresh()
     track(nav)

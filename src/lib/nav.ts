@@ -127,10 +127,11 @@ export function backTarget(fallback?: string): { history: true } | { to: string;
   return { to: fallback ?? ROOTS[section], state: { [SECTION]: section } }
 }
 
-// Where a tab's icon goes: back where that tab was left, or its first page if it's showing
+// Where a tab's icon goes: back where that tab was left, or its first page if it's showing.
+// Scan always opens on the camera; what it led to (a play, a lookup) is done by then.
 export function tabTarget(section: Section, path: string): { href: string; state: NavState } {
   const top = stacks[section].at(-1)
-  if (sectionFor(path) === section || !top) return { href: ROOTS[section], state: { [SECTION]: section } }
+  if (sectionFor(path) === section || !top || section === 'scan') return { href: ROOTS[section], state: { [SECTION]: section } }
   return { href: top.url, state: { [SECTION]: section, [RESUME]: top.key } }
 }
 
