@@ -20,13 +20,20 @@ export function ConfirmDialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
-    if (ref.current && !ref.current.open) ref.current.showModal()
+    const d = ref.current
+    if (d && !d.open) {
+      d.showModal()
+      // the dialog itself takes focus, as sheets do: a focused button would show its keyboard
+      // ring, and Enter shouldn't be one press away from the action. Tab still reaches both.
+      d.focus()
+    }
   }, [])
   const cancel = () => !busy && onCancel()
 
   return (
     <dialog
       ref={ref}
+      tabIndex={-1}
       role="alertdialog"
       aria-labelledby="confirm-title"
       aria-describedby={children ? 'confirm-body' : undefined}
@@ -35,7 +42,7 @@ export function ConfirmDialog({
         cancel()
       }}
       onClick={(e) => e.target === ref.current && cancel()}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-3xl bg-white p-6 text-stone-900 shadow-2xl dark:bg-stone-900 dark:text-stone-100"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-3xl focus:outline-none bg-white p-6 text-stone-900 shadow-2xl dark:bg-stone-900 dark:text-stone-100"
     >
       <h2 id="confirm-title" className="text-lg font-semibold">
         {title}
@@ -48,7 +55,7 @@ export function ConfirmDialog({
       <div className={`mt-6 grid gap-2 ${onConfirm ? 'grid-cols-2' : ''}`}>
         {onConfirm ? (
           <>
-            <Button variant="secondary" onClick={cancel} disabled={Boolean(busy)} autoFocus>
+            <Button variant="secondary" onClick={cancel} disabled={Boolean(busy)}>
               Cancel
             </Button>
             <Button variant="danger" onClick={onConfirm} disabled={Boolean(busy)} className="disabled:opacity-100">
@@ -56,7 +63,7 @@ export function ConfirmDialog({
             </Button>
           </>
         ) : (
-          <Button variant="secondary" onClick={onCancel} autoFocus>
+          <Button variant="secondary" onClick={onCancel}>
             {action}
           </Button>
         )}
