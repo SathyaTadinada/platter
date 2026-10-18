@@ -1,6 +1,9 @@
-import { ScanText } from 'lucide-react'
+import { Camera, ImageUp } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Button } from './ui'
+
+// Phones and tablets offer the camera from a file picker; computers only ever open files
+export const canTakePhoto = () => matchMedia('(pointer: coarse)').matches
 
 // Picks or takes a photo and runs on-device OCR on it
 export function ReadPhotoButton({ label, rotations, onText }: { label: string; rotations?: number[]; onText: (text: string) => void }) {
@@ -31,7 +34,7 @@ export function ReadPhotoButton({ label, rotations, onText }: { label: string; r
           </>
         ) : (
           <>
-            <ScanText size={20} aria-hidden />
+            {canTakePhoto() ? <Camera size={20} aria-hidden /> : <ImageUp size={20} aria-hidden />}
             {label}
           </>
         )}

@@ -4,7 +4,7 @@ import { getRelease } from '../api/discogs/endpoints'
 import type { Identifier, SearchResult } from '../api/discogs/types'
 import { useSignedIn } from '../hooks/session'
 import { confidence, rankByRunout, runoutCandidates, type Ranked, type RunoutResult } from '../lib/runout'
-import { ReadPhotoButton } from './ReadPhotoButton'
+import { canTakePhoto, ReadPhotoButton } from './ReadPhotoButton'
 import { Card } from './ui'
 
 const SIDE_NAMES = ['Side A', 'Side B', 'Side C', 'Side D']
@@ -115,7 +115,10 @@ export function RunoutPanel({
         </button>
       )}
 
-      <ReadPhotoButton label="Take or choose a photo" onText={(t) => setSuggestions(runoutCandidates(t))} />
+      <ReadPhotoButton
+        label={canTakePhoto() ? 'Take or choose a photo' : 'Choose a photo'}
+        onText={(t) => setSuggestions(runoutCandidates(t))}
+      />
       {suggestions && (
         <div className="space-y-1.5">
           <p className="text-xs text-stone-500">
