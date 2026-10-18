@@ -17,6 +17,14 @@
 @custom-variant standalone (&:where(.standalone, .standalone *));
 
 @theme {
+  /* fades in after a moment, so a quick load never flashes a spinner */
+  --animate-appear: appear 150ms ease-out 250ms both;
+  @keyframes appear {
+    from {
+      opacity: 0;
+    }
+  }
+
   --color-accent-50: #fffbeb;
   --color-accent-100: #fef3c7;
   --color-accent-400: #fbbf24;

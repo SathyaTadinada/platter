@@ -52,7 +52,7 @@ export function Notice({ tone = 'info', children }: { tone?: Tone; children: Rea
 
 export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 py-10 text-stone-500" role="status">
+    <div className="flex animate-appear items-center justify-center gap-3 py-10 text-stone-500" role="status">
       <span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
       {label}
     </div>
