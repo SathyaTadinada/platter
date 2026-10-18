@@ -142,6 +142,10 @@ function demoPlays(items: CollectionItem[], now = Date.now()) {
 const demoValue = (releaseIds: number[]) => releaseIds.reduce((n, id) => n + 6 + ((id * 7919) % 4500) / 100, 0)
 export const currentDemoValue = async () => demoValue((await load()).items.map((i) => i.id))
 export const currentDemoPlays = async () => demoPlays((await load()).items)
+export const currentDemoCollection = async () => {
+  const s = await load()
+  return { items: s.items, wants: s.wants }
+}
 
 async function handle(realFetch: typeof fetch, url: URL, method: string, body: unknown): Promise<Response> {
   const path = url.pathname

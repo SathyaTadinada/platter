@@ -1,8 +1,9 @@
 import { saveSession } from '../auth/auth'
-import { db, type Session } from '../db/db'
+import { db, setSetting, type Session } from '../db/db'
 import { resetDemoAccent } from '../lib/accent'
+import { toLibraryItem, wantFromApi } from '../lib/library'
 import { localDate, type ValueSnapshot } from '../lib/value'
-import { createDemoFetch, currentDemoPlays, currentDemoValue, DEMO_USER, resetDemo } from './backend'
+import { createDemoFetch, currentDemoCollection, currentDemoPlays, currentDemoValue, DEMO_USER, resetDemo } from './backend'
 import { setDemoFetch } from './registry'
 
 setDemoFetch(createDemoFetch())
@@ -33,5 +34,11 @@ export async function enterDemo(): Promise<Session> {
   resetDemoAccent()
   await seedValueHistory()
   await db.plays.bulkAdd(await currentDemoPlays())
+  // the sample collection is right here, so it goes straight in instead of through a sync
+  const { items, wants } = await currentDemoCollection()
+  await db.collection.bulkPut(items.map(toLibraryItem))
+  await db.wants.bulkPut(wants.map(wantFromApi))
+  await setSetting('collectionSyncedAt', Date.now())
+  await setSetting('wantsSyncedAt', Date.now())
   return saveSession({ kind: 'demo', token: '', username: DEMO_USER, userId: 0 })
 }

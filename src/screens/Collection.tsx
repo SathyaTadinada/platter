@@ -359,7 +359,7 @@ export function Collection() {
   } else if (!fresh) {
     // Discogs asks apps not to show data more than 6 hours old
     body = sync.running ? (
-      <Spinner label={sync.total > 1 ? `Updating your collection (${sync.done} of ${sync.total})` : 'Updating your collection'} />
+      <Spinner label={sync.total > 1 ? `Syncing your collection (${sync.done} of ${sync.total})` : 'Syncing your collection'} />
     ) : (
       <div className="space-y-3 py-6">
         <Notice tone={sync.error ? 'error' : 'info'}>
