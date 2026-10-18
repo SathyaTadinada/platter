@@ -22,7 +22,7 @@ const CARRY: FieldKey[] = ['purchasedFrom', 'purchaseDate', 'location']
 const RECENT = 'recentFields'
 const RECENT_FOR = 12 * 60 * 60 * 1000
 
-function pickDefaultFolder(folders: Folder[], last?: number): number | undefined {
+export function pickDefaultFolder(folders: Folder[], last?: number): number | undefined {
   if (last && folders.some((f) => f.id === last)) return last
   return (folders.find((f) => f.name === 'Uncategorized') ?? folders[0])?.id
 }
