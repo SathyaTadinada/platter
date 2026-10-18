@@ -115,7 +115,7 @@ export function RunoutPanel({
         </button>
       )}
 
-      <ReadPhotoButton label="Read it from a photo" onText={(t) => setSuggestions(runoutCandidates(t))} />
+      <ReadPhotoButton label="Take or choose a photo" onText={(t) => setSuggestions(runoutCandidates(t))} />
       {suggestions && (
         <div className="space-y-1.5">
           <p className="text-xs text-stone-500">

@@ -3,7 +3,7 @@ import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react
 import { useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
-import { Button, List, Screen, Section } from '../components/ui'
+import { Button, buttonClass, List, Screen, Section } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
@@ -86,17 +86,24 @@ export function Search() {
 
           <form onSubmit={submit} className="space-y-3">
             {mode === 'barcode' && (
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium">Barcode number</span>
-                <input
-                  className={input}
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={barcode}
-                  onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
-                  placeholder="e.g. 5 012394 144777"
-                />
-              </label>
+              <>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium">Barcode number</span>
+                  <input
+                    className={input}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={barcode}
+                    onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
+                    placeholder="e.g. 5 012394 144777"
+                  />
+                </label>
+                {/* the scanner lives on the Scan tab; this opens it set to look a record up */}
+                <Link href="/scan?mode=single" className={buttonClass('secondary', 'w-full')}>
+                  <ScanBarcode size={20} aria-hidden />
+                  Scan it instead
+                </Link>
+              </>
             )}
             {mode === 'catno' && (
               <>
