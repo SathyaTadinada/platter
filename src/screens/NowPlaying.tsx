@@ -1,24 +1,28 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, ScanBarcode } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useSearch } from 'wouter'
+import { Link, useLocation, useSearch } from 'wouter'
 import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { PlaySummary } from '../components/PlayButton'
-import { DiscogsCredit } from '../components/ReleaseCardView'
+import { DiscogsCredit, ReleaseCardView } from '../components/ReleaseCardView'
 import { RecordRow, statCard } from '../components/stats'
 import { buttonClass, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { useLogPlay } from '../hooks/plays'
 import { useSignedIn } from '../hooks/session'
+import { useSearchCovers } from '../hooks/useSearchCovers'
 import { useAsync } from '../hooks/useAsync'
+import { formatBarcodeInput } from '../lib/barcode'
+import { toCard } from '../lib/format'
 import { lookupBarcode } from '../lib/lookup'
 import { Cover } from '../components/Cover'
 
 // Scan in Play mode lands here: find the copy you own and log a play
 export function NowPlaying() {
-  const { client } = useSignedIn()
+  const { client, session } = useSignedIn()
   const barcode = new URLSearchParams(useSearch()).get('barcode') ?? ''
+  const [, navigate] = useLocation()
   const { log } = useLogPlay()
   const [chosen, setChosen] = useState<number | null>(null)
   const logged = useRef<string | null>(null)
@@ -28,13 +32,24 @@ export function NowPlaying() {
       searchDiscogs: (p) => searchReleases(client, p).then((r) => r.results),
       searchMb: (b) => searchMbBarcode(b),
     })
-    if (!('results' in found)) return []
-    const ids = found.results.map((r) => r.id)
-    return db.collection.where('releaseId').anyOf(ids).toArray()
+    const results = 'results' in found ? found.results : []
+    const copies = await db.collection
+      .where('releaseId')
+      .anyOf(results.map((r) => r.id))
+      .toArray()
+    // barcodes differ between pressings, so the record in hand may be another pressing of
+    // an album that's in the collection
+    const masters = results.map((r) => r.master_id).filter((m): m is number => Boolean(m))
+    const pressings = copies.length || !masters.length ? [] : await db.collection.where('masterId').anyOf(masters).toArray()
+    return { results, copies, pressings }
   }, [barcode, client])
 
+  // what was scanned, when it's not in the collection (the demo needs its cover looked up)
+  const first = owned.data?.results[0]
+  const covers = useSearchCovers(first && !first.thumb ? [first.id] : [], session.kind === 'demo')
+
   // one copy: log it straight away, once per barcode
-  const copies = owned.data
+  const copies = owned.data?.copies
   useEffect(() => {
     if (copies?.length === 1 && logged.current !== barcode) {
       logged.current = barcode
@@ -91,14 +106,39 @@ export function NowPlaying() {
       </div>
     )
   } else {
+    const { results = [], pressings = [] } = owned.data ?? {}
+    const card = results[0] && { ...toCard(results[0]), ...(covers.has(results[0].id) && { thumb: covers.get(results[0].id) }) }
     body = (
-      <div className="max-w-xl space-y-3">
-        <Notice tone="info">That one isn't in your collection.</Notice>
+      <div className="max-w-xl space-y-4">
+        {card && (
+          <ul>
+            <ReleaseCardView card={card} onPick={() => navigate(`/release/${card.id}`)} />
+          </ul>
+        )}
+        {pressings.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm text-stone-500">
+              That pressing isn't in your collection, but {pressings.length === 1 ? 'this one is' : 'these are'}. Log the play on yours?
+            </p>
+            <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+              {pressings.map((p) => (
+                <li key={p.instanceId}>
+                  <RecordRow item={p} detail={[p.format, p.year || null].filter(Boolean).join(' · ')} onClick={() => pick(p)} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <Notice tone="info">
+            {card ? "That one isn't in your collection." : `Discogs doesn't know the barcode ${formatBarcodeInput(barcode)}.`}
+          </Notice>
+        )}
         <div className="grid grid-cols-2 gap-2">
           <Link href={`/results?barcode=${barcode}`} className={buttonClass('secondary')}>
-            Look it up
+            {results.length > 1 ? `See all ${results.length}` : 'Look it up'}
           </Link>
           <Link href="/scan?mode=play" className={buttonClass('primary')}>
+            <ScanBarcode size={18} aria-hidden />
             Scan another
           </Link>
         </div>
