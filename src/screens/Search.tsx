@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
 import { Button, buttonClass, List, Screen, Section } from '../components/ui'
@@ -47,19 +47,24 @@ export function Search() {
   const ready =
     mode === 'barcode' ? digitsOnly(barcode).length >= 8 : mode === 'catno' ? catno.trim().length > 0 : (artist + title).trim().length > 0
 
+  const q = new URLSearchParams()
+  if (mode === 'barcode' && digitsOnly(barcode)) q.set('barcode', digitsOnly(barcode))
+  if (mode === 'catno' && catno.trim()) q.set('catno', catno.trim())
+  if (mode === 'title') {
+    if (artist.trim()) q.set('artist', artist.trim())
+    if (title.trim()) q.set('title', title.trim())
+  }
+  const query = q.toString()
+
+  // the page's address follows the form, so coming back to it (Back from the results, the tab,
+  // a reload) finds it as it was left, and clearing a field clears it there too
+  useEffect(() => {
+    replaceAddress(query ? `/search?mode=${mode}&${query}` : '/search')
+  }, [mode, query])
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!ready) return
-    const q = new URLSearchParams()
-    if (mode === 'barcode') q.set('barcode', digitsOnly(barcode))
-    if (mode === 'catno') q.set('catno', catno.trim())
-    if (mode === 'title') {
-      if (artist.trim()) q.set('artist', artist.trim())
-      if (title.trim()) q.set('title', title.trim())
-    }
-    // this page's own address keeps the search, so Back from the results brings it back filled in
-    replaceAddress(`/search?${new URLSearchParams({ mode, ...Object.fromEntries(q) })}`)
-    navigate(`/results?${q}`)
+    if (ready) navigate(`/results?${query}`)
   }
 
   return (
