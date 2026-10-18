@@ -18,15 +18,14 @@ import {
   Upload,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { useLocation } from 'wouter'
 import { getFields } from '../api/discogs/endpoints'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
 import { List, Notice, Row, Screen, Section } from '../components/ui'
 import { db, getSetting } from '../db/db'
-import { stopPriceCheck } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
+import { useSignOut } from '../hooks/signOut'
 import { useSync } from '../hooks/sync'
 import { useAsync } from '../hooks/useAsync'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -43,9 +42,8 @@ import { timeAgo } from '../lib/time'
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 export function Settings() {
-  const { session, auth, client, setSession } = useSignedIn()
+  const { session, client } = useSignedIn()
   const sync = useSync()
-  const [, navigate] = useLocation()
   const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -66,12 +64,7 @@ export function Settings() {
     return matchFields(fields, map ?? {}).filter((m) => m.field).length
   }, [client, session.username])
 
-  async function signOut() {
-    stopPriceCheck()
-    await auth.signOut()
-    navigate('/', { replace: true })
-    setSession(null)
-  }
+  const signOut = useSignOut()
 
   async function exportBackup() {
     download(`platter-${today()}.json`, JSON.stringify(await exportLocalData(), null, 2), 'application/json')

@@ -9,7 +9,7 @@ import { Toaster } from './components/Toaster'
 import { Spinner } from './components/ui'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
-import { stopPriceCheck } from './hooks/prices'
+import { useSignOut } from './hooks/signOut'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
@@ -136,15 +136,9 @@ function Routes({ error }: { error?: string }) {
 }
 
 function DemoBar() {
-  const { session, auth, setSession } = useSession()
-  const [, navigate] = useLocation()
+  const { session } = useSession()
+  const leave = useSignOut()
   if (session?.kind !== 'demo') return null
-  async function leave() {
-    stopPriceCheck()
-    await auth?.signOut()
-    navigate('/', { replace: true })
-    setSession(null)
-  }
   return (
     <div className="flex shrink-0 items-center justify-center gap-3 bg-accent px-4 pt-[env(safe-area-inset-top)] text-sm text-accent-fg">
       <p className="py-1.5">
