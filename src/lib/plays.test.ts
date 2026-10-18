@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { listensFor, parseDuration } from '../api/listenbrainz'
 import type { Release } from '../api/discogs/types'
-import type { LibraryItem } from '../db/db'
-import { listening, listeningStats, nextPlayValues, type Play } from './plays'
+import { db, type LibraryItem } from '../db/db'
+import { listening, listeningStats, nextPlayValues, trimPlays, type Play } from './plays'
 
 const item = (instanceId: number, fields: Record<number, string> = {}) =>
   ({ instanceId, releaseId: instanceId * 10, fields }) as LibraryItem
@@ -33,6 +33,24 @@ describe('listening', () => {
       [2, 2, day('2026-10-12')],
       [3, 0, day('2026-09-01')],
     ])
+  })
+})
+
+describe('trimPlays', () => {
+  beforeEach(() => db.plays.clear())
+
+  it('drops the newest plays beyond the count on Discogs', async () => {
+    await db.plays.bulkAdd([play(1, day('2026-10-01')), play(1, day('2026-10-10')), play(1, day('2026-10-17')), play(2, day('2026-10-17'))])
+    // turned down to 1 on Discogs; record 2's count was cleared to 0
+    expect(await trimPlays([item(1, { 8: '1' }), item(2, { 8: '0' })], ids)).toBe(3)
+    expect((await db.plays.toArray()).map((p) => [p.instanceId, p.at])).toEqual([[1, day('2026-10-01')]])
+  })
+
+  it("leaves plays alone when there's no count to go by", async () => {
+    await db.plays.bulkAdd([play(1, day('2026-10-01')), play(3, day('2026-10-02'))])
+    expect(await trimPlays([item(1), item(3, { 8: 'lots' })], ids)).toBe(0)
+    expect(await trimPlays([item(1, { 8: '5' })], { last: 9 })).toBe(0)
+    expect(await db.plays.count()).toBe(2)
   })
 })
 

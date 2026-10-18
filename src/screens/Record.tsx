@@ -94,8 +94,21 @@ export function Record({ id }: { id: string }) {
       await editInstance(client, username, target, { folder_id: folderId })
       invalidateCollectionMeta()
     })
-  const setField = (field: CollectionField, value: string) =>
-    save({ fields: { ...item.fields, [field.id]: value } }, () => setFieldValue(client, username, target, field.id, value))
+  const lastPlayed = matches ? fieldFor(matches, 'lastPlayed')?.id : undefined
+  const setField = (field: CollectionField, value: string) => {
+    const changes: Record<number, string> = { [field.id]: value }
+    // a play count turned down to 0 hasn't been played, so it has no last-played date
+    if (
+      field.id === (matches ? fieldFor(matches, 'playCount')?.id : undefined) &&
+      (!value || value === '0') &&
+      lastPlayed &&
+      item.fields[lastPlayed]
+    )
+      changes[lastPlayed] = ''
+    return save({ fields: { ...item.fields, ...changes } }, async () => {
+      for (const [id, v] of Object.entries(changes)) await setFieldValue(client, username, target, Number(id), v)
+    })
+  }
 
   async function remove() {
     setError(null)

@@ -1,14 +1,23 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from '../components/Toaster'
 import { db, type LibraryItem } from '../db/db'
-import { listening, logPlay, playFields, scheduleScrobbles, undoPlay, type Play } from '../lib/plays'
+import { listening, logPlay, playFields, scheduleScrobbles, trimPlays, undoPlay, type Play } from '../lib/plays'
 import { useSignedIn } from './session'
 import { useFieldMatches } from './useFields'
 
 export function usePlayFields() {
   const matches = useFieldMatches()
   return useMemo(() => playFields(matches), [matches])
+}
+
+// Keeps the plays logged here from outnumbering the play count on Discogs (see trimPlays)
+export function useTrimPlays() {
+  const ids = usePlayFields()
+  const items = useLiveQuery(() => db.collection.toArray(), [])
+  useEffect(() => {
+    if (items) trimPlays(items, ids).catch(() => {})
+  }, [items, ids])
 }
 
 // Logging a play from anywhere: writes the fields, shows a toast with Undo,

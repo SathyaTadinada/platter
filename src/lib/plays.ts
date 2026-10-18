@@ -97,6 +97,29 @@ export async function logPlay(client: DiscogsClient, username: string, item: Lib
   return play
 }
 
+// The play count on Discogs has the last word. Where it's lower than the plays logged here
+// (turned down on a record page, or on Discogs itself), the newest of those plays go so the
+// two agree. An empty count is left alone: the field may have been added after those plays.
+export async function trimPlays(items: Pick<LibraryItem, 'instanceId' | 'fields'>[], ids: PlayFields): Promise<number> {
+  if (ids.count === undefined) return 0
+  const limit = new Map<number, number>()
+  for (const i of items) {
+    const raw = i.fields[ids.count]?.trim()
+    if (raw && /^\d+$/.test(raw)) limit.set(i.instanceId, Number(raw))
+  }
+  const seen = new Map<number, number>()
+  const extra: number[] = []
+  for (const p of await db.plays.orderBy('at').toArray()) {
+    const max = limit.get(p.instanceId)
+    if (max === undefined) continue
+    const n = (seen.get(p.instanceId) ?? 0) + 1
+    seen.set(p.instanceId, n)
+    if (n > max) extra.push(p.id!)
+  }
+  if (extra.length) await db.plays.bulkDelete(extra)
+  return extra.length
+}
+
 // Puts the fields back the way they were and forgets the play
 export async function undoPlay(client: DiscogsClient, username: string, play: Play, ids: PlayFields) {
   const item = await db.collection.get(play.instanceId)

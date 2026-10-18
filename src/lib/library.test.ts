@@ -173,6 +173,16 @@ describe('groupItems', () => {
 })
 
 describe('facets', () => {
+  it('leaves a play count of 0 out of the filters', () => {
+    const playCount = { id: 8, name: 'Play Count', type: 'textarea', position: 8, public: false } as CollectionField
+    const list = [
+      { ...items[0], fields: { 8: '0' } },
+      { ...items[1], fields: { 8: '3' } },
+    ]
+    const f = facets(list, q({}), folders, [playCount])
+    expect(f.fields[0].options.map((o) => o.value)).toEqual(['3'])
+  })
+
   it('counts each option while ignoring its own filter', () => {
     const f = facets(items, q({ filters: { format: 'Vinyl', fields: {} } }), folders, fields)
     expect(f.format.find((o) => o.value === 'Vinyl')?.count).toBe(items.filter((i) => i.formatNames.includes('Vinyl')).length)

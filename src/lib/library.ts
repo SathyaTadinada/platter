@@ -1,6 +1,7 @@
 import type { CollectionField, CollectionItem, Folder, Release, SearchResult, WantItem as ApiWant } from '../api/discogs/types'
 import type { LibraryItem, WantItem } from '../db/db'
 import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, realImage, splitTitle } from './format'
+import { fieldFor, matchFields } from './fields'
 import { valueBracket } from './value'
 import { readChoice, writePref } from './prefs'
 
@@ -402,6 +403,7 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
   const base = items.filter((i) => matchesText(i, words))
   const without = (k: FacetKey) => base.filter((i) => passes(i, q.filters, k))
   const folderName = new Map(folders.map((f) => [String(f.id), f.name]))
+  const playCount = fieldFor(matchFields(fields), 'playCount')?.id
 
   const decade = count(without('decade').map((i) => [String(decadeOf(yearOf(i)))]))
     .map((o) => ({ ...o, label: o.value === '0' ? 'Unknown' : `${o.value}s` }))
@@ -431,7 +433,13 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
     fields: fields
       .map((field) => ({
         field,
-        options: count(without(`field:${field.id}`).map((i) => (i.fields[field.id] ? [i.fields[field.id]] : []))),
+        options: count(
+          without(`field:${field.id}`).map((i) => {
+            const v = i.fields[field.id]
+            // a play count of 0 is the same as never played
+            return v && !(field.id === playCount && v === '0') ? [v] : []
+          }),
+        ),
       }))
       .filter((f) => f.options.length > 0 && f.options.length <= MAX_FIELD_VALUES),
   }
