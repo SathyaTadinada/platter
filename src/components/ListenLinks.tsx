@@ -31,12 +31,8 @@ export function ListenLinks({
     setBusy(true)
     try {
       const album = await findAppleAlbum(String(releaseId), barcodes, artist, title)
-      const url = album ? (kind === 'apple' ? album.url : allServicesUrl(album)) : kind === 'apple' ? links.apple : null
-      if (!url) {
-        tab?.close()
-        toast("Couldn't find this album on streaming services. Try one of the searches.")
-        return
-      }
+      // without an Apple Music album there's no album.link page, so search the web instead
+      const url = album ? (kind === 'apple' ? album.url : allServicesUrl(album)) : kind === 'apple' ? links.apple : links.web
       if (tab) tab.location.href = url
       else window.open(url, '_blank', 'noopener')
     } catch {

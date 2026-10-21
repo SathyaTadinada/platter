@@ -5,13 +5,17 @@ import { digitsOnly } from './barcode'
 // which lists every service for an Apple Music album) need the album's Apple ID,
 // found from the barcode or by name. Nothing is looked up until a link is tapped.
 
-const q = (artist: string, title: string) => encodeURIComponent(`${artist} ${title}`.trim())
+const q = (artist: string, title: string) => encodeURIComponent(`${artist} ${title}`.replace(/\s+/g, ' ').trim())
 
 export function searchLinks(artist: string, title: string) {
   return {
-    spotify: `https://open.spotify.com/search/${q(artist, title)}/albums`,
+    // no "/albums" on the end: the Spotify app (which iOS opens for this link) reads
+    // the last part of the path as the search, so it searched for "albums"
+    spotify: `https://open.spotify.com/search/${q(artist, title)}`,
     youtube: `https://music.youtube.com/search?q=${q(artist, title)}`,
     apple: `https://music.apple.com/search?term=${q(artist, title)}`,
+    // for "All services" when Apple Music doesn't have it, so there's no album.link page
+    web: `https://www.google.com/search?q=${q(artist, title)}%20album`,
   }
 }
 
@@ -38,7 +42,14 @@ export function pickAlbum(results: ItunesAlbum[], artist: string, title: string)
   const match =
     albums.find((r) => norm(r.collectionName) === t && norm(r.artistName) === a) ??
     albums.find((r) => norm(r.collectionName) === t && (norm(r.artistName).includes(a) || a.includes(norm(r.artistName))))
-  return match ? { id: match.collectionId, url: match.collectionViewUrl, artist: match.artistName, title: match.collectionName } : null
+  return match ? toAlbum(match) : null
+}
+
+// a song's collectionViewUrl points at the track ("?i=123"); keep just the album
+const toAlbum = (r: ItunesAlbum): AppleAlbum => {
+  const url = new URL(r.collectionViewUrl)
+  url.searchParams.delete('i')
+  return { id: r.collectionId, url: url.href, artist: r.artistName, title: r.collectionName }
 }
 
 const store = () => {
@@ -49,7 +60,8 @@ const store = () => {
   }
 }
 
-const MONTH = 30 * 24 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+const MONTH = 30 * DAY
 
 export async function findAppleAlbum(
   key: string, // cache key, e.g. the Discogs release id
@@ -58,9 +70,11 @@ export async function findAppleAlbum(
   title: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<AppleAlbum | null> {
-  const cacheKey = `apple:${key}`
+  // misses are only trusted for a day, since Apple's search comes and goes
+  const cacheKey = `apple2:${key}` // "2" drops misses cached for a month before song search
   const hit = await readCache<{ album: AppleAlbum | null }>(cacheKey, MONTH)
-  if (hit) return hit.album
+  if (hit?.album) return hit.album
+  if (hit && (await readCache(cacheKey, DAY))) return null
 
   const get = async (url: string) => {
     const res = await fetchFn(url)
@@ -71,15 +85,19 @@ export async function findAppleAlbum(
   for (const b of barcodes.map(digitsOnly).filter((d) => d.length >= 12)) {
     const found = (await get(`https://itunes.apple.com/lookup?upc=${b}&entity=album&country=${store()}`)).find((r) => r.collectionId)
     if (found) {
-      album = { id: found.collectionId, url: found.collectionViewUrl, artist: found.artistName, title: found.collectionName }
+      album = toAlbum(found)
       break
     }
   }
-  album ??= pickAlbum(
-    await get(`https://itunes.apple.com/search?term=${q(artist, title)}&entity=album&limit=15&country=${store()}`),
-    artist,
-    title,
-  )
+  // Apple's album search misses some albums its song search finds (Peter Cat Recording
+  // Co.'s "Bismillah"), and songs carry their album, so try those next
+  for (const entity of ['album', 'song']) {
+    album ??= pickAlbum(
+      await get(`https://itunes.apple.com/search?term=${q(artist, title)}&entity=${entity}&limit=25&country=${store()}`),
+      artist,
+      title,
+    )
+  }
   await writeCache(cacheKey, { album })
   return album
 }
