@@ -102,7 +102,13 @@ export function Settings() {
             <List>
               <li>
                 <ProfileLink
-                  detail={session.kind === 'oauth' ? 'Logged in with Discogs' : 'Using a personal access token'}
+                  detail={
+                    session.expired
+                      ? 'Needs logging in again'
+                      : session.kind === 'oauth'
+                        ? 'Logged in with Discogs'
+                        : 'Using a personal access token'
+                  }
                   className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
                 />
               </li>

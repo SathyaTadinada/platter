@@ -11,6 +11,7 @@ export type Session = {
   secret?: string // OAuth token secret
   username: string
   userId: number
+  expired?: boolean // Discogs stopped accepting it; signing in again picks up where it left off
 }
 
 export type CacheEntry = { key: string; data: unknown; fetchedAt: number }

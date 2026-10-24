@@ -15,6 +15,14 @@ type Ctx = {
 
 const SessionContext = createContext<Ctx | null>(null)
 
+// While Discogs isn't accepting the sign-in, nothing is sent: every request gets the same
+// answer straight away instead of failing (and being retried) against Discogs
+const refused: typeof fetch = async () =>
+  new Response(JSON.stringify({ message: 'Log in to Discogs again to continue.' }), {
+    status: 401,
+    headers: { 'Content-Type': 'application/json' },
+  })
+
 export function SessionProvider({ initial, children }: { initial: Session | null; children: ReactNode }) {
   const [session, setSession] = useState(initial)
   useLayoutEffect(() => setAccentScope(!session ? 'none' : session.kind === 'demo' ? 'demo' : 'user'), [session])
@@ -25,7 +33,9 @@ export function SessionProvider({ initial, children }: { initial: Session | null
     const client = auth
       ? demoFetch
         ? new DiscogsClient(auth, demoFetch, new RateLimiter(22), undefined, undefined, isDemoLocal)
-        : new DiscogsClient(auth)
+        : session?.expired
+          ? new DiscogsClient(auth, refused, undefined, undefined, undefined, () => true)
+          : new DiscogsClient(auth)
       : null
     return { session, auth, client, setSession }
   }, [session])

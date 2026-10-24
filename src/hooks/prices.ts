@@ -122,7 +122,7 @@ export function usePrice(releaseId: number | undefined, currency: string | undef
 // Newly added records have no price until the next sync; fetch theirs a few seconds after
 // they show up
 export function useNewRecordPrices() {
-  const { client } = useSignedIn()
+  const { client, session } = useSignedIn()
   const currency = useCurrency()
   const check = usePriceCheck()
   const missing = useLiveQuery(async () => {
@@ -133,8 +133,8 @@ export function useNewRecordPrices() {
   }, [currency])
   const key = missing?.join(',') ?? ''
   useEffect(() => {
-    if (!key || !currency || check.running || check.error) return
+    if (!key || !currency || check.running || check.error || session.expired) return
     const t = setTimeout(() => checkPrices(client, key.split(',').map(Number), currency), 3000)
     return () => clearTimeout(t)
-  }, [key, currency, client, check.running, check.error])
+  }, [key, currency, client, check.running, check.error, session.expired])
 }

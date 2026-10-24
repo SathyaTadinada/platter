@@ -7,6 +7,7 @@ import { BottomNav, SideNav } from './components/Nav'
 import { StatusBar } from './components/StatusBar'
 import { Toaster } from './components/Toaster'
 import { Spinner } from './components/ui'
+import { SignInAgain } from './components/SignInAgain'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
 import { useSignOut } from './hooks/signOut'
@@ -179,8 +180,11 @@ function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="fixed inset-0 flex flex-col">
       <DemoBar />
-      {/* the demo bar already covers the status bar area */}
-      <div className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' ? '[--header-inset:0px]' : ''}`}>
+      <SignInAgain />
+      {/* either bar already covers the status bar area */}
+      <div
+        className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' || session?.expired ? '[--header-inset:0px]' : ''}`}
+      >
         <SideNav />
         <div className="relative flex min-h-0 flex-1 flex-col">
           <main

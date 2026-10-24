@@ -65,7 +65,7 @@ const headerButton =
 const loadView = () => readChoice<View>(VIEW_KEY, ['grid', 'list'], 'grid')
 
 export function Collection() {
-  const { client, username } = useSignedIn()
+  const { client, username, session } = useSignedIn()
   const sync = useSync()
   const search = useSearch()
   const [, navigate] = useLocation()
@@ -358,7 +358,11 @@ export function Collection() {
     body = <Spinner />
   } else if (!fresh) {
     // Discogs asks apps not to show data more than 6 hours old
-    body = sync.running ? (
+    body = session.expired ? (
+      <div className="py-6">
+        <Notice tone="info">Your collection shows again once you've logged back in. Nothing on this device is lost.</Notice>
+      </div>
+    ) : sync.running ? (
       <Spinner label={sync.total > 1 ? `Syncing your collection (${sync.done} of ${sync.total})` : 'Syncing your collection'} />
     ) : (
       <div className="space-y-3 py-6">
