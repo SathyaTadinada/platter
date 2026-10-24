@@ -15,7 +15,7 @@ import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
 import { useTrimPlays } from './hooks/plays'
-import { useNewRecordPrices } from './hooks/prices'
+import { useNewRecordPrices, useWatchedPrices } from './hooks/prices'
 import { rememberScroll, savedScroll, trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
@@ -162,6 +162,7 @@ function DemoBar() {
 // wrong at launch. Only the middle scrolls, so the header and tab bar stay put.
 function Shell({ children }: { children: ReactNode }) {
   useNewRecordPrices()
+  useWatchedPrices()
   useTrimPlays()
   const { session } = useSession()
   const [path] = useLocation()
