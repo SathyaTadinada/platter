@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Heart } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { addWant, removeWant } from '../api/discogs/endpoints'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { RecordRow, statCard } from '../components/stats'
@@ -51,14 +51,19 @@ export function Wantlist() {
     }
   }
 
-  // prices come in the background, like the collection's, a moment after the page opens
+  // prices come in the background, like the collection's, a moment after the page opens. Once
+  // per visit, so a check that fails doesn't keep retrying.
   const unpriced = prices ? (wants ?? []).filter((w) => !prices.has(w.releaseId)).map((w) => w.releaseId) : []
   const key = unpriced.join(',')
+  const tried = useRef('')
   useEffect(() => {
-    if (!key || !currency || check.running || check.error || session.expired) return
-    const t = setTimeout(() => checkPrices(client, key.split(',').map(Number), currency), 1000)
+    if (!key || !currency || check.running || session.expired || tried.current === key) return
+    const t = setTimeout(() => {
+      tried.current = key
+      checkPrices(client, key.split(',').map(Number), currency)
+    }, 1000)
     return () => clearTimeout(t)
-  }, [key, currency, client, check.running, check.error, session.expired])
+  }, [key, currency, client, check.running, session.expired])
 
   const sorted = [...(wants ?? [])].sort((a, b) => (b.dateAdded ?? '').localeCompare(a.dateAdded ?? ''))
   const note = (w: WantItem) =>
