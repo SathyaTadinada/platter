@@ -149,3 +149,23 @@ export async function flushScrobbles(client: DiscogsClient, now = Date.now()) {
 export function scheduleScrobbles(client: DiscogsClient) {
   setTimeout(() => flushScrobbles(client).catch(() => {}), SETTLE + 1000)
 }
+
+// Something to put on: any record can come up, but ones not played in a while (or ever) come
+// up more often than ones played this week. Ones already offered this time are skipped while
+// there are others left.
+export function pickToPlay(rows: Listening[], offered: Set<number>, rand = Math.random, now = Date.now()) {
+  const fresh = rows.filter((r) => !offered.has(r.item.instanceId))
+  const pool = fresh.length ? fresh : rows
+  const weight = (r: Listening) => {
+    if (!r.last) return r.count ? 2 : 4
+    const days = Math.max(0, (now - r.last) / DAY)
+    return 0.25 + Math.min(days, 365) / 90
+  }
+  const total = pool.reduce((n, r) => n + weight(r), 0)
+  let at = rand() * total
+  for (const r of pool) {
+    at -= weight(r)
+    if (at < 0) return r
+  }
+  return pool.at(-1)
+}

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { listensFor, parseDuration } from '../api/listenbrainz'
 import type { Release } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
-import { listening, listeningStats, nextPlayValues, trimPlays, type Play } from './plays'
+import { listening, listeningStats, nextPlayValues, pickToPlay, trimPlays, type Play } from './plays'
 
 const item = (instanceId: number, fields: Record<number, string> = {}) =>
   ({ instanceId, releaseId: instanceId * 10, fields }) as LibraryItem
@@ -98,5 +98,32 @@ describe('listenbrainz', () => {
       ['Three', 'Band', 1_000_000 - 120],
     ])
     expect(listens[0].track_metadata.additional_info).toMatchObject({ tracknumber: 'A1', duration_ms: 180_000, discogs_release_id: 5 })
+  })
+})
+
+describe('pickToPlay', () => {
+  const now = day('2026-10-24')
+  const row = (id: number, count: number, last?: string) => ({ item: item(id), count, last: last ? day(last) : undefined })
+  const rows = [row(1, 9, '2026-10-24'), row(2, 3, '2025-06-01'), row(3, 0)]
+
+  it('leans toward records that have waited longest', () => {
+    const seen = new Map<number, number>()
+    let seed = 1
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+    for (let n = 0; n < 3000; n++) {
+      const id = pickToPlay(rows, new Set(), rand, now)!.item.instanceId
+      seen.set(id, (seen.get(id) ?? 0) + 1)
+    }
+    // played today < never played < not played in over a year
+    expect(seen.get(1)!).toBeLessThan(seen.get(3)!)
+    expect(seen.get(3)!).toBeLessThan(seen.get(2)!)
+    expect(seen.get(1)!).toBeGreaterThan(0)
+  })
+
+  it("doesn't offer the same one twice until it runs out", () => {
+    const offered = new Set([2, 3])
+    expect(pickToPlay(rows, offered, () => 0.99, now)!.item.instanceId).toBe(1)
+    expect(pickToPlay(rows, new Set([1, 2, 3]), () => 0, now)).toBeDefined()
+    expect(pickToPlay([], new Set(), Math.random, now)).toBeUndefined()
   })
 })

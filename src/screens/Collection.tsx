@@ -25,6 +25,7 @@ import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollect
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
+import { useLogPlay } from '../hooks/plays'
 import { useListening } from '../hooks/plays'
 import { libraryItems } from '../lib/masters'
 import { dayAgo } from '../lib/time'
@@ -56,6 +57,7 @@ import { PriceCoverage } from '../components/PriceCoverage'
 import { GridTile, ListRow, LoadMore } from './collection/RecordTiles'
 import { ActiveFilters } from './collection/ActiveFilters'
 import { BulkBar } from './collection/BulkBar'
+import { PlayPicker } from './collection/PlayPicker'
 
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
@@ -161,11 +163,21 @@ export function Collection() {
     writePref(VIEW_KEY, next)
   }
 
-  function shuffle() {
-    if (!filtered.length) return
-    const pick = filtered[Math.floor(Math.random() * filtered.length)]
-    navigate(`/collection/${pick.instanceId}`)
+  const [picking, setPicking] = useState(false)
+  const { log } = useLogPlay()
+  const [playingId, setPlayingId] = useState<number | null>(null)
+  async function quickPlay(i: LibraryItem) {
+    setPlayingId(i.instanceId)
+    await log(i)
+    setPlayingId(null)
   }
+  const shuffle = () => filtered.length && setPicking(true)
+  // what the picker is choosing from, when it's not the whole collection
+  const pickScope = onlyCrate
+    ? facets?.folder.find((o) => o.value === String(query.filters.folder))?.label
+    : searching
+      ? `${filtered.length} record${filtered.length === 1 ? '' : 's'}`
+      : undefined
 
   function exportCsv(items = filtered) {
     download(`${username}-collection-${today()}.csv`, toCsv(items, folders, fields), 'text/csv')
@@ -431,6 +443,8 @@ export function Collection() {
                     item={i}
                     note={noteOf(i)}
                     lentTo={lentTo(i)}
+                    onPlay={() => quickPlay(i)}
+                    playing={playingId === i.instanceId}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -444,6 +458,8 @@ export function Collection() {
                     item={i}
                     note={noteOf(i)}
                     lentTo={lentTo(i)}
+                    onPlay={() => quickPlay(i)}
+                    playing={playingId === i.instanceId}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -487,6 +503,7 @@ export function Collection() {
           currency={currency ?? 'USD'}
         />
       )}
+      {picking && <PlayPicker items={filtered} scope={pickScope} onClose={() => setPicking(false)} />}
       {filtersOpen && facets && (
         <FilterSheet
           facets={facets}

@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react'
+import { Check, Disc3 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link } from 'wouter'
 import { Stars } from '../../components/Stars'
@@ -39,11 +39,28 @@ function Tick({ on }: { on?: boolean }) {
   )
 }
 
-type TileProps = { item: LibraryItem; note?: string; lentTo?: string } & Selectable
+type TileProps = { item: LibraryItem; note?: string; lentTo?: string; onPlay?: () => void; playing?: boolean } & Selectable
 
-export function GridTile({ item, note, lentTo, selected, onSelect }: TileProps) {
+// On computers, a play can be logged from the collection without opening the record. It shows
+// on hover (or keyboard focus); phones have the record page and the shuffle picker instead.
+function QuickPlay({ title, onPlay, playing, className }: { title: string; onPlay: () => void; playing?: boolean; className: string }) {
   return (
-    <li className="min-w-0">
+    <button
+      type="button"
+      onClick={onPlay}
+      disabled={playing}
+      aria-label={`Log a play of ${title}`}
+      title="Log a play"
+      className={`hidden items-center justify-center rounded-full pointer-fine:flex ${playing ? 'opacity-100' : 'opacity-0 group-hover/tile:opacity-100 focus-visible:opacity-100'} ${className}`}
+    >
+      <Disc3 size={18} className={playing ? 'animate-spin' : ''} aria-hidden />
+    </button>
+  )
+}
+
+export function GridTile({ item, note, lentTo, onPlay, playing, selected, onSelect }: TileProps) {
+  return (
+    <li className="group/tile relative min-w-0">
       <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
         <div className="relative">
           <Cover
@@ -65,19 +82,30 @@ export function GridTile({ item, note, lentTo, selected, onSelect }: TileProps) 
         <p className="truncate text-sm text-stone-500">{item.artist}</p>
         {note && <p className="text-sm font-medium tabular-nums">{note}</p>}
       </Tap>
+      {onPlay && !onSelect && (
+        // over the cover's bottom right corner, outside the link so it doesn't open the record
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <QuickPlay
+            title={item.title}
+            onPlay={onPlay}
+            playing={playing}
+            className="pointer-events-auto absolute right-2 bottom-2 size-9 bg-black/65 text-white shadow-lg transition hover:bg-black/80"
+          />
+        </div>
+      )}
     </li>
   )
 }
 
-export function ListRow({ item, note, lentTo, selected, onSelect }: TileProps) {
+export function ListRow({ item, note, lentTo, onPlay, playing, selected, onSelect }: TileProps) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
-    <li>
+    <li className="group/tile flex items-center">
       <Tap
         item={item}
         selected={selected}
         onSelect={onSelect}
-        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
+        className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
       >
         {onSelect && <Tick on={selected} />}
         <Cover item={item} small className="size-14 shrink-0 rounded-lg" />
@@ -97,6 +125,14 @@ export function ListRow({ item, note, lentTo, selected, onSelect }: TileProps) {
           )
         )}
       </Tap>
+      {onPlay && !onSelect && (
+        <QuickPlay
+          title={item.title}
+          onPlay={onPlay}
+          playing={playing}
+          className="mr-2 size-9 shrink-0 text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+        />
+      )}
     </li>
   )
 }
