@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, ScanBarcode, SwitchCamera } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
 import { Button, buttonClass, Notice, Screen } from '../components/ui'
@@ -11,6 +11,8 @@ import { enqueueBarcode } from '../lib/queue'
 import { useScanner } from '../scanner/useScanner'
 import { FieldNudge } from './FieldNudge'
 import { readChoice, writePref } from '../lib/prefs'
+import { addToShopList, clearShopList, shopList } from '../lib/shop'
+import { ShopList } from './scan/ShopList'
 
 // The camera only starts after an explicit tap, then stays on for the rest of
 // the session so "Scan next" goes straight back to scanning.
@@ -19,13 +21,22 @@ let cameraWanted = false
 // A still image being read: a photo the user picked, or a frame from the shutter
 type Still = { url: string; status: 'reading' | 'failed' }
 
-type Mode = 'single' | 'batch' | 'play'
+type Mode = 'single' | 'batch' | 'play' | 'shop'
+
+// Tailwind's lg breakpoint, where the page splits into two columns
+const wideQuery = '(min-width: 64rem)'
+const subscribeWide = (onChange: () => void) => {
+  const m = matchMedia(wideQuery)
+  m.addEventListener('change', onChange)
+  return () => m.removeEventListener('change', onChange)
+}
+const useWide = () => useSyncExternalStore(subscribeWide, () => matchMedia(wideQuery).matches)
 const MODE_KEY = 'platter.scanMode'
 
 function loadMode(): Mode {
   const asked = new URLSearchParams(location.search).get('mode')
-  if (asked === 'play' || asked === 'batch' || asked === 'single') return asked
-  return readChoice<Mode>(MODE_KEY, ['single', 'batch', 'play'], 'single')
+  if (asked === 'play' || asked === 'batch' || asked === 'single' || asked === 'shop') return asked
+  return readChoice<Mode>(MODE_KEY, ['single', 'batch', 'play', 'shop'], 'single')
 }
 
 export function Scan() {
@@ -36,15 +47,18 @@ export function Scan() {
   const [still, setStill] = useState<Still | null>(null)
   const [mode, setMode] = useState<Mode>(loadMode)
   const [flash, setFlash] = useState<string | null>(null)
+  const [shop, setShop] = useState(shopList)
+  const wide = useWide()
   const { kick } = useQueue()
   const waiting = useLiveQuery(() => db.queue.where('status').noneOf(['added']).count(), []) ?? 0
 
-  // batch mode: queue it, show a quick confirmation, keep scanning
+  // batch and shop modes: queue it or check it, show a quick confirmation, keep scanning
   const onCode = useCallback(
     (code: string, source: 'scan' | 'typed' = 'scan') => {
       if (mode === 'single') return navigate(`/results?barcode=${code}`)
       if (mode === 'play') return navigate(`/play?barcode=${code}`)
-      enqueueBarcode(code, source).then(kick)
+      if (mode === 'shop') setShop(addToShopList(code))
+      else enqueueBarcode(code, source).then(kick)
       setFlash(code)
       setStill(null)
     },
@@ -55,7 +69,7 @@ export function Scan() {
     const t = setTimeout(() => setFlash(null), 1500)
     return () => clearTimeout(t)
   }, [flash])
-  const scanner = useScanner(videoRef, onCode, on, mode === 'batch')
+  const scanner = useScanner(videoRef, onCode, on, mode === 'batch' || mode === 'shop')
 
   function switchMode(m: Mode) {
     setMode(m)
@@ -105,17 +119,28 @@ export function Scan() {
     </Button>
   )
 
+  const shopPanel = (
+    <ShopList
+      list={shop}
+      onClear={() => {
+        clearShopList()
+        setShop([])
+      }}
+    />
+  )
+
   const modeSwitch = (
     <div
       role="tablist"
       aria-label="Scan mode"
-      className="grid grid-cols-3 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[30rem] dark:bg-stone-800"
+      className="grid grid-cols-4 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[30rem] dark:bg-stone-800"
     >
       {(
         [
-          ['single', 'One at a time'],
+          ['single', 'Add'],
           ['batch', 'Batch'],
           ['play', 'Play'],
+          ['shop', 'Shop'],
         ] as const
       ).map(([m, label]) => (
         <button
@@ -152,9 +177,11 @@ export function Scan() {
           <div
             // on phones it takes whatever height is left in the scrolling area (100cqh), so the page fits without scrolling
             className={`relative mx-auto aspect-[4/5] min-h-40 w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
-              mode === 'batch'
-                ? 'max-h-[calc(100cqh-21.5rem-var(--header-inset,env(safe-area-inset-top)))]'
-                : 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]'
+              mode === 'shop'
+                ? 'max-h-[calc(100cqh-24rem-var(--header-inset,env(safe-area-inset-top)))]'
+                : mode === 'batch'
+                  ? 'max-h-[calc(100cqh-21.5rem-var(--header-inset,env(safe-area-inset-top)))]'
+                  : 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]'
             } ${on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'}`}
           >
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
@@ -190,7 +217,7 @@ export function Scan() {
               <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center px-3" role="status">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-lg">
                   <Check size={16} aria-hidden />
-                  Added {flash} to the batch
+                  {mode === 'shop' ? `Checking ${flash}` : `Added ${flash} to the batch`}
                 </span>
               </div>
             )}
@@ -284,10 +311,12 @@ export function Scan() {
             </Link>
           )}
 
+          {mode === 'shop' && !wide && shopPanel}
+
           <div className="mt-4 lg:hidden">
             <ManualBarcode
               label="Or type a barcode"
-              button={mode === 'play' ? 'Find' : mode === 'batch' ? 'Add' : 'Look up'}
+              button={mode === 'play' ? 'Find' : mode === 'batch' ? 'Add' : mode === 'shop' ? 'Check' : 'Look up'}
               onSubmit={(c) => onCode(c, 'typed')}
               inline
             />
@@ -298,11 +327,12 @@ export function Scan() {
           <div className="hidden space-y-4 lg:block">
             <ManualBarcode
               label="Or type the barcode number"
-              button={mode === 'batch' ? 'Add to batch' : mode === 'play' ? 'Find my copy' : 'Look it up'}
+              button={mode === 'batch' ? 'Add to batch' : mode === 'play' ? 'Find my copy' : mode === 'shop' ? 'Check it' : 'Look it up'}
               onSubmit={(c) => onCode(c, 'typed')}
             />
             {chooseButton}
           </div>
+          {mode === 'shop' && wide && shopPanel}
           <InstallHint />
           <FieldNudge />
         </div>
