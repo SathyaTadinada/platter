@@ -33,6 +33,7 @@ import { Setup } from './screens/Setup'
 import { ListenBrainz } from './screens/ListenBrainz'
 import { NowPlaying } from './screens/NowPlaying'
 import { Stats } from './screens/Stats'
+import { Upgrades } from './screens/Upgrades'
 import { YearReview } from './screens/YearReview'
 import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
@@ -124,6 +125,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/settings" component={Settings} />
             <Route path="/crates" component={Crates} />
             <Route path="/wantlist" component={Wantlist} />
+            <Route path="/upgrades" component={Upgrades} />
             <Route path="/stats" component={Stats} />
             <Route path="/stats/year/:year?">{(p) => <YearReview year={p.year} />}</Route>
             <Route path="/play" component={NowPlaying} />

@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownUp,
+  CircleArrowUp,
   Disc3,
   Download,
   Heart,
@@ -324,7 +325,10 @@ export function Collection() {
 
   const exportLabel = searching ? `Export these ${filtered.length}` : 'Export collection'
 
-  // Phones get the everyday actions plus a menu; desktop has room for all of them
+  // pages about the collection as a whole, in the More menu
+  const tools = [{ label: 'Worth upgrading', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') }]
+
+  // Phones get the everyday actions plus a menu; desktop has room for the everyday ones
   const actions = selected ? (
     selectActions
   ) : (
@@ -362,8 +366,12 @@ export function Collection() {
               disabled: sync.running,
             },
             { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
+            ...tools,
           ]}
         />
+      </div>
+      <div className="hidden lg:block">
+        <Menu label="More" items={tools} />
       </div>
     </>
   )

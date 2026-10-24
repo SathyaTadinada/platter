@@ -59,6 +59,13 @@ function initialState(now = Date.now()): State {
   // one record out on loan, so lending can be seen without setting anything up
   const lent = items.find((i) => i.basic_information.title === 'Rumours')
   if (lent) lent.notes = [...(lent.notes ?? []), { field_id: 10, value: formatLoan('Sam', now - 18 * DAY) }]
+  // and a couple of worn copies, so there's something worth upgrading
+  const worn = { 'Pet Sounds': ['Fair (F)', 'Good (G)'], 'Abbey Road': ['Good (G)', 'Very Good (VG)'] } as Record<string, string[]>
+  for (const item of items) {
+    const grades = worn[item.basic_information.title]
+    if (grades)
+      item.notes = (item.notes ?? []).map((n) => (n.field_id === 1 || n.field_id === 2 ? { ...n, value: grades[n.field_id - 1] } : n))
+  }
   // purchase prices on two out of three records, so "paid vs now" has something to compare
   items.forEach((item, n) => {
     if (n % 3 === 2 || item.notes?.some((x) => x.field_id === 5)) return
