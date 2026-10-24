@@ -334,7 +334,7 @@ export function Collection() {
   const more = [
     { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
     { label: 'Find worn copies', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') },
-    { label: 'Print for insurance', icon: <Printer size={18} />, onSelect: () => navigate('/insurance') },
+    { label: 'Print collection', icon: <Printer size={18} />, onSelect: () => navigate('/insurance') },
   ]
   const refresh = {
     label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',

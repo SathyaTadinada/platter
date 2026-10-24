@@ -194,7 +194,9 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Checkboxes drawn here so the tick uses the same color as text on accent buttons

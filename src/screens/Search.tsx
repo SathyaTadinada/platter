@@ -16,7 +16,7 @@ type Mode = 'barcode' | 'catno' | 'title'
 
 const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
   { id: 'barcode', label: 'Barcode', Icon: ScanBarcode },
-  { id: 'catno', label: 'Catalog no.', Icon: Tag },
+  { id: 'catno', label: 'Catalog number', Icon: Tag },
   { id: 'title', label: 'Artist & title', Icon: Music2 },
 ]
 // the last tab picked comes back next time, like the scanner's mode

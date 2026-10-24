@@ -29,7 +29,7 @@ export function Insurance() {
 
   if (!items || !prices || !currency || !matches) {
     return (
-      <Screen title="Insurance report" back="/">
+      <Screen title="Collection report" back="/">
         <Spinner />
       </Screen>
     )
@@ -47,7 +47,7 @@ export function Insurance() {
 
   return (
     <Screen
-      title="Insurance report"
+      title="Collection report"
       back="/"
       width="full"
       actions={
@@ -69,7 +69,7 @@ export function Insurance() {
       </div>
 
       <header className="mb-6">
-        <h1 className="mb-2 hidden text-sm font-semibold tracking-wide text-stone-500 uppercase print:block">Insurance report</h1>
+        <h1 className="mb-2 hidden text-sm font-semibold tracking-wide text-stone-500 uppercase print:block">Collection report</h1>
         <p className="text-sm text-stone-500">Record collection of {username}</p>
         <h2 className="text-2xl font-bold tracking-tight">{date}</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 print:grid-cols-4">
