@@ -76,11 +76,32 @@ const THEMES = {
 }
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 
-function fit(ctx: CanvasRenderingContext2D, text: string, max: number) {
-  if (ctx.measureText(text).width <= max) return text
+type Measure = (text: string) => number
+
+function ellipsize(text: string, max: number, measure: Measure) {
+  if (measure(text) <= max) return text
   let t = text
-  while (t.length > 1 && ctx.measureText(`${t}…`).width > max) t = t.slice(0, -1)
+  while (t.length > 1 && measure(`${t}…`) > max) t = t.slice(0, -1)
   return `${t.trimEnd()}…`
+}
+
+const fit = (ctx: CanvasRenderingContext2D, text: string, max: number) => ellipsize(text, max, (t) => ctx.measureText(t).width)
+
+// Breaks text between words into at most `most` lines, each no wider than width(line number).
+// Only the last line gets cut short, and only if there's still more.
+export function wrapText(text: string, width: (line: number) => number, measure: Measure, most = 2): string[] {
+  const lines: string[] = []
+  let rest = text.split(' ')
+  while (rest.length && lines.length < most) {
+    let n = 1
+    if (lines.length === most - 1) n = rest.length
+    else while (n < rest.length && measure(rest.slice(0, n + 1).join(' ')) <= width(lines.length)) n++
+    lines.push(rest.slice(0, n).join(' '))
+    rest = rest.slice(n)
+  }
+  const last = lines.length - 1
+  lines[last] = ellipsize(lines[last], width(last), measure)
+  return lines
 }
 
 export function drawCard(canvas: HTMLCanvasElement, card: ShareCard, accent: string, site: string, theme: CardTheme = 'light') {
@@ -141,25 +162,57 @@ export function drawCard(canvas: HTMLCanvasElement, card: ShareCard, accent: str
   // lines low enough to reach the record stop short of it
   const room = (y: number) => (y > cy - R - 20 ? cx - R - 40 - pad : max)
 
-  let y = pad + 300
-  for (const [label, main, sub] of card.rows.slice(0, 4)) {
+  // A long title wraps onto a second line, a little smaller, rather than losing its end. To make
+  // room, rows sit closer together, and if that's not enough the last one is left off.
+  const big = `600 48px ${FONT}`
+  const wrapped = `600 44px ${FONT}`
+  const bottom = card.note ? H - pad - 60 : H - pad - 40
+  const layout = (rows: ShareCard['rows'], gap: number) => {
+    let y = pad + 300
+    const placed = rows.map(([label, main, sub]) => {
+      const top = y
+      ctx.font = big
+      const one = ctx.measureText(main).width <= room(top + 120)
+      ctx.font = wrapped
+      const lines = one
+        ? [main]
+        : wrapText(
+            main,
+            (i) => room(top + 116 + i * 52),
+            (t) => ctx.measureText(t).width,
+          )
+      y = top + 120 + (lines.length - 1) * 52
+      const mainY = top + 120
+      const subY = sub ? (y += 46) : undefined
+      const end = y
+      y += gap
+      return { label, sub, lines, one, top, mainY, subY, end }
+    })
+    return { placed, end: placed.at(-1)?.end ?? 0 }
+  }
+  let rows = card.rows.slice(0, 4)
+  let plan = layout(rows, 44)
+  while (plan.end > bottom && rows.length > 1) {
+    plan = layout(rows, 28)
+    if (plan.end <= bottom) break
+    rows = rows.slice(0, -1)
+    plan = layout(rows, 44)
+  }
+
+  for (const r of plan.placed) {
     ctx.fillStyle = rule
-    ctx.fillRect(pad, y, max, 2)
-    y += 62
+    ctx.fillRect(pad, r.top, max, 2)
     ctx.fillStyle = muted
     ctx.font = `500 32px ${FONT}`
-    ctx.fillText(label, pad, y)
-    y += 58
+    ctx.fillText(r.label, pad, r.top + 62)
     ctx.fillStyle = ink
-    ctx.font = `600 48px ${FONT}`
-    ctx.fillText(fit(ctx, main, room(y)), pad, y)
-    if (sub) {
-      y += 46
+    ctx.font = r.one ? big : wrapped
+    r.lines.forEach((line, i) => ctx.fillText(r.one ? fit(ctx, line, room(r.mainY)) : line, pad, r.mainY + i * 52))
+    if (r.sub && r.subY) {
       ctx.fillStyle = muted
       ctx.font = `400 34px ${FONT}`
-      ctx.fillText(fit(ctx, sub, room(y)), pad, y)
+      ctx.fillText(fit(ctx, r.sub, room(r.subY)), pad, r.subY)
     }
-    y += 44
   }
 
   ctx.fillStyle = muted

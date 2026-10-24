@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LibraryItem } from '../db/db'
-import { cardFacts, cardRows } from './shareCard'
+import { cardFacts, cardRows, wrapText } from './shareCard'
 
 const item = (p: Partial<LibraryItem>) => ({ title: 'T', artist: 'A', year: 0, genres: [], dateAdded: '2020-01-01', ...p }) as LibraryItem
 
@@ -29,5 +29,19 @@ describe('share card', () => {
     expect(cardRows(f).map((r) => r[0])).toEqual(['Worth about', 'Most played', 'Mostly', 'Oldest'])
     const bare = cardRows(cardFacts('sam', [item({})], [], undefined))
     expect(bare).toEqual([])
+  })
+})
+
+describe('wrapText', () => {
+  const measure = (t: string) => t.length // one unit per character
+
+  it('breaks between words and only cuts the last line', () => {
+    const title = 'The Rise And Fall Of Ziggy Stardust And The Spiders From Mars'
+    expect(wrapText(title, () => 40, measure)).toEqual(['The Rise And Fall Of Ziggy Stardust And', 'The Spiders From Mars'])
+    expect(wrapText(title, () => 30, measure)).toEqual(['The Rise And Fall Of Ziggy', 'Stardust And The Spiders From…'])
+  })
+
+  it('leaves a short title alone', () => {
+    expect(wrapText('Blue', () => 40, measure)).toEqual(['Blue'])
   })
 })
