@@ -137,7 +137,7 @@ export function Scan() {
     >
       {(
         [
-          ['single', 'Add'],
+          ['single', 'Lookup'],
           ['batch', 'Batch'],
           ['play', 'Play'],
           ['shop', 'Shop'],
