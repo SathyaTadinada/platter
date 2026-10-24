@@ -72,10 +72,7 @@ export function WatchSheet({
             </Row>
           )}
         </List>
-        <p className="mt-3 text-sm text-stone-500">
-          While Platter is open, it checks Discogs for copies of this pressing and marks it on your wantlist when one is listed at or under
-          this price.
-        </p>
+        <p className="mt-3 text-sm text-stone-500">Checked while Platter is open.</p>
       </form>
     </Sheet>
   )

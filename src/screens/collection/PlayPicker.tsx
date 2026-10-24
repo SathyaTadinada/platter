@@ -1,4 +1,4 @@
-import { Disc3, Shuffle } from 'lucide-react'
+import { Dices, Disc3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../../components/Cover'
@@ -9,7 +9,7 @@ import { useListening, useLogPlay } from '../../hooks/plays'
 import { pickToPlay } from '../../lib/plays'
 import { dayAgo } from '../../lib/time'
 
-// "What should I play?" from the shuffle button: a pick from the records showing (so it
+// A random pick from the dice button: a pick from the records showing (so it
 // follows search and filters), leaning toward ones that haven't been on in a while
 export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; scope?: string; onClose: () => void }) {
   const listening = useListening()
@@ -47,18 +47,18 @@ export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; sc
 
   return (
     <Sheet
-      title="What should I play?"
+      title="Random pick"
       onClose={onClose}
       bodyClassName="p-5"
       footer={
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={next} disabled={rows.length < 2 || busy}>
-            <Shuffle size={18} aria-hidden />
-            Another
+            <Dices size={18} aria-hidden />
+            Roll again
           </Button>
           <Button onClick={putOn} disabled={!pick || busy}>
             <Disc3 size={18} className={busy ? 'animate-spin' : ''} aria-hidden />
-            Put it on
+            Play it
           </Button>
         </div>
       }

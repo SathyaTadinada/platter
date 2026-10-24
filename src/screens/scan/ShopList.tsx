@@ -26,14 +26,7 @@ export function ShopList({ list, onClear }: { list: Scanned[]; onClear: () => vo
     if (newest !== first.current) listRef.current?.firstElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [newest])
 
-  if (!list.length) {
-    return (
-      <p className="mt-4 rounded-2xl bg-stone-100 p-4 text-sm text-stone-600 dark:bg-stone-900 dark:text-stone-400">
-        Scan records in a shop to see if you already have them, whether they're on your wantlist, and what they go for on Discogs. Nothing
-        gets added.
-      </p>
-    )
-  }
+  if (!list.length) return null
   return (
     <section className="mt-4" aria-label="Scanned records">
       <div className="mb-2 flex items-center justify-between px-1">

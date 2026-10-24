@@ -140,12 +140,8 @@ export function Insurance() {
       </div>
 
       <p className="mt-4 max-w-3xl text-sm text-stone-500">
-        Condition is media / sleeve. Values are Discogs marketplace prices on {date}: the suggested price for the copy's condition where
-        Discogs has one, otherwise the cheapest copy for sale.
-        {report.unpriced > 0 &&
-          (report.unpriced === 1
-            ? ' One record has no current price, so it isn’t in the total.'
-            : ` ${report.unpriced} records have no current price, so they aren’t in the total.`)}
+        Condition is media / sleeve. Values are from the Discogs marketplace on {date}.
+        {report.unpriced > 0 && ` Records without a price (${report.unpriced}) aren’t in the total.`}
       </p>
       <p className="mt-2">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />

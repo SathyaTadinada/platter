@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LibraryItem } from '../db/db'
-import { defaultThreshold, needsUpgrade, ungraded } from './upgrades'
+import { defaultThreshold, needsUpgrade } from './upgrades'
 
 const grades = [
   'Mint (M)',
@@ -34,9 +34,5 @@ describe('upgrades', () => {
     expect(needsUpgrade(items, 1, grades, 'Fair (F)').map((i) => i.instanceId)).toEqual([2, 4, 3])
     expect(needsUpgrade(items, 1, grades, 'Good (G)').map((i) => i.instanceId)).toEqual([2, 4, 3, 1])
     expect(needsUpgrade(items, 1, grades, 'Nope')).toEqual([])
-  })
-
-  it('counts records with no grade', () => {
-    expect(ungraded(items, 1, grades)).toBe(1)
   })
 })

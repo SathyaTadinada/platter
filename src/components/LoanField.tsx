@@ -107,7 +107,6 @@ function LendSheet({ names, onLend, onClose }: { names: string[]; onLend: (to: s
             ))}
           </datalist>
         )}
-        <p className="mt-2 text-sm text-stone-500">It's saved to the Lent To field on Discogs, with today's date.</p>
       </form>
     </Sheet>
   )

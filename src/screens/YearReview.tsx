@@ -129,8 +129,8 @@ function Review({
   ].filter(Boolean) as ([string, string] | [string, LibraryItem, string])[]
 
   return (
-    <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
-      <div className="lg:col-span-2">
+    <div>
+      <div>
         <Section>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Tile label={r.added.length === 1 ? 'record added' : 'records added'} value={r.added.length.toLocaleString()} />
@@ -145,64 +145,65 @@ function Review({
         </Section>
       </div>
 
-      <div>
+      {/* the sections share two columns evenly, so a year with only plays (or only additions)
+          doesn't leave one side empty */}
+      <div className="lg:columns-2 lg:gap-x-8 [&>*]:inline-block [&>*]:w-full [&>*]:break-inside-avoid [&>*]:align-top">
         {r.plays > 0 && (
-          <>
-            <Section title="Plays by month" info="Only plays logged in Platter count here.">
-              <Card>
-                <MonthBars months={r.playsByMonth} text={(n) => plural(n, 'play')} short={String} />
-              </Card>
-            </Section>
-            <Section title="Most played">
-              <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
-                {r.topRecords.map(({ item, count }) => (
-                  <li key={item.instanceId}>
-                    <RecordRow item={item}>
-                      <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(count, 'play')}</span>
-                    </RecordRow>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-            <Section title="Top artists">
-              <ol className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
-                {r.topArtists.map((a, i) => (
-                  <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
-                    <span className="shrink-0 font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(a.count, 'play')}</span>
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          </>
+          <Section title="Plays by month">
+            <Card>
+              <MonthBars months={r.playsByMonth} text={(n) => plural(n, 'play')} short={String} />
+            </Card>
+          </Section>
         )}
-      </div>
-
-      <div>
+        {r.plays > 0 && (
+          <Section title="Most played">
+            <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+              {r.topRecords.map(({ item, count }) => (
+                <li key={item.instanceId}>
+                  <RecordRow item={item}>
+                    <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(count, 'play')}</span>
+                  </RecordRow>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+        {r.plays > 0 && (
+          <Section title="Top artists">
+            <ol className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+              {r.topArtists.map((a, i) => (
+                <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
+                  <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
+                  <span className="shrink-0 font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(a.count, 'play')}</span>
+                </li>
+              ))}
+            </ol>
+          </Section>
+        )}
         {r.added.length > 0 && (
-          <>
-            <Section title="Added by month">
-              <Card>
-                <MonthBars months={r.addedByMonth} text={(n) => plural(n, 'record')} short={String} />
-              </Card>
-            </Section>
-            <Section title={`New in ${year}`}>
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                {r.added
-                  .slice(-COVERS)
-                  .reverse()
-                  .map((item) => (
-                    <Link key={item.instanceId} href={`/collection/${item.instanceId}`} title={`${item.title} · ${item.artist}`}>
-                      <Cover item={item} small className="aspect-square w-full rounded-lg" />
-                    </Link>
-                  ))}
-              </div>
-              {r.added.length > COVERS && (
-                <p className="px-1 text-sm text-stone-500">And {(r.added.length - COVERS).toLocaleString()} more.</p>
-              )}
-            </Section>
-          </>
+          <Section title="Added by month">
+            <Card>
+              <MonthBars months={r.addedByMonth} text={(n) => plural(n, 'record')} short={String} />
+            </Card>
+          </Section>
+        )}
+        {r.added.length > 0 && (
+          <Section title={`New in ${year}`}>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {r.added
+                .slice(-COVERS)
+                .reverse()
+                .map((item) => (
+                  <Link key={item.instanceId} href={`/collection/${item.instanceId}`} title={`${item.title} · ${item.artist}`}>
+                    <Cover item={item} small className="aspect-square w-full rounded-lg" />
+                  </Link>
+                ))}
+            </div>
+            {r.added.length > COVERS && (
+              <p className="px-1 text-sm text-stone-500">And {(r.added.length - COVERS).toLocaleString()} more.</p>
+            )}
+          </Section>
         )}
         {facts.length > 0 && (
           <Section title="Highlights">

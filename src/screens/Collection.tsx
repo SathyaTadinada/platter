@@ -3,15 +3,15 @@ import {
   ArrowDownUp,
   CircleArrowUp,
   Disc3,
+  Dices,
   Download,
-  FileText,
   Heart,
   LayoutGrid,
   List as ListIcon,
+  Printer,
   SquareCheckBig,
   RefreshCw,
   Search,
-  Shuffle,
   SlidersHorizontal,
   X,
 } from 'lucide-react'
@@ -64,8 +64,6 @@ import { PlayPicker } from './collection/PlayPicker'
 type View = 'grid' | 'list'
 const VIEW_KEY = 'platter.libraryView'
 const PAGE = 120 // items rendered at a time; more load as you scroll
-const headerButton =
-  'hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-40 lg:inline-flex dark:text-stone-300 dark:hover:bg-stone-800'
 
 const loadView = () => readChoice<View>(VIEW_KEY, ['grid', 'list'], 'grid')
 
@@ -332,24 +330,30 @@ export function Collection() {
   const wantlistLabel = underPrice ? `Wantlist, ${underPrice} under your price` : 'Wantlist'
   const dot = 'absolute top-1.5 right-1.5 size-2 rounded-full bg-accent ring-2 ring-stone-50 dark:ring-stone-950'
 
-  // pages about the collection as a whole, in the More menu
-  const tools = [
-    { label: 'Worth upgrading', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') },
-    { label: 'Insurance report', icon: <FileText size={18} />, onSelect: () => navigate('/insurance') },
+  // everything less frequent goes in the More menu; refresh has its own button on desktop
+  const more = [
+    { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
+    { label: 'Find worn copies', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') },
+    { label: 'Print for insurance', icon: <Printer size={18} />, onSelect: () => navigate('/insurance') },
   ]
+  const refresh = {
+    label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
+    icon: <RefreshCw size={18} />,
+    onSelect: () => sync.sync(true),
+    disabled: sync.running,
+  }
 
-  // Phones get the everyday actions plus a menu; desktop has room for the everyday ones
   const actions = selected ? (
     selectActions
   ) : (
     <>
       <IconButton label="Pick a random record" onClick={shuffle} disabled={!filtered.length}>
-        <Shuffle size={20} />
+        <Dices size={20} />
       </IconButton>
       <IconButton label={view === 'grid' ? 'Show as list' : 'Show as grid'} onClick={toggleView}>
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
-      <IconButton label={wantlistLabel} onClick={() => navigate('/wantlist')} className="relative lg:hidden">
+      <IconButton label={wantlistLabel} onClick={() => navigate('/wantlist')} className="relative">
         <Heart size={20} />
         {underPrice > 0 && <span className={dot} aria-hidden />}
       </IconButton>
@@ -359,31 +363,11 @@ export function Collection() {
       <IconButton label="Refresh from Discogs" onClick={() => sync.sync(true)} disabled={sync.running} className="hidden lg:block">
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
       </IconButton>
-      <span className="mx-1 hidden h-6 w-px bg-stone-200 lg:block dark:bg-stone-800" aria-hidden />
-      <button type="button" onClick={() => navigate('/wantlist')} className={headerButton} aria-label={wantlistLabel}>
-        <Heart size={18} aria-hidden /> Wantlist
-        {underPrice > 0 && <span className="size-2 rounded-full bg-accent" aria-hidden />}
-      </button>
-      <button type="button" onClick={() => exportCsv()} disabled={!filtered.length} className={headerButton}>
-        <Download size={18} aria-hidden /> {exportLabel}
-      </button>
       <div className="lg:hidden">
-        <Menu
-          label="More"
-          items={[
-            {
-              label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
-              icon: <RefreshCw size={18} />,
-              onSelect: () => sync.sync(true),
-              disabled: sync.running,
-            },
-            { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
-            ...tools,
-          ]}
-        />
+        <Menu label="More" items={[refresh, ...more]} />
       </div>
       <div className="hidden lg:block">
-        <Menu label="More" items={tools} />
+        <Menu label="More" items={more} />
       </div>
     </>
   )

@@ -56,7 +56,11 @@ export function Stylus() {
     <div className={`${statCard} p-4`}>
       <div className="flex items-baseline justify-between gap-3">
         <p>
-          <span className="text-2xl font-bold tabular-nums">{hours(use.hours)}</span> <span className="text-sm text-stone-500">hours</span>
+          <span className="text-2xl font-bold tabular-nums">
+            {use.estimated || loading ? '~' : ''}
+            {hours(use.hours)}
+          </span>{' '}
+          <span className="text-sm text-stone-500">hours</span>
         </p>
         <p className="text-right text-sm text-stone-500">
           {!settings.since
@@ -79,15 +83,16 @@ export function Stylus() {
           style={{ width: `${Math.max(share * 100, use.hours ? 1 : 0)}%` }}
         />
       </div>
-      <p className={`mt-2 text-sm ${over ? 'font-medium text-red-600 dark:text-red-400' : 'text-stone-500'}`}>
-        {over
-          ? `Past the ${settings.lifespan.toLocaleString()} hours you set. Worth checking it for wear.`
-          : `About ${Math.round(settings.lifespan - use.hours).toLocaleString()} of ${settings.lifespan.toLocaleString()} hours left`}
-      </p>
-      <p className="mt-3 text-xs text-stone-500">
-        {use.plays} play{use.plays === 1 ? '' : 's'}, each counted as the whole record.
-        {loading ? ' Getting record lengths…' : use.estimated ? ' Some lengths are estimates.' : ''}
-      </p>
+      <div className="mt-2 flex justify-between gap-3 text-sm text-stone-500">
+        <p className={over ? 'font-medium text-red-600 dark:text-red-400' : ''}>
+          {over
+            ? `Past ${settings.lifespan.toLocaleString()} hours`
+            : `${Math.round(settings.lifespan - use.hours).toLocaleString()} of ${settings.lifespan.toLocaleString()} hours left`}
+        </p>
+        <p className="tabular-nums">
+          {use.plays.toLocaleString()} play{use.plays === 1 ? '' : 's'}
+        </p>
+      </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={fitted}>
           New stylus
@@ -156,9 +161,6 @@ function StylusSheet({
           </select>
         </Row>
       </List>
-      <p className="mt-3 text-sm text-stone-500">
-        Your stylus maker usually gives a figure. Without a date, hours count from the first play logged in Platter.
-      </p>
     </Sheet>
   )
 }

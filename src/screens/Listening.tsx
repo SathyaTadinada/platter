@@ -1,4 +1,4 @@
-import { Shuffle } from 'lucide-react'
+import { Dices } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
@@ -84,10 +84,7 @@ export function ListeningStats() {
       </div>
 
       <div>
-        <Section
-          title="Stylus"
-          info="Hours of play on your stylus, from the plays logged in Platter and each record's running time on Discogs."
-        >
+        <Section title="Stylus">
           <Stylus />
         </Section>
 
@@ -104,7 +101,7 @@ export function ListeningStats() {
               </p>
             )}
             <button type="button" onClick={pickForgotten} className={buttonClass('secondary', 'w-full')}>
-              <Shuffle size={18} aria-hidden />
+              <Dices size={18} aria-hidden />
               Pick one of these
             </button>
           </Section>

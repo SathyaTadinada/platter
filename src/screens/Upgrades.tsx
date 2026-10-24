@@ -15,7 +15,7 @@ import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { shortGrade } from '../lib/format'
 import { readPref, writePref } from '../lib/prefs'
-import { defaultThreshold, needsUpgrade, ungraded, UPGRADE_TARGET } from '../lib/upgrades'
+import { defaultThreshold, needsUpgrade, UPGRADE_TARGET } from '../lib/upgrades'
 import { formatMoney, type PriceEntry } from '../lib/value'
 
 const PREF = 'platter.upgradeGrade'
@@ -49,7 +49,6 @@ export function Upgrades() {
     )
   } else {
     const list = needsUpgrade(items, media.id, grades, threshold)
-    const unknown = ungraded(items, media.id, grades)
     body = (
       <>
         <label className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
@@ -91,10 +90,6 @@ export function Upgrades() {
             <p className="mt-1 text-sm text-stone-500">No records are graded {shortGrade(threshold)} or below.</p>
           </Card>
         )}
-        <p className="mt-3 px-1 text-sm text-stone-500">
-          {list.length > 0 && 'The heart adds that pressing to your wantlist, so Discogs lets you know when a copy is listed. '}
-          {unknown > 0 && `${unknown} record${unknown === 1 ? " doesn't" : "s don't"} have a media grade yet.`}
-        </p>
         {list.length > 0 && (
           <p className="mt-3 px-1">
             <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
@@ -105,7 +100,7 @@ export function Upgrades() {
   }
 
   return (
-    <Screen title="Worth upgrading" back="/">
+    <Screen title="Worn copies" back="/">
       {body}
     </Screen>
   )
@@ -186,6 +181,7 @@ function UpgradeRow({
         type="button"
         aria-label={wanted ? `Take ${item.title} off your wantlist` : `Add ${item.title} to your wantlist`}
         aria-pressed={wanted}
+        title={wanted ? 'On your wantlist' : 'Add to wantlist'}
         disabled={busy}
         onClick={toggle}
         className={`mr-2 shrink-0 rounded-full p-2.5 hover:bg-stone-100 disabled:opacity-50 dark:hover:bg-stone-800 ${wanted ? 'text-accent' : 'text-stone-400'}`}

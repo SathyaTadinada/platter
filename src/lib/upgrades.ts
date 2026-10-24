@@ -17,7 +17,3 @@ export function needsUpgrade(items: LibraryItem[], fieldId: number, grades: stri
     .sort((a, b) => b.rank - a.rank || a.item.artist.localeCompare(b.item.artist) || a.item.title.localeCompare(b.item.title))
     .map((r) => r.item)
 }
-
-// How many records have no grade at all, so the page can say they weren't checked
-export const ungraded = (items: LibraryItem[], fieldId: number, grades: string[]) =>
-  items.filter((i) => !grades.includes(i.fields[fieldId] ?? '')).length
