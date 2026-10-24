@@ -24,6 +24,7 @@ import { fieldFor } from '../lib/fields'
 import { discogsUrl } from '../lib/format'
 import { Cover } from '../components/Cover'
 import { rememberRelease } from '../lib/barcodes'
+import { rememberLength } from '../lib/stylus'
 
 export function Record({ id }: { id: string }) {
   const instanceId = Number(id)
@@ -40,6 +41,7 @@ export function Record({ id }: { id: string }) {
     if (!item) return undefined
     const r = await getRelease(client, item.releaseId)
     rememberRelease(r) // so scanning this record later in Play mode needs no search
+    rememberLength(r)
     return r
   }, [item?.releaseId])
   const [error, setError] = useState<string | null>(null)

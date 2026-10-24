@@ -21,6 +21,7 @@ import { useSearchCovers } from '../hooks/useSearchCovers'
 import { useAsync } from '../hooks/useAsync'
 import { formatBarcodeInput } from '../lib/barcode'
 import { rememberBarcode, rememberRelease, releasesWithBarcode } from '../lib/barcodes'
+import { rememberLength } from '../lib/stylus'
 import { toCard, type ReleaseCard } from '../lib/format'
 import { itemFromRelease } from '../lib/library'
 import { lookupBarcode } from '../lib/lookup'
@@ -143,6 +144,7 @@ export function NowPlaying() {
       await db.collection.put(added)
       await setSetting('lastFolderId', folderId)
       rememberRelease(release)
+      rememberLength(release)
       invalidateCollectionMeta()
       setAddedTo(folders.find((f) => f.id === folderId)?.name ?? 'your collection')
       await play(added)

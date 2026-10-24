@@ -3,6 +3,7 @@ import { getRelease, setFieldValue } from '../api/discogs/endpoints'
 import { listensFor, submitListens } from '../api/listenbrainz'
 import { db, getSetting, type LibraryItem } from '../db/db'
 import { fieldFor, type FieldMatch } from './fields'
+import { rememberLength } from './stylus'
 import { localDate } from './value'
 
 // One logged spin, kept on the device
@@ -141,6 +142,7 @@ export async function flushScrobbles(client: DiscogsClient, now = Date.now()) {
   const pending = (await db.plays.toArray()).filter((p) => p.scrobble === 'pending' && now - p.at >= SETTLE)
   for (const p of pending) {
     const release = await getRelease(client, p.releaseId)
+    rememberLength(release)
     await submitListens(lb.token, listensFor(release, p.at))
     await db.plays.update(p.id!, { scrobble: 'done' })
   }

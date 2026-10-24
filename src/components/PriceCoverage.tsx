@@ -15,7 +15,8 @@ export function PriceCoverage({ items, prices, currency }: { items: LibraryItem[
         <>
           <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent text-stone-500" />
           <span className="tabular-nums">
-            {check.stage === 'years' ? 'Getting album years' : 'Getting prices'} · {check.done} of {check.total}
+            {check.stage === 'years' ? 'Getting album years' : check.stage === 'lengths' ? 'Getting record lengths' : 'Getting prices'} ·{' '}
+            {check.done} of {check.total}
           </span>
         </>
       ) : (

@@ -5,13 +5,14 @@ import { useProfile } from '../components/Profile'
 import { db } from '../db/db'
 import { fetchMasterYear, staleMasters } from '../lib/masters'
 import { backgroundGapMs, fetchPrice } from '../lib/pricing'
+import { fetchLength, staleLengths } from '../lib/stylus'
 import { backgroundHeld } from '../lib/task'
 import { isFresh, type PriceEntry } from '../lib/value'
 import { useSignedIn } from './session'
 
 // One price check at a time, shared by every screen, so it keeps going while
 // you move around the app.
-type CheckState = { running: boolean; stage: 'years' | 'prices'; done: number; total: number; error: string | null }
+type CheckState = { running: boolean; stage: 'years' | 'lengths' | 'prices'; done: number; total: number; error: string | null }
 
 let state: CheckState = { running: false, stage: 'prices', done: 0, total: 0, error: null }
 let stopRequested = false
@@ -48,6 +49,22 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
         for (const id of masters) {
           if (!(await wait())) break
           await fetchMasterYear(bg, id)
+          set({ done: state.done + 1 })
+          await sleep(backgroundGapMs(client))
+        }
+      } catch {
+        // try again next time
+      }
+      set({ running: false })
+    }
+    // then running times of played records, for stylus hours
+    const lengths = stopRequested ? [] : await staleLengths()
+    if (lengths.length) {
+      set({ running: true, stage: 'lengths', done: 0, total: lengths.length, error: null })
+      try {
+        for (const id of lengths) {
+          if (!(await wait())) break
+          await fetchLength(bg, id)
           set({ done: state.done + 1 })
           await sleep(backgroundGapMs(client))
         }

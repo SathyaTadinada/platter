@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie'
 import type { SearchResult } from '../api/discogs/types'
 import type { Metadata } from '../lib/metadata'
 import type { Play } from '../lib/plays'
+import type { RecordLength } from '../lib/stylus'
 import type { PriceEntry, ValueSnapshot } from '../lib/value'
 
 export type Session = {
@@ -118,6 +119,7 @@ export class PlatterDB extends Dexie {
   plays!: EntityTable<Play, 'id'>
   masters!: EntityTable<MasterYear, 'masterId'>
   barcodes!: EntityTable<{ barcode: string; releaseIds: number[] }, 'barcode'>
+  lengths!: EntityTable<RecordLength, 'releaseId'>
 
   constructor(name = 'platter') {
     super(name)
@@ -141,6 +143,7 @@ export class PlatterDB extends Dexie {
     this.version(6).stores({ plays: '++id, instanceId, at' })
     this.version(7).stores({ masters: 'masterId, at' })
     this.version(8).stores({ barcodes: 'barcode' })
+    this.version(9).stores({ lengths: 'releaseId, at' })
   }
 }
 

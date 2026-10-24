@@ -8,6 +8,7 @@ import { useSignedIn } from '../hooks/session'
 import { listeningStats, type Listening } from '../lib/plays'
 import { dayAgo } from '../lib/time'
 import { byMonth, localDate } from '../lib/value'
+import { Stylus } from './listening/Stylus'
 
 const TOP = 8
 
@@ -83,6 +84,13 @@ export function ListeningStats() {
       </div>
 
       <div>
+        <Section
+          title="Stylus"
+          info="Hours of play on your stylus, from the plays logged in Platter and each record's running time on Discogs."
+        >
+          <Stylus />
+        </Section>
+
         <Section title="Recently played">
           <List rows={stats.recent.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />
         </Section>
