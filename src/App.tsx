@@ -34,6 +34,7 @@ import { ListenBrainz } from './screens/ListenBrainz'
 import { NowPlaying } from './screens/NowPlaying'
 import { Stats } from './screens/Stats'
 import { Upgrades } from './screens/Upgrades'
+import { Insurance } from './screens/Insurance'
 import { YearReview } from './screens/YearReview'
 import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
@@ -126,6 +127,7 @@ function Routes({ error }: { error?: string }) {
             <Route path="/crates" component={Crates} />
             <Route path="/wantlist" component={Wantlist} />
             <Route path="/upgrades" component={Upgrades} />
+            <Route path="/insurance" component={Insurance} />
             <Route path="/stats" component={Stats} />
             <Route path="/stats/year/:year?">{(p) => <YearReview year={p.year} />}</Route>
             <Route path="/play" component={NowPlaying} />
@@ -182,23 +184,26 @@ function Shell({ children }: { children: ReactNode }) {
   }, [path])
 
   return (
-    <div className="fixed inset-0 flex flex-col">
-      <DemoBar />
-      <SignInAgain />
+    // printed, it's just the page, running onto as many sheets as it needs
+    <div className="fixed inset-0 flex flex-col print:static print:block">
+      <div className="shrink-0 print:hidden">
+        <DemoBar />
+        <SignInAgain />
+      </div>
       {/* either bar already covers the status bar area */}
       <div
-        className={`flex min-h-0 flex-1 flex-col lg:flex-row ${session?.kind === 'demo' || session?.expired ? '[--header-inset:0px]' : ''}`}
+        className={`flex min-h-0 flex-1 flex-col lg:flex-row print:block ${session?.kind === 'demo' || session?.expired ? '[--header-inset:0px]' : ''}`}
       >
         <SideNav />
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1 flex-col print:block">
           <main
             ref={scroller}
             onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}
-            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size]"
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size] print:overflow-visible print:[container-type:normal]"
           >
             {children}
           </main>
-          <div className="pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+var(--status-lift,0px))] z-30 space-y-2">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+var(--status-lift,0px))] z-30 space-y-2 print:hidden">
             <Toaster />
             <StatusBar />
           </div>

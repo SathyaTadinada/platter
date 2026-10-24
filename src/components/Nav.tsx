@@ -32,7 +32,7 @@ export function BottomNav() {
   const isCurrent = useCurrent()
   const targetOf = useTarget()
   return (
-    <nav className="shrink-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-stone-800 dark:bg-stone-950">
+    <nav className="shrink-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden dark:border-stone-800 dark:bg-stone-950">
       <ul className="mx-auto flex max-w-xl">
         {tabs.map(({ section, label, Icon }) => (
           <li key={section} className="flex-1">
@@ -73,7 +73,7 @@ export function SideNav() {
 
   return (
     <nav
-      className={`hidden shrink-0 flex-col border-r border-stone-200 bg-white py-5 transition-[width] lg:flex dark:border-stone-800 dark:bg-stone-950 ${
+      className={`hidden shrink-0 flex-col border-r border-stone-200 bg-white py-5 transition-[width] lg:flex print:hidden dark:border-stone-800 dark:bg-stone-950 ${
         collapsed ? 'w-[4.5rem] items-center px-2' : 'w-64 px-3'
       }`}
     >

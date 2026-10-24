@@ -4,6 +4,7 @@ import {
   CircleArrowUp,
   Disc3,
   Download,
+  FileText,
   Heart,
   LayoutGrid,
   List as ListIcon,
@@ -326,7 +327,10 @@ export function Collection() {
   const exportLabel = searching ? `Export these ${filtered.length}` : 'Export collection'
 
   // pages about the collection as a whole, in the More menu
-  const tools = [{ label: 'Worth upgrading', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') }]
+  const tools = [
+    { label: 'Worth upgrading', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') },
+    { label: 'Insurance report', icon: <FileText size={18} />, onSelect: () => navigate('/insurance') },
+  ]
 
   // Phones get the everyday actions plus a menu; desktop has room for the everyday ones
   const actions = selected ? (

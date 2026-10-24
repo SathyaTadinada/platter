@@ -99,7 +99,7 @@ export function Screen({
         </div>
       )}
       <header
-        className={`sticky top-0 z-10 border-b border-stone-200/70 pt-[var(--header-inset,env(safe-area-inset-top))] backdrop-blur-xl standalone:bg-stone-50 standalone:backdrop-blur-none dark:border-stone-800/70 dark:standalone:bg-stone-950 ${
+        className={`sticky top-0 z-10 border-b print:hidden border-stone-200/70 pt-[var(--header-inset,env(safe-area-inset-top))] backdrop-blur-xl standalone:bg-stone-50 standalone:backdrop-blur-none dark:border-stone-800/70 dark:standalone:bg-stone-950 ${
           backdrop ? 'bg-stone-50/70 dark:bg-stone-950/70' : 'bg-stone-50/95 dark:bg-stone-950/95'
         }`}
       >

@@ -3,10 +3,13 @@
 /* Dark follows the system setting unless Settings picked one: a "light" or "dark" class
    on <html> (see lib/theme.ts). The system case needs no script, so nothing flashes at launch. */
 @custom-variant dark {
-  &:where(.dark, .dark *) {
-    @slot;
+  /* screen only, so printing always comes out dark on white */
+  @media screen {
+    &:where(.dark, .dark *) {
+      @slot;
+    }
   }
-  @media (prefers-color-scheme: dark) {
+  @media screen and (prefers-color-scheme: dark) {
     &:where(:root:not(.light), :root:not(.light) *) {
       @slot;
     }
