@@ -2,7 +2,7 @@ import { Link } from 'wouter'
 import { Card, Section } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { change, paidTotal, parseMoney } from '../../lib/value'
-import { pct, RecordRow } from '../../components/stats'
+import { RecordRow } from '../../components/stats'
 import { card, down, up, type Money, type Valued } from './shared'
 import { Delta } from './ValueChart'
 
@@ -46,8 +46,6 @@ export function PaidVsNow({
   const worth = rows.reduce((n, r) => n + r.value.amount, 0)
   const gains = rows.filter((r) => r.diff > 0).sort((a, b) => b.diff - a.diff)
   const losses = rows.filter((r) => r.diff < 0).sort((a, b) => a.diff - b.diff)
-  const most = Math.max(spent, worth)
-  const rising = worth >= spent
 
   return (
     <Section title="Paid vs now">
@@ -55,15 +53,12 @@ export function PaidVsNow({
         {rows.length ? (
           <>
             <Delta {...change(spent, worth)} money={money} />
+            <PaidBar paid={spent} now={worth} money={money} />
             {rows.length < paid.count && (
-              <p className="mt-2 text-sm text-stone-500">
-                {rows.length} of {paid.count} records so far
+              <p className="mt-3 text-sm text-stone-500">
+                Leaves out {paid.count - rows.length} record{paid.count - rows.length === 1 ? '' : 's'} without a current price.
               </p>
             )}
-            <div className="mt-4 space-y-2.5">
-              <BarLine label="Paid" amount={money(spent)} width={pct(spent, most)} className="bg-stone-400 dark:bg-stone-600" />
-              <BarLine label="Now" amount={money(worth)} width={pct(worth, most)} className={rising ? 'bg-emerald-500' : 'bg-red-500'} />
-            </div>
           </>
         ) : (
           <>
@@ -80,14 +75,34 @@ export function PaidVsNow({
   )
 }
 
-export function BarLine({ label, amount, width, className }: { label: string; amount: string; width: string; className: string }) {
+// One bar for both amounts: what you paid, plus what it's gained since in green, or with what
+// it's lost marked in red at the end
+function PaidBar({ paid, now, money }: { paid: number; now: number; money: Money }) {
+  const most = Math.max(paid, now)
+  const share = (n: number) => `${most > 0 ? (n / most) * 100 : 0}%`
   return (
-    <div className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 text-sm">
-      <span className="text-stone-500">{label}</span>
-      <span className="h-3 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
-        <span className={`block h-full rounded-full ${className}`} style={{ width }} />
-      </span>
-      <span className="font-medium tabular-nums">{amount}</span>
+    <div className="mt-4">
+      <div
+        role="img"
+        aria-label={`Paid ${money(paid)}, now ${money(now)}`}
+        className="flex h-3 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"
+      >
+        <span className="h-full bg-stone-400 dark:bg-stone-500" style={{ width: share(Math.min(paid, now)) }} />
+        {now > paid && (
+          <span className="h-full border-l-2 border-white bg-emerald-500 dark:border-stone-900" style={{ width: share(now - paid) }} />
+        )}
+        {now < paid && (
+          <span className="h-full border-l-2 border-white bg-red-500 dark:border-stone-900" style={{ width: share(paid - now) }} />
+        )}
+      </div>
+      <div className="mt-2 flex justify-between gap-3 text-sm">
+        <span className="text-stone-500">
+          Paid <span className="font-medium text-stone-900 tabular-nums dark:text-stone-100">{money(paid)}</span>
+        </span>
+        <span className="text-stone-500">
+          Now <span className="font-medium text-stone-900 tabular-nums dark:text-stone-100">{money(now)}</span>
+        </span>
+      </div>
     </div>
   )
 }
