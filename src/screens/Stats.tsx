@@ -1,6 +1,6 @@
 import { useLocation, useSearch } from 'wouter'
 import { useState } from 'react'
-import { Share, SlidersHorizontal } from 'lucide-react'
+import { CalendarDays, Share, SlidersHorizontal } from 'lucide-react'
 import { ChartsSheet } from '../components/ChartsSheet'
 import { ShareSheet } from '../components/ShareSheet'
 import { IconButton, Screen } from '../components/ui'
@@ -64,6 +64,9 @@ export function Stats() {
               <SlidersHorizontal size={20} />
             </IconButton>
           )}
+          <IconButton label="Year in review" onClick={() => navigate('/stats/year')}>
+            <CalendarDays size={20} />
+          </IconButton>
           <IconButton label="Share" onClick={() => setSharing(true)}>
             <Share size={20} />
           </IconButton>

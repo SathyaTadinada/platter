@@ -1,20 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db/db'
-import { parseDuration, recordSeconds, staleLengths, stylusUse } from './stylus'
+import { recordSeconds, staleLengths, stylusUse } from './stylus'
 
 beforeEach(async () => {
   await db.delete()
   await db.open()
-})
-
-describe('parseDuration', () => {
-  it('reads minutes and hours', () => {
-    expect(parseDuration('3:45')).toBe(225)
-    expect(parseDuration('1:02:10')).toBe(3730)
-    expect(parseDuration('')).toBeUndefined()
-    expect(parseDuration('4')).toBeUndefined()
-    expect(parseDuration('a:b')).toBeUndefined()
-  })
 })
 
 describe('recordSeconds', () => {

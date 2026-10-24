@@ -1,5 +1,6 @@
 import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
 import { getRelease } from '../api/discogs/endpoints'
+import { parseDuration } from '../api/listenbrainz'
 import type { Release, Track } from '../api/discogs/types'
 import { db, getSetting, setSetting } from '../db/db'
 import type { Play } from './plays'
@@ -17,13 +18,6 @@ const KEY = 'stylus'
 const RECHECK = 30 * 24 * 60 * 60 * 1000
 const FALLBACK = 40 * 60 // a typical LP, for a record with no tracklist at all
 const TRACK = 4.5 * 60 // a typical track, when there's a tracklist without lengths
-
-// "3:45" or "1:02:10" to seconds
-export function parseDuration(s?: string): number | undefined {
-  const parts = s?.trim().split(':').map(Number)
-  if (!parts || parts.length < 2 || parts.some((n) => !Number.isFinite(n))) return undefined
-  return parts.reduce((total, n) => total * 60 + n, 0) || undefined
-}
 
 // The record's running time. Tracks without a length get the average of the rest, or a
 // typical length when none have one (common on vinyl releases).
