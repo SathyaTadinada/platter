@@ -7,6 +7,7 @@ import { Sheet } from '../../components/Sheet'
 import { Button, List } from '../../components/ui'
 import { useFieldSuggestions } from '../../hooks/useFields'
 import type { FieldKey, FieldMatch } from '../../lib/fields'
+import { formatLoan } from '../../lib/loans'
 import { formatPrice } from '../../lib/metadata'
 
 const KEEP = 'keep'
@@ -50,7 +51,9 @@ export function BulkEditSheet({
     const out: Record<number, string> = {}
     for (const f of shown) {
       if (!(f.id in changes)) continue
-      out[f.id] = kindOf(f, keyOf(f)) === 'price' ? (formatPrice(changes[f.id], currency) ?? '') : changes[f.id].trim()
+      const kind = kindOf(f, keyOf(f))
+      const v = changes[f.id].trim()
+      out[f.id] = kind === 'price' ? (formatPrice(v, currency) ?? '') : kind === 'loan' && v ? formatLoan(v) : v
     }
     onApply(out)
   }

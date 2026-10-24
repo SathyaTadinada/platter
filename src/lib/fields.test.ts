@@ -8,12 +8,16 @@ const defaults = (fixture as FieldsResponse).fields
 const text = (id: number, name: string): CollectionField => ({ id, name, type: 'textarea', position: id, public: false })
 
 describe('matchFields', () => {
+  it('only asks for Lent To if you want it', () => {
+    expect(matchFields(defaults).find((x) => x.spec.key === 'lentTo')).toMatchObject({ source: 'none', spec: { optional: true } })
+  })
+
   it('finds the three Discogs defaults on a new account', () => {
     const m = matchFields(defaults)
     expect(fieldFor(m, 'mediaCondition')?.id).toBe(1)
     expect(fieldFor(m, 'sleeveCondition')?.id).toBe(2)
     expect(fieldFor(m, 'notes')?.id).toBe(3)
-    expect(m.filter((x) => x.source === 'none').map((x) => x.spec.key)).toEqual([
+    expect(m.filter((x) => x.source === 'none' && !x.spec.optional).map((x) => x.spec.key)).toEqual([
       'purchasePrice',
       'purchasedFrom',
       'purchaseDate',

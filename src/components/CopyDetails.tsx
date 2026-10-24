@@ -9,14 +9,16 @@ import { PriceInput } from './PriceInput'
 import { CrateSelect } from './CrateSelect'
 import { DateInput } from './DateInput'
 import { List } from './ui'
+import { LoanField } from './LoanField'
 
-type Kind = 'select' | 'price' | 'date' | 'count' | 'notes' | 'text'
+type Kind = 'select' | 'price' | 'date' | 'count' | 'notes' | 'loan' | 'text'
 
 export function kindOf(field: CollectionField, key: FieldKey | undefined): Kind {
   if (field.type === 'dropdown') return 'select'
   if (key === 'purchasePrice') return 'price'
   if (key === 'purchaseDate' || key === 'lastPlayed') return 'date'
   if (key === 'playCount') return 'count'
+  if (key === 'lentTo') return 'loan'
   if (key === 'notes' || (field.lines ?? 1) > 1) return 'notes'
   return 'text'
 }
@@ -38,6 +40,8 @@ export function Row({ label, saved, children, stacked }: { label: string; saved?
   )
 }
 
+const SUGGESTED: FieldKey[] = ['purchasedFrom', 'location', 'lentTo']
+
 type Props = {
   item: LibraryItem
   folders: Folder[]
@@ -52,7 +56,7 @@ type Props = {
 export function CopyDetails({ item, folders, fields, matches, currency, onMove, onSetField }: Props) {
   const added = new Date(item.dateAdded)
   const keyOf = (f: CollectionField) => matches?.find((m) => m.field?.id === f.id)?.spec.key
-  const [stores, locations] = useFieldSuggestions(matches, ['purchasedFrom', 'location'])
+  const [stores, locations, borrowers] = useFieldSuggestions(matches, SUGGESTED)
 
   return (
     <List>
@@ -78,7 +82,7 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
             kind={kindOf(f, key)}
             value={item.fields[f.id] ?? ''}
             currency={currency}
-            suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : []}
+            suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : key === 'lentTo' ? borrowers : []}
             onSave={(v) => onSetField(f, v)}
           />
         )
@@ -186,6 +190,20 @@ export function Field({
         </Row>
       )
     }
+
+    case 'loan':
+      return (
+        <LoanField
+          label={field.name}
+          value={value}
+          suggestions={suggestions}
+          saved={saved}
+          onSave={async (v) => {
+            await onSave(v)
+            if (!quiet) setSaved(true)
+          }}
+        />
+      )
 
     case 'date':
       return (

@@ -2,6 +2,7 @@ import type { CollectionField, CollectionItem, Folder, Release, SearchResult, Wa
 import type { LibraryItem, WantItem } from '../db/db'
 import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, realImage, splitTitle } from './format'
 import { fieldFor, matchFields } from './fields'
+import { loanName } from './loans'
 import { valueBracket } from './value'
 import { readChoice, writePref } from './prefs'
 
@@ -256,7 +257,7 @@ function passes(i: LibraryItem, f: Filters, skip?: FacetKey): boolean {
   if (skip !== 'rating' && f.rating && i.rating < f.rating) return false
   for (const [id, v] of Object.entries(f.fields)) {
     if (skip === `field:${id}`) continue
-    if ((i.fields[Number(id)] ?? '') !== v) return false
+    if (loanName(i.fields[Number(id)] ?? '') !== v) return false
   }
   return true
 }
@@ -436,8 +437,8 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
         options: count(
           without(`field:${field.id}`).map((i) => {
             const v = i.fields[field.id]
-            // a play count of 0 is the same as never played
-            return v && !(field.id === playCount && v === '0') ? [v] : []
+            // a play count of 0 is the same as never played; a loan goes by who has it
+            return v && !(field.id === playCount && v === '0') ? [loanName(v)] : []
           }),
         ),
       }))

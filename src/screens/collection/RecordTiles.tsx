@@ -39,7 +39,9 @@ function Tick({ on }: { on?: boolean }) {
   )
 }
 
-export function GridTile({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
+type TileProps = { item: LibraryItem; note?: string; lentTo?: string } & Selectable
+
+export function GridTile({ item, note, lentTo, selected, onSelect }: TileProps) {
   return (
     <li className="min-w-0">
       <Tap item={item} selected={selected} onSelect={onSelect} className="group block">
@@ -53,6 +55,11 @@ export function GridTile({ item, note, selected, onSelect }: { item: LibraryItem
               <Tick on={selected} />
             </span>
           )}
+          {lentTo && (
+            <span className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-full bg-black/65 px-2 py-0.5 text-xs font-medium text-white">
+              Lent to {lentTo}
+            </span>
+          )}
         </div>
         <p className="mt-2 truncate text-sm font-semibold">{item.title}</p>
         <p className="truncate text-sm text-stone-500">{item.artist}</p>
@@ -62,7 +69,7 @@ export function GridTile({ item, note, selected, onSelect }: { item: LibraryItem
   )
 }
 
-export function ListRow({ item, note, selected, onSelect }: { item: LibraryItem; note?: string } & Selectable) {
+export function ListRow({ item, note, lentTo, selected, onSelect }: TileProps) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
     <li>
@@ -78,6 +85,7 @@ export function ListRow({ item, note, selected, onSelect }: { item: LibraryItem;
           <p className="truncate font-semibold">{item.title}</p>
           <p className="truncate text-sm text-stone-600 dark:text-stone-400">{item.artist}</p>
           {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
+          {lentTo && <p className="truncate text-xs font-medium text-accent-700 dark:text-accent-400">Lent to {lentTo}</p>}
         </div>
         {note ? (
           <span className="shrink-0 text-sm font-semibold tabular-nums">{note}</span>

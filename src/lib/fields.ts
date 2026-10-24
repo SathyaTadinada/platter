@@ -10,6 +10,7 @@ export type FieldKey =
   | 'location'
   | 'playCount'
   | 'lastPlayed'
+  | 'lentTo'
 
 export type FieldSpec = {
   key: FieldKey
@@ -19,6 +20,7 @@ export type FieldSpec = {
   aliases: string[]
   why: string
   setup: string // what to enter on the Discogs settings page
+  optional?: boolean // only for a feature some people won't use; not counted as missing
 }
 
 export const FIELDS_SETTINGS_URL = 'https://www.discogs.com/settings/collection'
@@ -104,6 +106,16 @@ export const FIELD_SPECS: FieldSpec[] = [
     aliases: ['last spin', 'last listened'],
     why: 'Set when you log a play',
     setup: 'Text Area',
+  },
+  {
+    key: 'lentTo',
+    name: 'Lent To',
+    type: 'textarea',
+    builtIn: false,
+    aliases: ['lent', 'loaned to', 'lent out', 'borrowed by'],
+    why: 'Who has it, when you lend a record out',
+    setup: 'Text Area',
+    optional: true,
   },
 ]
 

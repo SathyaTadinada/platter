@@ -4,6 +4,7 @@
 import demo from '../../tests/fixtures/collection-demo.json'
 import type { CollectionField, CollectionItem, Release, WantItem } from '../api/discogs/types'
 import { getSetting, setSetting } from '../db/db'
+import { formatLoan } from '../lib/loans'
 
 export const DEMO_USER = 'demo'
 const API = 'https://api.discogs.com'
@@ -43,6 +44,7 @@ const FIELDS: CollectionField[] = [
   text(8, 'Play Count', 7),
   text(9, 'Last Played', 8),
   text(3, 'Notes', 9),
+  text(10, 'Lent To', 10),
 ]
 
 const DAY = 24 * 60 * 60 * 1000
@@ -54,6 +56,9 @@ function initialState(now = Date.now()): State {
   const shift = now - 14 * DAY - Math.max(...items.map((i) => Date.parse(i.date_added)))
   const moved = (date: string) => new Date(Date.parse(date) + shift).toISOString()
   for (const item of items) item.date_added = moved(item.date_added)
+  // one record out on loan, so lending can be seen without setting anything up
+  const lent = items.find((i) => i.basic_information.title === 'Rumours')
+  if (lent) lent.notes = [...(lent.notes ?? []), { field_id: 10, value: formatLoan('Sam', now - 18 * DAY) }]
   // purchase prices on two out of three records, so "paid vs now" has something to compare
   items.forEach((item, n) => {
     if (n % 3 === 2 || item.notes?.some((x) => x.field_id === 5)) return

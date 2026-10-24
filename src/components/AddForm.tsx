@@ -16,7 +16,8 @@ import { Button, List, Notice } from './ui'
 export type Added = { folder: string; instanceId: number; problems: string[] }
 
 // play fields start empty; they're filled in by logging plays
-const SKIP: FieldKey[] = ['playCount', 'lastPlayed']
+// plays come from logging them, and a record being added isn't lent out yet
+const SKIP: FieldKey[] = ['playCount', 'lastPlayed', 'lentTo']
 // a stack bought together usually shares store, date, and shelf
 const CARRY: FieldKey[] = ['purchasedFrom', 'purchaseDate', 'location']
 const RECENT = 'recentFields'

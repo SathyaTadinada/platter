@@ -29,7 +29,7 @@ export function Setup() {
   }
 
   const matches = state.data ? matchFields(state.data, map) : []
-  const missing = matches.filter((m) => !m.field && m.source === 'none')
+  const missing = matches.filter((m) => !m.field && m.source === 'none' && !m.spec.optional)
 
   return (
     <Screen title="Collection fields" back={back}>
@@ -111,7 +111,10 @@ function FieldRow({
           {field && <Check size={14} strokeWidth={3} aria-hidden />}
         </span>
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="font-semibold">{spec.name}</p>
+          <p className="font-semibold">
+            {spec.name}
+            {spec.optional && <span className="ml-2 text-xs font-medium text-stone-500">Optional</span>}
+          </p>
           <p className="text-sm text-stone-600 dark:text-stone-400">{spec.why}</p>
           {field && source === 'name' && field.name !== spec.name && (
             <p className="text-sm text-stone-500">Using your field "{field.name}".</p>

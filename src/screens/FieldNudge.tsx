@@ -19,7 +19,7 @@ export function FieldNudge({ className = '' }: { className?: string }) {
   const { client, username } = useSignedIn()
   const { data: missing } = useAsync(async () => {
     const [{ fields }, map] = await Promise.all([getFields(client, username), getSetting<FieldMap>('fieldMap')])
-    return matchFields(fields, map ?? {}).filter((m) => m.source === 'none').length
+    return matchFields(fields, map ?? {}).filter((m) => m.source === 'none' && !m.spec.optional).length
   }, [client, username])
 
   if (!missing || dismissed) return null

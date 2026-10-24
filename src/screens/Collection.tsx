@@ -46,6 +46,7 @@ import {
   type SortContext,
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
+import { parseLoan } from '../lib/loans'
 import { formatMoney, valueOf } from '../lib/value'
 import { applyFields, runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
@@ -107,6 +108,8 @@ export function Collection() {
   const currency = useCurrency()
   const prices = useFreshPrices(byValue ? currency : undefined)
   const matches = useFieldMatches()
+  const lentField = matches ? fieldFor(matches, 'lentTo')?.id : undefined
+  const lentTo = (i: LibraryItem) => (lentField === undefined ? undefined : parseLoan(i.fields[lentField])?.to)
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const listened = useListening()
   const locationField = matches ? fieldFor(matches, 'location')?.id : undefined
@@ -427,6 +430,7 @@ export function Collection() {
                     key={i.instanceId}
                     item={i}
                     note={noteOf(i)}
+                    lentTo={lentTo(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />
@@ -439,6 +443,7 @@ export function Collection() {
                     key={i.instanceId}
                     item={i}
                     note={noteOf(i)}
+                    lentTo={lentTo(i)}
                     selected={selected?.has(i.instanceId)}
                     onSelect={selected ? () => toggle(i.instanceId) : undefined}
                   />

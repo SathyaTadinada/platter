@@ -49,6 +49,7 @@ describe('demo backend', () => {
       'Play Count',
       'Last Played',
       'Notes',
+      'Lent To',
     ])
   })
 

@@ -61,7 +61,7 @@ export function Settings() {
 
   const fields = useAsync(async () => {
     const [{ fields }, map] = await Promise.all([getFields(client, session.username), getSetting<FieldMap>('fieldMap')])
-    return matchFields(fields, map ?? {}).filter((m) => m.field).length
+    return matchFields(fields, map ?? {}).filter((m) => m.field && !m.spec.optional).length
   }, [client, session.username])
 
   const signOut = useSignOut()
@@ -138,7 +138,7 @@ export function Settings() {
               <Row
                 icon={<ListChecks size={20} />}
                 label="Collection fields"
-                value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.length} set up` : undefined}
+                value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.filter((s) => !s.optional).length} set up` : undefined}
                 href="/setup"
               />
             </List>
