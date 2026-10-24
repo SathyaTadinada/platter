@@ -1,5 +1,6 @@
 import type { LibraryItem } from '../db/db'
 import type { Play } from './plays'
+import type { ShareCard } from './shareCard'
 import { stylusUse, type RecordLength } from './stylus'
 import { byMonth, localDate, parseMoney, type MonthTotal } from './value'
 
@@ -104,4 +105,24 @@ export function reviewYears(items: Pick<LibraryItem, 'dateAdded'>[], plays: Pick
   for (const i of items) years.add(Number(i.dateAdded.slice(0, 4)))
   for (const p of plays) years.add(new Date(p.at).getFullYear())
   return [...years].filter((n) => n > 1900).sort((a, b) => b - a)
+}
+
+const count = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
+
+// The year as a picture to share: plays as the big number, then what stood out
+export function yearCard(user: string, r: YearReview, spent?: string, now = new Date()): ShareCard {
+  const rows: ShareCard['rows'] = []
+  if (r.hours >= 1) rows.push(['Listened for', count(Math.round(r.hours), 'hour')])
+  const top = r.topRecords[0]
+  if (top) rows.push(['Most played', top.item.title, `${top.item.artist} · ${count(top.count, 'play')}`])
+  const artist = r.topArtists[0]
+  if (artist && artist.name !== top?.item.artist) rows.push(['Top artist', artist.name, count(artist.count, 'play')])
+  if (r.added.length) rows.push(['Added', count(r.added.length, 'record'), spent && `${spent} spent`])
+  const played = r.plays > 0
+  return {
+    heading: `${user}'s ${r.year}${r.year === now.getFullYear() ? ' so far' : ''}`,
+    count: played ? r.plays : r.added.length,
+    unit: played ? (r.plays === 1 ? 'play' : 'plays') : r.added.length === 1 ? 'record added' : 'records added',
+    rows,
+  }
 }

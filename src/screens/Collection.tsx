@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownUp,
-  CircleArrowUp,
   Disc3,
   Dices,
   Download,
@@ -32,7 +31,7 @@ import { useListening } from '../hooks/plays'
 import { libraryItems } from '../lib/masters'
 import { dayAgo } from '../lib/time'
 import { download, today } from '../lib/download'
-import { useCurrency, useFreshPrices, useWatches } from '../hooks/prices'
+import { useCurrency, useFreshPrices } from '../hooks/prices'
 import {
   activeFilterCount,
   facets as buildFacets,
@@ -70,7 +69,6 @@ const loadView = () => readChoice<View>(VIEW_KEY, ['grid', 'list'], 'grid')
 export function Collection() {
   const { client, username, session } = useSignedIn()
   const sync = useSync()
-  const watched = useWatches()
   const search = useSearch()
   const [, navigate] = useLocation()
   // the saved sort isn't in the URL, so picking one needs its own nudge to re-read the query
@@ -325,16 +323,10 @@ export function Collection() {
 
   const exportLabel = searching ? `Export these ${filtered.length}` : 'Export collection'
 
-  // a dot on the wantlist when something on it is listed under the price you set
-  const underPrice = watched?.under.size ?? 0
-  const wantlistLabel = underPrice ? `Wantlist, ${underPrice} under your price` : 'Wantlist'
-  const dot = 'absolute top-1.5 right-1.5 size-2 rounded-full bg-accent ring-2 ring-stone-50 dark:ring-stone-950'
-
   // everything less frequent goes in the More menu; refresh has its own button on desktop
   const more = [
     { label: exportLabel, icon: <Download size={18} />, onSelect: () => exportCsv(), disabled: !filtered.length },
-    { label: 'Find worn copies', icon: <CircleArrowUp size={18} />, onSelect: () => navigate('/upgrades') },
-    { label: 'Print collection', icon: <Printer size={18} />, onSelect: () => navigate('/insurance') },
+    { label: 'Print collection', icon: <Printer size={18} />, onSelect: () => navigate('/report') },
   ]
   const refresh = {
     label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
@@ -353,9 +345,8 @@ export function Collection() {
       <IconButton label={view === 'grid' ? 'Show as list' : 'Show as grid'} onClick={toggleView}>
         {view === 'grid' ? <ListIcon size={20} /> : <LayoutGrid size={20} />}
       </IconButton>
-      <IconButton label={wantlistLabel} onClick={() => navigate('/wantlist')} className="relative">
+      <IconButton label="Wantlist" onClick={() => navigate('/wantlist')}>
         <Heart size={20} />
-        {underPrice > 0 && <span className={dot} aria-hidden />}
       </IconButton>
       <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
         <SquareCheckBig size={20} />

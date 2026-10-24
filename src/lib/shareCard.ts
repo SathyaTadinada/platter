@@ -2,8 +2,16 @@ import type { LibraryItem } from '../db/db'
 import { yearOf } from './library'
 import type { Listening } from './plays'
 
-// The picture behind "Share" on the Stats tab: a few facts about the collection,
-// drawn on a canvas so it can be saved or sent anywhere.
+// The pictures behind "Share" on the Stats tab and on Your year: a big number and a few facts,
+// drawn on a canvas so they can be saved or sent anywhere.
+
+export type ShareCard = {
+  heading: string // e.g. "sam's collection"
+  count: number
+  unit: string // after the big number, e.g. "records"
+  rows: [string, string, string?][] // label, main line, optional smaller line
+  note?: string // small print at the bottom
+}
 
 export type CardFacts = {
   user: string
@@ -50,6 +58,14 @@ export function cardRows(f: CardFacts): [string, string, string?][] {
   return rows.slice(0, 4)
 }
 
+export const collectionCard = (f: CardFacts): ShareCard => ({
+  heading: `${f.user}'s collection`,
+  count: f.records,
+  unit: f.records === 1 ? 'record' : 'records',
+  rows: cardRows(f),
+  note: f.value ? 'Prices from Discogs' : undefined,
+})
+
 export const CARD = { width: 1080, height: 1350 }
 
 export type CardTheme = 'light' | 'dark'
@@ -67,7 +83,7 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number) {
   return `${t.trimEnd()}…`
 }
 
-export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string, site: string, theme: CardTheme = 'light') {
+export function drawCard(canvas: HTMLCanvasElement, card: ShareCard, accent: string, site: string, theme: CardTheme = 'light') {
   const { paper, ink, muted, rule, disc, groove, rim } = THEMES[theme]
   const { width: W, height: H } = CARD
   canvas.width = W
@@ -112,21 +128,21 @@ export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = muted
   ctx.font = `500 38px ${FONT}`
-  ctx.fillText(fit(ctx, `${f.user}'s collection`, max), pad, pad + 40)
+  ctx.fillText(fit(ctx, card.heading, max), pad, pad + 40)
 
   ctx.fillStyle = ink
   ctx.font = `700 150px ${FONT}`
-  ctx.fillText(f.records.toLocaleString(), pad, pad + 210)
-  const numberWidth = ctx.measureText(f.records.toLocaleString()).width
+  ctx.fillText(card.count.toLocaleString(), pad, pad + 210)
+  const numberWidth = ctx.measureText(card.count.toLocaleString()).width
   ctx.font = `600 52px ${FONT}`
   ctx.fillStyle = muted
-  ctx.fillText(f.records === 1 ? 'record' : 'records', pad + numberWidth + 24, pad + 210)
+  ctx.fillText(card.unit, pad + numberWidth + 24, pad + 210)
 
   // lines low enough to reach the record stop short of it
   const room = (y: number) => (y > cy - R - 20 ? cx - R - 40 - pad : max)
 
   let y = pad + 300
-  for (const [label, main, sub] of cardRows(f)) {
+  for (const [label, main, sub] of card.rows.slice(0, 4)) {
     ctx.fillStyle = rule
     ctx.fillRect(pad, y, max, 2)
     y += 62
@@ -149,8 +165,8 @@ export function drawCard(canvas: HTMLCanvasElement, f: CardFacts, accent: string
   ctx.fillStyle = muted
   ctx.font = `500 30px ${FONT}`
   ctx.fillText(site, pad, H - pad + 20)
-  if (f.value) {
+  if (card.note) {
     ctx.font = `400 26px ${FONT}`
-    ctx.fillText('Prices from Discogs', pad, H - pad - 26)
+    ctx.fillText(card.note, pad, H - pad - 26)
   }
 }

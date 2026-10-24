@@ -12,7 +12,6 @@ import type { Play } from './plays'
 export type RecordLength = { releaseId: number; seconds: number; estimated: boolean; at: number }
 export type StylusSettings = { since?: number; lifespan: number } // lifespan in hours
 
-export const LIFESPANS = [300, 500, 800, 1000, 1500] // hours, roughly by stylus shape
 export const DEFAULT_LIFESPAN = 1000
 const KEY = 'stylus'
 const RECHECK = 30 * 24 * 60 * 60 * 1000

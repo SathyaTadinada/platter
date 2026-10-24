@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import type { LibraryItem } from '../db/db'
-import { reviewYears, yearReview } from './yearReview'
+import { reviewYears, yearCard, yearReview } from './yearReview'
 
 const item = (instanceId: number, dateAdded: string, more: Partial<LibraryItem> = {}) =>
-  ({ instanceId, releaseId: instanceId, artist: 'A', year: 0, genres: [], fields: {}, dateAdded, ...more }) as LibraryItem
+  ({
+    instanceId,
+    releaseId: instanceId,
+    title: String(instanceId),
+    artist: 'A',
+    year: 0,
+    genres: [],
+    fields: {},
+    dateAdded,
+    ...more,
+  }) as LibraryItem
 const play = (instanceId: number, day: string) => ({ instanceId, releaseId: instanceId, at: Date.parse(`${day}T20:00`) })
 
 const items = [
@@ -68,5 +78,23 @@ describe('yearReview', () => {
 describe('reviewYears', () => {
   it('lists years with records added or played, newest first', () => {
     expect(reviewYears(items, plays)).toEqual([2026, 2025])
+  })
+})
+
+describe('yearCard', () => {
+  it('leads with plays and lists what stood out', () => {
+    const r = yearReview(2026, items, plays, lengths)
+    const card = yearCard('sam', r, '$45', new Date('2026-10-24T12:00'))
+    expect(card).toMatchObject({ heading: "sam's 2026 so far", count: 5, unit: 'plays' })
+    expect(card.rows).toEqual([
+      ['Listened for', '4 hours'],
+      ['Most played', '1', 'Bowie · 2 plays'],
+      ['Added', '2 records', '$45 spent'],
+    ])
+  })
+
+  it('leads with records added in a year with no plays', () => {
+    const card = yearCard('sam', yearReview(2025, items, [], lengths), undefined, new Date('2026-10-24T12:00'))
+    expect(card).toMatchObject({ heading: "sam's 2025", count: 1, unit: 'record added' })
   })
 })

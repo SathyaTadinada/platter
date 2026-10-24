@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LibraryItem } from '../db/db'
-import { insuranceReport } from './insurance'
+import { collectionReport } from './report'
 import type { PriceEntry } from './value'
 
 const item = (releaseId: number, artist: string, fields: Record<number, string>) =>
@@ -14,9 +14,9 @@ const price = (releaseId: number, lowest: number | null, suggested?: Record<stri
   suggested,
 })
 
-describe('insuranceReport', () => {
+describe('collectionReport', () => {
   it('values each copy, sorts by artist, and adds it all up', () => {
-    const r = insuranceReport(
+    const r = collectionReport(
       [item(1, 'Zappa', { 1: 'Very Good (VG)', 5: '$20' }), item(2, 'Abba', { 1: 'Mint (M)' }), item(3, 'Bowie', { 5: '$5.50' })],
       new Map([
         [1, price(1, 30, { 'Very Good (VG)': 25 })],

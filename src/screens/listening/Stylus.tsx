@@ -9,7 +9,7 @@ import { Button, List } from '../../components/ui'
 import { db } from '../../db/db'
 import { checkPrices, useCurrency, usePriceCheck } from '../../hooks/prices'
 import { useSignedIn } from '../../hooks/session'
-import { LIFESPANS, saveStylusSettings, staleLengths, stylusSettings, stylusUse, type StylusSettings } from '../../lib/stylus'
+import { saveStylusSettings, staleLengths, stylusSettings, stylusUse, type StylusSettings } from '../../lib/stylus'
 import { localDate } from '../../lib/value'
 
 const hours = (h: number) => (h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString())
@@ -44,7 +44,6 @@ export function Stylus() {
   const { settings, use } = data
   const share = Math.min(1, use.hours / settings.lifespan)
   const over = use.hours >= settings.lifespan
-  const loading = check.running && check.stage === 'lengths'
 
   async function fitted() {
     const before = settings
@@ -56,11 +55,7 @@ export function Stylus() {
     <div className={`${statCard} p-4`}>
       <div className="flex items-baseline justify-between gap-3">
         <p>
-          <span className="text-2xl font-bold tabular-nums">
-            {use.estimated || loading ? '~' : ''}
-            {hours(use.hours)}
-          </span>{' '}
-          <span className="text-sm text-stone-500">hours</span>
+          <span className="text-2xl font-bold tabular-nums">{hours(use.hours)}</span> <span className="text-sm text-stone-500">hours</span>
         </p>
         <p className="text-right text-sm text-stone-500">
           {!settings.since
@@ -125,8 +120,9 @@ function StylusSheet({
   onClose: () => void
 }) {
   const [since, setSince] = useState(settings.since ? localDate(settings.since) : '')
-  const [lifespan, setLifespan] = useState(settings.lifespan)
-  const options = LIFESPANS.includes(lifespan) ? LIFESPANS : [...LIFESPANS, lifespan].sort((a, b) => a - b)
+  const [lifespan, setLifespan] = useState(String(settings.lifespan))
+  const hoursSet = Number(lifespan)
+  const valid = Number.isInteger(hoursSet) && hoursSet > 0
   return (
     <Sheet
       title="Stylus"
@@ -138,7 +134,9 @@ function StylusSheet({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => onSave({ since: since ? dayStart(since) : undefined, lifespan })}>Save</Button>
+          <Button disabled={!valid} onClick={() => onSave({ since: since ? dayStart(since) : undefined, lifespan: hoursSet })}>
+            Save
+          </Button>
         </div>
       }
     >
@@ -147,18 +145,16 @@ function StylusSheet({
           <DateInput value={since} onChange={setSince} label="Fitted on" placeholder="Not set" />
         </Row>
         <Row label="Replace after">
-          <select
-            aria-label="Replace after"
-            value={lifespan}
-            onChange={(e) => setLifespan(Number(e.target.value))}
-            className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
-          >
-            {options.map((h) => (
-              <option key={h} value={h}>
-                {h.toLocaleString()} hours
-              </option>
-            ))}
-          </select>
+          <label className="flex items-center justify-end gap-1">
+            <input
+              aria-label="Replace after, in hours"
+              value={lifespan}
+              onChange={(e) => setLifespan(e.target.value.replace(/\D/g, ''))}
+              inputMode="numeric"
+              className={inline}
+            />
+            <span className="shrink-0 pr-2 font-medium text-stone-500">hours</span>
+          </label>
         </Row>
       </List>
     </Sheet>

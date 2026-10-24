@@ -2,7 +2,7 @@ import { useLocation, useSearch } from 'wouter'
 import { useState } from 'react'
 import { History, Share, SlidersHorizontal } from 'lucide-react'
 import { ChartsSheet } from '../components/ChartsSheet'
-import { ShareSheet } from '../components/ShareSheet'
+import { CollectionShare } from '../components/ShareSheet'
 import { IconButton, Screen } from '../components/ui'
 import { ListeningStats } from './Listening'
 import { ValueStats } from './Value'
@@ -64,7 +64,7 @@ export function Stats() {
               <SlidersHorizontal size={20} />
             </IconButton>
           )}
-          <IconButton label="Year in review" onClick={() => navigate('/stats/year')}>
+          <IconButton label="Your year" onClick={() => navigate('/stats/year')}>
             <History size={20} />
           </IconButton>
           <IconButton label="Share" onClick={() => setSharing(true)}>
@@ -78,7 +78,7 @@ export function Stats() {
         {view === 'value' ? <ValueStats /> : <ListeningStats />}
       </div>
       {choosing && <ChartsSheet onClose={() => setChoosing(false)} />}
-      {sharing && <ShareSheet onClose={() => setSharing(false)} />}
+      {sharing && <CollectionShare onClose={() => setSharing(false)} />}
     </Screen>
   )
 }

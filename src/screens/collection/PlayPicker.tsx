@@ -5,6 +5,8 @@ import { Cover } from '../../components/Cover'
 import { Sheet } from '../../components/Sheet'
 import { Button, buttonClass } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
+import { useCollectionMeta } from '../../hooks/useCollectionMeta'
+import { yearOf } from '../../lib/library'
 import { useListening, useLogPlay } from '../../hooks/plays'
 import { pickToPlay } from '../../lib/plays'
 import { dayAgo } from '../../lib/time'
@@ -13,6 +15,7 @@ import { dayAgo } from '../../lib/time'
 // follows search and filters), leaning toward ones that haven't been on in a while
 export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; scope?: string; onClose: () => void }) {
   const listening = useListening()
+  const folders = useCollectionMeta().data?.folders
   const { log, busy } = useLogPlay()
   const [offered] = useState(() => new Set<number>())
   const [pickId, setPickId] = useState<number | null>(null)
@@ -37,17 +40,21 @@ export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; sc
     onClose()
   }
 
+  const times = pick?.count ? `Played ${pick.count === 1 ? 'once' : `${pick.count} times`}` : ''
   const when = !pick
     ? ''
-    : !pick.last
-      ? pick.count
-        ? `Played ${pick.count === 1 ? 'once' : `${pick.count} times`}`
-        : 'Never played'
-      : `Last played ${dayAgo(pick.last)}`
+    : !pick.count && !pick.last
+      ? 'Never played'
+      : [times, pick.last && `last ${dayAgo(pick.last)}`].filter(Boolean).join(', ')
+  const about = pick && [
+    yearOf(pick.item) || undefined,
+    pick.item.format.split(', ').slice(0, 2).join(', '),
+    folders?.find((f) => f.id === pick.item.folderId && f.id !== 1)?.name,
+  ]
 
   return (
     <Sheet
-      title="Random pick"
+      title="Up next"
       onClose={onClose}
       bodyClassName="p-5"
       footer={
@@ -68,10 +75,9 @@ export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; sc
           <Cover item={pick.item} className="mx-auto aspect-square w-full max-w-64 rounded-2xl shadow-xl ring-1 ring-black/10" />
           <p className="mt-4 text-xl font-bold tracking-tight">{pick.item.title}</p>
           <p className="text-stone-600 dark:text-stone-300">{pick.item.artist}</p>
-          <p className="mt-1 text-sm text-stone-500">
-            {when}
-            {scope && ` · from ${scope}`}
-          </p>
+          <p className="mt-2 text-sm text-stone-500">{about?.filter(Boolean).join(' · ')}</p>
+          <p className="text-sm text-stone-500">{when}</p>
+          {scope && <p className="mt-2 text-xs text-stone-500">From {scope}</p>}
           <Link
             href={`/collection/${pick.item.instanceId}`}
             onClick={onClose}

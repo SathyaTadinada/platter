@@ -10,13 +10,13 @@ import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { shortGrade } from '../lib/format'
-import { insuranceReport } from '../lib/insurance'
+import { collectionReport } from '../lib/report'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { formatMoney } from '../lib/value'
 
 // A list of the whole collection with values, laid out to print or save as a PDF
-export function Insurance() {
+export function Report() {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
   const prices = useFreshPrices(currency)
@@ -36,7 +36,7 @@ export function Insurance() {
   }
 
   const field = (key: Parameters<typeof fieldFor>[1]) => fieldFor(matches, key)?.id
-  const report = insuranceReport(items, prices, {
+  const report = collectionReport(items, prices, {
     media: field('mediaCondition'),
     sleeve: field('sleeveCondition'),
     paid: field('purchasePrice'),

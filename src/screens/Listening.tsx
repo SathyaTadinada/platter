@@ -1,5 +1,6 @@
 import { Dices } from 'lucide-react'
-import { Link, useLocation } from 'wouter'
+import { useState } from 'react'
+import { Link } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
 import { buttonClass, Card, Notice, Section, Spinner } from '../components/ui'
@@ -8,6 +9,7 @@ import { useSignedIn } from '../hooks/session'
 import { listeningStats, type Listening } from '../lib/plays'
 import { dayAgo } from '../lib/time'
 import { byMonth, localDate } from '../lib/value'
+import { PlayPicker } from './collection/PlayPicker'
 import { Stylus } from './listening/Stylus'
 
 const TOP = 8
@@ -17,7 +19,7 @@ export function ListeningStats() {
   const data = useListening()
   const { username } = useSignedIn()
   const ids = usePlayFields()
-  const [, navigate] = useLocation()
+  const [picking, setPicking] = useState(false)
   if (!data) return <Spinner />
 
   const { rows, plays } = data
@@ -55,11 +57,6 @@ export function ListeningStats() {
     )
   }
 
-  function pickForgotten() {
-    const pick = forgotten[Math.floor(Math.random() * forgotten.length)]
-    if (pick) navigate(`/collection/${pick.item.instanceId}`)
-  }
-
   return (
     <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
       <div>
@@ -95,15 +92,20 @@ export function ListeningStats() {
         {forgotten.length > 0 && (
           <Section title="Not played in a year">
             {stats.dusty.length > 0 && <List rows={stats.dusty.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />}
-            {stats.never.length > 0 && (
-              <p className="px-1 text-sm text-stone-500">
-                {stats.never.length} record{stats.never.length === 1 ? ' has' : 's have'} never been played.
-              </p>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-sm text-stone-500">{stats.never.length > 0 && `${stats.never.length} never played`}</p>
+              <button type="button" onClick={() => setPicking(true)} className={buttonClass('secondary', 'min-h-9 shrink-0 px-3 text-sm')}>
+                <Dices size={16} aria-hidden />
+                Pick one
+              </button>
+            </div>
+            {picking && (
+              <PlayPicker
+                items={forgotten.map((r) => r.item)}
+                scope={`${forgotten.length} records not played in a year`}
+                onClose={() => setPicking(false)}
+              />
             )}
-            <button type="button" onClick={pickForgotten} className={buttonClass('secondary', 'w-full')}>
-              <Dices size={18} aria-hidden />
-              Pick one of these
-            </button>
           </Section>
         )}
       </div>

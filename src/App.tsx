@@ -15,7 +15,7 @@ import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
 import { useTrimPlays } from './hooks/plays'
-import { useNewRecordPrices, useWatchedPrices } from './hooks/prices'
+import { useNewRecordPrices } from './hooks/prices'
 import { rememberScroll, savedScroll, trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
 import { About } from './screens/About'
@@ -33,9 +33,8 @@ import { Setup } from './screens/Setup'
 import { ListenBrainz } from './screens/ListenBrainz'
 import { NowPlaying } from './screens/NowPlaying'
 import { Stats } from './screens/Stats'
-import { Upgrades } from './screens/Upgrades'
-import { Insurance } from './screens/Insurance'
-import { YearReview } from './screens/YearReview'
+import { Report } from './screens/Report'
+import { YourYear } from './screens/YourYear'
 import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
 
@@ -126,10 +125,9 @@ function Routes({ error }: { error?: string }) {
             <Route path="/settings" component={Settings} />
             <Route path="/crates" component={Crates} />
             <Route path="/wantlist" component={Wantlist} />
-            <Route path="/upgrades" component={Upgrades} />
-            <Route path="/insurance" component={Insurance} />
+            <Route path="/report" component={Report} />
             <Route path="/stats" component={Stats} />
-            <Route path="/stats/year/:year?">{(p) => <YearReview year={p.year} />}</Route>
+            <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
             <Route path="/play" component={NowPlaying} />
             <Route path="/listenbrainz" component={ListenBrainz} />
             <Route path="/value" component={Stats} />
@@ -162,7 +160,6 @@ function DemoBar() {
 // wrong at launch. Only the middle scrolls, so the header and tab bar stay put.
 function Shell({ children }: { children: ReactNode }) {
   useNewRecordPrices()
-  useWatchedPrices()
   useTrimPlays()
   const { session } = useSession()
   const [path] = useLocation()

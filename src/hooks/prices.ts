@@ -7,7 +7,6 @@ import { fetchMasterYear, staleMasters } from '../lib/masters'
 import { backgroundGapMs, fetchPrice } from '../lib/pricing'
 import { fetchLength, staleLengths } from '../lib/stylus'
 import { backgroundHeld } from '../lib/task'
-import { getWatches, underPrice, type Watches } from '../lib/priceWatch'
 import { isFresh, type PriceEntry } from '../lib/value'
 import { useSignedIn } from './session'
 
@@ -158,41 +157,4 @@ export function useNewRecordPrices() {
     const t = setTimeout(() => checkPrices(client, key.split(',').map(Number), currency), 3000)
     return () => clearTimeout(t)
   }, [key, currency, client, check.running, check.error, session.expired])
-}
-
-// Wantlist records with a price to watch (ones taken off the wantlist don't count), their
-// prices if fresh, and which are listed at or under the price
-export function useWatches() {
-  const currency = useCurrency()
-  return useLiveQuery(async () => {
-    const [all, wants] = await Promise.all([getWatches(), db.wants.toArray()])
-    const wanted = new Set(wants.map((w) => w.releaseId))
-    const watches: Watches = Object.fromEntries(Object.entries(all).filter(([id]) => wanted.has(Number(id))))
-    const ids = Object.keys(watches).map(Number)
-    const now = Date.now()
-    const prices = new Map<number, PriceEntry>()
-    for (const p of await db.prices.bulkGet(ids)) if (p && currency && isFresh(p, currency, now)) prices.set(p.releaseId, p)
-    const under = new Set(ids.filter((id) => underPrice(prices.get(id), watches[id])))
-    return { watches, prices, under }
-  }, [currency])
-}
-
-// Keeps watched prices fresh while the app is open: soon after one is added, then every so
-// often (checkPrices skips the ones still fresh)
-const WATCH_EVERY = 30 * 60 * 1000
-export function useWatchedPrices() {
-  const { client, session } = useSignedIn()
-  const currency = useCurrency()
-  const watches = useWatches()?.watches
-  const key = watches ? Object.keys(watches).join(',') : ''
-  useEffect(() => {
-    if (!key || !currency || session.expired) return
-    const run = () => checkPrices(client, key.split(',').map(Number), currency)
-    const first = setTimeout(run, 3000)
-    const every = setInterval(run, WATCH_EVERY)
-    return () => {
-      clearTimeout(first)
-      clearInterval(every)
-    }
-  }, [key, currency, client, session.expired])
 }

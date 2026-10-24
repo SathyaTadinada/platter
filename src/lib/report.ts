@@ -1,13 +1,13 @@
 import type { LibraryItem } from '../db/db'
 import { parseMoney, valueOf, type PriceEntry } from './value'
 
-// Every record with what it's worth now, for an insurer. Values follow the rest of the app: the
+// Every record with what it's worth now, to print or keep as a PDF. Values follow the rest of the app: the
 // suggested price for the copy's grade when there is one, otherwise the cheapest listing.
 
 export type ReportRow = { item: LibraryItem; media?: string; sleeve?: string; paid?: number; value?: number }
 export type ReportFields = { media?: number; sleeve?: number; paid?: number }
 
-export function insuranceReport(items: LibraryItem[], prices: Map<number, PriceEntry>, fields: ReportFields) {
+export function collectionReport(items: LibraryItem[], prices: Map<number, PriceEntry>, fields: ReportFields) {
   const get = (item: LibraryItem, id?: number) => (id !== undefined ? item.fields[id] || undefined : undefined)
   const rows: ReportRow[] = items
     .map((item) => {

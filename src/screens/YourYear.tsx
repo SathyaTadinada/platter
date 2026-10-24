@@ -1,34 +1,49 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ChevronLeft, ChevronRight, Share } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../components/Cover'
 import { formatDay } from '../components/DateInput'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
-import { Card, Screen, Section, Spinner } from '../components/ui'
+import { ShareSheet } from '../components/ShareSheet'
+import { Card, IconButton, Screen, Section, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { useCurrency } from '../hooks/prices'
+import { useSignedIn } from '../hooks/session'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { libraryItems } from '../lib/masters'
 import { replaceAddress } from '../lib/nav'
-import type { Play } from '../lib/plays'
-import type { RecordLength } from '../lib/stylus'
 import { formatMoney, localDate } from '../lib/value'
-import { reviewYears, yearReview } from '../lib/yearReview'
+import { reviewYears, yearCard, yearReview, type YearReview } from '../lib/yearReview'
 
 const COVERS = 12
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
 
-export function YearReview({ year: asked }: { year?: string }) {
+export function YourYear({ year: asked }: { year?: string }) {
   const thisYear = new Date().getFullYear()
   const [year, setYear] = useState(Number(asked) || thisYear)
+  const { username } = useSignedIn()
   const currency = useCurrency()
   const matches = useFieldMatches()
+  const [sharing, setSharing] = useState(false)
   const data = useLiveQuery(async () => {
     const [items, plays, lengths] = await Promise.all([libraryItems(), db.plays.toArray(), db.lengths.toArray()])
     return { items, plays, lengths: new Map(lengths.map((l) => [l.releaseId, l])) }
   }, [])
+
+  const paid = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
+  const date = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
+  const r = useMemo(
+    () => (data ? yearReview(year, data.items, data.plays, data.lengths, { paid, date }) : undefined),
+    [data, year, paid, date],
+  )
+  const empty = !r || (!r.added.length && !r.plays)
+  const card = useMemo(() => {
+    if (!r || !currency) return undefined
+    const spent = r.spent?.count ? formatMoney(r.spent.total, currency, { whole: true }) : undefined
+    return yearCard(username, r, spent)
+  }, [r, currency, username])
 
   const years = data ? reviewYears(data.items, data.plays) : []
   if (!years.includes(thisYear)) years.unshift(thisYear)
@@ -55,18 +70,21 @@ export function YearReview({ year: asked }: { year?: string }) {
   )
 
   return (
-    <Screen title="Year in review" back="/stats" width="wide" toolbar={toolbar}>
-      {!data || !currency ? (
-        <Spinner />
-      ) : (
-        <Review
-          year={year}
-          data={data}
-          paid={matches ? fieldFor(matches, 'purchasePrice')?.id : undefined}
-          date={matches ? fieldFor(matches, 'purchaseDate')?.id : undefined}
-          currency={currency}
-        />
-      )}
+    <Screen
+      title="Your year"
+      back="/stats"
+      width="wide"
+      toolbar={toolbar}
+      actions={
+        !empty && (
+          <IconButton label="Share" onClick={() => setSharing(true)}>
+            <Share size={20} />
+          </IconButton>
+        )
+      }
+    >
+      {!r || !currency ? <Spinner /> : <Review r={r} currency={currency} />}
+      {sharing && <ShareSheet card={card} name={`${username}-${year}`} onClose={() => setSharing(false)} />}
     </Screen>
   )
 }
@@ -95,20 +113,8 @@ function YearButton({
   )
 }
 
-function Review({
-  year,
-  data,
-  paid,
-  date,
-  currency,
-}: {
-  year: number
-  data: { items: LibraryItem[]; plays: Play[]; lengths: Map<number, RecordLength> }
-  paid?: number
-  date?: number
-  currency: string
-}) {
-  const r = yearReview(year, data.items, data.plays, data.lengths, { paid, date })
+function Review({ r, currency }: { r: YearReview; currency: string }) {
+  const { year } = r
   if (!r.added.length && !r.plays) {
     return (
       <Card className="max-w-xl">
@@ -135,7 +141,7 @@ function Review({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Tile label={r.added.length === 1 ? 'record added' : 'records added'} value={r.added.length.toLocaleString()} />
             <Tile label={r.plays === 1 ? 'play' : 'plays'} value={r.plays.toLocaleString()} />
-            <Tile label="hours listened" value={r.estimated ? `~${hours}` : hours} />
+            <Tile label="hours listened" value={hours} />
             {r.spent && r.spent.count > 0 ? (
               <Tile label={`spent on ${plural(r.spent.count, 'record')}`} value={formatMoney(r.spent.total, currency, { whole: true })} />
             ) : (
