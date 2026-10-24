@@ -125,7 +125,10 @@ export function useFreshPrices(currency: string | undefined) {
 // One release's price, fetched if there isn't a fresh one
 export function usePrice(releaseId: number | undefined, currency: string | undefined) {
   const { client } = useSignedIn()
-  const entry = useLiveQuery(async () => (releaseId ? ((await db.prices.get(releaseId)) ?? null) : null), [releaseId])
+  // tagged with the release it's for: when releaseId changes, the last answer sticks around until
+  // the new one is in, and taking it for this release's would mean fetching a price that's fresh
+  const found = useLiveQuery(async () => ({ releaseId, entry: releaseId ? ((await db.prices.get(releaseId)) ?? null) : null }), [releaseId])
+  const entry = found && found.releaseId === releaseId ? found.entry : undefined
   const fresh = entry && currency && isFresh(entry, currency) ? entry : undefined
   const missing = entry !== undefined && Boolean(currency) && !fresh
   const [failed, setFailed] = useState(false)
