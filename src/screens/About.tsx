@@ -16,8 +16,8 @@ export function About() {
           <p>Platter has no accounts or analytics of its own.</p>
           <p>Everything it saves, including your sign-in, stays in this browser, and it talks to Discogs directly from your device.</p>
           <p>
-            If you log in with Discogs, each request is signed by a small Platter server first. That server doesn't keep anything and never
-            sees Discogs' replies.
+            If you log in with Discogs, each request is signed by a small Platter server first. It gets your sign-in key and the address
+            being requested, keeps neither, and never sees Discogs' replies.
           </p>
           <p>
             Other services are only used when you need them. If Discogs doesn't know a barcode, Platter checks MusicBrainz and the Cover Art
