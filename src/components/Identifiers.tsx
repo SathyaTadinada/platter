@@ -35,11 +35,10 @@ export function Identifiers({ identifiers }: { identifiers: Identifier[] }) {
               className="group flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-xs text-stone-500">
-                  {id.type}
-                  {id.description && ` · ${id.description}`}
-                </span>
+                <span className="block text-xs text-stone-500">{id.type}</span>
                 <span className="mt-0.5 block font-mono text-sm break-words">{value}</span>
+                {/* the submitter's note, e.g. which side a runout is on */}
+                {id.description && <span className="mt-0.5 block text-xs text-stone-500">{id.description}</span>}
               </span>
               <Copy size={16} className="shrink-0 text-stone-500 opacity-60 group-hover:opacity-100" aria-hidden />
             </button>
