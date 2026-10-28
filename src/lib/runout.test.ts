@@ -115,6 +115,17 @@ describe('rankByRunout', () => {
     expect(ranked.map((r) => r.item.id)).toEqual([4, 1, 2, 5, 3])
     expect(ranked[2].result.kind).toBe('nodata')
   })
+
+  it('tells releases still being checked from ones with no data, and lists them first', () => {
+    const checking = rankByRunout(releases, ['ABC 123 A2', 'ABC 123 B2'], (r) => r.ids, true)
+    expect(checking.map((r) => [r.item.id, r.result.kind])).toEqual([
+      [4, 'scored'],
+      [1, 'scored'],
+      [2, 'pending'],
+      [5, 'nodata'],
+      [3, 'scored'],
+    ])
+  })
 })
 
 describe('confidence', () => {

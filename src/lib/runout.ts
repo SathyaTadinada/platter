@@ -62,6 +62,7 @@ export function similarity(input: string, identifier: string): number {
 export type SideMatch = { input: string; identifier: Identifier; score: number }
 
 export type RunoutResult =
+  | { kind: 'pending' } // the release's details haven't come back from Discogs yet
   | { kind: 'nodata' } // Discogs has no runout info for this release
   | { kind: 'scored'; score: number; matches: SideMatch[] }
 
@@ -97,14 +98,21 @@ export function confidence(score: number): Confidence {
 
 export type Ranked<T> = { item: T; result: RunoutResult }
 
-// Good matches first, then releases with no runout data (unknown, not bad),
-// then weak or missing matches.
-export function rankByRunout<T>(items: T[], inputs: string[], identifiersOf: (item: T) => Identifier[] | undefined): Ranked<T>[] {
+// Good matches first, then releases not checked yet, then ones with no runout data (unknown,
+// not bad), then weak or missing matches. Details that never came back count as no data once
+// checking is over.
+export function rankByRunout<T>(
+  items: T[],
+  inputs: string[],
+  identifiersOf: (item: T) => Identifier[] | undefined,
+  checking = false,
+): Ranked<T>[] {
   const ranked = items.map((item) => {
     const ids = identifiersOf(item)
-    return { item, result: ids ? scoreRelease(inputs, ids) : ({ kind: 'nodata' } as RunoutResult) }
+    const result: RunoutResult = ids ? scoreRelease(inputs, ids) : { kind: checking ? 'pending' : 'nodata' }
+    return { item, result }
   })
-  const tier = (r: RunoutResult) => (r.kind === 'nodata' ? 1 : confidence(r.score) === 'none' ? 2 : 0)
+  const tier = (r: RunoutResult) => (r.kind === 'pending' ? 1 : r.kind === 'nodata' ? 2 : confidence(r.score) === 'none' ? 3 : 0)
   const score = (r: RunoutResult) => (r.kind === 'scored' ? r.score : 0)
   // stable sort keeps Discogs' own order within a tier
   return ranked

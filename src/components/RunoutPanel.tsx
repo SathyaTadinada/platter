@@ -65,8 +65,8 @@ export function RunoutPanel({
   const typed = sides.some((s) => s.trim().length >= 2)
 
   const ranked = useMemo(
-    () => (open && typed ? rankByRunout(candidates, sides, (c) => identifiers.get(c.id)) : null),
-    [open, typed, candidates, sides, identifiers],
+    () => (open && typed ? rankByRunout(candidates, sides, (c) => identifiers.get(c.id), done < candidates.length) : null),
+    [open, typed, candidates, sides, identifiers, done],
   )
   useEffect(() => onRanked(ranked), [ranked, onRanked])
 
@@ -160,6 +160,7 @@ const labels = { strong: 'Strong match', likely: 'Likely match', weak: 'Weak mat
 
 // Badge plus the identifier each side matched
 export function RunoutMatch({ result }: { result: RunoutResult }) {
+  if (result.kind === 'pending') return <p className="mt-1.5 text-xs text-stone-500">Checking runout…</p>
   if (result.kind === 'nodata') return <p className="mt-1.5 text-xs text-stone-500">No runout info on Discogs</p>
   const c = confidence(result.score)
   return (
