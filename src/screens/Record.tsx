@@ -62,7 +62,7 @@ export function Record({ id }: { id: string }) {
 
   if (item === undefined) {
     return (
-      <Screen title="" back={back}>
+      <Screen title="" back={back} width="full">
         <Spinner />
       </Screen>
     )

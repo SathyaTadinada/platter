@@ -68,7 +68,7 @@ export function Release({ id }: { id: string }) {
 
   if (release.loading && !r) {
     return (
-      <Screen title="" back={back}>
+      <Screen title="" back={back} width="full">
         <Spinner />
       </Screen>
     )

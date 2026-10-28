@@ -36,6 +36,7 @@ export function Crates() {
     <Screen
       title="Crates"
       back="/settings"
+      width={meta.loading && !meta.data ? 'full' : 'narrow'}
       actions={
         <IconButton label="New crate" onClick={() => setCreating(true)}>
           <Plus size={22} />

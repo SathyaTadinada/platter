@@ -29,7 +29,7 @@ export function Report() {
 
   if (!items || !prices || !currency || !matches) {
     return (
-      <Screen title="Collection report" back="/">
+      <Screen title="Collection report" back="/" width="full">
         <Spinner />
       </Screen>
     )

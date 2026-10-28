@@ -70,8 +70,8 @@ export function Wantlist() {
     owned?.releases.has(w.releaseId) ? 'You own this one' : owned?.masters.has(w.masterId) ? 'You own another pressing' : undefined
 
   return (
-    // the empty state centers on the whole page, like the other empty states
-    <Screen title="Wantlist" back={back} width={wants && !wants.length ? 'full' : 'narrow'}>
+    // loading and the empty state center on the whole page, like the other empty states
+    <Screen title="Wantlist" back={back} width={!wants?.length ? 'full' : 'narrow'}>
       {error && (
         <div className="mb-4">
           <Notice tone="error">{error}</Notice>
