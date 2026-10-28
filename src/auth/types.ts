@@ -7,5 +7,5 @@ export interface Auth {
   getAuthHeaders(req: SignableRequest): Promise<Record<string, string>>
   getAuthHeadersBatch(reqs: SignableRequest[]): Promise<Record<string, string>[]>
   getIdentity(): Identity
-  signOut(): Promise<void>
+  signOut(opts?: { everything?: boolean }): Promise<void>
 }

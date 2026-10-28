@@ -23,6 +23,15 @@ export function removePref(key: string) {
   }
 }
 
+// Every preference Platter keeps here
+export function clearPrefs() {
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith('platter.')) localStorage.removeItem(key)
+  } catch {
+    // blocked
+  }
+}
+
 export function writePref(key: string, value: string) {
   try {
     localStorage.setItem(key, value)

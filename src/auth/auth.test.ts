@@ -50,4 +50,14 @@ describe('sessions', () => {
     // album years stay, so signing back in doesn't look them all up again
     expect(await db.masters.get(10)).toEqual({ masterId: 10, year: 1973, at: 1 })
   })
+
+  it('can wipe everything, album years and preferences included', async () => {
+    await db.masters.put({ masterId: 10, year: 1973, at: 1 })
+    localStorage.setItem('platter.sort', 'artist')
+    localStorage.setItem('other.app', 'keep')
+    await tokenAuth('abc', id).signOut({ everything: true })
+    expect(await db.masters.count()).toBe(0)
+    expect(localStorage.getItem('platter.sort')).toBeNull()
+    expect(localStorage.getItem('other.app')).toBe('keep')
+  })
 })

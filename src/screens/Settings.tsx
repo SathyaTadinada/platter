@@ -22,8 +22,8 @@ import { getFields } from '../api/discogs/endpoints'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
-import { List, Notice, Row, Screen, Section } from '../components/ui'
-import { db, getSetting } from '../db/db'
+import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
+import { db, getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useSignOut } from '../hooks/signOut'
 import { useSync } from '../hooks/sync'
@@ -38,6 +38,9 @@ import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 import { toCsv } from '../lib/library'
 import { libraryItems } from '../lib/masters'
 import { timeAgo } from '../lib/time'
+
+const BACKED_UP_KEY = 'backedUpAt'
+const shortDay = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
@@ -57,7 +60,12 @@ export function Settings() {
     records: await db.collection.count(),
     wants: await db.wants.count(),
     syncedAt: (await db.settings.get('collectionSyncedAt'))?.value as number | undefined,
+    backedUpAt: (await db.settings.get(BACKED_UP_KEY))?.value as number | undefined,
+    // what a backup would save that Discogs doesn't have
+    localOnly: (await db.plays.count()) + (await db.covers.count()) + (await db.valueHistory.count()) > 0,
   }))
+  const [everything, setEverything] = useState(false)
+  const [backedUp, setBackedUp] = useState(false)
 
   const fields = useAsync(async () => {
     const [{ fields }, map] = await Promise.all([getFields(client, session.username), getSetting<FieldMap>('fieldMap')])
@@ -68,6 +76,7 @@ export function Settings() {
 
   async function exportBackup() {
     download(`platter-${today()}.json`, JSON.stringify(await exportLocalData(), null, 2), 'application/json')
+    await setSetting(BACKED_UP_KEY, Date.now())
   }
 
   async function exportCollection() {
@@ -90,10 +99,37 @@ export function Settings() {
         <ConfirmDialog
           title={demo ? 'Leave the demo?' : 'Sign out?'}
           action={demo ? 'Leave' : 'Sign out'}
-          onConfirm={signOut}
-          onCancel={() => setConfirming(false)}
+          onConfirm={() => signOut({ everything: !demo && everything })}
+          onCancel={() => {
+            setConfirming(false)
+            setEverything(false)
+          }}
         >
-          {demo ? 'Anything you changed in it is thrown away.' : "Platter's data on this device gets deleted. Nothing changes on Discogs."}
+          {demo ? (
+            'Anything you changed in it is thrown away.'
+          ) : (
+            <div className="space-y-4">
+              <p>Your plays and other Platter data on this device get deleted. Nothing changes on Discogs.</p>
+              {stats?.localOnly && (
+                <Button
+                  variant="secondary"
+                  className="min-h-10 w-full text-sm"
+                  disabled={backedUp}
+                  onClick={async () => {
+                    await exportBackup()
+                    setBackedUp(true)
+                  }}
+                >
+                  {backedUp ? <Check size={16} aria-hidden /> : <Download size={16} aria-hidden />}
+                  {backedUp ? 'Backed up' : 'Back up first'}
+                </Button>
+              )}
+              <label className="flex cursor-pointer items-start gap-2.5 text-stone-700 dark:text-stone-300">
+                <input type="checkbox" checked={everything} onChange={(e) => setEverything(e.target.checked)} className="mt-0.5" />
+                Delete everything, including album years and preferences
+              </label>
+            </div>
+          )}
         </ConfirmDialog>
       )}
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
@@ -177,7 +213,7 @@ export function Settings() {
               <Row
                 icon={<Download size={20} />}
                 label="Back up Platter data"
-                detail="Plays and anything else not on Discogs"
+                detail={stats?.backedUpAt ? `Last backed up ${shortDay(stats.backedUpAt)}` : 'Not backed up yet'}
                 onClick={exportBackup}
               />
               <Row

@@ -149,7 +149,11 @@ function DemoBar() {
       <p className="py-1.5">
         <b>Demo</b>
       </p>
-      <button type="button" onClick={leave} className="rounded-md bg-accent-fg px-2 py-0.5 font-medium text-accent hover:opacity-90">
+      <button
+        type="button"
+        onClick={() => leave()}
+        className="rounded-md bg-accent-fg px-2 py-0.5 font-medium text-accent hover:opacity-90"
+      >
         Exit
       </button>
     </div>

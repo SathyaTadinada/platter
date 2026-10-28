@@ -1,16 +1,19 @@
 import { db, type Session } from '../db/db'
+import { clearPrefs } from '../lib/prefs'
 import type { Auth, Identity, SignableRequest } from './types'
 
 export class AuthError extends Error {}
 
-export async function wipeLocalData() {
-  // album years and record lengths are public catalog data with nothing about the account,
-  // and looking them all up again is what made signing back in slow
-  const [years, lengths] = await Promise.all([db.masters.toArray(), db.lengths.toArray()])
+// Album years and record lengths are public catalog data with nothing about the account, and
+// looking them all up again is what made signing back in slow, so they stay unless asked.
+// `everything` also drops them and the per-device preferences (theme, accent, sort…).
+export async function wipeLocalData({ everything = false } = {}) {
+  const [years, lengths] = everything ? [[], []] : await Promise.all([db.masters.toArray(), db.lengths.toArray()])
   await db.delete()
   await db.open()
   await Promise.all([db.masters.bulkPut(years), db.lengths.bulkPut(lengths)])
   sessionStorage.clear()
+  if (everything) clearPrefs()
 }
 
 export function tokenAuth(token: string, identity: Identity): Auth {

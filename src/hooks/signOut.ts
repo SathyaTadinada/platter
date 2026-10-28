@@ -1,4 +1,6 @@
 import { useLocation } from 'wouter'
+import { setAccentScope } from '../lib/accent'
+import { applyTheme } from '../lib/theme'
 import { stopPriceCheck } from './prices'
 import { useSession } from './session'
 
@@ -7,10 +9,15 @@ import { useSession } from './session'
 export function useSignOut() {
   const { auth, setSession } = useSession()
   const [, navigate] = useLocation()
-  return async () => {
+  return async (opts?: { everything?: boolean }) => {
     stopPriceCheck()
     navigate('/', { replace: true })
     setSession(null)
-    await auth?.signOut()
+    await auth?.signOut(opts)
+    // the theme and accent go back to their defaults with the rest
+    if (opts?.everything) {
+      applyTheme()
+      setAccentScope('none')
+    }
   }
 }
