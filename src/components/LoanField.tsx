@@ -1,11 +1,10 @@
 import { useId, useState } from 'react'
 import { formatLoan, lentFor, loanName, parseLoan } from '../lib/loans'
 import { inline, Row } from './CopyDetails'
-import { Sheet } from './Sheet'
 import { toast } from './Toaster'
-import { Button } from './ui'
 
-// The Lent To field on a record page: who has it and for how long, or a way to lend it
+// The Lent To field on a record page: who has it and for how long, or the name typed in like
+// any other field (saved with today's date, so the page can say how long it's been out)
 export function LoanField({
   label,
   value,
@@ -19,12 +18,21 @@ export function LoanField({
   saved: boolean
   onSave: (v: string) => Promise<void> | void
 }) {
-  const [lending, setLending] = useState(false)
+  const id = useId()
+  const [draft, setDraft] = useState('')
   const loan = parseLoan(value)
+  const names = [...new Set(suggestions.map(loanName))]
 
   async function returned() {
     await onSave('')
     toast(`Marked as back from ${loan!.to}`, { action: { label: 'Undo', onClick: () => onSave(value) } })
+  }
+
+  async function lend() {
+    const to = draft.trim()
+    if (!to) return
+    setDraft('')
+    await onSave(formatLoan(to))
   }
 
   return (
@@ -44,70 +52,28 @@ export function LoanField({
           </button>
         </span>
       ) : (
-        <button type="button" onClick={() => setLending(true)} className={`${inline} cursor-pointer font-normal text-stone-500`}>
-          Lend it
-        </button>
-      )}
-      {lending && (
-        <LendSheet
-          names={[...new Set(suggestions.map(loanName))]}
-          onLend={(to) => {
-            setLending(false)
-            return onSave(formatLoan(to))
-          }}
-          onClose={() => setLending(false)}
-        />
-      )}
-    </Row>
-  )
-}
-
-function LendSheet({ names, onLend, onClose }: { names: string[]; onLend: (to: string) => void; onClose: () => void }) {
-  const id = useId()
-  const [to, setTo] = useState('')
-  return (
-    <Sheet
-      title="Lend it"
-      onClose={onClose}
-      bodyClassName="p-4"
-      footer={
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" form={`${id}-form`} disabled={!to.trim()}>
-            Lend
-          </Button>
-        </div>
-      }
-    >
-      <form
-        id={`${id}-form`}
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (to.trim()) onLend(to)
-        }}
-      >
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Who's borrowing it?</span>
+        <>
           <input
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
+            aria-label={label}
+            value={draft}
+            placeholder="Add"
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={lend}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
             list={names.length ? `${id}-names` : undefined}
             autoComplete="off"
             autoCapitalize="words"
-            placeholder="Name"
-            className="min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base dark:border-stone-700 dark:bg-stone-900"
+            className={inline}
           />
-        </label>
-        {names.length > 0 && (
-          <datalist id={`${id}-names`}>
-            {names.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
-        )}
-      </form>
-    </Sheet>
+          {names.length > 0 && (
+            <datalist id={`${id}-names`}>
+              {names.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+          )}
+        </>
+      )}
+    </Row>
   )
 }

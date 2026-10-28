@@ -73,20 +73,23 @@ export function CopyDetails({ item, folders, fields, matches, currency, onMove, 
           {Number.isNaN(added.getTime()) ? '' : added.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
         </span>
       </Row>
-      {fields.map((f) => {
-        const key = keyOf(f)
-        return (
-          <Field
-            key={f.id}
-            field={f}
-            kind={kindOf(f, key)}
-            value={item.fields[f.id] ?? ''}
-            currency={currency}
-            suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : key === 'lentTo' ? borrowers : []}
-            onSave={(v) => onSetField(f, v)}
-          />
-        )
-      })}
+      {/* in Discogs' order, except notes, which go last since they can run long */}
+      {[...fields]
+        .sort((a, b) => Number(kindOf(a, keyOf(a)) === 'notes') - Number(kindOf(b, keyOf(b)) === 'notes'))
+        .map((f) => {
+          const key = keyOf(f)
+          return (
+            <Field
+              key={f.id}
+              field={f}
+              kind={kindOf(f, key)}
+              value={item.fields[f.id] ?? ''}
+              currency={currency}
+              suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : key === 'lentTo' ? borrowers : []}
+              onSave={(v) => onSetField(f, v)}
+            />
+          )
+        })}
     </List>
   )
 }
