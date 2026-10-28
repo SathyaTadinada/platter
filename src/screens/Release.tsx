@@ -223,11 +223,10 @@ export function Release({ id }: { id: string }) {
               )}
             </Section>
 
-            {(r.identifiers?.length ?? 0) > 0 && (
-              <Section title="Identifiers">
-                <Identifiers identifiers={r.identifiers} />
-              </Section>
-            )}
+            {/* shown even when empty, so a pressing with nothing listed doesn't look like a missing section */}
+            <Section title="Identifiers">
+              <Identifiers identifiers={r.identifiers ?? []} />
+            </Section>
 
             <div className="lg:hidden">{tracklist}</div>
 

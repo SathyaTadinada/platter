@@ -256,9 +256,10 @@ export function Record({ id }: { id: string }) {
               </Section>
             ) : null}
 
-            {r && (r.identifiers?.length ?? 0) > 0 && (
+            {/* shown even when empty, so a pressing with nothing listed doesn't look like a missing section */}
+            {r && (
               <Section title="Identifiers">
-                <Identifiers identifiers={r.identifiers} />
+                <Identifiers identifiers={r.identifiers ?? []} />
               </Section>
             )}
 

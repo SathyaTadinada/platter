@@ -170,7 +170,7 @@ export function RunoutMatch({ result }: { result: RunoutResult }) {
       </span>
       {c !== 'none' &&
         result.matches.map((m, i) => (
-          <p key={i} className="truncate text-xs text-stone-500">
+          <p key={i} className="truncate text-xs text-stone-500" title={m.identifier.value}>
             <span className="font-mono">{m.identifier.value}</span>
             {m.identifier.description ? ` (${m.identifier.description})` : ''}
           </p>

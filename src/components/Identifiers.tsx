@@ -18,7 +18,7 @@ const ORDER = ['Barcode', 'Matrix / Runout']
 const rank = (t: string) => (ORDER.includes(t) ? ORDER.indexOf(t) : ORDER.length)
 
 export function Identifiers({ identifiers }: { identifiers: Identifier[] }) {
-  if (!identifiers.length) return <p className="text-sm text-stone-500">Nothing listed on Discogs.</p>
+  if (!identifiers.length) return <p className="px-1 text-sm text-stone-500">Nothing listed on Discogs for this pressing.</p>
   const sorted = [...identifiers].sort((a, b) => rank(a.type) - rank(b.type))
   return (
     <List>
