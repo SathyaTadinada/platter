@@ -33,7 +33,7 @@ export function ListeningStats() {
   const playedCount = rows.length - stats.never.length
   const forgotten = [...stats.dusty, ...stats.never]
 
-  const nudge = (ids.count === undefined || ids.last === undefined) && (
+  const nudge = ids && (ids.count === undefined || ids.last === undefined) && (
     <Notice tone="info">
       Plays are only kept on this device until you add Play Count and Last Played fields on Discogs.{' '}
       <Link href="/setup" className="font-medium underline underline-offset-2">

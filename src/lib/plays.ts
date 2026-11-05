@@ -19,10 +19,26 @@ export type Play = {
 
 export type PlayFields = { count?: number; last?: number } // field ids
 
-export const playFields = (matches: FieldMatch[] | null): PlayFields => ({
-  count: matches ? fieldFor(matches, 'playCount')?.id : undefined,
-  last: matches ? fieldFor(matches, 'lastPlayed')?.id : undefined,
-})
+// null while the custom fields are loading, which isn't the same as not having the fields
+export const playFields = (matches: FieldMatch[] | null): PlayFields | null =>
+  matches ? { count: fieldFor(matches, 'playCount')?.id, last: fieldFor(matches, 'lastPlayed')?.id } : null
+
+// A value that may not be known yet; get() waits for it. Logging a play waits for the field
+// ids this way, so a play logged right away still reaches Discogs.
+export function latch<T>() {
+  let value: { v: T } | null = null
+  const waiting: ((v: T) => void)[] = []
+  return {
+    set(v: T) {
+      value = { v }
+      waiting.splice(0).forEach((w) => w(v))
+    },
+    clear() {
+      value = null
+    },
+    get: (): Promise<T> => (value ? Promise.resolve(value.v) : new Promise((r) => waiting.push(r))),
+  }
+}
 
 // New Play Count and Last Played values after one more play
 export function nextPlayValues(item: Pick<LibraryItem, 'fields'>, ids: PlayFields, now: number): Record<number, string> {

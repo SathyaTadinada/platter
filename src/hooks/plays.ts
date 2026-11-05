@@ -2,10 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from '../components/Toaster'
 import { db, type LibraryItem } from '../db/db'
-import { listening, logPlay, playFields, scheduleScrobbles, trimPlays, undoPlay, type Play } from '../lib/plays'
+import { latch, listening, logPlay, playFields, scheduleScrobbles, trimPlays, undoPlay, type Play, type PlayFields } from '../lib/plays'
 import { useSignedIn } from './session'
-import { useFieldMatches } from './useFields'
+import { useFieldMatches, useFieldState } from './useFields'
 
+// The Play Count and Last Played field ids, or null while they load
 export function usePlayFields() {
   const matches = useFieldMatches()
   return useMemo(() => playFields(matches), [matches])
@@ -16,29 +17,40 @@ export function useTrimPlays() {
   const ids = usePlayFields()
   const items = useLiveQuery(() => db.collection.toArray(), [])
   useEffect(() => {
-    if (items) trimPlays(items, ids).catch(() => {})
+    if (items && ids) trimPlays(items, ids).catch(() => {})
   }, [items, ids])
 }
 
 // Logging a play from anywhere: writes the fields, shows a toast with Undo,
-// and queues the scrobble if ListenBrainz is on
+// and queues the scrobble if ListenBrainz is on. A play logged before the
+// fields have loaded waits for them.
 export function useLogPlay() {
   const { client, username } = useSignedIn()
-  const ids = usePlayFields()
+  const { matches, error } = useFieldState()
+  const ids = useMemo(() => playFields(matches), [matches])
+  const [fields] = useState(() => latch<PlayFields | Error>())
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (ids) fields.set(ids)
+    else if (error) fields.set(error)
+    else fields.clear()
+  }, [ids, error, fields])
 
   const log = useCallback(
     async (item: LibraryItem): Promise<Play | null> => {
       setBusy(true)
       try {
-        const play = await logPlay(client, username, item, ids)
+        const known = await fields.get()
+        if (known instanceof Error) throw known
+        const play = await logPlay(client, username, item, known)
         scheduleScrobbles(client)
         toast(`Logged a play of ${item.title}`, {
           tone: 'success',
           action: {
             label: 'Undo',
             onClick: () =>
-              undoPlay(client, username, play, ids).catch((e) => toast(`Couldn't undo: ${(e as Error).message}`, { tone: 'error' })),
+              undoPlay(client, username, play, known).catch((e) => toast(`Couldn't undo: ${(e as Error).message}`, { tone: 'error' })),
           },
         })
         return play
@@ -49,15 +61,15 @@ export function useLogPlay() {
         setBusy(false)
       }
     },
-    [client, username, ids],
+    [client, username, fields],
   )
-  return { log, busy, ids }
+  return { log, busy }
 }
 
 export function useListening() {
   const ids = usePlayFields()
   return useLiveQuery(async () => {
     const [items, plays] = await Promise.all([db.collection.toArray(), db.plays.toArray()])
-    return { rows: listening(items, plays, ids), plays }
-  }, [ids.count, ids.last])
+    return { rows: listening(items, plays, ids ?? {}), plays }
+  }, [ids?.count, ids?.last])
 }

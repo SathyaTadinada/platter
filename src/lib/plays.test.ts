@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { listensFor, parseDuration } from '../api/listenbrainz'
 import type { Release } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
-import { listening, listeningStats, nextPlayValues, pickToPlay, trimPlays, type Play } from './plays'
+import { matchFields } from './fields'
+import { latch, listening, listeningStats, nextPlayValues, pickToPlay, playFields, trimPlays, type Play } from './plays'
 
 const item = (instanceId: number, fields: Record<number, string> = {}) =>
   ({ instanceId, releaseId: instanceId * 10, fields }) as LibraryItem
@@ -18,6 +19,33 @@ describe('nextPlayValues', () => {
 
   it('skips fields that are not set up', () => {
     expect(nextPlayValues(item(1), { last: 9 }, day('2026-10-14'))).toEqual({ 9: '2026-10-14' })
+  })
+})
+
+describe('playFields', () => {
+  it('tells loading apart from fields that are missing', () => {
+    expect(playFields(null)).toBeNull()
+    expect(playFields([])).toEqual({ count: undefined, last: undefined })
+    const field = (id: number, name: string) => ({ id, name, type: 'textarea' as const, position: id, public: false })
+    expect(playFields(matchFields([field(8, 'Play Count'), field(9, 'Last Played')]))).toEqual(ids)
+  })
+})
+
+describe('latch', () => {
+  it('holds a play logged early until the field ids are known', async () => {
+    const fields = latch<{ count?: number; last?: number }>()
+    const early = fields.get()
+    let got: unknown
+    early.then((v) => (got = v))
+    await Promise.resolve()
+    expect(got).toBeUndefined()
+    fields.set(ids)
+    expect(await early).toEqual(ids)
+    expect(await fields.get()).toEqual(ids)
+    fields.clear()
+    const again = fields.get()
+    fields.set({ last: 9 })
+    expect(await again).toEqual({ last: 9 })
   })
 })
 

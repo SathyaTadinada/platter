@@ -5,10 +5,16 @@ import { fieldFor, matchFields, type FieldKey, type FieldMap } from '../lib/fiel
 import { useCollectionMeta } from './useCollectionMeta'
 
 // The user's custom fields lined up with Platter's, honoring manual mapping
+// (null while they load)
 export function useFieldMatches() {
+  return useFieldState().matches
+}
+
+export function useFieldState() {
   const meta = useCollectionMeta()
   const map = useLiveQuery(async () => ((await db.settings.get('fieldMap'))?.value as FieldMap | undefined) ?? {}, [])
-  return useMemo(() => (meta.data && map ? matchFields(meta.data.fields, map) : null), [meta.data, map])
+  const matches = useMemo(() => (meta.data && map ? matchFields(meta.data.fields, map) : null), [meta.data, map])
+  return { matches, error: meta.error }
 }
 
 // Values already used in a field across the collection, most common first,
