@@ -31,7 +31,9 @@ export function BulkBar({
   const [editing, setEditing] = useState(false)
   const [running, setRunning] = useState(false)
   const records = `${count} record${count === 1 ? '' : 's'}`
-  const compact = 'px-3 sm:min-h-10 sm:px-3.5 sm:text-sm'
+  // on phones the four share the row, each at least as wide as its label. The padding
+  // needs ! to win over buttonClass's own px-4.
+  const compact = 'flex-auto px-2.5! max-[379px]:px-2! max-[359px]:text-sm sm:flex-none sm:min-h-10 sm:px-3.5! sm:text-sm'
 
   // progress goes to the status pill at the bottom; the bar steps aside meanwhile
   async function track(verb: string, job: (onProgress: (d: number, t: number) => void) => Promise<void>) {
@@ -71,8 +73,8 @@ export function BulkBar({
       )}
       {/* full width on phones; on bigger screens just as wide as its buttons */}
       <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
-        <div className="flex gap-2">
-          <label className="relative min-w-0 flex-1 sm:flex-none">
+        <div className="flex gap-2 max-[379px]:gap-1.5">
+          <label className="relative flex flex-auto sm:flex-none">
             <span className={buttonClass('secondary', `w-full whitespace-nowrap ${compact}`)}>
               {/* four buttons only fit on a phone with the short label */}
               <span className="sm:hidden">Move…</span>
