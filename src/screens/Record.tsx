@@ -166,7 +166,7 @@ export function Record({ id }: { id: string }) {
               <button
                 type="button"
                 onClick={() => setPickingCover(true)}
-                className="mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
+                className="relative mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs after:absolute after:-inset-y-2.5 font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
               >
                 Change cover
               </button>

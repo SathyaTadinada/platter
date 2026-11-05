@@ -89,12 +89,17 @@ export function Toaster() {
                 t.action!.onClick()
                 dismiss(t.id)
               }}
-              className="shrink-0 rounded-lg px-2 py-1 font-semibold text-accent-400"
+              className="relative shrink-0 rounded-lg px-2 py-1 font-semibold text-accent-400 after:absolute after:-inset-y-2"
             >
               {t.action.label}
             </button>
           )}
-          <button type="button" aria-label="Dismiss" onClick={() => dismiss(t.id)} className="shrink-0 rounded-lg p-1 text-stone-400">
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => dismiss(t.id)}
+            className="relative shrink-0 rounded-lg p-1 text-stone-400 after:absolute after:-inset-2.5"
+          >
             <X size={16} />
           </button>
         </div>

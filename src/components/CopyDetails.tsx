@@ -176,7 +176,7 @@ export function Field({
               aria-label="One fewer"
               disabled={n === 0}
               onClick={() => commit(String(n - 1))}
-              className="rounded-full p-1.5 hover:bg-stone-100 disabled:opacity-30 dark:hover:bg-stone-800"
+              className="relative rounded-full p-1.5 after:absolute after:-inset-2 hover:bg-stone-100 disabled:opacity-30 dark:hover:bg-stone-800"
             >
               <Minus size={16} />
             </button>
@@ -185,7 +185,7 @@ export function Field({
               type="button"
               aria-label="One more"
               onClick={() => commit(String(n + 1))}
-              className="rounded-full p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800"
+              className="relative rounded-full p-1.5 after:absolute after:-inset-2 hover:bg-stone-100 dark:hover:bg-stone-800"
             >
               <Plus size={16} />
             </button>

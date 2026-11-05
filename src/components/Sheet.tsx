@@ -73,7 +73,7 @@ export function Sheet({
           type="button"
           aria-label="Close"
           onClick={onClose}
-          className="-mr-2 shrink-0 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800"
+          className="relative -mr-2 shrink-0 rounded-full p-2 after:absolute after:-inset-1 hover:bg-stone-100 dark:hover:bg-stone-800"
         >
           <X size={20} />
         </button>

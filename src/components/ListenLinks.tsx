@@ -5,7 +5,7 @@ import { allServicesUrl, findAppleAlbum, searchLinks } from '../lib/listen'
 import { toast } from './Toaster'
 
 const pill =
-  'inline-flex items-center whitespace-nowrap rounded-full bg-stone-900/5 px-2 py-1.5 text-xs font-medium sm:px-3 hover:bg-stone-900/10 disabled:opacity-50 dark:bg-white/10 dark:hover:bg-white/15'
+  'relative inline-flex items-center whitespace-nowrap rounded-full after:absolute after:-inset-y-2 bg-stone-900/5 px-2 py-1.5 text-xs font-medium sm:px-3 hover:bg-stone-900/10 disabled:opacity-50 dark:bg-white/10 dark:hover:bg-white/15'
 
 // Where to hear it. Apple Music and "All services" look up the exact album when
 // tapped (nothing is sent anywhere before that); the rest are plain searches.

@@ -31,7 +31,7 @@ function EditableStars({ value, onChange, size }: { value: number; onChange: (n:
           onMouseEnter={() => setHover(n)}
           // clicking the current rating clears it
           onClick={() => onChange(value === n ? 0 : n)}
-          className="p-1 text-accent transition-transform hover:scale-110"
+          className="relative p-1 text-accent transition-transform after:absolute after:-inset-y-2 hover:scale-110"
         >
           <Star
             size={size}

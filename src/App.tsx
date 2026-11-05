@@ -152,7 +152,7 @@ function DemoBar() {
       <button
         type="button"
         onClick={() => leave()}
-        className="rounded-md bg-accent-fg px-2 py-0.5 font-medium text-accent hover:opacity-90"
+        className="relative rounded-md bg-accent-fg px-2 py-0.5 font-medium text-accent after:absolute after:-inset-x-0.5 after:-inset-y-2.5 hover:opacity-90"
       >
         Exit
       </button>
