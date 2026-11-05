@@ -97,39 +97,35 @@ export function Settings() {
     <Screen title="Settings" width="wide">
       {confirming && (
         <ConfirmDialog
-          title={demo ? 'Leave the demo?' : 'Sign out?'}
-          action={demo ? 'Leave' : 'Sign out'}
-          onConfirm={() => signOut({ everything: !demo && everything })}
+          title="Sign out?"
+          action="Sign out"
+          onConfirm={() => signOut({ everything })}
           onCancel={() => {
             setConfirming(false)
             setEverything(false)
           }}
         >
-          {demo ? (
-            'Anything you changed in it is thrown away.'
-          ) : (
-            <div className="space-y-4">
-              <p>Your plays and other Platter data on this device get deleted. Nothing changes on Discogs.</p>
-              {stats?.localOnly && (
-                <Button
-                  variant="secondary"
-                  className="min-h-10 w-full text-sm"
-                  disabled={backedUp}
-                  onClick={async () => {
-                    await exportBackup()
-                    setBackedUp(true)
-                  }}
-                >
-                  {backedUp ? <Check size={16} aria-hidden /> : <Download size={16} aria-hidden />}
-                  {backedUp ? 'Backed up' : 'Back up first'}
-                </Button>
-              )}
-              <label className="flex cursor-pointer items-start gap-2.5 text-stone-700 dark:text-stone-300">
-                <input type="checkbox" checked={everything} onChange={(e) => setEverything(e.target.checked)} className="mt-0.5" />
-                Delete everything, including album years and preferences
-              </label>
-            </div>
-          )}
+          <div className="space-y-4">
+            <p>Your plays and other Platter data on this device get deleted. Nothing changes on Discogs.</p>
+            {stats?.localOnly && (
+              <Button
+                variant="secondary"
+                className="min-h-10 w-full text-sm"
+                disabled={backedUp}
+                onClick={async () => {
+                  await exportBackup()
+                  setBackedUp(true)
+                }}
+              >
+                {backedUp ? <Check size={16} aria-hidden /> : <Download size={16} aria-hidden />}
+                {backedUp ? 'Backed up' : 'Back up first'}
+              </Button>
+            )}
+            <label className="flex cursor-pointer items-start gap-2.5 text-stone-700 dark:text-stone-300">
+              <input type="checkbox" checked={everything} onChange={(e) => setEverything(e.target.checked)} className="mt-0.5" />
+              Delete everything, including album years and preferences
+            </label>
+          </div>
         </ConfirmDialog>
       )}
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
@@ -148,7 +144,12 @@ export function Settings() {
                   className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
                 />
               </li>
-              <Row icon={<LogOut size={20} />} label={demo ? 'Leave demo' : 'Sign out'} danger onClick={() => setConfirming(true)} />
+              <Row
+                icon={<LogOut size={20} />}
+                label={demo ? 'Leave demo' : 'Sign out'}
+                danger
+                onClick={() => (demo ? signOut() : setConfirming(true))}
+              />
             </List>
           </Section>
 
