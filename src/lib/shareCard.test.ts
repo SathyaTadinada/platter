@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import type { LibraryItem } from '../db/db'
-import { cardFacts, cardRows, wrapText } from './shareCard'
+import { cardAlt, cardFacts, cardRows, wrapText } from './shareCard'
 
 const item = (p: Partial<LibraryItem>) => ({ title: 'T', artist: 'A', year: 0, genres: [], dateAdded: '2020-01-01', ...p }) as LibraryItem
+
+describe('cardAlt', () => {
+  it('reads out what the card shows', () => {
+    const card = {
+      heading: "sam's collection",
+      count: 1204,
+      unit: 'records',
+      rows: [
+        ['Worth', '$1,550'],
+        ['Most played', 'AM', 'Arctic Monkeys'],
+      ],
+    }
+    expect(cardAlt(card as Parameters<typeof cardAlt>[0])).toBe(
+      `sam's collection: ${(1204).toLocaleString()} records. Worth: $1,550. Most played: AM, Arctic Monkeys`,
+    )
+  })
+})
 
 describe('share card', () => {
   const items = [

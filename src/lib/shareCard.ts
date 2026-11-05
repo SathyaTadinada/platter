@@ -66,6 +66,12 @@ export const collectionCard = (f: CardFacts): ShareCard => ({
   note: f.value ? 'Prices from Discogs' : undefined,
 })
 
+// The card in words, for the preview's alt text
+export function cardAlt(card: ShareCard): string {
+  const rows = card.rows.slice(0, 4).map(([label, main, sub]) => `${label}: ${main}${sub ? `, ${sub}` : ''}`)
+  return [`${card.heading}: ${card.count.toLocaleString()} ${card.unit}`, ...rows, card.note].filter(Boolean).join('. ')
+}
+
 export const CARD = { width: 1080, height: 1350 }
 
 export type CardTheme = 'light' | 'dark'

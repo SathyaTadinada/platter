@@ -6,7 +6,7 @@ import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
-import { CARD, cardFacts, collectionCard, drawCard, type CardTheme, type ShareCard } from '../lib/shareCard'
+import { CARD, cardAlt, cardFacts, collectionCard, drawCard, type CardTheme, type ShareCard } from '../lib/shareCard'
 import { formatMoney } from '../lib/value'
 import { toast } from './Toaster'
 import { Sheet } from './Sheet'
@@ -115,7 +115,7 @@ export function ShareSheet({ card, name, onClose }: { card?: ShareCard; name: st
         style={{ aspectRatio: `${CARD.width} / ${CARD.height}` }}
       >
         {image ? (
-          <img src={image.url} alt={card?.heading ?? ''} className="size-full" />
+          <img src={image.url} alt={card ? cardAlt(card) : ''} className="size-full" />
         ) : (
           <div className="grid size-full place-items-center">
             <Spinner />
