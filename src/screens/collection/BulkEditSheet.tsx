@@ -77,7 +77,6 @@ export function BulkEditSheet({
         </div>
       }
     >
-      <p className="px-1 text-sm text-stone-500">Only the fields you change are updated.</p>
       <List>
         {shown.map((f) => {
           const key = keyOf(f)
