@@ -13,7 +13,31 @@ let nextId = 1
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((fn) => fn())
 
+// Each toast's countdown, paused while the pointer or focus is on it
+type Timer = { left: number; started: number; handle?: ReturnType<typeof setTimeout>; hover: boolean; focus: boolean }
+const timers = new Map<number, Timer>()
+
+function start(id: number) {
+  const t = timers.get(id)
+  if (!t || t.hover || t.focus) return
+  t.started = Date.now()
+  t.handle = setTimeout(() => dismiss(id), t.left)
+}
+
+export function hold(id: number, why: 'hover' | 'focus', on: boolean) {
+  const t = timers.get(id)
+  if (!t || t[why] === on) return
+  const wasHeld = t.hover || t.focus
+  t[why] = on
+  if (on && !wasHeld) {
+    clearTimeout(t.handle)
+    t.left -= Date.now() - t.started
+  } else if (!on) start(id)
+}
+
 export function dismiss(id: number) {
+  clearTimeout(timers.get(id)?.handle)
+  timers.delete(id)
   toasts = toasts.filter((t) => t.id !== id)
   emit()
 }
@@ -22,11 +46,14 @@ export function dismiss(id: number) {
 // stacked twice; showing it again just restarts its timer.
 export function toast(message: string, opts: { tone?: Toast['tone']; action?: Toast['action'] } = {}) {
   const tone = opts.tone ?? 'info'
-  toasts = toasts.filter((t) => t.message !== message)
+  for (const old of toasts) if (old.message === message) dismiss(old.id)
   const t: Toast = { id: nextId++, message, tone, action: opts.action }
-  toasts = [...toasts.slice(-2), t]
+  for (const old of toasts.slice(0, -2)) dismiss(old.id)
+  toasts = [...toasts, t]
   emit()
-  setTimeout(() => dismiss(t.id), tone === 'error' ? 10_000 : 5_000)
+  // longer when there's something to read or tap
+  timers.set(t.id, { left: tone === 'error' || t.action ? 10_000 : 5_000, started: 0, hover: false, focus: false })
+  start(t.id)
 }
 
 const subscribe = (fn: () => void) => {
@@ -43,6 +70,10 @@ export function Toaster() {
         <div
           key={t.id}
           role={t.tone === 'error' ? 'alert' : 'status'}
+          onPointerEnter={() => hold(t.id, 'hover', true)}
+          onPointerLeave={() => hold(t.id, 'hover', false)}
+          onFocus={() => hold(t.id, 'focus', true)}
+          onBlur={(e) => hold(t.id, 'focus', e.currentTarget.contains(e.relatedTarget))}
           className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl bg-stone-900 py-2.5 pr-2 pl-4 text-sm text-stone-100 shadow-lg ring-1 ring-white/10 dark:bg-stone-800"
         >
           {t.tone === 'error' ? (
