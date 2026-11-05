@@ -14,6 +14,7 @@ import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
 import { change, formatMoney, valueOf } from '../lib/value'
 import { RecordRow } from '../components/stats'
 import { PriceCoverage } from '../components/PriceCoverage'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { card, shortDate, type Money, type Valued } from './value/shared'
 import { Delta, Chart } from './value/ValueChart'
 import { PaidVsNow } from './value/PaidVsNow'
@@ -151,14 +152,7 @@ export function ValueStats() {
           ))}
       </div>
       <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
-        <a
-          href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
-          target="_blank"
-          rel="noopener"
-          className="text-stone-500 underline underline-offset-2"
-        >
-          Data provided by Discogs.
-        </a>
+        <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </footer>
     </>
   )

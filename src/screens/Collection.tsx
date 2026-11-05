@@ -55,6 +55,7 @@ import { SYNC_MAX_AGE } from '../lib/sync'
 import { FieldNudge } from './FieldNudge'
 import { readChoice, writePref } from '../lib/prefs'
 import { PriceCoverage } from '../components/PriceCoverage'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { GridTile, ListRow, LoadMore } from './collection/RecordTiles'
 import { ActiveFilters } from './collection/ActiveFilters'
 import { BulkBar } from './collection/BulkBar'
@@ -465,14 +466,7 @@ export function Collection() {
         ))}
         {filtered.length > limit && <LoadMore onVisible={() => setLimit((n) => n + PAGE)} />}
         <footer className="mt-4 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
-          <a
-            href={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`}
-            target="_blank"
-            rel="noopener"
-            className="text-stone-500 underline underline-offset-2"
-          >
-            Data provided by Discogs.
-          </a>
+          <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
         </footer>
       </>
     )

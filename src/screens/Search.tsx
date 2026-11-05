@@ -3,6 +3,8 @@ import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
+import { DiscogsCredit } from '../components/ReleaseCardView'
+import { useSignedIn } from '../hooks/session'
 import { Button, buttonClass, List, Screen, Section } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
@@ -221,6 +223,7 @@ function RecentSearches() {
 
 // Desktop only: a quick way back to what was just added
 function RecentlyAdded() {
+  const { username } = useSignedIn()
   const items = useLiveQuery(() => db.collection.orderBy('dateAdded').reverse().limit(5).toArray(), [])
   if (!items?.length) return null
   return (
@@ -242,6 +245,9 @@ function RecentlyAdded() {
             </li>
           ))}
         </List>
+        <p className="mt-2 px-1">
+          <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
+        </p>
       </Section>
     </div>
   )

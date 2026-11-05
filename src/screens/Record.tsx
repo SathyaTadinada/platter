@@ -1,5 +1,4 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ExternalLink as ExternalIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/discogs/endpoints'
@@ -11,6 +10,7 @@ import { Identifiers } from '../components/Identifiers'
 import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
 import { PlayButton } from '../components/PlayButton'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { ShareButton } from '../components/ShareButton'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
@@ -266,15 +266,7 @@ export function Record({ id }: { id: string }) {
             <div className="lg:hidden">{tracklist}</div>
 
             <Section>
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center gap-1 text-sm text-stone-500 underline underline-offset-2"
-              >
-                Data provided by Discogs.
-                <ExternalIcon size={14} aria-hidden />
-              </a>
+              <DiscogsCredit url={url} />
             </Section>
 
             <Section>

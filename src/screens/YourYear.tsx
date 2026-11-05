@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../components/Cover'
 import { formatDay } from '../components/DateInput'
+import { DiscogsCredit } from '../components/ReleaseCardView'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
 import { ShareSheet } from '../components/ShareSheet'
 import { Card, IconButton, Screen, Section, Spinner } from '../components/ui'
@@ -83,7 +84,7 @@ export function YourYear({ year: asked }: { year?: string }) {
         )
       }
     >
-      {!r || !currency ? <Spinner /> : <Review r={r} currency={currency} />}
+      {!r || !currency ? <Spinner /> : <Review r={r} currency={currency} username={username} />}
       {sharing && <ShareSheet card={card} name={`${username}-${year}`} onClose={() => setSharing(false)} />}
     </Screen>
   )
@@ -113,7 +114,7 @@ function YearButton({
   )
 }
 
-function Review({ r, currency }: { r: YearReview; currency: string }) {
+function Review({ r, currency, username }: { r: YearReview; currency: string; username: string }) {
   const { year } = r
   if (!r.added.length && !r.plays) {
     return (
@@ -233,6 +234,9 @@ function Review({ r, currency }: { r: YearReview; currency: string }) {
           </Section>
         )}
       </div>
+      <p className="mt-2">
+        <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
+      </p>
     </div>
   )
 }
