@@ -11,7 +11,7 @@ const variants: Record<Variant, string> = {
   secondary: 'bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-100 active:opacity-80 hover:opacity-90',
   ghost: 'text-stone-700 dark:text-stone-300 active:bg-stone-200 hover:bg-stone-100 dark:active:bg-stone-800 dark:hover:bg-stone-900',
   // red text for anything that removes or leaves; solid red only for the final yes in a confirmation
-  destructive: 'bg-stone-200 text-red-600 dark:bg-stone-800 dark:text-red-400 active:opacity-80 hover:opacity-90',
+  destructive: 'bg-stone-200 text-red-700 dark:bg-stone-800 dark:text-red-400 active:opacity-80 hover:opacity-90',
   danger: 'bg-red-600 text-white active:opacity-80',
 }
 

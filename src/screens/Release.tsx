@@ -153,7 +153,7 @@ export function Release({ id }: { id: string }) {
           )}
 
           {copyCount > 0 && (
-            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent dark:bg-accent/20">
+            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-700 dark:bg-accent/20 dark:text-accent">
               <Check size={16} aria-hidden />
               {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
             </p>

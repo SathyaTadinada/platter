@@ -132,7 +132,7 @@ function ShopRow({ barcode }: { barcode: string }) {
           {check && (
             <span className="mt-1.5 flex flex-wrap gap-1">
               {check.owned ? (
-                <span className={`${badge} bg-accent-100 text-accent dark:bg-accent/20`}>You own this</span>
+                <span className={`${badge} bg-accent-100 text-accent-700 dark:bg-accent/20 dark:text-accent`}>You own this</span>
               ) : check.otherPressing ? (
                 <span className={`${badge} bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300`}>
                   You own another pressing

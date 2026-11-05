@@ -16,7 +16,7 @@ export function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: n
         <Icon size={14} aria-hidden />
         {rising ? '+' : '−'}
         {money(Math.abs(abs))}
-        {ratio !== undefined && <span className="font-medium opacity-80">· {Math.abs(Math.round(ratio * 100))}%</span>}
+        {ratio !== undefined && <span className="font-medium">· {Math.abs(Math.round(ratio * 100))}%</span>}
       </span>
       {suffix && <span className="text-stone-500">{suffix}</span>}
     </span>
