@@ -83,7 +83,7 @@ export function Wantlist() {
         <div className="py-12 text-center">
           <Heart size={40} className="mx-auto text-stone-400" aria-hidden />
           <p className="mt-3 font-semibold">Nothing on your wantlist</p>
-          <p className="mt-1 text-sm text-stone-500">Search for a record and tap Add to wantlist.</p>
+          <p className="mt-1 text-sm text-stone-500">Tap the heart on a record to add it here.</p>
         </div>
       ) : (
         <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
