@@ -24,13 +24,14 @@ export function CoverSheet({ item, release, onClose }: { item: LibraryItem; rele
     >
       {images.length ? (
         <ul className="grid grid-cols-3 gap-2">
-          {images.map((img) => {
+          {images.map((img, i) => {
             const current = img.uri === item.cover
             return (
               <li key={img.uri}>
                 <button
                   type="button"
                   aria-pressed={current}
+                  aria-label={`Photo ${i + 1} of ${images.length}`}
                   onClick={() => chooseCover(item, img.uri, img.uri150).then(onClose)}
                   className={`relative block w-full overflow-hidden rounded-lg ring-2 ${current ? 'ring-accent' : 'ring-transparent'}`}
                 >
