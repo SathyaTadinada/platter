@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'wouter'
 import { deleteFolder, renameFolder } from '../api/discogs/endpoints'
@@ -52,7 +52,7 @@ export function Crates() {
 
       <List>
         {folders.map((f) => (
-          <li key={f.id} className="flex min-h-14 items-center gap-2 px-4 py-2">
+          <li key={f.id} className={`flex min-h-14 ${editing === f.id ? 'items-center gap-2 px-4 py-2' : ''}`}>
             {editing === f.id ? (
               <form
                 className="flex flex-1 flex-wrap items-center gap-2 sm:flex-nowrap"
@@ -77,14 +77,21 @@ export function Crates() {
               </form>
             ) : (
               <>
-                <Link href={`/?folder=${f.id}`} className="min-w-0 flex-1">
-                  <span className="block truncate">{f.name}</span>
-                  <span className="text-sm text-stone-500">
-                    {f.count} record{f.count === 1 ? '' : 's'}
+                {/* opens the crate in Collection, like a Row link */}
+                <Link
+                  href={`/?folder=${f.id}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{f.name}</span>
+                    <span className="text-sm text-stone-500">
+                      {f.count} record{f.count === 1 ? '' : 's'}
+                    </span>
                   </span>
+                  <ChevronRight size={18} className="shrink-0 text-stone-400" aria-hidden />
                 </Link>
                 {f.id !== UNCATEGORIZED && (
-                  <>
+                  <span className="flex items-center gap-2 pr-2">
                     <IconButton
                       label={`Rename ${f.name}`}
                       onClick={() => {
@@ -101,7 +108,7 @@ export function Crates() {
                     >
                       <Trash2 size={18} />
                     </IconButton>
-                  </>
+                  </span>
                 )}
               </>
             )}
