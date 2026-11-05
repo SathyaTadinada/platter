@@ -81,9 +81,7 @@ export function ListeningStats() {
       </div>
 
       <div>
-        <Section title="Stylus">
-          <Stylus />
-        </Section>
+        <Stylus />
 
         <Section title="Recently played">
           <List rows={stats.recent.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />

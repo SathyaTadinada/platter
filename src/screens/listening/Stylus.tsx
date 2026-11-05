@@ -6,7 +6,7 @@ import { formatDay } from '../../lib/time'
 import { Sheet } from '../../components/Sheet'
 import { statCard } from '../../components/stats'
 import { toast } from '../../components/Toaster'
-import { Button, List } from '../../components/ui'
+import { Button, List, Section } from '../../components/ui'
 import { db } from '../../db/db'
 import { checkPrices, useCurrency, usePriceCheck } from '../../hooks/prices'
 import { useSignedIn } from '../../hooks/session'
@@ -16,7 +16,8 @@ import { localDate } from '../../lib/value'
 const hours = (h: number) => (h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString())
 const dayStart = (iso: string) => new Date(`${iso}T00:00`).getTime()
 
-// Hours on the stylus, in the Listening view
+// Hours on the stylus, in the Listening view. The section (heading and all) waits for the
+// numbers, so the heading doesn't show alone.
 export function Stylus() {
   const { client, session } = useSignedIn()
   const currency = useCurrency()
@@ -53,61 +54,64 @@ export function Stylus() {
   }
 
   return (
-    <div className={`${statCard} p-4`}>
-      <div className="flex items-baseline justify-between gap-3">
-        <p>
-          <span className="text-2xl font-bold tabular-nums">{hours(use.hours)}</span> <span className="text-sm text-stone-500">hours</span>
-        </p>
-        <p className="text-right text-sm text-stone-500">
-          {!settings.since
-            ? 'since your first logged play'
-            : localDate(settings.since) === localDate(Date.now())
-              ? 'since today'
-              : `since ${formatDay(localDate(settings.since))}`}
-        </p>
-      </div>
-      <div
-        role="progressbar"
-        aria-label="Stylus wear"
-        aria-valuemin={0}
-        aria-valuemax={settings.lifespan}
-        aria-valuenow={Math.round(use.hours)}
-        className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"
-      >
+    <Section title="Stylus">
+      <div className={`${statCard} p-4`}>
+        <div className="flex items-baseline justify-between gap-3">
+          <p>
+            <span className="text-2xl font-bold tabular-nums">{hours(use.hours)}</span>{' '}
+            <span className="text-sm text-stone-500">hours</span>
+          </p>
+          <p className="text-right text-sm text-stone-500">
+            {!settings.since
+              ? 'since your first logged play'
+              : localDate(settings.since) === localDate(Date.now())
+                ? 'since today'
+                : `since ${formatDay(localDate(settings.since))}`}
+          </p>
+        </div>
         <div
-          className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-accent'}`}
-          style={{ width: `${Math.max(share * 100, use.hours ? 1 : 0)}%` }}
-        />
+          role="progressbar"
+          aria-label="Stylus wear"
+          aria-valuemin={0}
+          aria-valuemax={settings.lifespan}
+          aria-valuenow={Math.round(use.hours)}
+          className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"
+        >
+          <div
+            className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-accent'}`}
+            style={{ width: `${Math.max(share * 100, use.hours ? 1 : 0)}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between gap-3 text-sm text-stone-500">
+          <p className={over ? 'font-medium text-red-600 dark:text-red-400' : ''}>
+            {over
+              ? `Past ${settings.lifespan.toLocaleString()} hours`
+              : `${Math.round(settings.lifespan - use.hours).toLocaleString()} of ${settings.lifespan.toLocaleString()} hours left`}
+          </p>
+          <p className="tabular-nums">
+            {use.plays.toLocaleString()} play{use.plays === 1 ? '' : 's'}
+          </p>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button variant="secondary" onClick={fitted}>
+            New stylus
+          </Button>
+          <Button variant="secondary" onClick={() => setEditing(true)}>
+            Edit
+          </Button>
+        </div>
+        {editing && (
+          <StylusSheet
+            settings={settings}
+            onSave={async (s) => {
+              await saveStylusSettings(s)
+              setEditing(false)
+            }}
+            onClose={() => setEditing(false)}
+          />
+        )}
       </div>
-      <div className="mt-2 flex justify-between gap-3 text-sm text-stone-500">
-        <p className={over ? 'font-medium text-red-600 dark:text-red-400' : ''}>
-          {over
-            ? `Past ${settings.lifespan.toLocaleString()} hours`
-            : `${Math.round(settings.lifespan - use.hours).toLocaleString()} of ${settings.lifespan.toLocaleString()} hours left`}
-        </p>
-        <p className="tabular-nums">
-          {use.plays.toLocaleString()} play{use.plays === 1 ? '' : 's'}
-        </p>
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button variant="secondary" onClick={fitted}>
-          New stylus
-        </Button>
-        <Button variant="secondary" onClick={() => setEditing(true)}>
-          Edit
-        </Button>
-      </div>
-      {editing && (
-        <StylusSheet
-          settings={settings}
-          onSave={async (s) => {
-            await saveStylusSettings(s)
-            setEditing(false)
-          }}
-          onClose={() => setEditing(false)}
-        />
-      )}
-    </div>
+    </Section>
   )
 }
 
