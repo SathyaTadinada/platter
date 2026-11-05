@@ -3,7 +3,8 @@ import type { LibraryItem, WantItem } from '../db/db'
 import { ALL_MEDIA, cleanArtist, cleanLabel, describeFormats, realImage, splitTitle } from './format'
 import { fieldFor, matchFields } from './fields'
 import { loanName } from './loans'
-import { valueBracket } from './value'
+import { formatDay } from './time'
+import { parseMoney, PRICE_RANGES, rangeLabel, valueBracket } from './value'
 import { readChoice, writePref } from './prefs'
 
 // what the Format filter offers; "All Media" isn't a format (see format.ts)
@@ -257,7 +258,9 @@ function passes(i: LibraryItem, f: Filters, skip?: FacetKey): boolean {
   if (skip !== 'rating' && f.rating && i.rating < f.rating) return false
   for (const [id, v] of Object.entries(f.fields)) {
     if (skip === `field:${id}`) continue
-    if (loanName(i.fields[Number(id)] ?? '') !== v) return false
+    const value = i.fields[Number(id)] ?? ''
+    const range = priceRange(v)
+    if (range ? !inRange(parseMoney(value), range) : loanName(value) !== v) return false
   }
   return true
 }
@@ -374,6 +377,13 @@ export function groupItems(items: LibraryItem[], sort: SortKey, ctx: SortContext
 
 // ---- facets ----
 
+// a purchase price filter is a range, like "range:10-20" or "range:100-"
+const priceRange = (v: string): [number, number] | undefined => {
+  const m = /^range:(\d+)-(\d*)$/.exec(v)
+  return m ? [Number(m[1]), m[2] ? Number(m[2]) : Infinity] : undefined
+}
+const inRange = (n: number | undefined, [lo, hi]: [number, number]) => n !== undefined && n >= lo && n < hi
+
 export type FacetOption = { value: string; label: string; count: number }
 
 function count(values: string[][]): FacetOption[] {
@@ -399,12 +409,44 @@ const MAX_FIELD_VALUES = 40 // free-text fields with more values than this aren'
 
 // Counts for each filter, ignoring that filter itself, so you can see what
 // switching to another value would give.
-export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[], fields: CollectionField[]): Facets {
+export function facets(
+  items: LibraryItem[],
+  q: LibraryQuery,
+  folders: Folder[],
+  fields: CollectionField[],
+  money: (n: number) => string = String,
+): Facets {
   const words = wordsOf(q.q)
   const base = items.filter((i) => matchesText(i, words))
   const without = (k: FacetKey) => base.filter((i) => passes(i, q.filters, k))
   const folderName = new Map(folders.map((f) => [String(f.id), f.name]))
-  const playCount = fieldFor(matchFields(fields), 'playCount')?.id
+  const matches = matchFields(fields)
+  const [playCount, paid] = [fieldFor(matches, 'playCount')?.id, fieldFor(matches, 'purchasePrice')?.id]
+  const dates = new Set([fieldFor(matches, 'lastPlayed')?.id, fieldFor(matches, 'purchaseDate')?.id])
+
+  const fieldOptions = (field: CollectionField) => {
+    const list = without(`field:${field.id}`)
+    // prices go in ranges, as in the By price chart
+    if (field.id === paid)
+      return PRICE_RANGES.map((r) => ({
+        value: `range:${r[0]}-${r[1] === Infinity ? '' : r[1]}`,
+        label: rangeLabel(r, money),
+        count: list.filter((i) => inRange(parseMoney(i.fields[field.id] ?? ''), r)).length,
+      })).filter((o) => o.count > 0)
+    const options = count(
+      list.map((i) => {
+        const v = i.fields[field.id]
+        // a play count of 0 is the same as never played; a loan goes by who has it
+        return v && !(field.id === playCount && v === '0') ? [loanName(v)] : []
+      }),
+    )
+    // dates read as dates, newest first
+    if (dates.has(field.id))
+      return options
+        .map((o) => (/^\d{4}-\d{2}-\d{2}$/.test(o.value) ? { ...o, label: formatDay(o.value) } : o))
+        .sort((a, b) => byText(b.value, a.value))
+    return options
+  }
 
   const decade = count(without('decade').map((i) => [String(decadeOf(yearOf(i)))]))
     .map((o) => ({ ...o, label: o.value === '0' ? 'Unknown' : `${o.value}s` }))
@@ -432,16 +474,7 @@ export function facets(items: LibraryItem[], q: LibraryQuery, folders: Folder[],
     decade,
     rating: rating.filter((r) => r.count > 0),
     fields: fields
-      .map((field) => ({
-        field,
-        options: count(
-          without(`field:${field.id}`).map((i) => {
-            const v = i.fields[field.id]
-            // a play count of 0 is the same as never played; a loan goes by who has it
-            return v && !(field.id === playCount && v === '0') ? [loanName(v)] : []
-          }),
-        ),
-      }))
+      .map((field) => ({ field, options: fieldOptions(field) }))
       .filter((f) => f.options.length > 0 && f.options.length <= MAX_FIELD_VALUES),
   }
 }

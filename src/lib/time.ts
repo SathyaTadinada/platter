@@ -9,6 +9,10 @@ export function timeAgo(ts: number, now = Date.now()): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
+// "Oct 14, 2026" from "2026-10-14"
+export const formatDay = (iso: string) =>
+  new Date(`${iso}T12:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+
 // For play dates: "today", "yesterday", "5 days ago", then a plain date
 export function dayAgo(ts: number, now = Date.now()): string {
   const start = (t: number) => new Date(new Date(t).toDateString()).getTime()

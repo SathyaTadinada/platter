@@ -131,18 +131,23 @@ export function change(from: number, to: number) {
 
 export type Bucket = { label: string; count: number; total: number }
 
+// Price ranges for the By price chart and the purchase price filter
+export const PRICE_RANGES: [number, number][] = [
+  [0, 10],
+  [10, 20],
+  [20, 50],
+  [50, 100],
+  [100, Infinity],
+]
+
+export const rangeLabel = ([lo, hi]: [number, number], money: (n: number) => string) =>
+  lo === 0 ? `Under ${money(hi)}` : hi === Infinity ? `${money(lo)}+` : `${money(lo)}–${money(hi)}`
+
 // How many records fall in each price range, and what they add up to. Cheapest first.
 export function distribution(amounts: number[], money: (n: number) => string): Bucket[] {
-  const ranges: [number, number, string][] = [
-    [0, 10, `Under ${money(10)}`],
-    [10, 20, `${money(10)}–${money(20)}`],
-    [20, 50, `${money(20)}–${money(50)}`],
-    [50, 100, `${money(50)}–${money(100)}`],
-    [100, Infinity, `${money(100)}+`],
-  ]
-  return ranges.map(([lo, hi, label]) => {
+  return PRICE_RANGES.map(([lo, hi]) => {
     const inRange = amounts.filter((a) => a >= lo && a < hi)
-    return { label, count: inRange.length, total: inRange.reduce((n, a) => n + a, 0) }
+    return { label: rangeLabel([lo, hi], money), count: inRange.length, total: inRange.reduce((n, a) => n + a, 0) }
   })
 }
 

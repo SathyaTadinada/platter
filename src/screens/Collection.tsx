@@ -150,7 +150,11 @@ export function Collection() {
     if (all.length < 2 || filtered.length / all.length < 3) return [{ key: 'all', label: '', items: shown }]
     return groupItems(shown, query.sort, sortCtx)
   }, [filtered, limit, query.sort, sortCtx])
-  const facets = useMemo(() => (items ? buildFacets(items, query, folders, fields) : null), [items, query, folders, fields])
+  const facets = useMemo(
+    () =>
+      items ? buildFacets(items, query, folders, fields, currency ? (n) => formatMoney(n, currency, { whole: true }) : undefined) : null,
+    [items, query, folders, fields, currency],
+  )
 
   const fresh = syncedAt !== undefined && Date.now() - syncedAt < SYNC_MAX_AGE
   const nFilters = activeFilterCount(query.filters)

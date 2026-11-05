@@ -183,6 +183,25 @@ describe('facets', () => {
     expect(f.fields[0].options.map((o) => o.value)).toEqual(['3'])
   })
 
+  it('groups purchase prices into ranges and shows dates as dates', () => {
+    const field = (id: number, name: string) => ({ id, name, type: 'textarea', position: id, public: false }) as CollectionField
+    const custom = [field(4, 'Purchase Price'), field(5, 'Last Played')]
+    const list = [
+      { ...items[0], fields: { 4: '$12.50', 5: '2026-03-04' } },
+      { ...items[1], fields: { 4: '15', 5: '2026-10-14' } },
+      { ...items[2], fields: { 4: '$140', 5: '' } },
+    ]
+    const [price, played] = facets(list, q(), folders, custom, (n) => `$${n}`).fields
+    expect(price.options).toEqual([
+      { value: 'range:10-20', label: '$10–$20', count: 2 },
+      { value: 'range:100-', label: '$100+', count: 1 },
+    ])
+    expect(played.options.map((o) => o.value)).toEqual(['2026-10-14', '2026-03-04'])
+    expect(played.options[0].label).not.toBe('2026-10-14')
+    expect(filterItems(list, q({ filters: { fields: { 4: 'range:10-20' } } }))).toEqual(list.slice(0, 2))
+    expect(filterItems(list, q({ filters: { fields: { 4: 'range:100-' } } }))).toEqual([list[2]])
+  })
+
   it('counts each option while ignoring its own filter', () => {
     const f = facets(items, q({ filters: { format: 'Vinyl', fields: {} } }), folders, fields)
     expect(f.format.find((o) => o.value === 'Vinyl')?.count).toBe(items.filter((i) => i.formatNames.includes('Vinyl')).length)

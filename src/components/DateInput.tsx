@@ -1,9 +1,7 @@
 import { X } from 'lucide-react'
+import { formatDay } from '../lib/time'
 
 const isoDate = /^\d{4}-\d{2}-\d{2}$/
-
-export const formatDay = (iso: string) =>
-  new Date(`${iso}T12:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 
 // A date shown the way the rest of the page shows dates ("Oct 14, 2026", or "Add" when empty),
 // with the browser's own picker underneath: tapping the text opens the iOS wheel or the

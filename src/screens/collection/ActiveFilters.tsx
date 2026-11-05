@@ -28,9 +28,11 @@ export function ActiveFilters({
   if (filters.rating)
     chips.push({ key: 'rating', label: `${'★'.repeat(filters.rating)}+`, clear: () => onChange({ ...filters, rating: undefined }) })
   for (const [id, v] of Object.entries(filters.fields)) {
+    // a date or price range reads as it does in the filters
+    const label = facets?.fields.find((x) => x.field.id === Number(id))?.options.find((o) => o.value === v)?.label
     chips.push({
       key: `f${id}`,
-      label: v,
+      label: label ?? v,
       clear: () => {
         const fields = { ...filters.fields }
         delete fields[Number(id)]

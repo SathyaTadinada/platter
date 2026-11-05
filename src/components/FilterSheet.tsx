@@ -107,7 +107,12 @@ export function Group({
                   : 'bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
               }`}
             >
-              {o.label} <span className={on ? 'opacity-70' : 'text-stone-500'}>{o.count}</span>
+              {o.label} {/* set apart so a number value and its count don't run together */}
+              <span
+                className={`ml-0.5 rounded-full px-1.5 text-xs tabular-nums ${on ? 'bg-white/20' : 'bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300'}`}
+              >
+                {o.count}
+              </span>
             </button>
           )
         })}
