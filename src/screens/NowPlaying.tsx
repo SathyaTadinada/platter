@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, ScanBarcode } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, useSearch } from 'wouter'
+import { Link, Redirect, useSearch } from 'wouter'
 import { addToFolder, getRelease, searchReleases } from '../api/discogs/endpoints'
 import type { SearchResult } from '../api/discogs/types'
 import { searchMbBarcode } from '../api/musicbrainz'
@@ -59,8 +59,13 @@ function Layout({
 
 // Scan in Play mode lands here: find the copy you own and log a play, or add it first
 export function NowPlaying() {
+  const barcode = new URLSearchParams(useSearch()).get('barcode')?.trim()
+  // nothing to look up, so scan something first
+  return barcode ? <Playing barcode={barcode} /> : <Redirect to="/scan?mode=play" replace />
+}
+
+function Playing({ barcode }: { barcode: string }) {
   const { client, session, username } = useSignedIn()
-  const barcode = new URLSearchParams(useSearch()).get('barcode') ?? ''
   const { log } = useLogPlay()
   const meta = useCollectionMeta()
   const [chosen, setChosen] = useState<number | null>(null)
