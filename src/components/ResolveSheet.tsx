@@ -40,7 +40,15 @@ export function ResolveSheet({ item, onPick, onClose }: { item: QueueItem; onPic
 
   return (
     <Sheet
-      title={item.barcode ? `Which release is ${formatBarcodeInput(item.barcode ?? '')}?` : 'Pick a release'}
+      title={
+        item.barcode ? (
+          <>
+            Which release is <span className="whitespace-nowrap">{formatBarcodeInput(item.barcode)}?</span>
+          </>
+        ) : (
+          'Pick a release'
+        )
+      }
       onClose={onClose}
       width="xl"
       background="page"
