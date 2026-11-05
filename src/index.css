@@ -177,6 +177,23 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Reduced motion: no slides, fades, or bounces. Spinners keep turning, only slower,
+   so there's still a sign that something is happening. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-spin {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
 /* the browser default is too faint on white */
 ::placeholder {
   color: var(--color-stone-500);

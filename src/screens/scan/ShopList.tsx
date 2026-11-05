@@ -23,7 +23,11 @@ export function ShopList({ list, onClear }: { list: Scanned[]; onClear: () => vo
   const newest = list[0]?.at
   const first = useRef(newest)
   useEffect(() => {
-    if (newest !== first.current) listRef.current?.firstElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    if (newest !== first.current)
+      listRef.current?.firstElementChild?.scrollIntoView({
+        block: 'nearest',
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
   }, [newest])
 
   if (!list.length) return null
