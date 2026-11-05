@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { DiscogsError } from '../api/discogs/client'
 import { Disc3 } from 'lucide-react'
@@ -9,6 +9,14 @@ import { signInWithToken } from '../lib/signIn'
 
 export function Welcome({ error }: { error?: string }) {
   const [useToken, setUseToken] = useState(false)
+  // Back from the token form puts focus on the link that opened it
+  const tokenLink = useRef<HTMLButtonElement>(null)
+  const back = useRef(false)
+  useEffect(() => {
+    if (useToken || !back.current) return
+    back.current = false
+    tokenLink.current?.focus()
+  }, [useToken])
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
   // after signing out, the tab would otherwise keep the last page's name
@@ -35,7 +43,7 @@ export function Welcome({ error }: { error?: string }) {
 
   return (
     <div className="flex min-h-dvh flex-col items-center px-6 pt-[max(env(safe-area-inset-top),1.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
-      <div className="flex w-full flex-1 items-center justify-center gap-20">
+      <main className="flex w-full flex-1 items-center justify-center gap-20">
         <div className="flex w-full max-w-sm flex-col items-center text-center">
           <Disc3 size={56} strokeWidth={1.5} className="text-accent" aria-hidden />
           <h1 className="mt-4 text-4xl font-bold tracking-tight">Platter</h1>
@@ -45,14 +53,24 @@ export function Welcome({ error }: { error?: string }) {
           <div className="mt-10 w-full space-y-3 text-left">
             {(startError ?? error) && <Notice tone="error">{startError ?? error}</Notice>}
             {useToken ? (
-              <TokenForm onCancel={() => setUseToken(false)} />
+              <TokenForm
+                onCancel={() => {
+                  back.current = true
+                  setUseToken(false)
+                }}
+              />
             ) : (
               <>
                 <Button className="w-full" onClick={logIn} disabled={starting}>
                   {starting ? 'Opening Discogs…' : 'Log in with Discogs'}
                 </Button>
                 <p className="flex items-center justify-center gap-2 py-1 text-sm text-stone-500">
-                  <button type="button" onClick={() => setUseToken(true)} className="py-1 hover:text-stone-700 dark:hover:text-stone-300">
+                  <button
+                    ref={tokenLink}
+                    type="button"
+                    onClick={() => setUseToken(true)}
+                    className="py-1 hover:text-stone-700 dark:hover:text-stone-300"
+                  >
                     Use a personal access token
                   </button>
                   <span aria-hidden>·</span>
@@ -81,7 +99,7 @@ export function Welcome({ error }: { error?: string }) {
             className="hidden rounded-[2.75rem] shadow-xl ring-1 ring-white/10 dark:block"
           />
         </div>
-      </div>
+      </main>
 
       <p className="text-xs text-stone-500">
         Free and open source ·{' '}
@@ -140,6 +158,7 @@ function TokenForm({ onCancel }: { onCancel: () => void }) {
           spellCheck={false}
           placeholder="Paste your token"
           aria-label="Personal access token"
+          autoFocus
           className="min-h-12 w-full rounded-xl border border-stone-300 bg-transparent px-3 dark:border-stone-700"
         />
         {error && <Notice tone="error">{error}</Notice>}
