@@ -70,7 +70,7 @@ export function Row({
       status =
         item.via === 'musicbrainz'
           ? `Not on Discogs by barcode. MusicBrainz lists it as ${item.guess}.`
-          : `${item.candidates?.length} releases have this barcode`
+          : `${item.candidates?.length} pressings share this barcode`
       break
     case 'notfound':
       status = item.guess ? `Not on Discogs by barcode. MusicBrainz lists it as ${item.guess}.` : 'No match on Discogs'
@@ -163,7 +163,7 @@ export function Row({
       {onRetry && item.status === 'failed' && (
         <button
           type="button"
-          aria-label="Retry"
+          aria-label="Try again"
           onClick={onRetry}
           className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
         >

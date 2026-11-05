@@ -241,7 +241,7 @@ function Playing({ barcode }: { barcode: string }) {
         status={pressings.length ? 'You have a different pressing' : 'Not in your collection'}
       >
         <p className="mt-1 text-sm text-stone-500">
-          {several ? `${cards.length} pressings have this barcode` : [card.label, card.catno, where(card)].filter(Boolean).join(' · ')}
+          {several ? `${cards.length} pressings share this barcode` : [card.label, card.catno, where(card)].filter(Boolean).join(' · ')}
         </p>
         <div className="mt-6 space-y-6">
           {pressings.length > 0 && (

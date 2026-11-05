@@ -55,7 +55,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         setState({ ...idle, error: message })
         toast(`Couldn't update your collection from Discogs. ${message}`, {
           tone: 'error',
-          action: { label: 'Retry', onClick: () => syncRef.current(true) },
+          action: { label: 'Try again', onClick: () => syncRef.current(true) },
         })
       } finally {
         busy.current = false

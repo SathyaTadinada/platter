@@ -281,7 +281,7 @@ export function Collection() {
     const verb = kind === 'remove' ? 'Removed' : 'Moved'
     const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
     if (r.failed.length) toast(`${verb} ${n(r.done.length)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
-    else toast(`${verb} ${n(r.done.length)}.`, { tone: 'success' })
+    else toast(`${verb} ${n(r.done.length)}`, { tone: 'success' })
     setSelected(null)
   }
 
@@ -303,7 +303,7 @@ export function Collection() {
     const same = r.done.length - changed
     if (r.failed.length) toast(`Updated ${n(changed)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
     else if (!changed) toast(`Nothing to change. ${same === 1 ? 'It' : 'They'} already had those values.`, { tone: 'success' })
-    else toast(`Updated ${n(changed)}.${same ? ` ${same} already matched.` : ''}`, { tone: 'success' })
+    else toast(`Updated ${n(changed)}${same ? `. ${same} already matched.` : ''}`, { tone: 'success' })
     setSelected(null)
   }
 

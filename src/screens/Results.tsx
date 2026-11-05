@@ -192,8 +192,8 @@ export function Results() {
 }
 
 function resultsLine(n: number, barcode: boolean): string {
-  if (n === 1) return barcode ? 'One release has this barcode.' : '1 result'
-  return barcode ? `${n} releases share this barcode.` : `${n} results`
+  if (n === 1) return barcode ? 'One pressing has this barcode' : '1 result'
+  return barcode ? `${n} pressings share this barcode` : `${n} results`
 }
 
 function MbNotice({ mb }: { mb: MbRelease }) {

@@ -53,7 +53,15 @@ export function Release({ id }: { id: string }) {
       if (own?.wanted) {
         await removeWant(client, username, releaseId)
         await db.wants.delete(releaseId)
-        toast('Removed from your wantlist')
+        toast(`Took ${r.title} off your wantlist`, {
+          action: {
+            label: 'Undo',
+            onClick: () =>
+              addWant(client, username, releaseId)
+                .then(() => db.wants.put(wantFromRelease(r)))
+                .catch((e) => toast((e as Error).message, { tone: 'error' })),
+          },
+        })
       } else {
         await addWant(client, username, releaseId)
         await db.wants.put(wantFromRelease(r))
@@ -202,7 +210,7 @@ export function Release({ id }: { id: string }) {
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     <Link href={`/collection/${added.instanceId}`} className={buttonClass('secondary')}>
-                      Open it
+                      Open record
                     </Link>
                     <Link href="/scan" className={buttonClass('primary')}>
                       <ScanBarcode size={18} aria-hidden />

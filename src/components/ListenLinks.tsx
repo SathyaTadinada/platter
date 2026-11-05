@@ -37,7 +37,7 @@ export function ListenLinks({
       else window.open(url, '_blank', 'noopener')
     } catch {
       tab?.close()
-      toast("Couldn't look that up right now.", { tone: 'error' })
+      toast("Couldn't look that up right now", { tone: 'error' })
     } finally {
       setBusy(false)
     }

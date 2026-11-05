@@ -40,10 +40,10 @@ export function Wantlist() {
       toast(`Took ${w.title ?? 'it'} off your wantlist`, {
         action: {
           label: 'Undo',
-          onClick: async () => {
-            await addWant(client, username, w.releaseId)
-            await db.wants.put(w)
-          },
+          onClick: () =>
+            addWant(client, username, w.releaseId)
+              .then(() => db.wants.put(w))
+              .catch((e) => toast((e as Error).message, { tone: 'error' })),
         },
       })
     } catch (e) {
