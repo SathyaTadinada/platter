@@ -223,6 +223,51 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
   )
 }
 
+// A row of mutually exclusive buttons, like the Scan modes or a chart's grouping.
+// "sm" is the compact one used inside cards; "card" sits it on a white card.
+export function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  size = 'md',
+  card = false,
+  className = '',
+}: {
+  label: string
+  options: { value: T; label: string; icon?: ReactNode }[]
+  value: T
+  onChange: (v: T) => void
+  size?: 'sm' | 'md'
+  card?: boolean
+  className?: string
+}) {
+  const sm = size === 'sm'
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className={`${sm ? 'inline-flex gap-1 rounded-lg p-0.5' : 'grid gap-1 rounded-xl p-1'} ${sm || card ? 'bg-stone-100' : 'bg-stone-200'} dark:bg-stone-800 ${className}`}
+      style={sm ? undefined : { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={`font-medium ${sm ? 'rounded-md px-2.5 py-1 text-xs' : 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg text-sm'} ${
+            value === o.value ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
+          }`}
+        >
+          {o.icon}
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // The ::after pads the hit area out to 44px for fingers without changing the look
 export function IconButton({ label, children, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
   return (

@@ -22,7 +22,7 @@ import { getFields } from '../api/discogs/endpoints'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
-import { Button, List, Notice, Row, Screen, Section } from '../components/ui'
+import { Button, List, Notice, Row, Screen, Section, Segmented } from '../components/ui'
 import { db, getSetting, setSetting } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useSignOut } from '../hooks/signOut'
@@ -262,32 +262,20 @@ function Appearance() {
   const [theme, setThemeLocal] = useState<Theme>(getTheme)
   return (
     <div className="space-y-4 rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-      <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-xl bg-stone-100 p-1 dark:bg-stone-800">
-        {(
-          [
-            ['system', 'System', MonitorSmartphone],
-            ['light', 'Light', Sun],
-            ['dark', 'Dark', Moon],
-          ] as const
-        ).map(([t, label, Icon]) => (
-          <button
-            key={t}
-            type="button"
-            role="radio"
-            aria-checked={theme === t}
-            onClick={() => {
-              setTheme(t)
-              setThemeLocal(t)
-            }}
-            className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-medium ${
-              theme === t ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
-            }`}
-          >
-            <Icon size={16} aria-hidden />
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        label="Theme"
+        card
+        value={theme}
+        onChange={(t) => {
+          setTheme(t)
+          setThemeLocal(t)
+        }}
+        options={[
+          { value: 'system', label: 'System', icon: <MonitorSmartphone size={16} aria-hidden /> },
+          { value: 'light', label: 'Light', icon: <Sun size={16} aria-hidden /> },
+          { value: 'dark', label: 'Dark', icon: <Moon size={16} aria-hidden /> },
+        ]}
+      />
       <div role="radiogroup" aria-label="Accent color" className="grid grid-cols-5 gap-3 sm:grid-cols-10">
         {ACCENTS.map((a) => (
           <button

@@ -5,7 +5,7 @@ import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { useSignedIn } from '../hooks/session'
-import { Button, buttonClass, List, Screen, Section } from '../components/ui'
+import { Button, buttonClass, List, Screen, Section, Segmented } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { catnoCandidates } from '../lib/catno'
@@ -73,23 +73,17 @@ export function Search() {
     <Screen title="Search" width="wide">
       <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-12">
         <div>
-          <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-stone-200 p-1 dark:bg-stone-800">
-            {modes.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={mode === id}
-                onClick={() => setMode(id)}
-                className={`inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-medium ${
-                  mode === id ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
-                }`}
-              >
-                <Icon size={16} aria-hidden className="hidden sm:block" />
-                {label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Search by"
+            className="mb-4"
+            value={mode}
+            onChange={setMode}
+            options={modes.map(({ id, label, Icon }) => ({
+              value: id,
+              label,
+              icon: <Icon size={16} aria-hidden className="hidden sm:block" />,
+            }))}
+          />
 
           <form onSubmit={submit} className="space-y-3">
             {mode === 'barcode' && (

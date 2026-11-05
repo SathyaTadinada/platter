@@ -7,11 +7,10 @@ import { useAsync } from '../hooks/useAsync'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { CARD, cardFacts, collectionCard, drawCard, type CardTheme, type ShareCard } from '../lib/shareCard'
-import { Toggle } from './stats'
 import { formatMoney } from '../lib/value'
 import { toast } from './Toaster'
 import { Sheet } from './Sheet'
-import { Button, buttonClass, Spinner } from './ui'
+import { Button, buttonClass, Segmented, Spinner } from './ui'
 
 // The accent shade that reads well on a light or dark card
 function cardAccent(theme: CardTheme) {
@@ -99,10 +98,13 @@ export function ShareSheet({ card, name, onClose }: { card?: ShareCard; name: st
       }
     >
       <div className="flex justify-center">
-        <Toggle
+        <Segmented
+          label="Card theme"
+          size="sm"
+          className="mb-4"
           options={[
-            ['light', 'Light'],
-            ['dark', 'Dark'],
+            { value: 'light', label: 'Light' },
+            { value: 'dark', label: 'Dark' },
           ]}
           value={theme}
           onChange={setTheme}

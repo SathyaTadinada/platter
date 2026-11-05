@@ -3,7 +3,7 @@ import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, ScanBarcode, S
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
-import { Button, buttonClass, Notice, Screen } from '../components/ui'
+import { Button, buttonClass, Notice, Screen, Segmented } from '../components/ui'
 import { db } from '../db/db'
 import { useQueue } from '../hooks/queue'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
@@ -130,31 +130,18 @@ export function Scan() {
   )
 
   const modeSwitch = (
-    <div
-      role="tablist"
-      aria-label="Scan mode"
-      className="grid grid-cols-4 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[30rem] dark:bg-stone-800"
-    >
-      {(
-        [
-          ['single', 'Lookup'],
-          ['batch', 'Batch'],
-          ['play', 'Play'],
-          ['shop', 'Shop'],
-        ] as const
-      ).map(([m, label]) => (
-        <button
-          key={m}
-          type="button"
-          role="tab"
-          aria-selected={mode === m}
-          onClick={() => switchMode(m)}
-          className={`min-h-9 rounded-lg text-sm font-medium ${mode === m ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <Segmented
+      label="Scan mode"
+      className="lg:max-w-[30rem]"
+      value={mode}
+      onChange={switchMode}
+      options={[
+        { value: 'single', label: 'Lookup' },
+        { value: 'batch', label: 'Batch' },
+        { value: 'play', label: 'Play' },
+        { value: 'shop', label: 'Shop' },
+      ]}
+    />
   )
 
   return (

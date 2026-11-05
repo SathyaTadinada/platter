@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Card } from '../../components/ui'
+import { Card, Segmented } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { byMonth, parseMoney } from '../../lib/value'
-import { MonthBars, Toggle } from '../../components/stats'
+import { MonthBars } from '../../components/stats'
 import type { Money } from './shared'
 
 // Money spent (purchase price by purchase date, or date added) or records added, per month
@@ -41,10 +41,13 @@ export function Monthly({
   return (
     <Card>
       {canSpend && (
-        <Toggle
+        <Segmented
+          label="Show"
+          size="sm"
+          className="mb-4"
           options={[
-            ['spent', 'Spent'],
-            ['added', 'Added'],
+            { value: 'spent', label: 'Spent' },
+            { value: 'added', label: 'Added' },
           ]}
           value={show}
           onChange={setShow}

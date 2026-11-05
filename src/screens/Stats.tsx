@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { History, Share, SlidersHorizontal } from 'lucide-react'
 import { ChartsSheet } from '../components/ChartsSheet'
 import { CollectionShare } from '../components/ShareSheet'
-import { IconButton, Screen } from '../components/ui'
+import { IconButton, Screen, Segmented } from '../components/ui'
 import { ListeningStats } from './Listening'
 import { ValueStats } from './Value'
 import { readChoice, writePref } from '../lib/prefs'
@@ -27,29 +27,16 @@ export function Stats() {
   }
 
   const toggle = (
-    <div
-      role="tablist"
-      aria-label="Stats"
-      className="grid grid-cols-2 gap-1 rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800"
-    >
-      {(
-        [
-          ['value', 'Value'],
-          ['listening', 'Listening'],
-        ] as const
-      ).map(([v, label]) => (
-        <button
-          key={v}
-          type="button"
-          role="tab"
-          aria-selected={view === v}
-          onClick={() => show(v)}
-          className={`min-h-9 rounded-lg text-sm font-medium ${view === v ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <Segmented
+      label="Stats"
+      className="lg:max-w-[26rem]"
+      value={view}
+      onChange={show}
+      options={[
+        { value: 'value', label: 'Value' },
+        { value: 'listening', label: 'Listening' },
+      ]}
+    />
   )
 
   return (

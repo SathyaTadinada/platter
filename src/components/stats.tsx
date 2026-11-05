@@ -9,27 +9,6 @@ import { Cover } from './Cover'
 export const statCard = 'rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800'
 export const pct = (n: number, of: number) => `${of > 0 ? Math.max(2, (n / of) * 100) : 0}%`
 
-export function Toggle<T extends string>({ options, value, onChange }: { options: [T, string][]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div role="tablist" className="mb-4 inline-flex gap-1 rounded-lg bg-stone-100 p-0.5 dark:bg-stone-800">
-      {options.map(([v, label]) => (
-        <button
-          key={v}
-          type="button"
-          role="tab"
-          aria-selected={value === v}
-          onClick={() => onChange(v)}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            value === v ? 'bg-white shadow-sm dark:bg-stone-950' : 'text-stone-600 dark:text-stone-400'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 type RowItem = Pick<LibraryItem, 'instanceId' | 'title' | 'artist' | 'cover' | 'thumb'>
 
 // A record with cover, title, and artist; opens the record unless given somewhere else to go

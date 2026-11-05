@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Card } from '../../components/ui'
+import { Card, Segmented } from '../../components/ui'
 import type { Folder } from '../../api/discogs/types'
 import type { LibraryItem } from '../../db/db'
 import { decadeOf, yearOf } from '../../lib/library'
 import { distribution, totalsBy } from '../../lib/value'
-import { pct, Toggle } from '../../components/stats'
+import { pct } from '../../components/stats'
 import type { Money, Valued } from './shared'
 
 // Records per price range, with what each range adds up to
@@ -75,11 +75,14 @@ export function GroupTotals({ valued, folders, money }: { valued: Valued[]; fold
       : totalsBy(amounts, keys[by])
   return (
     <Card>
-      <Toggle
+      <Segmented
+        label="Group by"
+        size="sm"
+        className="mb-4"
         options={[
-          ['genre', 'Genre'],
-          ['decade', 'Decade'],
-          ['crate', 'Crate'],
+          { value: 'genre', label: 'Genre' },
+          { value: 'decade', label: 'Decade' },
+          { value: 'crate', label: 'Crate' },
         ]}
         value={by}
         onChange={setBy}
