@@ -143,7 +143,7 @@ export function Release({ id }: { id: string }) {
         </div>
 
         <div className="mt-6 min-w-0 lg:mt-0">
-          <h2 className="text-2xl font-bold tracking-tight lg:text-3xl">{r.title}</h2>
+          <p className="text-2xl font-bold tracking-tight lg:text-3xl">{r.title}</p>
           <p className="text-lg text-stone-600 dark:text-stone-300">{joinArtists(r.artists)}</p>
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
             {label && <p>{[cleanLabel(label.name), label.catno !== 'none' && label.catno].filter(Boolean).join(' · ')}</p>}

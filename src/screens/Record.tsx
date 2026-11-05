@@ -176,7 +176,7 @@ export function Record({ id }: { id: string }) {
         </div>
 
         <div className="mt-6 min-w-0 lg:mt-0">
-          <h2 className="text-2xl font-bold tracking-tight lg:text-3xl">{item.title}</h2>
+          <p className="text-2xl font-bold tracking-tight lg:text-3xl">{item.title}</p>
           <p className="text-lg text-stone-600 dark:text-stone-300">{item.artist}</p>
           <div className="mt-2 space-y-0.5 text-sm text-stone-500">
             {(item.label || item.catno) && <p>{[item.label, item.catno].filter(Boolean).join(' · ')}</p>}
