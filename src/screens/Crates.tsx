@@ -55,7 +55,7 @@ export function Crates() {
           <li key={f.id} className="flex min-h-14 items-center gap-2 px-4 py-2">
             {editing === f.id ? (
               <form
-                className="flex flex-1 items-center gap-2"
+                className="flex flex-1 flex-wrap items-center gap-2 sm:flex-nowrap"
                 onSubmit={(e) => {
                   e.preventDefault()
                   if (name.trim()) run(() => renameFolder(client, username, f.id, name.trim())).then(() => setEditing(null))
@@ -65,12 +65,13 @@ export function Crates() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   aria-label="Crate name"
-                  className="min-h-10 min-w-0 flex-1 rounded-lg border border-stone-300 bg-transparent px-3 dark:border-stone-700"
+                  autoFocus
+                  className="min-h-10 w-full min-w-0 rounded-lg border border-stone-300 bg-transparent px-3 sm:w-auto sm:flex-1 dark:border-stone-700"
                 />
-                <Button type="submit" className="min-h-10">
+                <Button type="submit" className="min-h-10 flex-1 sm:flex-none">
                   Save
                 </Button>
-                <Button variant="ghost" className="min-h-10" onClick={() => setEditing(null)}>
+                <Button variant="ghost" className="min-h-10 flex-1 sm:flex-none" onClick={() => setEditing(null)}>
                   Cancel
                 </Button>
               </form>
