@@ -203,6 +203,9 @@ export function NowPlaying() {
         </p>
       </Layout>
     )
+  } else if (chosen !== null || copies?.length === 1) {
+    // a copy was found and is about to show
+    body = <Spinner label="Looking for your copy" />
   } else if (copies && copies.length > 1) {
     backdrop = copies[0].cover ?? copies[0].thumb
     body = (
