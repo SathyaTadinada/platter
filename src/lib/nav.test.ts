@@ -178,3 +178,33 @@ describe('page memory', () => {
     expect(nav.savedPage()).toBeUndefined()
   })
 })
+
+describe('back labels', () => {
+  // what a page's header does as it shows: set its title, then App tracks the location
+  function show(nav: Nav, url: string, title: string, state: unknown = null) {
+    history.pushState(state, '', url)
+    nav.rememberTitle(title)
+    track(nav)
+  }
+
+  it('names the page Back goes to, even one whose title arrived after it opened', async () => {
+    const nav = await fresh()
+    nav.rememberTitle('Search')
+    track(nav)
+    show(nav, '/results?q=currents', 'currents')
+    show(nav, '/release/1', '')
+    nav.rememberTitle('Currents')
+    expect(nav.backLabel()).toBe('currents')
+    await back(nav)
+    expect(nav.backLabel()).toBe('Search')
+  })
+
+  it("names the tab when Back falls back to it, and nothing before the page's been tracked", async () => {
+    const nav = await fresh()
+    history.replaceState(null, '', '/import')
+    nav.rememberTitle('Import collection')
+    expect(nav.backLabel('/settings')).toBeUndefined()
+    track(nav)
+    expect(nav.backLabel('/settings')).toBe('Settings')
+  })
+})

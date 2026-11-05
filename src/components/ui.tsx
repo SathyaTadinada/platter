@@ -1,7 +1,7 @@
-import { backTarget } from '../lib/nav'
+import { backLabel, backTarget, rememberTitle, subscribeNav } from '../lib/nav'
 import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'wouter'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'danger'
@@ -86,9 +86,12 @@ export function Screen({
   fill?: boolean // content stretches to the bottom of the screen, so something can sit there with mt-auto
 }) {
   const goBack = useBack(typeof back === 'string' ? back : undefined)
-  // the browser tab (and history menu) names the page
+  // where Back leads, named next to the arrow where there's room
+  const backName = useSyncExternalStore(subscribeNav, () => (back ? backLabel(typeof back === 'string' ? back : undefined) : undefined))
+  // the browser tab (and history menu) names the page, and so does the Back button of the next one
   useEffect(() => {
     document.title = typeof title === 'string' && title ? `${title} · Platter` : 'Platter'
+    rememberTitle(typeof title === 'string' ? title : '')
   }, [title])
   return (
     <div className={`relative isolate ${fill ? 'flex min-h-full flex-col' : ''}`}>
@@ -107,11 +110,14 @@ export function Screen({
           {back && (
             <button
               type="button"
-              aria-label="Back"
-              className="-ml-2 rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800"
+              aria-label={backName ? `Back to ${backName}` : 'Back'}
+              className={`-ml-2 flex min-w-0 shrink-0 items-center rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${
+                backName ? 'sm:mr-1 sm:pr-3' : ''
+              }`}
               onClick={() => (typeof back === 'function' ? back() : goBack())}
             >
-              <ChevronLeft />
+              <ChevronLeft className="shrink-0" />
+              {backName && <span className="hidden max-w-40 truncate text-sm font-medium text-stone-500 sm:inline">{backName}</span>}
             </button>
           )}
           <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>

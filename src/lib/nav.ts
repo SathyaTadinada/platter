@@ -23,6 +23,14 @@ export function sectionOf(path: string): Section {
   return 'collection'
 }
 
+const ROOT_TITLES: Record<Section, string> = {
+  collection: 'Collection',
+  scan: 'Scan',
+  search: 'Search',
+  stats: 'Stats',
+  settings: 'Settings',
+}
+
 const rootOf = (path: string) => (Object.keys(ROOTS) as Section[]).find((s) => ROOTS[s] === path)
 
 const KEY = 'platterKey' // names the page, for its stack entry, scroll position and saved state
@@ -32,7 +40,7 @@ const INDEX = 'platterIndex' // its place in the browser's history
 const STACKS = 'platter.stacks'
 
 type NavState = { [KEY]?: string; [SECTION]?: Section; [RESUME]?: string; [INDEX]?: number }
-type Entry = { url: string; key: string; index: number }
+type Entry = { url: string; key: string; index: number; title?: string } // title: for the next page's Back button
 
 const state = () => (history.state ?? {}) as NavState
 const newKey = () => Math.random().toString(36).slice(2)
@@ -50,6 +58,18 @@ function loadStacks(): Record<Section, Entry[]> {
 let stacks = loadStacks()
 let here: { section: Section; key: string; index: number } | null = null
 let length = 0 // history.length last time, to tell a new entry from a replaced one
+// The title the page being shown asked for. A new page sets it before trackLocation has made
+// its stack entry (child effects run first), so it's held here until then.
+let shownTitle = ''
+
+const listeners = new Set<() => void>()
+const changed = () => listeners.forEach((l) => l())
+export function subscribeNav(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
 
 function save() {
   try {
@@ -77,29 +97,44 @@ export function trackLocation(path: string, search: string) {
     const index = s[INDEX] ?? history.length - 1
     const stack = stacks[section]
     const i = stack.findIndex((e) => e.key === s[KEY])
-    if (i >= 0) stack.splice(i, Infinity, { url, key: s[KEY], index })
-    else stack.push({ url, key: s[KEY], index })
+    const title = shownTitle || stack[i]?.title
+    if (i >= 0) stack.splice(i, Infinity, { url, key: s[KEY], index, title })
+    else stack.push({ url, key: s[KEY], index, title })
     here = { section, key: s[KEY], index }
   } else {
     const section = sectionFor(path)
     const index = pushed || !here ? history.length - 1 : here.index
     let stack = stacks[section]
     let key = newKey()
+    let title = shownTitle || undefined
     const back = s[RESUME] ? stack.findIndex((e) => e.key === s[RESUME]) : -1
     if (back >= 0) {
       // returning to a page in this stack: it keeps its key, and so its scroll and state
       key = s[RESUME]!
+      title ??= stack[back].title
       stack = stack.slice(0, back)
     } else if (rootOf(path) === section) {
       stack = [] // a tab's first page starts its stack over
     } else if (stack.at(-1)?.url === url) {
       stack = stack.slice(0, -1) // the same page again, like after a replace
     }
-    stacks[section] = [...stack, { url, key, index }]
+    stacks[section] = [...stack, { url, key, index, title }]
     history.replaceState({ ...s, [KEY]: key, [SECTION]: section, [INDEX]: index }, '')
     here = { section, key, index }
   }
   save()
+  changed()
+}
+
+// The page's title, for the Back button of whatever is opened from it
+export function rememberTitle(title: string) {
+  shownTitle = title
+  const s = state()
+  const entry = s[SECTION] && stacks[s[SECTION]].find((e) => e.key === s[KEY])
+  if (!title || !entry || entry.title === title) return
+  entry.title = title
+  save()
+  changed()
 }
 
 // Changes the address of the page being shown, without a navigation (so it isn't a new page)
@@ -125,6 +160,19 @@ export function backTarget(fallback?: string): { history: true } | { to: string;
     return { to: prev.url, state: { [SECTION]: section, [RESUME]: prev.key } }
   }
   return { to: fallback ?? ROOTS[section], state: { [SECTION]: section } }
+}
+
+// What Back leads to, by name: the page before this one in its tab, or the tab itself when Back
+// falls back to it. Undefined when that isn't known (a page opened before titles were kept).
+export function backLabel(fallback?: string): string | undefined {
+  const s = state()
+  const section = s[SECTION] ?? here?.section ?? 'collection'
+  const stack = stacks[section]
+  const i = stack.findIndex((e) => e.key === s[KEY])
+  if (i < 0) return undefined // not tracked yet; trackLocation tells subscribers when it is
+  if (i > 0) return stack[i - 1].title
+  const root = rootOf(fallback ?? ROOTS[section])
+  return root && ROOT_TITLES[root]
 }
 
 // Where a tab's icon goes: back where that tab was left, or its first page if it's showing.
