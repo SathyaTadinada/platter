@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFolder } from '../api/discogs/endpoints'
 import type { Folder } from '../api/discogs/types'
 import { useSignedIn } from '../hooks/session'
 import { invalidateCollectionMeta } from '../hooks/useCollectionMeta'
+import { useModal } from './Sheet'
 import { Button, Notice } from './ui'
 
 const NEW = '__new'
@@ -68,9 +69,8 @@ export function NewCrateDialog({ onClose, onCreated }: { onClose: () => void; on
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (ref.current && !ref.current.open) ref.current.showModal()
-  }, [])
+  // the name field takes focus
+  useModal(ref, false)
 
   async function create(e: React.FormEvent) {
     e.preventDefault()

@@ -1,9 +1,31 @@
 import { X } from 'lucide-react'
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 
 const widths = { md: 'sm:max-w-md', lg: 'sm:max-w-lg', xl: 'sm:max-w-xl' }
 // "page" is the app's own background, so cards inside stand out from it
 const backgrounds = { plain: 'bg-white dark:bg-stone-900', page: 'bg-stone-50 dark:bg-stone-950' }
+
+// Opens a dialog as a modal and puts focus back on whatever opened it once it's gone.
+// Dialogs here close by unmounting, which skips the browser's own focus restore.
+export function useModal(ref: RefObject<HTMLDialogElement | null>, focusSelf = true) {
+  const opener = useRef<Element | null>(null)
+  useEffect(() => {
+    const d = ref.current
+    if (d && !d.open) {
+      opener.current ??= document.activeElement
+      d.showModal()
+      // otherwise the browser focuses the first control, which opens selects on some phones
+      if (focusSelf) d.focus()
+    }
+    return () => {
+      // still in the page means a dev-mode remount, not a close
+      if (d?.isConnected) return
+      const to = opener.current
+      const lost = !document.activeElement || document.activeElement === document.body
+      if (lost && to instanceof HTMLElement && to.isConnected) to.focus()
+    }
+  }, [])
+}
 
 // A modal that slides up from the bottom on phones and sits in the middle on bigger
 // screens: title bar with a close button, a scrolling body, and an optional footer.
@@ -30,14 +52,7 @@ export function Sheet({
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  useEffect(() => {
-    const d = ref.current
-    if (d && !d.open) {
-      d.showModal()
-      // otherwise the browser focuses the first control, which opens selects on some phones
-      d.focus()
-    }
-  }, [])
+  useModal(ref)
 
   return (
     <dialog

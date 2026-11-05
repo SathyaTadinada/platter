@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
+import { useModal } from './Sheet'
 import { Button } from './ui'
 
 // A small centered dialog for "are you sure?" moments. Without onConfirm it's just a
@@ -19,15 +20,9 @@ export function ConfirmDialog({
   onCancel: () => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
-    const d = ref.current
-    if (d && !d.open) {
-      d.showModal()
-      // the dialog itself takes focus, as sheets do: a focused button would show its keyboard
-      // ring, and Enter shouldn't be one press away from the action. Tab still reaches both.
-      d.focus()
-    }
-  }, [])
+  // the dialog itself takes focus, as sheets do: a focused button would show its keyboard
+  // ring, and Enter shouldn't be one press away from the action. Tab still reaches both.
+  useModal(ref)
   const cancel = () => !busy && onCancel()
 
   return (
