@@ -79,7 +79,7 @@ export function ValueStats() {
         info={
           anySuggested
             ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
-            : "These are the cheapest copies for sale on Discogs. Fill in your seller settings on Discogs to get prices for your copy's condition."
+            : 'Cheapest copy for sale. Set up seller settings on Discogs for prices by condition.'
         }
       >
         <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${card}`}>

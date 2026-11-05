@@ -31,7 +31,7 @@ export function PaidVsNow({
                 </Link>
               </>
             ) : (
-              'Fill in Purchase Price on your records to see what you paid next to what they go for now.'
+              'No purchase prices yet.'
             )}
           </p>
         </Card>
@@ -64,7 +64,7 @@ export function PaidVsNow({
           <>
             <p className="text-2xl font-bold tabular-nums">{money(paid.total)}</p>
             <p className="text-sm text-stone-500">
-              paid for {paid.count} record{paid.count === 1 ? '' : 's'}. Current prices show up here once they're in.
+              paid for {paid.count} record{paid.count === 1 ? '' : 's'}
             </p>
           </>
         )}

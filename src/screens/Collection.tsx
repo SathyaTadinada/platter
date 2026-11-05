@@ -375,7 +375,7 @@ export function Collection() {
     // Discogs asks apps not to show data more than 6 hours old
     body = session.expired ? (
       <div className="py-6">
-        <Notice tone="info">Your collection shows again once you've logged back in. Nothing on this device is lost.</Notice>
+        <Notice tone="info">Log in again to see your collection.</Notice>
       </div>
     ) : sync.running ? (
       <Spinner label={sync.total > 1 ? `Syncing your collection (${sync.done} of ${sync.total})` : 'Syncing your collection'} />
