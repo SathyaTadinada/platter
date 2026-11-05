@@ -1,5 +1,5 @@
 import { shortGrade } from '../lib/format'
-import { ArrowUpRight } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useCurrency, usePrice } from '../hooks/prices'
 import { formatMoney } from '../lib/value'
 
@@ -63,7 +63,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
           className="flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-accent hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/50"
         >
           See listings on Discogs
-          <ArrowUpRight size={16} aria-hidden />
+          <ExternalLink size={16} aria-hidden />
         </a>
       )}
     </div>
