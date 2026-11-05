@@ -115,7 +115,8 @@ export function ValueStats() {
         <p className="text-sm text-stone-500">Estimated value</p>
         {current.data ? (
           <>
-            <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">{current.data.raw.median}</p>
+            {/* whole amounts, like the change under it and the chart */}
+            <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">{money(current.data.snap.median, true)}</p>
             {/* nothing to say when it hasn't moved */}
             {series.length >= 2 && Math.abs(current.data.snap.median - series[0].median) >= 1 && (
               <div className="mt-2">
@@ -127,7 +128,7 @@ export function ValueStats() {
               </div>
             )}
             <p className="mt-3 text-sm text-stone-500 tabular-nums">
-              Low {current.data.raw.minimum} · High {current.data.raw.maximum}
+              Low {money(current.data.snap.min, true)} · High {money(current.data.snap.max, true)}
             </p>
           </>
         ) : current.loading ? (
