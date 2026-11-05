@@ -42,6 +42,9 @@ export function Report() {
     paid: field('purchasePrice'),
   })
   const money = (n?: number) => (n === undefined ? '—' : formatMoney(n, currency))
+  const priced = report.rows.length - report.unpriced
+  // nothing priced is no total, not a total of zero
+  const total = priced ? report.value : undefined
   const showPaid = report.paid > 0
   const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 
@@ -74,7 +77,12 @@ export function Report() {
         <h2 className="text-2xl font-bold tracking-tight">{date}</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 print:grid-cols-4">
           <Total label="Records" value={items.length.toLocaleString()} />
-          <Total label="Total value" value={money(report.value)} />
+          <Total
+            label="Total value"
+            value={money(total)}
+            // on screen the price check above says this
+            note={priced && report.unpriced ? `Prices for ${priced} of ${report.rows.length} records` : undefined}
+          />
           {showPaid && <Total label="Paid" value={money(report.paid)} />}
           {discogs.data && <Total label="Discogs estimate" value={`${discogs.data.raw.minimum} – ${discogs.data.raw.maximum}`} />}
         </div>
@@ -133,7 +141,7 @@ export function Report() {
                 Total
               </td>
               {showPaid && <td className="px-2 py-2 first:pl-3 last:pr-3 text-right tabular-nums">{money(report.paid)}</td>}
-              <td className="px-2 py-2 first:pl-3 last:pr-3 text-right tabular-nums">{money(report.value)}</td>
+              <td className="px-2 py-2 first:pl-3 last:pr-3 text-right tabular-nums">{money(total)}</td>
             </tr>
           </tfoot>
         </table>
@@ -152,11 +160,12 @@ export function Report() {
 
 const grades = (media?: string, sleeve?: string) => [media, sleeve].map((g) => (g ? shortGrade(g) : '—')).join(' / ')
 
-function Total({ label, value }: { label: string; value: string }) {
+function Total({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className={`${statCard} p-3 print:p-2 print:ring-stone-300`}>
       <p className="text-xl font-bold tabular-nums">{value}</p>
       <p className="text-xs text-stone-500">{label}</p>
+      {note && <p className="hidden text-xs text-stone-500 print:block">{note}</p>}
     </div>
   )
 }
