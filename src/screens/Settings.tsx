@@ -157,7 +157,15 @@ export function Settings() {
               <Row
                 icon={<Disc3 size={20} />}
                 label={stats ? plural(stats.records, 'record') : 'Collection'}
-                detail={sync.running ? `${sync.label}…` : stats?.syncedAt ? `Synced ${timeAgo(stats.syncedAt)}` : 'Not synced yet'}
+                detail={
+                  sync.running
+                    ? `${sync.label}…`
+                    : !stats
+                      ? undefined
+                      : stats.syncedAt
+                        ? `Synced ${timeAgo(stats.syncedAt)}`
+                        : 'Not synced yet'
+                }
                 trailing={
                   <button
                     type="button"
