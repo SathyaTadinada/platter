@@ -227,7 +227,6 @@ export function Batch() {
 
       {groups.ready.length > 0 && shared && groups.ready.some((i) => i.source !== 'csv') && (
         <Section title="For all records">
-          <p className="mb-2 px-1 text-xs text-stone-500">Each record above gets these unless you set its own.</p>
           <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
         </Section>
       )}
