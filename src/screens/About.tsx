@@ -25,7 +25,7 @@ export function About() {
             it.
           </p>
           <p>Photos of runouts and spines are read on your device and never uploaded.</p>
-          <p>Signing out deletes everything Platter saved here.</p>
+          <p>Signing out deletes what Platter saved here, except album years, record lengths, and preferences.</p>
         </Card>
       </Section>
 
