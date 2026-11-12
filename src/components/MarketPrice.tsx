@@ -1,7 +1,8 @@
 import { shortGrade } from '../lib/format'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink as ExternalIcon } from 'lucide-react'
 import { useCurrency, usePrice } from '../hooks/prices'
 import { formatMoney } from '../lib/value'
+import { ExternalLink } from './ui'
 
 export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; mediaCondition?: string }) {
   const currency = useCurrency()
@@ -24,7 +25,16 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
     rows.push(['Lowest listing', money(price.lowest)])
     rows.push(['For sale', `${price.forSale} cop${price.forSale === 1 ? 'y' : 'ies'}`])
   }
-  if (!rows.length && ladder.length < 2) return <p className="px-1 text-sm text-stone-500">Nobody's selling a copy right now.</p>
+  // Discogs' API has no sales history, so past sales are a link to Discogs' own page
+  if (!rows.length && ladder.length < 2)
+    return (
+      <p className="px-1 text-sm text-stone-500">
+        Nobody's selling a copy right now.{' '}
+        <ExternalLink href={`https://www.discogs.com/sell/history/${releaseId}`} className="whitespace-nowrap">
+          Sales history on Discogs
+        </ExternalLink>
+      </p>
+    )
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
@@ -63,7 +73,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
           className="flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-sm font-medium text-accent hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/50"
         >
           See listings on Discogs
-          <ExternalLink size={16} aria-hidden />
+          <ExternalIcon size={16} aria-hidden />
         </a>
       )}
     </div>
