@@ -4,7 +4,7 @@
 // sign-in it is, the first time a device turns on cloud sync (see sync.ts).
 
 import { header, signParams } from './oauth'
-import { askDiscogs, forget, loginHash, parseLogin, parseRows, pull, push, SyncError, whoIs, type DB } from './sync'
+import { askDiscogs, forget, loginHash, parseLogin, parseRows, pull, push, remember, SyncError, whoIs, type DB } from './sync'
 
 type RateLimiter = { limit(opts: { key: string }): Promise<{ success: boolean }> }
 type Fetcher = { fetch(req: Request): Promise<Response> }
@@ -18,6 +18,7 @@ interface Env {
   ASSETS: Fetcher
   DB?: DB
   SYNC_KEY?: string
+  DEV_IDENTITY?: string // local testing only (.dev.vars): every sign-in belongs to this username
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -120,18 +121,26 @@ async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'):
     const login = parseLogin(input.login)
     if (!(await allowed(env.SYNC_LIMITER, `sync:${(await loginHash(login)).slice(0, 32)}`))) return tooMany()
     const ask = async (l: typeof login) => {
+      if (env.DEV_IDENTITY) return env.DEV_IDENTITY
       // checking with Discogs is the costly part, so it gets the stricter per-IP limit
       if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) throw new SyncError(429, 'Too many requests')
       return askDiscogs(l, { ...env, DB: db })
     }
-    const { username } = await whoIs(db, login, ask)
+    // a sign-in is only kept while its account has something synced
+    const { username, hash } = await whoIs(db, login, ask, Date.now(), false)
     const syncEnv = { ...env, DB: db }
     if (action === 'pull') {
       const since = Number(input.since ?? 0)
       if (!Number.isInteger(since) || since < 0) throw new SyncError(400, 'Bad cursor')
-      return Response.json(await pull(db, syncEnv, username, since), { headers: noStore })
+      const result = await pull(db, syncEnv, username, since)
+      if (result.exists) await remember(db, hash, username)
+      return Response.json(result, { headers: noStore })
     }
-    if (action === 'push') return Response.json(await push(db, syncEnv, username, parseRows(input.rows)), { headers: noStore })
+    if (action === 'push') {
+      const result = await push(db, syncEnv, username, parseRows(input.rows))
+      await remember(db, hash, username)
+      return Response.json(result, { headers: noStore })
+    }
     await forget(db, username)
     return Response.json({ ok: true }, { headers: noStore })
   } catch (e) {

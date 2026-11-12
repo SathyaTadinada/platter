@@ -37,6 +37,12 @@ describe('who is asking', () => {
     expect(asked).toBe(1)
   })
 
+  it("doesn't keep a sign-in that was only checked, if asked not to", async () => {
+    const { db } = setup()
+    await whoIs(db, login, async () => 'someone', 0, false)
+    expect(await db.prepare('SELECT * FROM logins').first()).toBeNull()
+  })
+
   it('treats a different token as a different sign-in', async () => {
     const { db } = setup()
     await whoIs(db, login, async () => 'someone')

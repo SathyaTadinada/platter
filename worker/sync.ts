@@ -94,12 +94,15 @@ export async function askDiscogs(l: Login, env: SyncEnv, fetchFn: typeof fetch =
 }
 
 // The account a sign-in belongs to: remembered, or checked with Discogs (again after 30 days,
-// so a sign-in revoked on Discogs stops working here too)
+// so a sign-in revoked on Discogs stops working here too). With remember off, a newly checked
+// sign-in isn't kept: a new device asking whether its account syncs leaves nothing behind
+// unless it does (see remember below).
 export async function whoIs(
   db: DB,
   l: Login,
   ask: (l: Login) => Promise<string | null>,
   now = Date.now(),
+  keep = true,
 ): Promise<{ username: string; hash: string }> {
   const hash = await loginHash(l)
   const known = await db
@@ -112,13 +115,17 @@ export async function whoIs(
     await db.prepare('DELETE FROM logins WHERE hash = ?1').bind(hash).run()
     throw new SyncError(401, 'Discogs no longer accepts this sign-in')
   }
+  if (keep) await remember(db, hash, username, now)
+  return { username, hash }
+}
+
+export async function remember(db: DB, hash: string, username: string, now = Date.now()) {
   await db
     .prepare(
       'INSERT INTO logins (hash, username, verified_at) VALUES (?1, ?2, ?3) ON CONFLICT (hash) DO UPDATE SET username = ?2, verified_at = ?3',
     )
     .bind(hash, username, now)
     .run()
-  return { username, hash }
 }
 
 // ---- secrets ----

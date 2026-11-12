@@ -178,7 +178,7 @@ describe('between devices', () => {
   it('joins in on a new device if the account already syncs, and only asks once', async () => {
     const { api } = fakeCloud()
     let peeks = 0
-    const counting: CloudApi = { ...api, pull: (since, peek) => (peek && peeks++, api.pull(since, peek)) }
+    const counting: CloudApi = { ...api, pull: (since) => (peeks++, api.pull(since)) }
     expect(await joinIfSynced(counting)).toBe(false)
     expect(await joinIfSynced(counting)).toBe(false)
     expect(peeks).toBe(1)

@@ -28,7 +28,7 @@ export class CloudError extends Error {
 }
 
 export type CloudApi = {
-  pull(since: number, peek?: boolean): Promise<PullResult>
+  pull(since: number): Promise<PullResult>
   push(rows: Row[]): Promise<{ seq: number; seqs: number[] }>
   forget(): Promise<unknown>
 }
@@ -52,7 +52,7 @@ export function cloudApi(login: Login, fetchFn: typeof fetch = (...a) => fetch(.
     return res.json() as Promise<T>
   }
   return {
-    pull: (since, peek) => call('pull', { since, peek }),
+    pull: (since) => call('pull', { since }),
     push: (rows) => call('push', { rows }),
     forget: () => call('forget', {}),
   }
@@ -310,7 +310,7 @@ export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
 // Once per sign-in: if this account already syncs from another device, this one joins in
 export async function joinIfSynced(api: CloudApi): Promise<boolean> {
   if (await getSetting<boolean>(CLOUD.checked)) return false
-  const r = await api.pull(0, true)
+  const r = await api.pull(0)
   await setSetting(CLOUD.checked, true)
   if (!r.exists) return false
   await turnOn(api)

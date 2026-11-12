@@ -45,7 +45,7 @@ export function CloudSync() {
         <Card className="space-y-4">
           <label className="flex items-center justify-between gap-3">
             <span>
-              <span className="block">Sync across devices</span>
+              <span className="block">Sync this device</span>
               {cloud.enabled && status && <span className="block text-sm text-stone-500">{status}</span>}
             </span>
             <input

@@ -56,7 +56,8 @@ export default defineConfig({
       },
     }),
   ],
-  server: { host: true },
+  // the Worker, when it's running locally (npx wrangler dev)
+  server: { host: true, proxy: { '/api': 'http://localhost:8787' } },
   test: {
     environment: 'jsdom',
     setupFiles: ['tests/setup.ts'],
