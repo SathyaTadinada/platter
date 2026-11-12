@@ -23,11 +23,18 @@ export function Button({ variant = 'primary', className = '', ...props }: Button
 }
 
 export function ExternalLink({ children, className = '', ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  // The last word and the icon stay on one line, so the icon never wraps on its own
+  const text = typeof children === 'string' ? children : null
+  const split = text ? text.lastIndexOf(' ') + 1 : 0
+  const icon = <ExternalIcon size={14} aria-hidden className="ml-1 inline align-[-2px]" />
   return (
     // inline rather than flex, so selecting a sentence carries on through the link
     <a target="_blank" rel="noopener" className={`underline underline-offset-2 ${className}`} {...props}>
-      {children}
-      <ExternalIcon size={14} aria-hidden className="ml-1 inline align-[-2px]" />
+      {text ? text.slice(0, split) : children}
+      <span className="whitespace-nowrap">
+        {text ? text.slice(split) : '⁠'}
+        {icon}
+      </span>
     </a>
   )
 }
