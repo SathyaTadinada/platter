@@ -40,6 +40,12 @@ const tooMany = () => new Response('Too many requests', { status: 429, headers: 
 
 const API = 'https://api.discogs.com'
 const ALLOWED_ORIGINS = ['https://platter.tadinada.com', 'http://localhost:5173', 'http://127.0.0.1:5173']
+// preview builds (wrangler versions upload --preview-alias), which only this Cloudflare account can make
+const PREVIEW = /^https:\/\/[a-z0-9-]+-platter\.tadinada\.workers\.dev$/
+const allowedOrigin = (req: Request) => {
+  const origin = req.headers.get('Origin') ?? ''
+  return ALLOWED_ORIGINS.includes(origin) || PREVIEW.test(origin)
+}
 const MAX_BATCH = 60
 
 type SignRequest = {
@@ -67,7 +73,7 @@ function validRequest(r: SignRequest['requests'][number], signedIn: boolean): bo
 
 async function sign(req: Request, env: Env): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
-  if (!ALLOWED_ORIGINS.includes(req.headers.get('Origin') ?? '')) return new Response('Forbidden', { status: 403 })
+  if (!allowedOrigin(req)) return new Response('Forbidden', { status: 403 })
 
   let input: SignRequest
   try {
@@ -107,7 +113,7 @@ async function sign(req: Request, env: Env): Promise<Response> {
 
 async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
-  if (!ALLOWED_ORIGINS.includes(req.headers.get('Origin') ?? '')) return new Response('Forbidden', { status: 403 })
+  if (!allowedOrigin(req)) return new Response('Forbidden', { status: 403 })
   const db = env.DB
   if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
   const noStore = { 'Cache-Control': 'no-store' }

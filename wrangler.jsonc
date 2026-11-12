@@ -16,6 +16,8 @@
     { "name": "AUTH_LIMITER", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } },
     { "name": "SYNC_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
   ],
-  // cloud sync; the id is filled in once the database is created on Cloudflare
-  "d1_databases": [{ "binding": "DB", "database_name": "platter", "database_id": "local-only", "migrations_dir": "migrations" }],
+  // cloud sync
+  "d1_databases": [
+    { "binding": "DB", "database_name": "platter", "database_id": "925a7706-80d0-4657-86d7-91fc13c4afc5", "migrations_dir": "migrations" },
+  ],
 }
