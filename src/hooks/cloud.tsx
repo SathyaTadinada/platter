@@ -96,35 +96,38 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [client])
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
-  const run = useCallback(async (shown = false) => {
-    if (!api) return
-    if (busy.current) {
-      again.current = true
-      return
-    }
-    busy.current = true
-    clearTimeout(retry.current)
-    clearTimeout(soon.current)
-    lastRun.current = Date.now()
-    if (shown) setRunning(true)
-    try {
-      if ((await syncNow(api)) === 'gone') setVersion((v) => v + 1)
-      failures.current = 0
-      setError(null)
-      await refill()
-    } catch (e) {
-      setError((e as Error).message)
-      const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
-      retry.current = setTimeout(() => document.visibilityState === 'visible' && runRef.current(), wait)
-    } finally {
-      busy.current = false
-      setRunning(false)
-      if (again.current) {
-        again.current = false
-        runRef.current()
+  const run = useCallback(
+    async (shown = false) => {
+      if (!api) return
+      if (busy.current) {
+        again.current = true
+        return
       }
-    }
-  }, [api, refill])
+      busy.current = true
+      clearTimeout(retry.current)
+      clearTimeout(soon.current)
+      lastRun.current = Date.now()
+      if (shown) setRunning(true)
+      try {
+        if ((await syncNow(api)) === 'gone') setVersion((v) => v + 1)
+        failures.current = 0
+        setError(null)
+        await refill()
+      } catch (e) {
+        setError((e as Error).message)
+        const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
+        retry.current = setTimeout(() => document.visibilityState === 'visible' && runRef.current(), wait)
+      } finally {
+        busy.current = false
+        setRunning(false)
+        if (again.current) {
+          again.current = false
+          runRef.current()
+        }
+      }
+    },
+    [api, refill],
+  )
   runRef.current = run
 
   // note changes while on, and send them shortly after
