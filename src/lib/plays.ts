@@ -15,6 +15,8 @@ export type Play = {
   // field values before this play, so it can be undone
   before: { count?: string; last?: string }
   scrobble?: 'pending' | 'done'
+  uid?: string // the same play on every device
+  device?: string // where it was logged; only that device scrobbles it
 }
 
 export type PlayFields = { count?: number; last?: number } // field ids

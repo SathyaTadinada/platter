@@ -1,4 +1,5 @@
-import Dexie, { type EntityTable } from 'dexie'
+import Dexie, { type EntityTable, type Table } from 'dexie'
+import { captureMiddleware, newUid, type Kind } from './capture'
 import type { SearchResult } from '../api/discogs/types'
 import type { Metadata } from '../lib/metadata'
 import type { Play } from '../lib/plays'
@@ -54,6 +55,9 @@ export type WantItem = {
 }
 export type Setting = { key: string; value: unknown }
 
+// A change not sent to the server yet. Only what changed and when: the current value is read when it's sent.
+export type OutboxEntry = { kind: Kind; key: string; at: number }
+
 // A cover the user picked from the release's other Discogs images
 export type CoverChoice = { instanceId: number; cover: string; thumb: string }
 
@@ -99,8 +103,11 @@ export type QueueItem = {
   dropped?: string[] // details that had nowhere to go
   error?: string
   addStartedAt?: number
+  addingBy?: string // the device adding it, when cloud sync is on
   instanceId?: number
   warning?: string // added, but something minor went wrong (e.g. a field didn't save)
+  uid?: string // the same record on every device
+  seq?: number // where the server had it when this device last heard; claims check it hasn't moved
 }
 
 // The year an album first came out, from its Discogs master (0 when Discogs doesn't say)
@@ -120,6 +127,7 @@ export class PlatterDB extends Dexie {
   masters!: EntityTable<MasterYear, 'masterId'>
   barcodes!: EntityTable<{ barcode: string; releaseIds: number[] }, 'barcode'>
   lengths!: EntityTable<RecordLength, 'releaseId'>
+  outbox!: Table<OutboxEntry, [Kind, string]>
 
   constructor(name = 'platter') {
     super(name)
@@ -144,6 +152,20 @@ export class PlatterDB extends Dexie {
     this.version(7).stores({ masters: 'masterId, at' })
     this.version(8).stores({ barcodes: 'barcode' })
     this.version(9).stores({ lengths: 'releaseId, at' })
+    // cloud sync: plays and batch records get ids that hold across devices
+    this.version(10)
+      .stores({ plays: '++id, instanceId, at, uid', queue: '++id, status, createdAt, uid', outbox: '[kind+key], at' })
+      .upgrade(async (tx) => {
+        await tx
+          .table('plays')
+          .toCollection()
+          .modify((p) => void (p.uid ??= newUid()))
+        await tx
+          .table('queue')
+          .toCollection()
+          .modify((q) => void (q.uid ??= newUid()))
+      })
+    this.use(captureMiddleware)
   }
 }
 

@@ -58,6 +58,12 @@ export function setLayout(l: Layout) {
   listeners.forEach((f) => f())
 }
 
+// after another device's layout arrives
+export function reloadLayout() {
+  current = null
+  listeners.forEach((f) => f())
+}
+
 export function subscribeLayout(f: () => void) {
   listeners.add(f)
   return () => listeners.delete(f)

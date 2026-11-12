@@ -15,12 +15,16 @@ export function readChoice<T extends string>(key: string, allowed: readonly T[],
   return allowed.includes(v as T) ? (v as T) : fallback
 }
 
+// Told about every change (cloud sync sends the ones that follow the account)
+export const prefListeners = new Set<(key: string) => void>()
+
 export function removePref(key: string) {
   try {
     localStorage.removeItem(key)
   } catch {
     // blocked
   }
+  prefListeners.forEach((l) => l(key))
 }
 
 // Every preference Platter keeps here
@@ -38,4 +42,5 @@ export function writePref(key: string, value: string) {
   } catch {
     // blocked
   }
+  prefListeners.forEach((l) => l(key))
 }
