@@ -1,41 +1,108 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { categoryOf, type Category } from '../../worker/categories'
 import { db, getSetting, setSetting } from '../db/db'
 import { quiet } from '../db/capture'
-import { capture, claimBatch, CLOUD, joinIfSynced, pushAll, syncNow, takeNeedCandidates, turnOn, type CloudApi, type Row } from './cloud'
+import {
+  capture,
+  claimBatch,
+  CLOUD,
+  cloudApi,
+  CloudError,
+  deviceFor,
+  joinWithCode,
+  leave,
+  setWhatSyncs,
+  signIn,
+  syncNow,
+  takeNeedCandidates,
+  type Row,
+} from './cloud'
 import { readPref, writePref } from './prefs'
 
-// The server's rules (newest edit wins, claims, seq numbers) in memory; worker/sync.test.ts covers the real one
-function fakeCloud() {
-  let seq = 0
-  let exists = false
-  const rows = new Map<string, Row & { seq: number }>()
-  const api: CloudApi = {
-    async pull(since) {
-      if (!exists) return { exists: false, rows: [], seq: 0, more: false }
-      const out = [...rows.values()].filter((r) => r.seq > since).sort((a, b) => a.seq - b.seq)
-      return { exists: true, rows: out.map((r) => ({ ...r })), seq: Math.max(since, seq), more: false }
-    },
-    async push(input) {
-      exists = true
-      const seqs = input.map((r) => {
-        const k = `${r.kind}:${r.key}`
-        const cur = rows.get(k)
-        seq++
-        if (r.ifSeq !== undefined ? (cur?.seq ?? 0) !== r.ifSeq : cur && !(r.updatedAt > cur.updatedAt)) return 0
-        rows.set(k, { ...r, deleted: r.value === null, seq })
-        return seq
-      })
-      return { seq, seqs }
-    },
-    async forget() {
-      rows.clear()
-      exists = false
-    },
+// The server's rules in memory, behind fetch: accounts by name and password proof, device keys,
+// pairing codes, newest edit wins, claims, switched-off categories. worker/sync.test.ts covers the real one.
+function fakeServer() {
+  type Account = { id: string; name: string; proof: string; seq: number; off: Category[]; rows: Map<string, Row & { seq: number }> }
+  const accounts: Account[] = []
+  const devices = new Map<string, Account>()
+  const pairings = new Map<string, Account>()
+  let n = 0
+  const newDevice = (a: Account) => {
+    const token = `device-${++n}`
+    devices.set(token, a)
+    return token
   }
-  return { api, rows }
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
+
+  const fetchFn = (async (url: string, init: RequestInit) => {
+    const action = url.split('/').pop()
+    const b = JSON.parse(String(init.body))
+    if (action === 'exists') return json({ exists: accounts.some((a) => a.name === b.name.toLowerCase()) })
+    if (action === 'signin') {
+      const name = b.name.toLowerCase()
+      let a = accounts.find((x) => x.name === name && x.proof === b.proof)
+      if (!a) {
+        if (!b.fresh && accounts.some((x) => x.name === name)) return json({ error: 'Wrong password' }, 401)
+        a = { id: `acc-${++n}`, name, proof: b.proof, seq: 0, off: [], rows: new Map() }
+        accounts.push(a)
+      }
+      return json({ device: newDevice(a) })
+    }
+    if (action === 'join') {
+      const a = pairings.get(b.code.replace('-', ''))
+      if (!a) return json({ error: 'nope' }, 401)
+      pairings.delete(b.code.replace('-', ''))
+      return json({ device: newDevice(a), name: a.name })
+    }
+    const a = devices.get(b.device)
+    if (!a || !accounts.includes(a)) return json({ error: 'Not signed in' }, 401)
+    switch (action) {
+      case 'pull': {
+        const rows = [...a.rows.values()].filter((r) => r.seq > b.since).sort((x, y) => x.seq - y.seq)
+        return json({ rows, seq: Math.max(b.since, a.seq), more: false, off: a.off })
+      }
+      case 'push': {
+        const seqs = (b.rows as Row[]).map((r) => {
+          if (a.off.includes(categoryOf(r.kind, r.key))) return 0
+          const k = `${r.kind}:${r.key}`
+          const cur = a.rows.get(k)
+          a.seq++
+          if (r.ifSeq !== undefined ? (cur?.seq ?? 0) !== r.ifSeq : cur && !(r.updatedAt > cur.updatedAt)) return 0
+          a.rows.set(k, { ...r, deleted: r.value === null, seq: a.seq })
+          return a.seq
+        })
+        return json({ seq: a.seq, seqs })
+      }
+      case 'pair': {
+        const code = `ABC${++n}`.slice(0, 6).padEnd(6, 'X')
+        pairings.set(code, a)
+        return json({ code: `${code.slice(0, 3)}-${code.slice(3)}`, expiresAt: 0 })
+      }
+      case 'password':
+        a.proof = b.proof
+        return json({ ok: true })
+      case 'off':
+        a.off = b.off
+        for (const [k, r] of a.rows) if (a.off.includes(categoryOf(r.kind, r.key))) a.rows.delete(k)
+        return json({ off: a.off })
+      case 'leave':
+        devices.delete(b.device)
+        return json({ ok: true })
+      case 'forget':
+        accounts.splice(accounts.indexOf(a), 1)
+        return json({ ok: true })
+    }
+    return json({ error: 'unknown' }, 404)
+  }) as unknown as typeof fetch
+  return { fetchFn, accounts }
 }
 
-// another browser: an empty database, with sync noting changes again
+let server: ReturnType<typeof fakeServer>
+const api = () => cloudApi(deviceFor('tadinada')!.device, server.fetchFn)
+const wait = () => new Promise((r) => setTimeout(r, 20))
+const PASSWORD = 'correct horse'
+
+// another browser: an empty database and no preferences, so no device key
 async function newDevice() {
   capture(false)
   await db.delete()
@@ -44,15 +111,18 @@ async function newDevice() {
   capture(true)
 }
 
-const wait = () => new Promise((r) => setTimeout(r, 20))
-
 beforeEach(async () => {
+  server = fakeServer()
+  vi.stubGlobal('fetch', server.fetchFn)
   await db.delete()
   await db.open()
   localStorage.clear()
   capture(true)
 })
-afterEach(() => capture(false))
+afterEach(() => {
+  capture(false)
+  vi.unstubAllGlobals()
+})
 
 describe('noting changes', () => {
   it('notes synced rows once they are saved, and gives plays a uid', async () => {
@@ -92,120 +162,141 @@ describe('noting changes', () => {
   })
 })
 
-describe('between devices', () => {
-  it('brings plays, settings, covers, and preferences to another device', async () => {
-    const { api } = fakeCloud()
-    await turnOn(api)
+describe('getting in', () => {
+  it('starts an account with the first password, and lets the next device in with it', async () => {
     await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
     await setSetting('stylus', { lifespan: 900 })
     await db.covers.put({ instanceId: 1, cover: 'c.jpg', thumb: 't.jpg' })
     await db.valueHistory.put({ date: '2026-11-01', median: 100, min: 50, max: 200 } as never)
     writePref('platter.accent', 'teal')
-    await wait()
-    await syncNow(api)
+    await signIn('Tadinada', PASSWORD)
+    expect(deviceFor('tadinada')).toBeTruthy()
+    expect(server.accounts).toHaveLength(1)
 
     await newDevice()
-    await turnOn(api)
+    await signIn('tadinada', PASSWORD)
     expect(await db.plays.count()).toBe(1)
     expect(await getSetting('stylus')).toEqual({ lifespan: 900 })
     expect((await db.covers.get(1))?.cover).toBe('c.jpg')
     expect(await db.valueHistory.count()).toBe(1)
     expect(readPref('platter.accent')).toBe('teal')
-    // nothing to send back
     expect(await db.outbox.count()).toBe(0)
   })
 
-  it('passes an undo on', async () => {
-    const { api } = fakeCloud()
-    await turnOn(api)
-    const id = await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
-    await wait()
-    await syncNow(api)
+  it('turns away a wrong password, and can start over with it', async () => {
+    await signIn('tadinada', PASSWORD)
     await newDevice()
-    await turnOn(api)
-    expect(await db.plays.count()).toBe(1)
-    const local = (await db.plays.toArray())[0]
-    await db.plays.delete(local.id!)
-    await wait()
-    await syncNow(api)
-
-    // back on the first device
-    await newDevice()
-    await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {}, uid: local.uid, id })
-    await setSetting(CLOUD.cursor, 0)
-    await db.outbox.clear()
-    await syncNow(api)
-    expect(await db.plays.count()).toBe(0)
+    await expect(signIn('tadinada', 'not it at all')).rejects.toMatchObject({ status: 401 })
+    expect(deviceFor('tadinada')).toBeNull()
+    await signIn('tadinada', 'not it at all', true)
+    expect(server.accounts).toHaveLength(2)
   })
 
-  it('keeps both devices history when the second one turns sync on', async () => {
-    const { api } = fakeCloud()
-    await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
-    await turnOn(api)
-    await newDevice()
-    await db.plays.add({ instanceId: 3, releaseId: 4, at: 200, before: {} })
-    writePref('platter.accent', 'rose')
-    await turnOn(api)
-    expect((await db.plays.toArray()).map((p) => p.instanceId).sort()).toEqual([1, 3])
-  })
-
-  it('lets a change not yet sent beat an older one from the server', async () => {
-    const { api } = fakeCloud()
-    await turnOn(api)
-    await setSetting('stylus', { lifespan: 500 })
-    await wait()
-    await syncNow(api)
-    await newDevice()
-    await turnOn(api)
-    await setSetting('stylus', { lifespan: 700 }) // newer, waiting to go
-    await wait()
-    await setSetting(CLOUD.cursor, 0)
-    await syncNow(api)
-    expect(await getSetting('stylus')).toEqual({ lifespan: 700 })
-  })
-
-  it('switches itself off when the synced data is deleted from another device', async () => {
-    const { api } = fakeCloud()
-    await turnOn(api)
-    await setSetting('stylus', {})
-    await wait()
-    await syncNow(api)
-    await api.forget()
-    expect(await syncNow(api)).toBe('gone')
-    expect(await getSetting(CLOUD.enabled)).toBe(false)
-  })
-
-  it('joins in on a new device if the account already syncs, and only asks once', async () => {
-    const { api } = fakeCloud()
-    let peeks = 0
-    const counting: CloudApi = { ...api, pull: (since, check) => (check && peeks++, api.pull(since, check)) }
-    expect(await joinIfSynced(counting)).toBe(false)
-    expect(await joinIfSynced(counting)).toBe(false)
-    expect(peeks).toBe(1)
-
+  it('lets a device in with a pairing code, but only for the same Discogs account', async () => {
     await setSetting('stylus', { lifespan: 1 })
+    await signIn('tadinada', PASSWORD)
+    const { code } = await api().pair()
+    const { code: second } = await api().pair()
+
     await newDevice()
-    await setSetting('stylus', { lifespan: 2 })
-    await turnOn(api)
-    await newDevice()
-    expect(await joinIfSynced(api)).toBe(true)
-    expect(await getSetting(CLOUD.enabled)).toBe(true)
-    expect(await getSetting('stylus')).toEqual({ lifespan: 2 })
+    await expect(joinWithCode('someone-else', code)).rejects.toMatchObject({ status: 403 })
+    expect(deviceFor('someone-else')).toBeNull()
+    await joinWithCode('tadinada', second)
+    expect(await getSetting('stylus')).toEqual({ lifespan: 1 })
+  })
+
+  it('stays in after signing out of Discogs, and picks up again when signed back in', async () => {
+    await signIn('tadinada', PASSWORD)
+    await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
+    await wait()
+    await syncNow(api())
+    // signing out wipes the database but not the device key
+    capture(false)
+    await db.delete()
+    await db.open()
+    capture(true)
+    expect(deviceFor('tadinada')).toBeTruthy()
+    expect(deviceFor('someone-else')).toBeNull()
+    await syncNow(api())
+    expect(await db.plays.count()).toBe(1)
   })
 })
 
-describe('turning on', () => {
-  it('stays off if the first round fails', async () => {
-    const { CloudError } = await import('./cloud')
-    const failing: CloudApi = {
-      pull: async () => {
-        throw new CloudError(503, 'busy')
-      },
-      push: async () => ({ seq: 0, seqs: [] }),
-      forget: async () => ({}),
-    }
-    await expect(turnOn(failing)).rejects.toThrow()
-    expect(await getSetting(CLOUD.enabled)).toBe(false)
+describe('between devices', () => {
+  it('passes an undo on', async () => {
+    await signIn('tadinada', PASSWORD)
+    const id = await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
+    await wait()
+    await syncNow(api())
+    const uid = (await db.plays.get(id))!.uid
+
+    await newDevice()
+    await signIn('tadinada', PASSWORD)
+    const local = (await db.plays.toArray())[0]
+    expect(local.uid).toBe(uid)
+    await db.plays.delete(local.id!)
+    await wait()
+    await syncNow(api())
+
+    await newDevice()
+    await signIn('tadinada', PASSWORD)
+    expect(await db.plays.count()).toBe(0)
+  })
+
+  it('lets a change not yet sent beat an older one from the server', async () => {
+    await signIn('tadinada', PASSWORD)
+    await setSetting('stylus', { lifespan: 500 })
+    await wait()
+    await syncNow(api())
+    await newDevice()
+    await signIn('tadinada', PASSWORD)
+    await setSetting('stylus', { lifespan: 700 }) // newer, waiting to go
+    await wait()
+    await setSetting(CLOUD.cursor, 0)
+    await syncNow(api())
+    expect(await getSetting('stylus')).toEqual({ lifespan: 700 })
+  })
+
+  it('stops here when the account is deleted from another device', async () => {
+    await signIn('tadinada', PASSWORD)
+    const mine = api()
+    // the other device deletes it; only the server changes
+    server.accounts.splice(0, 1)
+    expect(await syncNow(mine)).toBe('gone')
+    expect(deviceFor('tadinada')).toBeNull()
+  })
+
+  it('leaves without touching the account', async () => {
+    await signIn('tadinada', PASSWORD)
+    await leave(api())
+    expect(deviceFor('tadinada')).toBeNull()
+    expect(server.accounts).toHaveLength(1)
+  })
+})
+
+describe('what syncs', () => {
+  it('stops sending a switched-off category, and sends it all again once back on', async () => {
+    await signIn('tadinada', PASSWORD)
+    await setWhatSyncs(api(), ['plays'])
+    await db.plays.add({ instanceId: 1, releaseId: 2, at: 100, before: {} })
+    await setSetting('stylus', {})
+    await wait()
+    expect((await db.outbox.toArray()).map((e) => e.kind)).toEqual(['setting'])
+    await syncNow(api())
+
+    await setWhatSyncs(api(), [])
+    await syncNow(api())
+    expect([...server.accounts[0].rows.values()].some((r) => r.kind === 'play')).toBe(true)
+  })
+
+  it('follows a switch flipped on another device', async () => {
+    await signIn('tadinada', PASSWORD)
+    server.accounts[0].off = ['covers']
+    await syncNow(api())
+    expect(await getSetting(CLOUD.off)).toEqual(['covers'])
+    await db.covers.put({ instanceId: 1, cover: 'c', thumb: 't' })
+    await wait()
+    expect(await db.outbox.count()).toBe(0)
   })
 })
 
@@ -213,50 +304,46 @@ describe('batch across devices', () => {
   const result = (id: number) => ({ id, title: `R${id}`, type: 'release' }) as never
 
   it("sends the batch without Discogs' search results, and the other device looks them up", async () => {
-    const { api, rows } = fakeCloud()
-    await turnOn(api)
+    await signIn('tadinada', PASSWORD)
     await db.queue.add({ createdAt: 1, source: 'scan', status: 'choose', barcode: '123', candidates: [result(1), result(2)] })
     await wait()
-    await pushAll(api)
-    const sent = JSON.parse([...rows.values()].find((r) => r.kind === 'batch')!.value!)
+    await syncNow(api())
+    const sent = JSON.parse([...server.accounts[0].rows.values()].find((r) => r.kind === 'batch')!.value!)
     expect(sent.candidates).toBeUndefined()
     expect(sent.barcode).toBe('123')
 
     await newDevice()
     takeNeedCandidates()
-    await turnOn(api)
+    await signIn('tadinada', PASSWORD)
     const [item] = await db.queue.toArray()
     expect(item.status).toBe('choose')
     expect(takeNeedCandidates()).toEqual([item.id])
   })
 
   it('lets only one device start adding a record', async () => {
-    const { api } = fakeCloud()
-    await turnOn(api)
+    await signIn('tadinada', PASSWORD)
     await db.queue.add({ createdAt: 1, source: 'scan', status: 'ready', barcode: '123' })
     await wait()
-    await syncNow(api)
+    await syncNow(api())
     const phone = (await db.queue.toArray())[0]
+    const phoneApi = api()
 
     await newDevice()
-    await turnOn(api)
+    await signIn('tadinada', PASSWORD)
     const laptop = (await db.queue.toArray())[0]
     expect(laptop.seq).toBe(phone.seq)
 
-    expect(await claimBatch(api, phone, 'phone', 10)).toBe(true)
-    expect(await claimBatch(api, laptop, 'laptop', 11)).toBe(false)
+    expect(await claimBatch(phoneApi, phone, 'phone', 10)).toBe(true)
+    expect(await claimBatch(api(), laptop, 'laptop', 11)).toBe(false)
   })
 
   it("adds anyway if Platter's server can't be reached", async () => {
-    const down: CloudApi = {
-      pull: async () => ({ exists: true, rows: [], seq: 0, more: false }),
-      push: async () => {
-        throw new (await import('./cloud')).CloudError(0, 'down')
-      },
-      forget: async () => ({}),
-    }
+    const down = cloudApi('x', (async () => {
+      throw new TypeError('offline')
+    }) as unknown as typeof fetch)
     const id = await db.queue.add({ createdAt: 1, source: 'scan', status: 'ready', barcode: '1' })
     expect(await claimBatch(down, (await db.queue.get(id))!, 'phone', 1)).toBe(true)
+    expect(new CloudError(0, 'x').status).toBe(0)
   })
 })
 

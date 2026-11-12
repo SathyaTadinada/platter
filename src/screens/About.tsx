@@ -13,7 +13,7 @@ export function About() {
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>Platter has no analytics, and no accounts of its own: your Discogs sign-in is the account.</p>
+          <p>Platter has no analytics, and no accounts of its own unless you turn on sync.</p>
           <p>Your sign-in stays in this browser, and Platter talks to Discogs directly from your device.</p>
           <p>
             If you log in with Discogs, each request is signed by a small Platter server first. It gets your sign-in key and the address
@@ -26,9 +26,9 @@ export function About() {
           </p>
           <p>
             If you turn on sync across devices, what you save in Platter (plays, value history, cover picks, your batch, settings, and your
-            ListenBrainz token, encrypted) is kept on Platter's server under your Discogs username. Your collection, wantlist, and prices
-            still come only from Discogs. To check a sign-in is yours, the server asks Discogs once and then keeps only a scrambled
-            fingerprint of it, never the sign-in itself. Signing in on a new device checks whether your account already syncs.
+            ListenBrainz token, encrypted) is kept on Platter's server under your Discogs username and a sync password. You choose what
+            syncs, and the server never contacts Discogs. Your password isn't sent anywhere: your device turns it into a code first, and the
+            server keeps only a fingerprint of that. Your collection, wantlist, and prices still come only from Discogs.
           </p>
           <p>Photos of runouts and spines are read on your device and never uploaded.</p>
           <p>

@@ -1,3 +1,4 @@
+import { categoryOf, type Category } from '../../worker/categories'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
 import { applyAccent } from './accent'
@@ -5,18 +6,19 @@ import { prefListeners, readPref, removePref, writePref } from './prefs'
 import { reloadLayout } from './statsLayout'
 import { applyTheme } from './theme'
 
-// Cloud sync: what you save in Platter follows your Discogs account to every device. Changes are
-// noted as they happen (db/capture.ts), sent in batches, and other devices' changes come back
-// by number (the server's seq) so each pull only carries what's new. The newest edit wins.
+// Cloud sync: what you save in Platter follows you to every device. An account is your Discogs
+// username and a sync password; each browser that gets in (with the password, or a pairing code from
+// a device that's already in) keeps a device key. Changes are noted as they happen (db/capture.ts),
+// sent in batches, and other devices' changes come back by number (the server's seq) so each pull
+// only carries what's new. The newest edit wins.
 
 export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', 'platter.valueLayout'])
 
 // per device, so none of these sync
-export const CLOUD = { enabled: 'cloudSync', cursor: 'cloudCursor', syncedAt: 'cloudSyncedAt', checked: 'cloudChecked' } as const
+export const CLOUD = { cursor: 'cloudCursor', syncedAt: 'cloudSyncedAt', checked: 'cloudChecked', off: 'cloudOff' } as const
 
-export type Login = { kind: 'token' | 'oauth'; token: string; secret?: string }
 export type Row = { kind: Kind; key: string; value: string | null; updatedAt: number; deleted?: boolean; ifSeq?: number; seq?: number }
-type PullResult = { exists: boolean; rows: Row[]; seq: number; more: boolean }
+type PullResult = { rows: Row[]; seq: number; more: boolean; off: Category[] }
 
 export class CloudError extends Error {
   constructor(
@@ -27,38 +29,89 @@ export class CloudError extends Error {
   }
 }
 
-export type CloudApi = {
-  pull(since: number, check?: boolean): Promise<PullResult>
-  push(rows: Row[]): Promise<{ seq: number; seqs: number[] }>
-  forget(): Promise<unknown>
+// ---- this device's key ----
+
+// Kept with the preferences rather than the database, so signing out of Discogs doesn't sign this
+// browser out of sync ("Delete everything" does). It's only used while the same Discogs account is in.
+const KEY = 'platter.sync'
+export type Device = { name: string; device: string }
+
+export function savedDevice(): Device | null {
+  try {
+    const d = JSON.parse(readPref(KEY) ?? 'null') as Device | null
+    return d && typeof d.name === 'string' && typeof d.device === 'string' ? d : null
+  } catch {
+    return null
+  }
+}
+const saveDevice = (d: Device | null) => (d ? writePref(KEY, JSON.stringify(d)) : removePref(KEY))
+export const deviceFor = (username: string) => {
+  const d = savedDevice()
+  return d && d.name === username.toLowerCase() ? d : null
 }
 
-// What to tell someone, by the server's status. Busy (Platter's limit or Discogs') sorts itself out.
+// The password, stretched here so the server never sees it and guessing it is slow. The name is the
+// salt, so the same password makes a different proof for every account.
+export async function proofFor(name: string, password: string, iterations = 310_000): Promise<string> {
+  const enc = new TextEncoder()
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits'])
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(`platter-sync\n${name.toLowerCase()}`), iterations },
+    base,
+    256,
+  )
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// ---- talking to the server ----
+
 function failure(status: number) {
-  if (status === 401) return "Discogs didn't accept your sign-in."
   if (status === 429 || status === 503) return "Couldn't sync just now. Platter will try again shortly."
   return `Couldn't sync (${status}).`
 }
 
-export function cloudApi(login: Login, fetchFn: typeof fetch = (...a) => fetch(...a)): CloudApi {
-  async function call<T>(path: string, body: object): Promise<T> {
-    let res: Response
-    try {
-      res = await fetchFn(`/api/sync/${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login, ...body }),
-      })
-    } catch {
-      throw new CloudError(0, "Can't reach Platter's server.")
-    }
-    if (!res.ok) throw new CloudError(res.status, failure(res.status))
-    return res.json() as Promise<T>
+async function call<T>(fetchFn: typeof fetch, path: string, body: object): Promise<T> {
+  let res: Response
+  try {
+    res = await fetchFn(`/api/sync/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new CloudError(0, "Can't reach Platter's server.")
   }
+  if (!res.ok) throw new CloudError(res.status, failure(res.status))
+  return res.json() as Promise<T>
+}
+
+// Getting in, before there's a device key
+export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
+  exists: (name: string) => call<{ exists: boolean }>(fetchFn, 'exists', { name }).then((r) => r.exists),
+  signIn: (name: string, proof: string, fresh = false) => call<{ device: string }>(fetchFn, 'signin', { name, proof, fresh }),
+  join: (code: string) => call<{ device: string; name: string }>(fetchFn, 'join', { code }),
+})
+
+export type CloudApi = {
+  pull(since: number): Promise<PullResult>
+  push(rows: Row[]): Promise<{ seq: number; seqs: number[] }>
+  pair(): Promise<{ code: string; expiresAt: number }>
+  password(proof: string): Promise<unknown>
+  setOff(off: Category[]): Promise<{ off: Category[] }>
+  leave(): Promise<unknown>
+  forget(): Promise<unknown>
+}
+
+export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch(...a)): CloudApi {
+  const c = <T>(path: string, body: object = {}) => call<T>(fetchFn, path, { device, ...body })
   return {
-    pull: (since, check) => call('pull', { since, check }),
-    push: (rows) => call('push', { rows }),
-    forget: () => call('forget', {}),
+    pull: (since) => c('pull', { since }),
+    push: (rows) => c('push', { rows }),
+    pair: () => c('pair'),
+    password: (proof) => c('password', { proof }),
+    setOff: (off) => c('off', { off }),
+    leave: () => c('leave'),
+    forget: () => c('forget'),
   }
 }
 
@@ -66,9 +119,13 @@ export function cloudApi(login: Login, fetchFn: typeof fetch = (...a) => fetch(.
 
 let onChange = () => {}
 let applyingPrefs = false
+// categories switched off on the Sync page: not noted, not sent
+let off = new Set<Category>()
 
 async function note(kind: Kind, keys: string[], at: number) {
-  await db.outbox.bulkPut(keys.map((key) => ({ kind, key, at })))
+  const wanted = keys.filter((key) => !off.has(categoryOf(kind, key)))
+  if (!wanted.length) return
+  await db.outbox.bulkPut(wanted.map((key) => ({ kind, key, at })))
   onChange()
 }
 
@@ -255,92 +312,145 @@ export async function pushAll(api: CloudApi) {
   }
 }
 
-// false when the account has nothing on the server (never turned on, or deleted from another device)
-export async function pullAll(api: CloudApi): Promise<boolean> {
+// Brings in what other devices changed, and follows the account's "What syncs" switches: a category
+// switched back on gets everything here sent up again
+export async function pullAll(api: CloudApi) {
   let since = (await getSetting<number>(CLOUD.cursor)) ?? 0
   for (;;) {
     const r = await api.pull(since)
-    if (!r.exists) return false
+    await followOff(r.off)
     await applyRows(r.rows)
     since = r.seq
     await setSetting(CLOUD.cursor, since)
-    if (!r.more) return true
+    if (!r.more) return
   }
 }
 
+async function followOff(next: Category[]) {
+  const before = new Set((await getSetting<Category[]>(CLOUD.off)) ?? [])
+  off = new Set(next)
+  const backOn = [...before].filter((c) => !off.has(c))
+  // anything waiting in a category that's now off isn't wanted
+  const waiting = await db.outbox.toArray()
+  const drop = waiting.filter((e) => off.has(categoryOf(e.kind, e.key)))
+  if (drop.length) await db.outbox.bulkDelete(drop.map((e) => [e.kind, e.key] as [Kind, string]))
+  await setSetting(CLOUD.off, next)
+  if (backOn.length) await noteEverything(new Set(backOn))
+}
+
 // Everything already here, marked as old so anything the server has wins
-async function noteEverything() {
+async function noteEverything(only?: Set<Category>) {
+  const want = (kind: Kind, key: string) => {
+    const c = categoryOf(kind, key)
+    return !off.has(c) && (!only || only.has(c))
+  }
   const entries: OutboxEntry[] = []
   for (const [table, spec] of Object.entries(SPECS)) {
     for (const row of await db.table(table).toArray()) {
       const key = spec.key(row)
       if (key === undefined || key === null) continue
       if (spec.kind === 'setting' && !SYNCED_SETTINGS.has(String(key))) continue
-      entries.push({ kind: spec.kind, key: String(key), at: 1 })
+      if (want(spec.kind, String(key))) entries.push({ kind: spec.kind, key: String(key), at: 1 })
     }
   }
-  for (const key of SYNCED_PREFS) if (readPref(key) !== null) entries.push({ kind: 'pref', key, at: 1 })
+  for (const key of SYNCED_PREFS) if (readPref(key) !== null && want('pref', key)) entries.push({ kind: 'pref', key, at: 1 })
   const waiting = new Set((await db.outbox.toArray()).map((e) => `${e.kind}:${e.key}`))
   await db.outbox.bulkPut(entries.filter((e) => !waiting.has(`${e.kind}:${e.key}`)))
 }
 
-// If the first round fails, sync stays off rather than retrying behind the scenes
-export async function turnOn(api: CloudApi) {
-  await setSetting(CLOUD.enabled, true)
+// Everything the device knew about syncing, apart from what it synced
+async function resetDevice() {
+  saveDevice(null)
+  off = new Set()
+  await db.outbox.clear()
+  for (const key of [CLOUD.cursor, CLOUD.syncedAt, CLOUD.off]) await db.settings.delete(key)
+}
+
+// A device that just got in: the first round brings everything down, then sends up what only it had
+async function firstRound(api: CloudApi) {
   await setSetting(CLOUD.cursor, 0)
+  await pullAll(api)
+  await noteEverything()
+  await pushAll(api)
+  await setSetting(CLOUD.syncedAt, Date.now())
+}
+
+async function start(name: string, device: string) {
+  saveDevice({ name: name.toLowerCase(), device })
   try {
-    await pullAll(api)
-    await noteEverything()
-    await pushAll(api)
+    await firstRound(cloudApi(device))
   } catch (e) {
-    await setSetting(CLOUD.enabled, false)
-    await db.outbox.clear()
+    // still in; the next sync finishes the first round
+    if (e instanceof CloudError && e.status === 401) await resetDevice()
     throw e
   }
-  await setSetting(CLOUD.syncedAt, Date.now())
 }
 
-export async function turnOff() {
-  await setSetting(CLOUD.enabled, false)
-  await setSetting(CLOUD.syncedAt, null)
-  await setSetting(CLOUD.checked, true) // don't switch itself back on
-  await db.outbox.clear()
+// With the sync password. fresh starts a separate account when the name already has one with another password.
+export async function signIn(username: string, password: string, fresh = false, entry = cloudEntry()) {
+  const { device } = await entry.signIn(username, await proofFor(username, password), fresh)
+  await start(username, device)
 }
 
+// With a code from a device that's already in. The code has to be for the Discogs account signed in here.
+export async function joinWithCode(username: string, code: string, entry = cloudEntry()) {
+  const { device, name } = await entry.join(code)
+  if (name !== username.toLowerCase()) {
+    await cloudApi(device)
+      .leave()
+      .catch(() => {})
+    throw new CloudError(403, `That code is for ${name}, not ${username}.`)
+  }
+  await start(username, device)
+}
+
+export async function changePassword(api: CloudApi, username: string, password: string) {
+  await api.password(await proofFor(username, password))
+}
+
+export async function setWhatSyncs(api: CloudApi, next: Category[]) {
+  const { off: saved } = await api.setOff(next)
+  await followOff(saved)
+}
+
+// This device stops syncing; the account and the other devices carry on
+export async function leave(api: CloudApi) {
+  await api.leave().catch(() => {})
+  await resetDevice()
+}
+
+// The whole account, from every device
+export async function forgetAccount(api: CloudApi) {
+  await api.forget()
+  await resetDevice()
+}
+
+// 'gone' when the device was signed out of sync elsewhere (or the account deleted): it stops here too
 export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
-  // never finished a first round: do it the way turning on does, so everything here goes up
-  if (!(await getSetting<number | null>(CLOUD.syncedAt))) {
-    await pullAll(api)
-    await noteEverything()
-    await pushAll(api)
-    await setSetting(CLOUD.syncedAt, Date.now())
+  off = new Set((await getSetting<Category[]>(CLOUD.off)) ?? [])
+  try {
+    // never finished a first round: do it now, so everything here goes up
+    if (!(await getSetting<number | null>(CLOUD.syncedAt))) await firstRound(api)
+    else {
+      await pushAll(api)
+      await pullAll(api)
+      await setSetting(CLOUD.syncedAt, Date.now())
+    }
     return 'ok'
+  } catch (e) {
+    if (e instanceof CloudError && e.status === 401) {
+      await resetDevice()
+      return 'gone'
+    }
+    throw e
   }
-  await pushAll(api)
-  if (!(await pullAll(api))) {
-    // deleted from another device
-    await turnOff()
-    return 'gone'
-  }
-  await setSetting(CLOUD.syncedAt, Date.now())
-  return 'ok'
-}
-
-// Once per sign-in: if this account already syncs from another device, this one joins in
-export async function joinIfSynced(api: CloudApi): Promise<boolean> {
-  if (await getSetting<boolean>(CLOUD.checked)) return false
-  const r = await api.pull(0, true)
-  await setSetting(CLOUD.checked, true)
-  if (!r.exists) return false
-  await turnOn(api)
-  return true
 }
 
 // Before adding a batch record to Discogs: mark it as this device's on the server, unless another
 // device changed it first (most likely by starting to add it). A server that can't be reached
 // doesn't stop the add.
 export async function claimBatch(api: CloudApi, item: QueueItem, by: string, startedAt: number): Promise<boolean> {
-  if (!item.uid) return true
+  if (!item.uid || off.has('batch')) return true
   const value = { ...batchValue(item), status: 'adding', addingBy: by, addStartedAt: startedAt }
   try {
     const { seqs } = await api.push([

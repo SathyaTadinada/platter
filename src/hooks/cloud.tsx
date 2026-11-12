@@ -1,19 +1,27 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'wouter'
+import type { Category } from '../../worker/categories'
 import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
+import { toast } from '../components/Toaster'
 import { quiet } from '../db/capture'
-import { db, getSetting, type QueueItem } from '../db/db'
+import { db, getSetting, setSetting, type QueueItem } from '../db/db'
 import {
   capture,
+  changePassword as savePassword,
   claimBatch,
   CLOUD,
   cloudApi,
-  joinIfSynced,
+  cloudEntry,
+  deviceFor,
+  forgetAccount,
+  joinWithCode,
+  leave as leaveSync,
+  setWhatSyncs,
+  signIn as signInSync,
   syncNow,
   takeNeedCandidates,
-  turnOff as stopSyncing,
-  turnOn as startSyncing,
 } from '../lib/cloud'
 import { deviceId } from '../lib/device'
 import { lookupBarcode } from '../lib/lookup'
@@ -21,12 +29,18 @@ import { useSession } from './session'
 
 type Ctx = {
   available: boolean // signed in with Discogs (not the demo)
+  username: string
   enabled: boolean
   running: boolean
   error: string | null
   syncedAt: number | null
-  turnOn: () => Promise<void>
-  turnOff: () => Promise<void>
+  off: Category[]
+  signIn: (password: string, fresh?: boolean) => Promise<void>
+  join: (code: string) => Promise<void>
+  pair: () => Promise<{ code: string; expiresAt: number }>
+  changePassword: (password: string) => Promise<void>
+  setOff: (off: Category[]) => Promise<void>
+  leave: () => Promise<void>
   forget: () => Promise<void>
   // set while sync is on: false when another device has started adding this batch record
   claim?: (item: QueueItem, startedAt: number) => Promise<boolean>
@@ -38,18 +52,17 @@ const PUSH_AFTER = 2000
 
 export function CloudProvider({ children }: { children: ReactNode }) {
   const { session, client } = useSession()
-  const api = useMemo(
-    () =>
-      session && session.kind !== 'demo' && !session.expired
-        ? cloudApi({ kind: session.kind, token: session.token, secret: session.secret })
-        : null,
-    [session],
-  )
+  const [, navigate] = useLocation()
+  const username = session && session.kind !== 'demo' && !session.expired ? session.username : ''
+  // bumped when this device gets in or out, so its saved key is read again
+  const [version, setVersion] = useState(0)
+  const device = useMemo(() => (username && version >= 0 ? deviceFor(username) : null), [username, version])
+  const api = useMemo(() => (device ? cloudApi(device.device) : null), [device])
   const saved = useLiveQuery(async () => ({
-    enabled: Boolean(await getSetting<boolean>(CLOUD.enabled)),
     syncedAt: (await getSetting<number | null>(CLOUD.syncedAt)) ?? null,
+    off: (await getSetting<Category[]>(CLOUD.off)) ?? [],
   }))
-  const enabled = Boolean(api && saved?.enabled)
+  const enabled = Boolean(api)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -85,24 +98,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     busy.current = true
     clearTimeout(retry.current)
-    const on = Boolean(await getSetting<boolean>(CLOUD.enabled))
+    setRunning(true)
     try {
-      if (on) {
-        setRunning(true)
-        await syncNow(api)
-      } else {
-        // once per sign-in, in case this account already syncs from another device
-        await joinIfSynced(api)
-      }
+      if ((await syncNow(api)) === 'gone') setVersion((v) => v + 1)
       failures.current = 0
       setError(null)
       await refill()
     } catch (e) {
-      if (on) {
-        setError((e as Error).message)
-        const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
-        retry.current = setTimeout(() => document.visibilityState === 'visible' && runRef.current(), wait)
-      }
+      setError((e as Error).message)
+      const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
+      retry.current = setTimeout(() => document.visibilityState === 'visible' && runRef.current(), wait)
     } finally {
       busy.current = false
       setRunning(false)
@@ -141,42 +146,62 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [api, run])
 
-  const turnOn = useCallback(async () => {
-    if (!api) return
+  // Once per sign-in on a browser that isn't syncing: if this Discogs account syncs elsewhere, say so
+  useEffect(() => {
+    if (!username || device) return
+    ;(async () => {
+      if (await getSetting<boolean>(CLOUD.checked)) return
+      const exists = await cloudEntry()
+        .exists(username)
+        .catch(() => null)
+      if (exists === null) return // try again next time
+      await setSetting(CLOUD.checked, true)
+      if (exists) toast('You sync Platter on another device', { action: { label: 'Sync here', onClick: () => navigate('/sync') } })
+    })()
+  }, [username, device, navigate])
+
+  // getting in or out: the saved key changes, so read it again either way
+  const entered = useCallback(async (go: () => Promise<void>) => {
     setRunning(true)
     setError(null)
     try {
-      await startSyncing(api)
-      await refill()
+      await go()
     } finally {
+      setVersion((v) => v + 1)
       setRunning(false)
     }
-  }, [api, refill])
-
-  const turnOff = useCallback(async () => {
-    await stopSyncing()
-    setError(null)
   }, [])
 
-  const forget = useCallback(async () => {
-    if (!api) return
-    await api.forget()
-    await stopSyncing()
-    setError(null)
-  }, [api])
+  const value: Ctx = {
+    available: Boolean(username),
+    username,
+    enabled,
+    running,
+    error,
+    syncedAt: saved?.syncedAt ?? null,
+    off: saved?.off ?? [],
+    signIn: (password, fresh) => entered(() => signInSync(username, password, fresh)),
+    join: (code) => entered(() => joinWithCode(username, code)),
+    pair: async () => {
+      if (!api) throw new Error('Not syncing')
+      return api.pair()
+    },
+    changePassword: async (password) => {
+      if (api) await savePassword(api, username, password)
+    },
+    setOff: async (next) => {
+      if (api) await setWhatSyncs(api, next)
+    },
+    leave: async () => {
+      if (api) await entered(() => leaveSync(api))
+    },
+    forget: async () => {
+      if (api) await entered(() => forgetAccount(api))
+    },
+    claim: api && !saved?.off.includes('batch') ? (item, startedAt) => claimBatch(api, item, deviceId(), startedAt) : undefined,
+  }
 
-  const claim = useMemo(
-    () => (api && enabled ? (item: QueueItem, startedAt: number) => claimBatch(api, item, deviceId(), startedAt) : undefined),
-    [api, enabled],
-  )
-
-  return (
-    <CloudContext.Provider
-      value={{ available: Boolean(api), enabled, running, error, syncedAt: saved?.syncedAt ?? null, turnOn, turnOff, forget, claim }}
-    >
-      {children}
-    </CloudContext.Provider>
-  )
+  return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>
 }
 
 export function useCloud() {
