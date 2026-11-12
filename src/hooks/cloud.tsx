@@ -35,6 +35,7 @@ type Ctx = {
   error: string | null
   syncedAt: number | null
   off: Category[]
+  exists: () => Promise<boolean> // whether this Discogs account already syncs somewhere
   syncNow: () => Promise<void>
   signIn: (password: string, fresh?: boolean) => Promise<void>
   join: (code: string) => Promise<void>
@@ -184,7 +185,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const demoValue = useDemoCloud()
   const value: Ctx = {
+    exists: () => cloudEntry().exists(username),
     available: Boolean(username),
     username,
     enabled,
@@ -214,7 +217,50 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     claim: api && !saved?.off.includes('batch') ? (item, startedAt) => claimBatch(api, item, deviceId(), startedAt) : undefined,
   }
 
-  return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>
+  return <CloudContext.Provider value={session?.kind === 'demo' ? demoValue : value}>{children}</CloudContext.Provider>
+}
+
+// The demo shows sync as if it were on, with nothing behind it: switches flip, codes count down,
+// and nothing leaves the browser
+function useDemoCloud(): Ctx {
+  const [enabled, setEnabled] = useState(true)
+  const [off, setOff] = useState<Category[]>([])
+  const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
+  const [running, setRunning] = useState(false)
+  const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+  const signIn = async () => {
+    await pause(600)
+    setEnabled(true)
+    setSyncedAt(Date.now())
+  }
+  return {
+    available: true,
+    username: 'demo',
+    enabled,
+    running,
+    error: null,
+    syncedAt,
+    off,
+    exists: async () => true,
+    syncNow: async () => {
+      setRunning(true)
+      await pause(800)
+      setSyncedAt(Date.now())
+      setRunning(false)
+    },
+    signIn,
+    join: signIn,
+    pair: async () => {
+      await pause(300)
+      const pick = () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]
+      const code = Array.from({ length: 6 }, pick).join('')
+      return { code: `${code.slice(0, 3)}-${code.slice(3)}`, expiresAt: Date.now() + 10 * 60_000 }
+    },
+    changePassword: () => pause(500),
+    setOff: async (next) => setOff(next),
+    leave: async () => setEnabled(false),
+    forget: async () => setEnabled(false),
+  }
 }
 
 export function useCloud() {

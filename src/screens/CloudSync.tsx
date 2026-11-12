@@ -20,7 +20,7 @@ import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
 import { Button, Card, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
-import { cloudEntry, CloudError } from '../lib/cloud'
+import { CloudError } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 
 const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
@@ -37,7 +37,7 @@ export function CloudSync() {
   const cloud = useCloud()
   return (
     <Screen title="Sync across devices" back="/settings" width="wide">
-      {!cloud.available ? <Notice tone="info">Sync isn't available in the demo.</Notice> : cloud.enabled ? <Syncing /> : <GetIn />}
+      {!cloud.available ? null : cloud.enabled ? <Syncing /> : <GetIn />}
     </Screen>
   )
 }
@@ -69,9 +69,8 @@ function GetIn() {
   const [codeKey, setCodeKey] = useState(0)
 
   useEffect(() => {
-    cloudEntry()
-      .exists(cloud.username)
-      .then(setExists, () => setExists(false))
+    cloud.exists().then(setExists, () => setExists(false))
+    // once per visit (exists is a new function on every render)
   }, [cloud.username])
 
   async function go(task: () => Promise<void>, wrongText: string) {

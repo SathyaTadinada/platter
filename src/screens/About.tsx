@@ -1,38 +1,31 @@
-import { Camera, Cloud, Code2, ExternalLink as ExternalIcon, KeyRound, LogOut, Plug, ShieldCheck } from 'lucide-react'
+import { Camera, Cloud, KeyRound, LogOut, Plug, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Screen, Section } from '../components/ui'
+import { ExternalLink, Screen, Section } from '../components/ui'
 import { useSession } from '../hooks/session'
 
-const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
-  {
-    icon: <ShieldCheck size={20} />,
-    title: 'No tracking',
-    text: 'No analytics and no ads. There’s no account to make unless you turn on sync.',
-  },
+// In pairs of about the same length, since they sit side by side on wide screens
+const PRIVACY: { icon: ReactNode; title: string; text: string }[] = [
+  { icon: <ShieldCheck size={20} />, title: 'No tracking', text: 'No analytics and no ads. You only need an account if you want sync.' },
+  { icon: <Camera size={20} />, title: 'Photos', text: 'Photos of runouts and spines are read on your device. They never get uploaded.' },
   {
     icon: <KeyRound size={20} />,
     title: 'Your Discogs sign-in',
-    text: 'It stays in this browser, and Platter talks to Discogs straight from your device. With Log in with Discogs, a small Platter server signs each request first. It doesn’t keep your key and never sees Discogs’ replies.',
+    text: 'It stays in this browser, and Platter talks to Discogs directly. If you log in with Discogs, Platter’s server signs each request but never keeps your key or sees the reply.',
+  },
+  {
+    icon: <Cloud size={20} />,
+    title: 'Sync',
+    text: 'If you turn it on, your plays, value history, covers, batch, and settings are stored on Platter’s server for your other devices. Your password never leaves your device.',
   },
   {
     icon: <Plug size={20} />,
     title: 'Other services',
-    text: 'Only when you need them: MusicBrainz and the Cover Art Archive for barcodes Discogs doesn’t know, Apple when you tap Apple Music or All services, and ListenBrainz if you connect it.',
-  },
-  {
-    icon: <Camera size={20} />,
-    title: 'Photos',
-    text: 'Photos of runouts and spines are read on your device and never uploaded.',
-  },
-  {
-    icon: <Cloud size={20} />,
-    title: 'Sync, if you turn it on',
-    text: 'Your plays, value history, cover picks, batch, and settings are stored on Platter’s server so your other devices get them, and you choose which. Your sync password never leaves your device, and a synced ListenBrainz token is encrypted. Your collection, wantlist, and prices always come from Discogs.',
+    text: 'MusicBrainz and the Cover Art Archive fill in barcodes Discogs doesn’t know. Apple and ListenBrainz are only used when you use them.',
   },
   {
     icon: <LogOut size={20} />,
     title: 'Signing out',
-    text: 'Clears what Platter saved in this browser, except album years, record lengths, and preferences. Synced data stays until you delete it in Settings.',
+    text: 'Clears this browser but keeps album years, record lengths, and preferences. Anything synced stays until you delete it.',
   },
 ]
 
@@ -61,19 +54,11 @@ export function About() {
       </Section>
 
       <Section title="Source">
-        <a
-          href="https://github.com/SathyaTadinada/platter"
-          target="_blank"
-          rel="noopener"
-          className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 hover:bg-stone-50 sm:max-w-md dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800/50"
-        >
-          <Code2 size={20} className="shrink-0 text-stone-500" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block">github.com/SathyaTadinada/platter</span>
-            <span className="block text-sm text-stone-500">MIT license</span>
-          </span>
-          <ExternalIcon size={18} className="shrink-0 text-stone-400" aria-hidden />
-        </a>
+        <p className="text-sm">
+          The code is on GitHub at{' '}
+          <ExternalLink href="https://github.com/SathyaTadinada/platter">github.com/SathyaTadinada/platter</ExternalLink> under the MIT
+          license.
+        </p>
       </Section>
 
       <Section>
