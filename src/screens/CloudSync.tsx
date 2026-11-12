@@ -1,54 +1,71 @@
-import { KeyRound, MonitorSmartphone, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {
+  CalendarDays,
+  Headphones,
+  Image,
+  KeyRound,
+  Layers,
+  MonitorSmartphone,
+  Radio,
+  SlidersHorizontal,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { Category } from '../../worker/categories'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { PairingCodeDisplay, PairingCodeInput } from '../components/PairingCode'
+import { fieldClass, NewPassword, newPasswordReady, PasswordInput } from '../components/PasswordField'
+import { Sheet } from '../components/Sheet'
+import { toast } from '../components/Toaster'
 import { Button, Card, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import { cloudEntry, CloudError } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 
-const LABELS: [Category, string][] = [
-  ['plays', 'Plays'],
-  ['value', 'Value history'],
-  ['covers', 'Cover picks'],
-  ['batch', 'Batch'],
-  ['settings', 'Settings and appearance'],
-  ['listenbrainz', 'ListenBrainz connection'],
-  ['catalog', 'Album years and record lengths'],
+const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
+  { id: 'plays', label: 'Plays', icon: <Headphones size={20} /> },
+  { id: 'value', label: 'Value history', icon: <TrendingUp size={20} /> },
+  { id: 'covers', label: 'Cover picks', icon: <Image size={20} /> },
+  { id: 'batch', label: 'Batch', icon: <Layers size={20} /> },
+  { id: 'settings', label: 'Settings and appearance', icon: <SlidersHorizontal size={20} /> },
+  { id: 'listenbrainz', label: 'ListenBrainz connection', icon: <Radio size={20} /> },
+  { id: 'catalog', label: 'Album years and lengths', icon: <CalendarDays size={20} /> },
 ]
-
-const field =
-  'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base dark:border-stone-700 dark:bg-stone-900 read-only:bg-stone-100 read-only:text-stone-500 dark:read-only:bg-stone-800 dark:read-only:text-stone-400'
 
 export function CloudSync() {
   const cloud = useCloud()
   return (
-    <Screen title="Sync across devices" back="/settings">
+    <Screen title="Sync across devices" back="/settings" width="wide">
       {!cloud.available ? <Notice tone="info">Sync isn't available in the demo.</Notice> : cloud.enabled ? <Syncing /> : <GetIn />}
     </Screen>
   )
 }
 
-function message(e: unknown, wrong: string): string {
+// two columns on wide screens, like Settings
+const columns = 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8'
+
+function explain(e: unknown, wrong: string): string {
   if (e instanceof CloudError) {
     if (e.status === 401) return wrong
     if (e.status === 403) return e.message
     if (e.status === 429) return 'Too many tries. Wait a minute and try again.'
+    if (e.status === 0) return e.message
   }
-  return (e as Error).message
+  return 'Something went wrong. Try again in a minute.'
 }
 
-// Not syncing here yet: a password (new or the account's), or a code from a device that already syncs
+// Not syncing here yet: the account's password (or a new one), or a code from another device
 function GetIn() {
   const cloud = useCloud()
   const [exists, setExists] = useState<boolean | null>(null)
   const [useCode, setUseCode] = useState(false)
   const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [wrong, setWrong] = useState(false)
   const [startOver, setStartOver] = useState(false)
+  const [codeKey, setCodeKey] = useState(0)
 
   useEffect(() => {
     cloudEntry()
@@ -63,130 +80,128 @@ function GetIn() {
     try {
       await task()
     } catch (e) {
-      setError(message(e, wrongText))
+      setError(explain(e, wrongText))
       setWrong(e instanceof CloudError && e.status === 401)
+      if (useCode) setCodeKey((k) => k + 1) // clear the boxes for another try
     } finally {
       setBusy(false)
     }
   }
 
-  const newAccount = exists === false
-  const tooShort = newAccount && password.length < 8
+  const switchTo = (code: boolean) => {
+    setUseCode(code)
+    setError(null)
+    setWrong(false)
+  }
+
+  const creating = exists === false
+  const ready = creating ? newPasswordReady(password, confirm) : password.length > 0
+
+  const form = useCode ? (
+    <div className="space-y-5">
+      <div>
+        <h2 className="font-semibold">Enter the code from your other device</h2>
+        <p className="mt-1 text-sm text-stone-500">On a device that already syncs, open Sync across devices and choose Add a device.</p>
+      </div>
+      <PairingCodeInput
+        key={codeKey}
+        disabled={busy}
+        onComplete={(code) => go(() => cloud.join(code), 'That code is wrong or has expired.')}
+      />
+      {busy && <p className="text-center text-sm text-stone-500">Checking…</p>}
+      {error && <Notice tone="error">{error}</Notice>}
+      <Button variant="secondary" className="w-full" onClick={() => switchTo(false)}>
+        Use your password instead
+      </Button>
+    </div>
+  ) : (
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (ready) go(() => cloud.signIn(password), 'Incorrect password.')
+      }}
+    >
+      <div>
+        <h2 className="font-semibold">{creating ? 'Set up sync' : 'Sign in to sync'}</h2>
+        <p className="mt-1 text-sm text-stone-500">
+          {creating
+            ? 'Choose a password for syncing. You’ll use it to add your other devices.'
+            : 'This Discogs account already syncs on another device.'}
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium" htmlFor="sync-username">
+          Discogs username
+        </label>
+        <input id="sync-username" value={cloud.username} readOnly autoComplete="username" className={fieldClass} />
+      </div>
+      {creating ? (
+        <NewPassword value={password} onChange={setPassword} confirm={confirm} onConfirmChange={setConfirm} />
+      ) : (
+        <PasswordInput label="Password" value={password} onChange={setPassword} autoComplete="current-password" invalid={wrong} />
+      )}
+      {error && (
+        <Notice tone="error">
+          {error}
+          {wrong && (
+            <>
+              {' '}
+              Forgot it? Change it on a device that still syncs, or{' '}
+              <button type="button" onClick={() => setStartOver(true)} className="font-semibold underline">
+                start a new sync account
+              </button>
+              .
+            </>
+          )}
+        </Notice>
+      )}
+      <Button type="submit" className="w-full" disabled={busy || exists === null || !ready}>
+        {busy ? 'Signing in…' : creating ? 'Turn on sync' : 'Sign in'}
+      </Button>
+      {exists && (
+        <Button variant="secondary" className="w-full" onClick={() => switchTo(true)}>
+          Use a code instead
+        </Button>
+      )}
+    </form>
+  )
 
   return (
-    <Section>
+    <div className={columns}>
       {startOver && (
         <ConfirmDialog
           title="Start a new sync account?"
-          action="Start over"
+          action="Start new account"
           onConfirm={() => {
             setStartOver(false)
-            go(() => cloud.signIn(password, true), "That password doesn't match.")
+            go(() => cloud.signIn(password, true), 'Incorrect password.')
           }}
           onCancel={() => setStartOver(false)}
         >
-          It begins empty and uses this password. Devices already syncing stay on the old one.
+          It starts empty and uses the password you just entered. Devices that already sync stay on your current account.
         </ConfirmDialog>
       )}
-      <Card className="space-y-4">
-        <p className="text-sm text-stone-500">
-          Plays, value history, cover picks, your batch, and settings are kept on Platter's server and follow you to any device you sync.
-        </p>
-        {useCode ? (
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              go(() => cloud.join(code), 'That code is wrong or has expired.')
-            }}
-          >
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">Code from a device that syncs</span>
-              <input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="K7P-4QM"
-                autoComplete="one-time-code"
-                autoCapitalize="characters"
-                spellCheck={false}
-                className={`${field} font-mono tracking-widest`}
-              />
-            </label>
-            {error && <Notice tone="error">{error}</Notice>}
-            <Button type="submit" className="w-full" disabled={busy || code.replace(/[^A-Z0-9]/gi, '').length !== 6}>
-              {busy ? 'Syncing…' : 'Sync this device'}
-            </Button>
-            <button
-              type="button"
-              onClick={() => setUseCode(false)}
-              className="w-full text-sm font-medium text-stone-600 dark:text-stone-300"
-            >
-              Use the password instead
-            </button>
-          </form>
-        ) : (
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              go(() => cloud.signIn(password), "That password doesn't match.")
-            }}
-          >
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">Discogs username</span>
-              <input value={cloud.username} readOnly autoComplete="username" className={field} />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">{newAccount ? 'Choose a sync password' : 'Sync password'}</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={newAccount ? 'new-password' : 'current-password'}
-                className={field}
-              />
-              {newAccount && <span className="block text-sm text-stone-500">At least 8 characters.</span>}
-            </label>
-            {error && (
-              <Notice tone="error">
-                {error}
-                {wrong && (
-                  <>
-                    {' '}
-                    <button type="button" onClick={() => setStartOver(true)} className="font-semibold underline">
-                      Start over with this password
-                    </button>
-                  </>
-                )}
-              </Notice>
-            )}
-            <Button type="submit" className="w-full" disabled={busy || exists === null || !password || tooShort}>
-              {busy ? 'Syncing…' : newAccount ? 'Turn on sync' : 'Sync this device'}
-            </Button>
-            {exists && (
-              <button
-                type="button"
-                onClick={() => setUseCode(true)}
-                className="w-full text-sm font-medium text-stone-600 dark:text-stone-300"
-              >
-                Use a code from another device
-              </button>
-            )}
-          </form>
-        )}
-      </Card>
-    </Section>
+      <Section>
+        <Card>{form}</Card>
+      </Section>
+      <Section title="What syncs">
+        <List>
+          {CATEGORIES.map((c) => (
+            <Row key={c.id} icon={c.icon} label={c.label} />
+          ))}
+        </List>
+      </Section>
+    </div>
   )
 }
 
 function Syncing() {
   const cloud = useCloud()
   const [error, setError] = useState<string | null>(null)
-  const [stopping, setStopping] = useState<Category | null>(null)
-  const [pairing, setPairing] = useState<{ code: string } | null>(null)
+  const [stopping, setStopping] = useState<(typeof CATEGORIES)[number] | null>(null)
+  const [pairing, setPairing] = useState<{ code: string; expiresAt: number } | null>(null)
   const [changing, setChanging] = useState(false)
-  const [newPassword, setNewPassword] = useState('')
-  const [saved, setSaved] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const attempt = async (task: () => Promise<unknown>) => {
@@ -194,33 +209,27 @@ function Syncing() {
     try {
       await task()
     } catch (e) {
-      setError((e as Error).message)
+      setError(explain(e, "This device isn't signed in to sync anymore."))
     }
   }
   const setCategory = (c: Category, on: boolean) => attempt(() => cloud.setOff(on ? cloud.off.filter((x) => x !== c) : [...cloud.off, c]))
+  const newCode = () => attempt(async () => setPairing(await cloud.pair()))
 
   const status = cloud.running ? 'Syncing…' : cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : undefined
-  const label = (c: Category) => LABELS.find(([k]) => k === c)![1]
 
   return (
-    <>
+    <div className={columns}>
       {stopping && (
         <ConfirmDialog
-          title={`Stop syncing ${label(stopping).toLowerCase()}?`}
+          title={`Stop syncing ${stopping.label.toLowerCase()}?`}
           action="Stop syncing"
           onConfirm={() => {
-            setCategory(stopping, false)
+            setCategory(stopping.id, false)
             setStopping(null)
           }}
           onCancel={() => setStopping(null)}
         >
-          Platter's server deletes its copy. Each device keeps what it has.
-        </ConfirmDialog>
-      )}
-      {pairing && (
-        <ConfirmDialog title="Add a device" onCancel={() => setPairing(null)}>
-          <p className="my-2 text-center font-mono text-3xl font-bold tracking-widest">{pairing.code}</p>
-          <p>Enter it on the other device in Settings › Sync across devices. It works for 10 minutes.</p>
+          They’ll be removed from Platter’s server. Your devices keep their own copies.
         </ConfirmDialog>
       )}
       {deleting && (
@@ -233,84 +242,128 @@ function Syncing() {
           }}
           onCancel={() => setDeleting(false)}
         >
-          Platter's copy and the sync account are deleted, and sync turns off on every device. Each device keeps what it already has.
+          This deletes your sync account and everything on Platter’s server, and turns off sync on all your devices. Your devices keep their
+          own copies.
         </ConfirmDialog>
       )}
+      {pairing && (
+        <Sheet
+          title="Add a device"
+          bodyClassName="p-4"
+          width="md"
+          onClose={() => setPairing(null)}
+          footer={
+            <Button variant="secondary" className="w-full" onClick={() => setPairing(null)}>
+              Done
+            </Button>
+          }
+        >
+          <div className="space-y-6 py-2">
+            <p className="text-sm text-stone-600 dark:text-stone-300">
+              On your other device, open Sync across devices, choose Use a code instead, and enter this code.
+            </p>
+            <PairingCodeDisplay code={pairing.code} expiresAt={pairing.expiresAt} onRenew={newCode} />
+          </div>
+        </Sheet>
+      )}
+      {changing && <ChangePassword onClose={() => setChanging(false)} />}
 
-      <Section>
-        <Card>
-          <label className="flex items-center justify-between gap-3">
-            <span>
-              <span className="block">Sync this device</span>
-              {status && <span className="block text-sm text-stone-500">{status}</span>}
-            </span>
-            <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
-          </label>
-        </Card>
-        {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
-      </Section>
+      <div>
+        <Section>
+          <List>
+            <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
+              <div className="min-w-0 flex-1">
+                <span className="block">Sync this device</span>
+                {status && <span className="block text-sm text-stone-500">{status}</span>}
+              </div>
+              <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
+            </li>
+          </List>
+          {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
+        </Section>
+        <Section title="Sync account">
+          <List>
+            <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
+            <Row icon={<KeyRound size={20} />} label="Change password" onClick={() => setChanging(true)} />
+          </List>
+          <List>
+            <Row icon={<Trash2 size={20} />} label="Delete synced data" danger onClick={() => setDeleting(true)} />
+          </List>
+        </Section>
+      </div>
 
       <Section title="What syncs">
         <List>
-          {LABELS.map(([c, text]) => (
+          {CATEGORIES.map((c) => (
             <Row
-              key={c}
-              label={text}
+              key={c.id}
+              icon={c.icon}
+              label={c.label}
               trailing={
-                <Switch label={text} checked={!cloud.off.includes(c)} onChange={(on) => (on ? setCategory(c, true) : setStopping(c))} />
+                <Switch
+                  label={c.label}
+                  checked={!cloud.off.includes(c.id)}
+                  onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
+                />
               }
             />
           ))}
         </List>
       </Section>
+    </div>
+  )
+}
 
-      <Section>
-        <List>
-          <Row
-            icon={<MonitorSmartphone size={20} />}
-            label="Add a device"
-            onClick={() => attempt(async () => setPairing(await cloud.pair()))}
-          />
-          <Row
-            icon={<KeyRound size={20} />}
-            label="Change sync password"
-            detail={saved ? 'Changed' : undefined}
-            onClick={() => {
-              setSaved(false)
-              setChanging((c) => !c)
-            }}
-          />
-          <Row icon={<Trash2 size={20} />} label="Delete synced data" danger onClick={() => setDeleting(true)} />
-        </List>
-        {changing && (
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              attempt(async () => {
-                await cloud.changePassword(newPassword)
-                setNewPassword('')
-                setChanging(false)
-                setSaved(true)
-              })
-            }}
-          >
-            <input value={cloud.username} readOnly autoComplete="username" className="hidden" />
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New sync password"
-              aria-label="New sync password"
-              autoComplete="new-password"
-              className={field}
-            />
-            <Button type="submit" className="w-full" disabled={newPassword.length < 8}>
-              Save
-            </Button>
-          </form>
-        )}
-      </Section>
-    </>
+function ChangePassword({ onClose }: { onClose: () => void }) {
+  const cloud = useCloud()
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save() {
+    setBusy(true)
+    setError(null)
+    try {
+      await cloud.changePassword(password)
+      toast('Sync password changed', { tone: 'success' })
+      onClose()
+    } catch (e) {
+      setError(explain(e, "This device isn't signed in to sync anymore."))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      title="Change password"
+      bodyClassName="p-4"
+      width="md"
+      onClose={onClose}
+      footer={
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={save} disabled={busy || !newPasswordReady(password, confirm)}>
+            {busy ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      }
+    >
+      <form
+        className="space-y-4 py-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (newPasswordReady(password, confirm)) save()
+        }}
+      >
+        <input value={cloud.username} readOnly autoComplete="username" className="hidden" aria-hidden />
+        <NewPassword label="New password" value={password} onChange={setPassword} confirm={confirm} onConfirmChange={setConfirm} />
+        <p className="text-sm text-stone-500">Devices that already sync stay signed in.</p>
+        {error && <Notice tone="error">{error}</Notice>}
+      </form>
+    </Sheet>
   )
 }

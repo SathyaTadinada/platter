@@ -13,7 +13,7 @@ export function About() {
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>Platter has no analytics, and no accounts of its own unless you turn on sync.</p>
+          <p>Platter doesn't track you, and there's no account to make unless you turn on sync.</p>
           <p>Your sign-in stays in this browser, and Platter talks to Discogs directly from your device.</p>
           <p>
             If you log in with Discogs, each request is signed by a small Platter server first. It gets your sign-in key and the address
@@ -25,15 +25,15 @@ export function About() {
             it.
           </p>
           <p>
-            If you turn on sync across devices, what you save in Platter (plays, value history, cover picks, your batch, settings, and your
-            ListenBrainz token, encrypted) is kept on Platter's server under your Discogs username and a sync password. You choose what
-            syncs, and the server never contacts Discogs. Your password isn't sent anywhere: your device turns it into a code first, and the
-            server keeps only a fingerprint of that. Your collection, wantlist, and prices still come only from Discogs.
+            With sync turned on, what you save in Platter (plays, value history, cover picks, your batch, and settings) is kept on Platter's
+            server so your other devices get it too. You choose what syncs. Your sync password never leaves your device; the server keeps
+            only a scrambled fingerprint of it. A synced ListenBrainz token is stored encrypted. Your collection, wantlist, and prices
+            always come straight from Discogs.
           </p>
           <p>Photos of runouts and spines are read on your device and never uploaded.</p>
           <p>
-            Signing out deletes what Platter saved here, except album years, record lengths, and preferences. A synced copy stays until you
-            delete it in Settings.
+            Signing out deletes what Platter saved here, except album years, record lengths, and preferences. Anything synced stays on the
+            server until you delete it in Settings.
           </p>
         </Card>
       </Section>

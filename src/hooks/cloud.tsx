@@ -156,7 +156,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         .catch(() => null)
       if (exists === null) return // try again next time
       await setSetting(CLOUD.checked, true)
-      if (exists) toast('You sync Platter on another device', { action: { label: 'Sync here', onClick: () => navigate('/sync') } })
+      if (exists) toast('Sync is set up on another device', { action: { label: 'Sync here', onClick: () => navigate('/sync') } })
     })()
   }, [username, device, navigate])
 

@@ -66,8 +66,8 @@ export async function proofFor(name: string, password: string, iterations = 310_
 // ---- talking to the server ----
 
 function failure(status: number) {
-  if (status === 429 || status === 503) return "Couldn't sync just now. Platter will try again shortly."
-  return `Couldn't sync (${status}).`
+  if (status === 429 || status === 503) return "Couldn't sync just now. Trying again shortly."
+  return "Couldn't sync. Trying again shortly."
 }
 
 async function call<T>(fetchFn: typeof fetch, path: string, body: object): Promise<T> {
