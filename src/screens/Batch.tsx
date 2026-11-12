@@ -17,7 +17,7 @@ import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import type { Metadata } from '../lib/metadata'
-import { chooseRelease, retryFailed } from '../lib/queue'
+import { addingElsewhere, chooseRelease, retryFailed, takeOver } from '../lib/queue'
 import { Row } from './batch/BatchRow'
 import { DetailsSheet } from './batch/DetailsSheet'
 
@@ -95,6 +95,8 @@ export function Batch() {
   }, [items])
 
   const readyWanted = groups.ready.filter((i) => i.release && wants?.has(i.release.id)).length
+  // records another device is adding aren't this one's to add
+  const addable = groups.ready.filter((i) => !addingElsewhere(i)).length
   const adding = run?.kind === 'add'
 
   async function remove(id: number) {
@@ -210,6 +212,7 @@ export function Batch() {
                     )}
                     wanted={Boolean(i.release && wants?.has(i.release.id))}
                     cover={i.release && owned?.covers.get(i.release.id)}
+                    onTakeOver={() => takeOver(i.id!)}
                     onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
                     onRemove={adding ? undefined : () => remove(i.id!)}
                     onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
@@ -271,7 +274,7 @@ export function Batch() {
             )}
             <Button
               className="w-full"
-              disabled={adding || !folderId || !online}
+              disabled={adding || !folderId || !online || !addable}
               onClick={() => {
                 if (!folderId) return
                 setSetting('lastFolderId', folderId)
@@ -282,7 +285,7 @@ export function Batch() {
                 ? `Adding ${Math.min(run.done + 1, run.total)} of ${run.total}…`
                 : !online
                   ? 'Offline'
-                  : `Add ${groups.ready.length} to collection`}
+                  : `Add ${addable} to collection`}
             </Button>
           </div>
         </div>

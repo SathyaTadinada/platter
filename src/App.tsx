@@ -11,6 +11,7 @@ import { SignInAgain } from './components/SignInAgain'
 import { pruneCache } from './db/cache'
 import type { Session } from './db/db'
 import { useSignOut } from './hooks/signOut'
+import { CloudProvider } from './hooks/cloud'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
@@ -23,6 +24,7 @@ import { Batch } from './screens/Batch'
 import { Crates } from './screens/Crates'
 import { Import } from './screens/Import'
 import { Results } from './screens/Results'
+import { CloudSync } from './screens/CloudSync'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -110,32 +112,35 @@ function Routes({ error }: { error?: string }) {
 
   return (
     <SyncProvider>
-      <QueueProvider>
-        <Shell>
-          <Switch>
-            <Route path="/" component={Collection} />
-            <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
-            <Route path="/release/:id">{(p) => <Release id={p.id} />}</Route>
-            <Route path="/scan" component={Scan} />
-            <Route path="/batch" component={Batch} />
-            <Route path="/import" component={Import} />
-            <Route path="/search" component={Search} />
-            <Route path="/results" component={Results} />
-            <Route path="/setup" component={Setup} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/crates" component={Crates} />
-            <Route path="/wantlist" component={Wantlist} />
-            <Route path="/report" component={Report} />
-            <Route path="/stats" component={Stats} />
-            <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
-            <Route path="/play" component={NowPlaying} />
-            <Route path="/listenbrainz" component={ListenBrainz} />
-            <Route path="/value" component={Stats} />
-            <Route path="/about" component={About} />
-            <Route component={Collection} />
-          </Switch>
-        </Shell>
-      </QueueProvider>
+      <CloudProvider>
+        <QueueProvider>
+          <Shell>
+            <Switch>
+              <Route path="/" component={Collection} />
+              <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
+              <Route path="/release/:id">{(p) => <Release id={p.id} />}</Route>
+              <Route path="/scan" component={Scan} />
+              <Route path="/batch" component={Batch} />
+              <Route path="/import" component={Import} />
+              <Route path="/search" component={Search} />
+              <Route path="/results" component={Results} />
+              <Route path="/setup" component={Setup} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/crates" component={Crates} />
+              <Route path="/wantlist" component={Wantlist} />
+              <Route path="/report" component={Report} />
+              <Route path="/stats" component={Stats} />
+              <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
+              <Route path="/play" component={NowPlaying} />
+              <Route path="/listenbrainz" component={ListenBrainz} />
+              <Route path="/sync" component={CloudSync} />
+              <Route path="/value" component={Stats} />
+              <Route path="/about" component={About} />
+              <Route component={Collection} />
+            </Switch>
+          </Shell>
+        </QueueProvider>
+      </CloudProvider>
     </SyncProvider>
   )
 }

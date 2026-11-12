@@ -74,6 +74,13 @@ describe('trimPlays', () => {
     expect((await db.plays.toArray()).map((p) => [p.instanceId, p.at])).toEqual([[1, day('2026-10-01')]])
   })
 
+  it('leaves plays newer than the last collection sync alone', async () => {
+    // logged on another device after this one last heard from Discogs
+    await db.plays.bulkAdd([play(1, day('2026-10-01')), play(1, day('2026-10-10'))])
+    expect(await trimPlays([item(1, { 8: '1' })], ids, day('2026-10-05'))).toBe(0)
+    expect(await db.plays.count()).toBe(2)
+  })
+
   it("leaves plays alone when there's no count to go by", async () => {
     await db.plays.bulkAdd([play(1, day('2026-10-01')), play(3, day('2026-10-02'))])
     expect(await trimPlays([item(1), item(3, { 8: 'lots' })], ids)).toBe(0)

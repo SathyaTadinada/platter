@@ -57,7 +57,7 @@ export function ListenBrainz() {
           <form onSubmit={connect} className="space-y-3">
             <p className="text-sm text-stone-600 dark:text-stone-300">
               Copy your user token from <ExternalLink href="https://listenbrainz.org/settings/">ListenBrainz settings</ExternalLink> and
-              paste it here. It stays on this device.
+              paste it here. It stays on this device, and on Platter's server, encrypted, if you sync across devices.
             </p>
             <input
               type="password"

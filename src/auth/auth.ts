@@ -1,4 +1,5 @@
 import { db, type Session } from '../db/db'
+import { capture } from '../lib/cloud'
 import { clearPrefs } from '../lib/prefs'
 import type { Auth, Identity, SignableRequest } from './types'
 
@@ -8,6 +9,8 @@ export class AuthError extends Error {}
 // looking them all up again is what made signing back in slow, so they stay unless asked.
 // `everything` also drops them and the per-device preferences (theme, accent, sort…).
 export async function wipeLocalData({ everything = false } = {}) {
+  // what's cleared here was signed out of, not deleted, so none of it goes to the cloud copy
+  capture(false)
   const [years, lengths] = everything ? [[], []] : await Promise.all([db.masters.toArray(), db.lengths.toArray()])
   await db.delete()
   await db.open()

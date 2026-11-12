@@ -17,6 +17,7 @@ import { lookupBarcode } from '../lib/lookup'
 import { matchFields, type FieldMap } from '../lib/fields'
 import type { Metadata } from '../lib/metadata'
 import { addReady, applyBatchDetails, lookupPending, resetInterrupted, type AddDeps } from '../lib/queue'
+import { useCloud } from './cloud'
 import { useSession } from './session'
 import { useSync } from './sync'
 
@@ -54,6 +55,7 @@ const useOnline = () => {
 export function QueueProvider({ children }: { children: ReactNode }) {
   const { client, session } = useSession()
   const { sync } = useSync()
+  const { claim } = useCloud()
   const online = useOnline()
   const [run, setRun] = useState<Run>(null)
   const busy = useRef(false)
@@ -88,14 +90,20 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         ownedInstances: async (releaseId) => (await getOwnedInstances(client, u, releaseId)).releases,
       }
       try {
-        const hadCsv =
+        // CSV rows, and records picked on another device, have no search result to build collection entries from
+        const needsRefresh =
           (await db.queue
             .where('status')
             .equals('ready')
-            .filter((i) => i.source === 'csv')
+            .filter((i) => i.source === 'csv' || !i.raw)
             .count()) > 0
         const wants = new Set((await db.wants.toArray()).map((w) => w.releaseId))
-        const r = await addReady(deps, { ...job, wants, onProgress: (done, total) => setRun({ kind: 'add', done, total }) })
+        const r = await addReady(deps, {
+          ...job,
+          wants,
+          claim,
+          onProgress: (done, total) => setRun({ kind: 'add', done, total }),
+        })
         if (r.end === 'offline') {
           toast("Lost the connection. Adding will carry on when you're back online.", { tone: 'error' })
           return // keep the job so it resumes
@@ -104,15 +112,14 @@ export function QueueProvider({ children }: { children: ReactNode }) {
         const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
         if (r.failed) toast(`Added ${n(r.added)}. ${r.failed} didn't go through. Check the batch.`, { tone: 'error' })
         else if (r.added) toast(`Added ${n(r.added)} to your collection`, { tone: 'success' })
-        // CSV rows have no search result to build collection entries from, so refresh
-        if (hadCsv && r.added) sync(true)
+        if (needsRefresh && r.added) sync(true)
       } finally {
         release()
         busy.current = false
         setRun(null)
       }
     },
-    [client, session, sync],
+    [client, session, sync, claim],
   )
 
   const startAdding = useCallback(

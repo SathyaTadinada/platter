@@ -2,6 +2,7 @@ import type { DiscogsClient } from '../api/discogs/client'
 import { getRelease, setFieldValue } from '../api/discogs/endpoints'
 import { listensFor, submitListens } from '../api/listenbrainz'
 import { db, getSetting, type LibraryItem } from '../db/db'
+import { deviceId } from './device'
 import { fieldFor, type FieldMatch } from './fields'
 import { rememberLength } from './stylus'
 import { localDate } from './value'
@@ -109,6 +110,7 @@ export async function logPlay(client: DiscogsClient, username: string, item: Lib
       last: ids.last !== undefined ? item.fields[ids.last] : undefined,
     },
     scrobble: lb?.enabled ? 'pending' : undefined,
+    device: deviceId(),
   }
   await writeFields(client, username, item, values)
   await db.collection.update(item.instanceId, { fields: { ...item.fields, ...values } })
@@ -119,7 +121,13 @@ export async function logPlay(client: DiscogsClient, username: string, item: Lib
 // The play count on Discogs has the last word. Where it's lower than the plays logged here
 // (turned down on a record page, or on Discogs itself), the newest of those plays go so the
 // two agree. An empty count is left alone: the field may have been added after those plays.
-export async function trimPlays(items: Pick<LibraryItem, 'instanceId' | 'fields'>[], ids: PlayFields): Promise<number> {
+// Plays logged after this device last synced the collection are left alone: with cloud sync they can
+// come from another device before the count on Discogs reaches here.
+export async function trimPlays(
+  items: Pick<LibraryItem, 'instanceId' | 'fields'>[],
+  ids: PlayFields,
+  syncedAt = Infinity,
+): Promise<number> {
   if (ids.count === undefined) return 0
   const limit = new Map<number, number>()
   for (const i of items) {
@@ -129,6 +137,7 @@ export async function trimPlays(items: Pick<LibraryItem, 'instanceId' | 'fields'
   const seen = new Map<number, number>()
   const extra: number[] = []
   for (const p of await db.plays.orderBy('at').toArray()) {
+    if (p.at >= syncedAt) break
     const max = limit.get(p.instanceId)
     if (max === undefined) continue
     const n = (seen.get(p.instanceId) ?? 0) + 1
@@ -157,7 +166,10 @@ const SETTLE = 20_000
 export async function flushScrobbles(client: DiscogsClient, now = Date.now()) {
   const lb = await getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY)
   if (!lb?.enabled) return
-  const pending = (await db.plays.toArray()).filter((p) => p.scrobble === 'pending' && now - p.at >= SETTLE)
+  // with cloud sync, plays from other devices are theirs to send
+  const pending = (await db.plays.toArray()).filter(
+    (p) => p.scrobble === 'pending' && now - p.at >= SETTLE && (!p.device || p.device === deviceId()),
+  )
   for (const p of pending) {
     const release = await getRelease(client, p.releaseId)
     rememberLength(release)

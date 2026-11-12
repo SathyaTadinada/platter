@@ -1,6 +1,7 @@
 import { ChevronRight, CircleAlert, CircleCheck, Disc3, Loader, Pencil, RotateCw, X } from 'lucide-react'
 import type { QueueItem } from '../../db/db'
 import { formatBarcodeInput } from '../../lib/barcode'
+import { addingElsewhere, STUCK_AFTER } from '../../lib/queue'
 import { shortGrade, toCard } from '../../lib/format'
 import { formatPrice, hasMetadata, type Metadata } from '../../lib/metadata'
 
@@ -24,6 +25,7 @@ type RowProps = {
   onRemove?: () => void
   onRetry?: () => void
   onEdit?: () => void
+  onTakeOver?: () => void
   currency?: string
   cover?: string // for rows that came without one
 }
@@ -44,6 +46,7 @@ export function Row({
   onRemove,
   onRetry,
   onEdit,
+  onTakeOver,
   currency = 'USD',
   cover,
 }: RowProps) {
@@ -79,7 +82,20 @@ export function Row({
       status = <span className="text-red-600 dark:text-red-400">{item.error}</span>
       break
     case 'adding':
-      status = (
+      status = addingElsewhere(item) ? (
+        <>
+          Adding on another device
+          {/* that device may have closed partway through */}
+          {onTakeOver && Date.now() - (item.addStartedAt ?? 0) > STUCK_AFTER && (
+            <>
+              {' · '}
+              <button type="button" onClick={onTakeOver} className="font-semibold text-stone-700 underline dark:text-stone-300">
+                Add here instead
+              </button>
+            </>
+          )}
+        </>
+      ) : (
         <span className="inline-flex items-center gap-1">
           <Loader size={14} className="animate-spin" aria-hidden /> Adding
         </span>

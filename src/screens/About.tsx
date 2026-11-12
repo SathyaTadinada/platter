@@ -13,8 +13,8 @@ export function About() {
 
       <Section title="Privacy">
         <Card className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-          <p>Platter has no accounts or analytics of its own.</p>
-          <p>Everything it saves, including your sign-in, stays in this browser, and it talks to Discogs directly from your device.</p>
+          <p>Platter has no analytics, and no accounts of its own: your Discogs sign-in is the account.</p>
+          <p>Your sign-in stays in this browser, and Platter talks to Discogs directly from your device.</p>
           <p>
             If you log in with Discogs, each request is signed by a small Platter server first. It gets your sign-in key and the address
             being requested, keeps neither, and never sees Discogs' replies.
@@ -24,8 +24,17 @@ export function About() {
             Archive. Tapping Apple Music or All services looks the album up with Apple. Plays go to ListenBrainz only if you've connected
             it.
           </p>
+          <p>
+            If you turn on sync across devices, what you save in Platter (plays, value history, cover picks, your batch, settings, and your
+            ListenBrainz token, encrypted) is kept on Platter's server under your Discogs username. Your collection, wantlist, and prices
+            still come only from Discogs. To check a sign-in is yours, the server asks Discogs once and then keeps only a scrambled
+            fingerprint of it, never the sign-in itself. Signing in on a new device checks whether your account already syncs.
+          </p>
           <p>Photos of runouts and spines are read on your device and never uploaded.</p>
-          <p>Signing out deletes what Platter saved here, except album years, record lengths, and preferences.</p>
+          <p>
+            Signing out deletes what Platter saved here, except album years, record lengths, and preferences. A synced copy stays until you
+            delete it in Settings.
+          </p>
         </Card>
       </Section>
 

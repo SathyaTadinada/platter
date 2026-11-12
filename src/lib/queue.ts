@@ -3,6 +3,7 @@ import type { InstanceTarget } from '../api/discogs/endpoints'
 import type { SearchResult } from '../api/discogs/types'
 import { db, type QueueItem, type ReleaseSummary } from '../db/db'
 import { digitsOnly } from './barcode'
+import { deviceId } from './device'
 import { rememberBarcode } from './barcodes'
 import { fieldValueFits, type ImportPlan, type ImportRow } from './csv'
 import { toCard } from './format'
@@ -74,10 +75,26 @@ export async function chooseRelease(id: number, r: SearchResult) {
   await db.queue.update(id, { status: 'ready', release: summaryFromSearch(r), raw: r, error: undefined })
 }
 
-// After a reload, anything mid-flight goes back to where it can safely restart
-export async function resetInterrupted() {
+// After a reload, anything mid-flight goes back to where it can safely restart. With cloud sync,
+// a record another device is adding is left to that device.
+export async function resetInterrupted(me = deviceId()) {
   await db.queue.where('status').equals('looking').modify({ status: 'pending' })
-  await db.queue.where('status').equals('adding').modify({ status: 'ready' })
+  await db.queue
+    .where('status')
+    .equals('adding')
+    .filter((i) => !i.addingBy || i.addingBy === me)
+    .modify({ status: 'ready', addingBy: undefined })
+}
+
+// How long a record can sit on another device's "adding" before this one may take it over
+export const STUCK_AFTER = 15 * 60 * 1000
+
+export const addingElsewhere = (i: QueueItem, me = deviceId()) => i.status === 'adding' && Boolean(i.addingBy) && i.addingBy !== me
+
+// Takes over a record another device started adding and never finished. Its start time stays, so
+// the add checks Discogs for a copy that device may have added before stopping.
+export async function takeOver(id: number) {
+  await db.queue.update(id, { status: 'ready', addingBy: undefined })
 }
 
 const byAge = (status: QueueItem['status']) => db.queue.where('status').equals(status).sortBy('createdAt')
@@ -143,7 +160,13 @@ export type AddDeps = {
   ownedInstances: (releaseId: number) => Promise<{ instance_id: number; date_added: string; folder_id: number }[]>
 }
 
-export type AddOpts = RunOpts & { folderId: number; removeFromWantlist: boolean; wants: Set<number> }
+export type AddOpts = RunOpts & {
+  folderId: number
+  removeFromWantlist: boolean
+  wants: Set<number>
+  // with cloud sync: false when another device has started on this record
+  claim?: (item: QueueItem, startedAt: number) => Promise<boolean>
+}
 
 export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: RunEnd; added: number; failed: number }> {
   const items = await byAge('ready')
@@ -155,7 +178,8 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
     const release = item.release!
     const folderId = item.folderId ?? opts.folderId
     const startedAt = item.addStartedAt ?? Date.now()
-    await db.queue.update(item.id!, { status: 'adding', addStartedAt: startedAt })
+    if (opts.claim && !(await opts.claim(item, startedAt))) continue
+    await db.queue.update(item.id!, { status: 'adding', addStartedAt: startedAt, addingBy: opts.claim ? deviceId() : undefined })
     try {
       let instanceId = item.instanceId
       if (!instanceId && item.addStartedAt) {

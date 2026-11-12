@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from '../components/Toaster'
-import { db, type LibraryItem } from '../db/db'
+import { db, getSetting, type LibraryItem } from '../db/db'
 import { latch, listening, logPlay, playFields, scheduleScrobbles, trimPlays, undoPlay, type Play, type PlayFields } from '../lib/plays'
 import { useSignedIn } from './session'
 import { useFieldMatches, useFieldState } from './useFields'
@@ -17,7 +17,10 @@ export function useTrimPlays() {
   const ids = usePlayFields()
   const items = useLiveQuery(() => db.collection.toArray(), [])
   useEffect(() => {
-    if (items && ids) trimPlays(items, ids).catch(() => {})
+    if (!items || !ids) return
+    getSetting<number>('collectionSyncedAt')
+      .then((at) => trimPlays(items, ids, at ?? 0))
+      .catch(() => {})
   }, [items, ids])
 }
 

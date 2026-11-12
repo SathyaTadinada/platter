@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Boxes,
+  Cloud,
   Check,
   MonitorSmartphone,
   Moon,
@@ -17,13 +18,14 @@ import {
   RefreshCw,
   Upload,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getFields } from '../api/discogs/endpoints'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
 import { Button, List, Notice, Row, Screen, Section, Segmented } from '../components/ui'
 import { db, getSetting, setSetting } from '../db/db'
+import { useCloud } from '../hooks/cloud'
 import { useSignedIn } from '../hooks/session'
 import { useSignOut } from '../hooks/signOut'
 import { useSync } from '../hooks/sync'
@@ -52,6 +54,7 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const install = useInstallPrompt()
   const demo = session.kind === 'demo'
+  const cloud = useCloud()
   const meta = useCollectionMeta().data
   const crates = meta?.folders.length
   const lb = useLiveQuery(async () => (await db.settings.get(LISTENBRAINZ_KEY))?.value as ListenBrainzSettings | undefined)
@@ -209,6 +212,11 @@ export function Settings() {
           </Section>
 
           <Section title="Your data">
+            {cloud.available && (
+              <List>
+                <Row icon={<Cloud size={20} />} label="Sync across devices" value={cloud.enabled ? 'On' : 'Off'} href="/sync" />
+              </List>
+            )}
             <List>
               <Row icon={<FileUp size={20} />} label="Import collection" detail="From a Discogs export file" href="/import" />
               <Row
@@ -261,6 +269,15 @@ export function Settings() {
 function Appearance() {
   const [accent, setLocal] = useState<AccentId>(getAccent)
   const [theme, setThemeLocal] = useState<Theme>(getTheme)
+  // changed on another device
+  useEffect(() => {
+    const update = () => {
+      setLocal(getAccent())
+      setThemeLocal(getTheme())
+    }
+    window.addEventListener('platter-prefs', update)
+    return () => window.removeEventListener('platter-prefs', update)
+  }, [])
   return (
     <div className="space-y-4 rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       <Segmented
