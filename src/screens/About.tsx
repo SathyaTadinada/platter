@@ -48,7 +48,7 @@ export function About() {
   return (
     <Screen title="About Platter" back={session ? '/settings' : '/'} width="wide">
       <Section>
-        <p className="max-w-2xl text-lg text-stone-700 dark:text-stone-300">
+        <p className="text-lg text-stone-700 dark:text-stone-300">
           Scan a record’s barcode to add it to your Discogs collection. Platter is free and open source.
         </p>
       </Section>
