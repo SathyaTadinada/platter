@@ -12,9 +12,11 @@ export class DiscogsError extends Error {
   }
 }
 
+// Also what a run of 429s looks like (see send), so it only blames the connection when the
+// device says it's offline
 export class OfflineError extends Error {
-  constructor() {
-    super("Can't reach Discogs. Check your connection.")
+  constructor(online = typeof navigator === 'undefined' || navigator.onLine !== false) {
+    super(online ? "Discogs isn't answering right now." : "You're offline.")
   }
 }
 

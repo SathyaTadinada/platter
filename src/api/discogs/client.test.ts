@@ -87,6 +87,11 @@ describe('DiscogsClient', () => {
     await expect(getIdentity(client(fn))).rejects.toBeInstanceOf(OfflineError)
   })
 
+  it('only blames the connection when the device is offline', () => {
+    expect(new OfflineError(true).message).toBe("Discogs isn't answering right now.")
+    expect(new OfflineError(false).message).toBe("You're offline.")
+  })
+
   it('retries a failed fetch while online, since 429s arrive without CORS headers', async () => {
     let n = 0
     const fn = (async () => {
