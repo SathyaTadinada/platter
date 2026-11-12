@@ -1,8 +1,10 @@
 // Handles /api/*. Everything else is served from static assets.
-// The Worker never talks to Discogs: it signs requests (including the sign-in
-// steps) that the browser then sends itself, so Discogs sees the user's IP.
+// For Discogs requests the Worker only signs: the browser sends them itself (sign-in steps
+// included), so Discogs sees the user's IP. The one call it makes itself is asking Discogs whose
+// sign-in it is, the first time a device turns on cloud sync (see sync.ts).
 
 import { header, signParams } from './oauth'
+import { askDiscogs, forget, loginHash, parseLogin, parseRows, pull, push, SyncError, whoIs, type DB } from './sync'
 
 type RateLimiter = { limit(opts: { key: string }): Promise<{ success: boolean }> }
 type Fetcher = { fetch(req: Request): Promise<Response> }
@@ -12,7 +14,10 @@ interface Env {
   DISCOGS_CONSUMER_SECRET: string
   SIGN_LIMITER: RateLimiter
   AUTH_LIMITER: RateLimiter
+  SYNC_LIMITER: RateLimiter
   ASSETS: Fetcher
+  DB?: DB
+  SYNC_KEY?: string
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -33,7 +38,7 @@ async function userKey(token: string): Promise<string> {
 const tooMany = () => new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
 
 const API = 'https://api.discogs.com'
-const ALLOWED_ORIGINS = ['https://platter.tadinada.com', 'http://localhost:5173']
+const ALLOWED_ORIGINS = ['https://platter.tadinada.com', 'http://localhost:5173', 'http://127.0.0.1:5173']
 const MAX_BATCH = 60
 
 type SignRequest = {
@@ -99,6 +104,42 @@ async function sign(req: Request, env: Env): Promise<Response> {
   return Response.json({ headers: params.map(header), params }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
+async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'): Promise<Response> {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  if (!ALLOWED_ORIGINS.includes(req.headers.get('Origin') ?? '')) return new Response('Forbidden', { status: 403 })
+  const db = env.DB
+  if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
+  const noStore = { 'Cache-Control': 'no-store' }
+  try {
+    let input: { login?: unknown; since?: unknown; rows?: unknown }
+    try {
+      input = await req.json()
+    } catch {
+      throw new SyncError(400, 'Bad JSON')
+    }
+    const login = parseLogin(input.login)
+    if (!(await allowed(env.SYNC_LIMITER, `sync:${(await loginHash(login)).slice(0, 32)}`))) return tooMany()
+    const ask = async (l: typeof login) => {
+      // checking with Discogs is the costly part, so it gets the stricter per-IP limit
+      if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) throw new SyncError(429, 'Too many requests')
+      return askDiscogs(l, { ...env, DB: db })
+    }
+    const { username } = await whoIs(db, login, ask)
+    const syncEnv = { ...env, DB: db }
+    if (action === 'pull') {
+      const since = Number(input.since ?? 0)
+      if (!Number.isInteger(since) || since < 0) throw new SyncError(400, 'Bad cursor')
+      return Response.json(await pull(db, syncEnv, username, since), { headers: noStore })
+    }
+    if (action === 'push') return Response.json(await push(db, syncEnv, username, parseRows(input.rows)), { headers: noStore })
+    await forget(db, username)
+    return Response.json({ ok: true }, { headers: noStore })
+  } catch (e) {
+    if (e instanceof SyncError) return Response.json({ error: e.message }, { status: e.status, headers: noStore })
+    throw e
+  }
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(req.url)
@@ -112,6 +153,12 @@ export default {
     switch (pathname) {
       case '/api/sign':
         return sign(req, env)
+      case '/api/sync/pull':
+        return sync(req, env, 'pull')
+      case '/api/sync/push':
+        return sync(req, env, 'push')
+      case '/api/sync/forget':
+        return sync(req, env, 'forget')
       case '/api/health':
         return Response.json({
           ok: true,
