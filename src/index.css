@@ -143,6 +143,7 @@
   --color-accent: var(--color-accent-400);
   --color-accent-fg: #0c0a09;
   --color-stone-500: oklch(70.9% 0.01 56.259);
+  --selection: color-mix(in oklab, var(--color-accent) 40%, transparent);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light),
@@ -151,6 +152,7 @@
     --color-accent: var(--color-accent-400);
     --color-accent-fg: #0c0a09;
     --color-stone-500: oklch(70.9% 0.01 56.259);
+    --selection: color-mix(in oklab, var(--color-accent) 40%, transparent);
   }
 }
 
@@ -200,9 +202,10 @@ body {
   opacity: 1;
 }
 
+/* a tint rather than solid accent: Safari also paints the gaps between selected blocks, which
+   looked like heavy bars in full color */
 ::selection {
-  background-color: var(--color-accent);
-  color: var(--color-accent-fg);
+  background-color: var(--selection, color-mix(in oklab, var(--color-accent) 28%, transparent));
 }
 
 /* Safari pads the inside of date inputs, which pushes the text off center */

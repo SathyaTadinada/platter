@@ -17,19 +17,19 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
       <>
         Photos of barcodes, runouts, and spines are read on your device with{' '}
         <ExternalLink href="https://github.com/zxing-cpp/zxing-cpp">ZXing</ExternalLink> and{' '}
-        <ExternalLink href="https://tesseract.projectnaptha.com">Tesseract</ExternalLink>, and never uploaded.
+        <ExternalLink href="https://tesseract.projectnaptha.com">Tesseract</ExternalLink>, and are never uploaded.
       </>
     ),
   },
   {
     icon: <KeyRound size={20} />,
-    title: 'Your Discogs sign-in',
+    title: 'Log in with Discogs',
     text: 'Your Discogs sign-in stays in this browser, and Platter talks to Discogs directly. If you log in with Discogs, Platter’s server signs each request without storing your key or seeing the response.',
   },
   {
     icon: <Cloud size={20} />,
     title: 'Sync',
-    text: 'Off by default. Turn it on to keep your plays, value history, covers, batch, and settings on your other devices. Your sync password never leaves your device.',
+    text: 'Enable sync to keep your plays, value history, covers, batch, and settings on your other devices. This feature is off by default.',
   },
   {
     icon: <Plug size={20} />,
@@ -39,7 +39,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <LogOut size={20} />,
     title: 'Signing out',
-    text: 'Signing out clears this browser. With sync on, your data is waiting when you sign back in. Without it, album years, record lengths, and preferences stay unless you delete everything.',
+    text: 'Signing out clears this browser. With sync on, your data remains in Platter. Without sync, album years, record lengths, and preferences stay unless you delete everything.',
   },
 ]
 

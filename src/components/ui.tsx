@@ -24,9 +24,10 @@ export function Button({ variant = 'primary', className = '', ...props }: Button
 
 export function ExternalLink({ children, className = '', ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
-    <a target="_blank" rel="noopener" className={`inline-flex items-center gap-1 underline underline-offset-2 ${className}`} {...props}>
+    // inline rather than flex, so selecting a sentence carries on through the link
+    <a target="_blank" rel="noopener" className={`underline underline-offset-2 ${className}`} {...props}>
       {children}
-      <ExternalIcon size={14} aria-hidden />
+      <ExternalIcon size={14} aria-hidden className="ml-1 inline align-[-2px]" />
     </a>
   )
 }
