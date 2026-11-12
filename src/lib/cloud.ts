@@ -419,6 +419,13 @@ export async function leave(api: CloudApi) {
   await resetDevice()
 }
 
+// Signing out of Discogs on a device that syncs: anything not sent yet goes first (this throws if it
+// can't), then the device leaves sync, so its key isn't left behind in a browser that's been signed out of
+export async function signOutOfSync(api: CloudApi) {
+  await pushAll(api)
+  await leave(api)
+}
+
 // The whole account, from every device
 export async function forgetAccount(api: CloudApi) {
   await api.forget()

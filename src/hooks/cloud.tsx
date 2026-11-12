@@ -20,6 +20,7 @@ import {
   leave as leaveSync,
   setWhatSyncs,
   signIn as signInSync,
+  signOutOfSync,
   syncNow,
   takeNeedCandidates,
 } from '../lib/cloud'
@@ -44,6 +45,8 @@ type Ctx = {
   setOff: (off: Category[]) => Promise<void>
   leave: () => Promise<void>
   forget: () => Promise<void>
+  // before signing out of Discogs: sends what's left and takes this device out of sync. Throws if it couldn't send.
+  beforeSignOut: () => Promise<void>
   // set while sync is on: false when another device has started adding this batch record
   claim?: (item: QueueItem, startedAt: number) => Promise<boolean>
 }
@@ -214,6 +217,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     forget: async () => {
       if (api) await entered(() => forgetAccount(api))
     },
+    beforeSignOut: async () => {
+      if (api) await entered(() => signOutOfSync(api))
+    },
     claim: api && !saved?.off.includes('batch') ? (item, startedAt) => claimBatch(api, item, deviceId(), startedAt) : undefined,
   }
 
@@ -260,6 +266,7 @@ function useDemoCloud(): Ctx {
     setOff: async (next) => setOff(next),
     leave: async () => setEnabled(false),
     forget: async () => setEnabled(false),
+    beforeSignOut: async () => {},
   }
 }
 

@@ -1,5 +1,4 @@
 import {
-  CalendarDays,
   Headphones,
   Image,
   KeyRound,
@@ -23,6 +22,8 @@ import { useCloud } from '../hooks/cloud'
 import { CloudError } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 
+// Album years, record lengths, and the barcode index ('catalog') aren't listed: they're public catalog
+// data that only makes a new device quicker to set up, so they always sync
 const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
   { id: 'plays', label: 'Plays', icon: <Headphones size={20} /> },
   { id: 'value', label: 'Value history', icon: <TrendingUp size={20} /> },
@@ -30,7 +31,6 @@ const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
   { id: 'batch', label: 'Batch', icon: <Layers size={20} /> },
   { id: 'settings', label: 'Settings and appearance', icon: <SlidersHorizontal size={20} /> },
   { id: 'listenbrainz', label: 'ListenBrainz connection', icon: <Radio size={20} /> },
-  { id: 'catalog', label: 'Album years and lengths', icon: <CalendarDays size={20} /> },
 ]
 
 export function CloudSync() {
@@ -205,7 +205,8 @@ function Syncing() {
       setError(explain(e, "This device isn't signed in to sync anymore."))
     }
   }
-  const setCategory = (c: Category, on: boolean) => attempt(() => cloud.setOff(on ? cloud.off.filter((x) => x !== c) : [...cloud.off, c]))
+  const setCategory = (c: Category, on: boolean) =>
+    attempt(() => cloud.setOff((on ? cloud.off.filter((x) => x !== c) : [...cloud.off, c]).filter((x) => x !== 'catalog')))
   const newCode = () => attempt(async () => setPairing(await cloud.pair()))
 
   const status = cloud.running ? 'Syncing…' : cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : undefined

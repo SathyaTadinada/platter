@@ -65,8 +65,35 @@ export function Settings() {
     syncedAt: (await db.settings.get('collectionSyncedAt'))?.value as number | undefined,
     backedUpAt: (await db.settings.get(BACKED_UP_KEY))?.value as number | undefined,
     // what a backup would save that Discogs doesn't have
-    localOnly: (await db.plays.count()) + (await db.covers.count()) + (await db.valueHistory.count()) > 0,
+    plays: await db.plays.count(),
+    covers: await db.covers.count(),
+    values: await db.valueHistory.count(),
   }))
+  const onlyHere =
+    stats !== undefined &&
+    (cloud.enabled
+      ? (cloud.off.includes('plays') && stats.plays > 0) ||
+        (cloud.off.includes('covers') && stats.covers > 0) ||
+        (cloud.off.includes('value') && stats.values > 0)
+      : stats.plays + stats.covers + stats.values > 0)
+  const [leaving, setLeaving] = useState<string | null>(null)
+  const [unsent, setUnsent] = useState(false)
+
+  // Syncing devices send what's left and leave sync first. If that fails, say so rather than lose it.
+  async function confirmSignOut() {
+    if (cloud.enabled) {
+      setLeaving('Syncing…')
+      try {
+        if (unsent) await cloud.leave()
+        else await cloud.beforeSignOut()
+      } catch {
+        setUnsent(true)
+        setLeaving(null)
+        return
+      }
+    }
+    await signOut({ everything })
+  }
   const [everything, setEverything] = useState(false)
   const [backedUp, setBackedUp] = useState(false)
 
@@ -101,16 +128,23 @@ export function Settings() {
       {confirming && (
         <ConfirmDialog
           title="Sign out?"
-          action="Sign out"
-          onConfirm={() => signOut({ everything })}
+          action={unsent ? 'Sign out anyway' : 'Sign out'}
+          busy={leaving}
+          onConfirm={confirmSignOut}
           onCancel={() => {
             setConfirming(false)
             setEverything(false)
+            setUnsent(false)
           }}
         >
           <div className="space-y-4">
-            <p>Your plays and other Platter data on this device get deleted. Nothing changes on Discogs.</p>
-            {stats?.localOnly && (
+            <p>
+              {cloud.enabled
+                ? 'This browser is cleared and stops syncing. Your synced data stays on Platter’s server.'
+                : 'Your plays and other Platter data on this device get deleted. Nothing changes on Discogs.'}
+            </p>
+            {unsent && <Notice tone="error">Your latest changes couldn’t be synced, so signing out now loses them.</Notice>}
+            {onlyHere && (
               <Button
                 variant="secondary"
                 className="min-h-10 w-full text-sm"
@@ -190,6 +224,15 @@ export function Settings() {
                 href="/setup"
               />
             </List>
+            <List>
+              <Row icon={<FileUp size={20} />} label="Import collection" detail="From a Discogs export file" href="/import" />
+              <Row
+                icon={<FileDown size={20} />}
+                label="Export collection"
+                detail="A CSV in the same format as Discogs"
+                onClick={exportCollection}
+              />
+            </List>
             {sync.error && <Notice tone="error">{sync.error}</Notice>}
           </Section>
 
@@ -212,31 +255,26 @@ export function Settings() {
           </Section>
 
           <Section title="Your data">
-            {cloud.available && (
-              <List>
-                <Row icon={<Cloud size={20} />} label="Sync across devices" value={cloud.enabled ? 'On' : 'Off'} href="/sync" />
-              </List>
-            )}
             <List>
-              <Row icon={<FileUp size={20} />} label="Import collection" detail="From a Discogs export file" href="/import" />
-              <Row
-                icon={<FileDown size={20} />}
-                label="Export collection"
-                detail="A CSV in the same format as Discogs"
-                onClick={exportCollection}
-              />
-            </List>
-            <List>
+              {cloud.available && (
+                <Row
+                  icon={<Cloud size={20} />}
+                  label="Sync across devices"
+                  detail={cloud.enabled ? (cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : 'On') : undefined}
+                  value={cloud.enabled ? undefined : 'Off'}
+                  href="/sync"
+                />
+              )}
               <Row
                 icon={<Download size={20} />}
-                label="Back up Platter data"
+                label="Back up to a file"
                 detail={stats?.backedUpAt ? `Last backed up ${shortDay(stats.backedUpAt)}` : 'Not backed up yet'}
                 onClick={exportBackup}
               />
               <Row
                 icon={<Upload size={20} />}
-                label="Restore a backup"
-                detail="From a Platter backup file"
+                label="Restore from a file"
+                detail="A Platter backup"
                 onClick={() => fileRef.current?.click()}
               />
             </List>

@@ -13,6 +13,7 @@ import {
   leave,
   setWhatSyncs,
   signIn,
+  signOutOfSync,
   syncNow,
   takeNeedCandidates,
   type Row,
@@ -271,6 +272,30 @@ describe('between devices', () => {
     await leave(api())
     expect(deviceFor('tadinada')).toBeNull()
     expect(server.accounts).toHaveLength(1)
+  })
+})
+
+describe('signing out', () => {
+  it('sends what was waiting, then takes the device out of sync', async () => {
+    await signIn('tadinada', PASSWORD)
+    await setSetting('stylus', { lifespan: 321 })
+    await wait()
+    expect(await db.outbox.count()).toBe(1)
+    await signOutOfSync(api())
+    expect(deviceFor('tadinada')).toBeNull()
+    expect([...server.accounts[0].rows.values()].some((r) => r.key === 'stylus' && r.value?.includes('321'))).toBe(true)
+  })
+
+  it("stays in sync if what's waiting can't be sent", async () => {
+    await signIn('tadinada', PASSWORD)
+    await setSetting('stylus', { lifespan: 1 })
+    await wait()
+    const down = cloudApi(deviceFor('tadinada')!.device, (async () => {
+      throw new TypeError('offline')
+    }) as unknown as typeof fetch)
+    await expect(signOutOfSync(down)).rejects.toBeInstanceOf(CloudError)
+    expect(deviceFor('tadinada')).toBeTruthy()
+    expect(await db.outbox.count()).toBe(1)
   })
 })
 
