@@ -178,7 +178,7 @@ describe('between devices', () => {
   it('joins in on a new device if the account already syncs, and only asks once', async () => {
     const { api } = fakeCloud()
     let peeks = 0
-    const counting: CloudApi = { ...api, pull: (since) => (peeks++, api.pull(since)) }
+    const counting: CloudApi = { ...api, pull: (since, check) => (check && peeks++, api.pull(since, check)) }
     expect(await joinIfSynced(counting)).toBe(false)
     expect(await joinIfSynced(counting)).toBe(false)
     expect(peeks).toBe(1)
@@ -191,6 +191,21 @@ describe('between devices', () => {
     expect(await joinIfSynced(api)).toBe(true)
     expect(await getSetting(CLOUD.enabled)).toBe(true)
     expect(await getSetting('stylus')).toEqual({ lifespan: 2 })
+  })
+})
+
+describe('turning on', () => {
+  it('stays off if the first round fails', async () => {
+    const { CloudError } = await import('./cloud')
+    const failing: CloudApi = {
+      pull: async () => {
+        throw new CloudError(503, 'busy')
+      },
+      push: async () => ({ seq: 0, seqs: [] }),
+      forget: async () => ({}),
+    }
+    await expect(turnOn(failing)).rejects.toThrow()
+    expect(await getSetting(CLOUD.enabled)).toBe(false)
   })
 })
 

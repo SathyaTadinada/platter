@@ -65,8 +65,14 @@ export function parseLogin(x: unknown): Login {
 const IDENTITY = 'https://api.discogs.com/oauth/identity'
 const USER_AGENT = 'Platter/1.0 +https://platter.tadinada.com'
 
-// Asks Discogs whose sign-in this is. null means Discogs turned it down.
-export async function askDiscogs(l: Login, env: SyncEnv, fetchFn: typeof fetch = fetch): Promise<string | null> {
+// Asks Discogs whose sign-in this is. null means Discogs turned it down. A busy Discogs gets
+// one more try after a moment: this goes out from Cloudflare's shared addresses.
+export async function askDiscogs(
+  l: Login,
+  env: SyncEnv,
+  fetchFn: typeof fetch = fetch,
+  sleep = (ms: number) => new Promise((r) => setTimeout(r, ms)),
+): Promise<string | null> {
   let auth: string
   if (l.kind === 'token') auth = `Discogs token=${l.token}`
   else {
@@ -80,17 +86,25 @@ export async function askDiscogs(l: Login, env: SyncEnv, fetchFn: typeof fetch =
     })
     auth = header(params)
   }
-  let res: Response
-  try {
-    res = await fetchFn(IDENTITY, { headers: { Authorization: auth, 'User-Agent': USER_AGENT } })
-  } catch {
-    throw new SyncError(503, "Couldn't reach Discogs")
+  for (let attempt = 0; ; attempt++) {
+    let res: Response | null = null
+    try {
+      res = await fetchFn(IDENTITY, { headers: { Authorization: auth, 'User-Agent': USER_AGENT } })
+    } catch {
+      // no answer at all
+    }
+    if (res?.status === 401 || res?.status === 403) return null
+    if (res?.ok) {
+      const body = (await res.json()) as { username?: unknown }
+      if (typeof body.username !== 'string' || !body.username) throw new SyncError(503, 'Discogs sent no username')
+      return body.username
+    }
+    if (attempt === 0 && (!res || res.status === 429 || res.status >= 500)) {
+      await sleep(1500)
+      continue
+    }
+    throw new SyncError(503, res ? `Discogs returned ${res.status}` : "Couldn't reach Discogs")
   }
-  if (res.status === 401 || res.status === 403) return null
-  if (!res.ok) throw new SyncError(503, `Discogs returned ${res.status}`)
-  const body = (await res.json()) as { username?: unknown }
-  if (typeof body.username !== 'string' || !body.username) throw new SyncError(503, 'Discogs sent no username')
-  return body.username
 }
 
 // The account a sign-in belongs to: remembered, or checked with Discogs (again after 30 days,

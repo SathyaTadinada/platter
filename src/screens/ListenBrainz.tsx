@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { validateToken } from '../api/listenbrainz'
-import { Button, Card, ExternalLink, Notice, Screen, Section } from '../components/ui'
+import { Button, Card, ExternalLink, Notice, Screen, Section, Switch } from '../components/ui'
 import { db, setSetting } from '../db/db'
 import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 
@@ -39,11 +39,10 @@ export function ListenBrainz() {
             </p>
             <label className="flex items-center justify-between gap-3">
               <span>Send plays to ListenBrainz</span>
-              <input
-                type="checkbox"
+              <Switch
+                label="Send plays to ListenBrainz"
                 checked={saved.enabled}
-                onChange={(e) => setSetting(LISTENBRAINZ_KEY, { ...saved, enabled: e.target.checked })}
-                className="size-5"
+                onChange={(on) => setSetting(LISTENBRAINZ_KEY, { ...saved, enabled: on })}
               />
             </label>
             <p className="text-sm text-stone-500">Each play is sent as the album's tracks, ending when you logged it.</p>

@@ -118,7 +118,7 @@ async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'):
   if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
   const noStore = { 'Cache-Control': 'no-store' }
   try {
-    let input: { login?: unknown; since?: unknown; rows?: unknown }
+    let input: { login?: unknown; since?: unknown; rows?: unknown; check?: unknown }
     try {
       input = await req.json()
     } catch {
@@ -132,21 +132,21 @@ async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'):
       if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) throw new SyncError(429, 'Too many requests')
       return askDiscogs(l, { ...env, DB: db })
     }
-    // a sign-in is only kept while its account has something synced
-    const { username, hash } = await whoIs(db, login, ask, Date.now(), false)
+    // A new device checking whether its account syncs leaves nothing behind unless it does.
+    // Otherwise a confirmed sign-in is kept, so it isn't checked with Discogs on every call.
+    const check = action === 'pull' && input.check === true
+    const { username, hash } = await whoIs(db, login, ask, Date.now(), !check)
     const syncEnv = { ...env, DB: db }
     if (action === 'pull') {
       const since = Number(input.since ?? 0)
       if (!Number.isInteger(since) || since < 0) throw new SyncError(400, 'Bad cursor')
       const result = await pull(db, syncEnv, username, since)
-      if (result.exists) await remember(db, hash, username)
+      if (check && result.exists) await remember(db, hash, username)
+      // a device that was syncing, finding the account deleted: it switches off, and its sign-in goes too
+      if (!result.exists && since > 0) await db.prepare('DELETE FROM logins WHERE hash = ?1').bind(hash).run()
       return Response.json(result, { headers: noStore })
     }
-    if (action === 'push') {
-      const result = await push(db, syncEnv, username, parseRows(input.rows))
-      await remember(db, hash, username)
-      return Response.json(result, { headers: noStore })
-    }
+    if (action === 'push') return Response.json(await push(db, syncEnv, username, parseRows(input.rows)), { headers: noStore })
     await forget(db, username)
     return Response.json({ ok: true }, { headers: noStore })
   } catch (e) {

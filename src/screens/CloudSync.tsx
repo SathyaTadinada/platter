@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { Button, Card, Notice, Screen, Section } from '../components/ui'
+import { Button, Card, Notice, Screen, Section, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
+import { CloudError } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 
 export function CloudSync() {
@@ -16,7 +17,8 @@ export function CloudSync() {
     try {
       await (on ? cloud.turnOn() : cloud.turnOff())
     } catch (e) {
-      setError((e as Error).message)
+      // turning on didn't stick, so nothing retries by itself
+      setError(e instanceof CloudError && e.status === 401 ? e.message : "Couldn't turn sync on just now. Try again in a minute.")
     } finally {
       setBusy(false)
     }
@@ -48,13 +50,7 @@ export function CloudSync() {
               <span className="block">Sync this device</span>
               {cloud.enabled && status && <span className="block text-sm text-stone-500">{status}</span>}
             </span>
-            <input
-              type="checkbox"
-              checked={cloud.enabled}
-              disabled={busy || !cloud.available}
-              onChange={(e) => toggle(e.target.checked)}
-              className="size-5"
-            />
+            <Switch label="Sync this device" checked={cloud.enabled} disabled={busy || !cloud.available} onChange={toggle} />
           </label>
           <p className="text-sm text-stone-500">
             Plays, value history, cover picks, your batch, and settings are kept on Platter's server and follow your Discogs account to any

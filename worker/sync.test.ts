@@ -67,8 +67,18 @@ describe('who is asking', () => {
   it("says Discogs turned it down, or that Discogs couldn't be asked", async () => {
     const { env } = setup()
     const answer = (status: number) => (async () => new Response('', { status })) as unknown as typeof fetch
-    expect(await askDiscogs(login, env, answer(401))).toBeNull()
-    await expect(askDiscogs(login, env, answer(429))).rejects.toBeInstanceOf(SyncError)
+    const noWait = async () => {}
+    expect(await askDiscogs(login, env, answer(401), noWait)).toBeNull()
+    await expect(askDiscogs(login, env, answer(429), noWait)).rejects.toBeInstanceOf(SyncError)
+  })
+
+  it('tries a busy Discogs once more', async () => {
+    const { env } = setup()
+    let calls = 0
+    const busyOnce = (async () =>
+      calls++ ? Response.json({ username: 'someone' }) : new Response('', { status: 429 })) as unknown as typeof fetch
+    expect(await askDiscogs(login, env, busyOnce, async () => {})).toBe('someone')
+    expect(calls).toBe(2)
   })
 })
 

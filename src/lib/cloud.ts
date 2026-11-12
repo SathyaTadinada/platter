@@ -28,9 +28,16 @@ export class CloudError extends Error {
 }
 
 export type CloudApi = {
-  pull(since: number): Promise<PullResult>
+  pull(since: number, check?: boolean): Promise<PullResult>
   push(rows: Row[]): Promise<{ seq: number; seqs: number[] }>
   forget(): Promise<unknown>
+}
+
+// What to tell someone, by the server's status. Busy (Platter's limit or Discogs') sorts itself out.
+function failure(status: number) {
+  if (status === 401) return "Discogs didn't accept your sign-in."
+  if (status === 429 || status === 503) return "Couldn't sync just now. Platter will try again shortly."
+  return `Couldn't sync (${status}).`
 }
 
 export function cloudApi(login: Login, fetchFn: typeof fetch = (...a) => fetch(...a)): CloudApi {
@@ -45,14 +52,11 @@ export function cloudApi(login: Login, fetchFn: typeof fetch = (...a) => fetch(.
     } catch {
       throw new CloudError(0, "Can't reach Platter's server.")
     }
-    if (!res.ok) {
-      const msg = ((await res.json().catch(() => null)) as { error?: string } | null)?.error
-      throw new CloudError(res.status, msg ?? `Sync failed (${res.status})`)
-    }
+    if (!res.ok) throw new CloudError(res.status, failure(res.status))
     return res.json() as Promise<T>
   }
   return {
-    pull: (since) => call('pull', { since }),
+    pull: (since, check) => call('pull', { since, check }),
     push: (rows) => call('push', { rows }),
     forget: () => call('forget', {}),
   }
@@ -280,12 +284,19 @@ async function noteEverything() {
   await db.outbox.bulkPut(entries.filter((e) => !waiting.has(`${e.kind}:${e.key}`)))
 }
 
+// If the first round fails, sync stays off rather than retrying behind the scenes
 export async function turnOn(api: CloudApi) {
   await setSetting(CLOUD.enabled, true)
   await setSetting(CLOUD.cursor, 0)
-  await pullAll(api)
-  await noteEverything()
-  await pushAll(api)
+  try {
+    await pullAll(api)
+    await noteEverything()
+    await pushAll(api)
+  } catch (e) {
+    await setSetting(CLOUD.enabled, false)
+    await db.outbox.clear()
+    throw e
+  }
   await setSetting(CLOUD.syncedAt, Date.now())
 }
 
@@ -297,6 +308,14 @@ export async function turnOff() {
 }
 
 export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
+  // never finished a first round: do it the way turning on does, so everything here goes up
+  if (!(await getSetting<number | null>(CLOUD.syncedAt))) {
+    await pullAll(api)
+    await noteEverything()
+    await pushAll(api)
+    await setSetting(CLOUD.syncedAt, Date.now())
+    return 'ok'
+  }
   await pushAll(api)
   if (!(await pullAll(api))) {
     // deleted from another device
@@ -310,7 +329,7 @@ export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
 // Once per sign-in: if this account already syncs from another device, this one joins in
 export async function joinIfSynced(api: CloudApi): Promise<boolean> {
   if (await getSetting<boolean>(CLOUD.checked)) return false
-  const r = await api.pull(0)
+  const r = await api.pull(0, true)
   await setSetting(CLOUD.checked, true)
   if (!r.exists) return false
   await turnOn(api)

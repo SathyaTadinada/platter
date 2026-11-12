@@ -117,6 +117,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   // note changes while on, and send them shortly after
   useEffect(() => {
     capture(enabled, () => {
+      // after a failure the retry timer goes next; changes wait for it rather than adding calls
+      if (failures.current > 0) return
       clearTimeout(soon.current)
       soon.current = setTimeout(() => runRef.current(), PUSH_AFTER)
     })
@@ -146,9 +148,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     try {
       await startSyncing(api)
       await refill()
-    } catch (e) {
-      setError((e as Error).message)
-      throw e
     } finally {
       setRunning(false)
     }
