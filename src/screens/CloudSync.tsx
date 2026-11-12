@@ -119,7 +119,11 @@ function GetIn() {
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault()
-        if (ready) go(() => cloud.signIn(password), 'Incorrect password.')
+        if (!ready) return
+        // the form is swapped out once signed in, and a field removed while focused never blurs, which
+        // leaves password managers' field icons floating where it was
+        ;(document.activeElement as HTMLElement | null)?.blur()
+        go(() => cloud.signIn(password), 'Incorrect password.')
       }}
     >
       <div>
@@ -134,7 +138,7 @@ function GetIn() {
         <label className="block text-sm font-medium" htmlFor="sync-username">
           Discogs username
         </label>
-        <input id="sync-username" value={cloud.username} readOnly autoComplete="username" className={fieldClass} />
+        <input id="sync-username" name="username" value={cloud.username} readOnly autoComplete="username" className={fieldClass} />
       </div>
       {creating ? (
         <NewPassword value={password} onChange={setPassword} confirm={confirm} onConfirmChange={setConfirm} />

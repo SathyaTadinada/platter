@@ -28,6 +28,7 @@ export function PasswordInput({
       <div className="relative">
         <input
           id={id}
+          name={autoComplete === 'current-password' ? 'password' : undefined}
           type={shown ? 'text' : 'password'}
           value={value}
           onChange={(e) => onChange(e.target.value)}
