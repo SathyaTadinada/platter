@@ -6,6 +6,7 @@ import {
   Layers,
   MonitorSmartphone,
   Radio,
+  RefreshCw,
   SlidersHorizontal,
   Trash2,
   TrendingUp,
@@ -101,7 +102,7 @@ function GetIn() {
     <div className="space-y-5">
       <div>
         <h2 className="font-semibold">Enter the code from your other device</h2>
-        <p className="mt-1 text-sm text-stone-500">On a device that already syncs, open Sync across devices and choose Add a device.</p>
+        <p className="mt-1 text-sm text-stone-500">Get one from a device that already syncs, under Add a device.</p>
       </div>
       <PairingCodeInput
         key={codeKey}
@@ -168,7 +169,7 @@ function GetIn() {
   )
 
   return (
-    <div className={columns}>
+    <div className="mx-auto max-w-lg">
       {startOver && (
         <ConfirmDialog
           title="Start a new sync account?"
@@ -184,13 +185,6 @@ function GetIn() {
       )}
       <Section>
         <Card>{form}</Card>
-      </Section>
-      <Section title="What syncs">
-        <List>
-          {CATEGORIES.map((c) => (
-            <Row key={c.id} icon={c.icon} label={c.label} />
-          ))}
-        </List>
       </Section>
     </div>
   )
@@ -260,9 +254,9 @@ function Syncing() {
         >
           <div className="space-y-6 py-2">
             <p className="text-sm text-stone-600 dark:text-stone-300">
-              On your other device, open Sync across devices, choose Use a code instead, and enter this code.
+              Enter this code on your other device, in Settings › Sync across devices.
             </p>
-            <PairingCodeDisplay code={pairing.code} expiresAt={pairing.expiresAt} onRenew={newCode} />
+            <PairingCodeDisplay key={pairing.code} code={pairing.code} expiresAt={pairing.expiresAt} onRenew={newCode} />
           </div>
         </Sheet>
       )}
@@ -276,6 +270,16 @@ function Syncing() {
                 <span className="block">Sync this device</span>
                 {status && <span className="block text-sm text-stone-500">{status}</span>}
               </div>
+              <button
+                type="button"
+                aria-label="Sync now"
+                title="Sync now"
+                disabled={cloud.running}
+                onClick={() => cloud.syncNow()}
+                className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
+              >
+                <RefreshCw size={20} className={cloud.running ? 'animate-spin' : ''} />
+              </button>
               <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
             </li>
           </List>
@@ -292,7 +296,7 @@ function Syncing() {
         </Section>
       </div>
 
-      <Section title="What syncs">
+      <Section title="Synced data">
         <List>
           {CATEGORIES.map((c) => (
             <Row
@@ -361,7 +365,6 @@ function ChangePassword({ onClose }: { onClose: () => void }) {
       >
         <input value={cloud.username} readOnly autoComplete="username" className="hidden" aria-hidden />
         <NewPassword label="New password" value={password} onChange={setPassword} confirm={confirm} onConfirmChange={setConfirm} />
-        <p className="text-sm text-stone-500">Devices that already sync stay signed in.</p>
         {error && <Notice tone="error">{error}</Notice>}
       </form>
     </Sheet>

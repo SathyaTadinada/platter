@@ -1,4 +1,4 @@
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type ReactNode } from 'react'
 
 export const CODE_LENGTH = 6
@@ -42,9 +42,13 @@ export function PairingCodeDisplay({ code, expiresAt, onRenew }: { code: string;
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const action =
+    'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800'
+
   return (
     <div className="space-y-5">
-      <div className={expired ? 'opacity-40' : ''} aria-label={`Code ${chars.split('').join(' ')}`} role="group">
+      {/* letters aren't selectable, so copying is only ever the whole code */}
+      <div className={`select-none ${expired ? 'opacity-40' : ''}`} aria-label={`Code ${chars.split('').join(' ')}`} role="group">
         <Halves>
           {(i) => (
             <span key={i} className={box}>
@@ -53,36 +57,27 @@ export function PairingCodeDisplay({ code, expiresAt, onRenew }: { code: string;
           )}
         </Halves>
       </div>
-      {expired ? (
-        <div className="space-y-3 text-center">
-          <p className="text-sm text-stone-500">This code has expired.</p>
-          <button type="button" onClick={onRenew} className="text-sm font-semibold text-accent">
-            Get a new code
-          </button>
+      <div className="space-y-1.5">
+        <div className="h-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
+          <div
+            className="h-full rounded-full bg-accent transition-[width] duration-1000 ease-linear"
+            style={{ width: `${(left / total) * 100}%` }}
+          />
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <div className="h-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
-              <div
-                className="h-full rounded-full bg-accent transition-[width] duration-1000 ease-linear"
-                style={{ width: `${(left / total) * 100}%` }}
-              />
-            </div>
-            <p className="text-center text-xs text-stone-500 tabular-nums">
-              Expires in {mm}:{ss}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={copy}
-            className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-          >
+        <p className="text-center text-xs text-stone-500 tabular-nums">{expired ? 'Expired' : `Expires in ${mm}:${ss}`}</p>
+      </div>
+      <div className="flex justify-center gap-2">
+        {!expired && (
+          <button type="button" onClick={copy} className={action}>
             {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
             {copied ? 'Copied' : 'Copy code'}
           </button>
-        </div>
-      )}
+        )}
+        <button type="button" onClick={onRenew} className={action}>
+          <RefreshCw size={16} aria-hidden />
+          New code
+        </button>
+      </div>
     </div>
   )
 }
@@ -137,7 +132,12 @@ export function PairingCodeInput({ onComplete, disabled }: { onComplete: (code: 
             aria-label={`Character ${i + 1}`}
             inputMode="text"
             autoCapitalize="characters"
-            autoComplete={i === 0 ? 'one-time-code' : 'off'}
+            // password managers would offer to fill these, and fill in something that isn't a code
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            data-form-type="other"
             spellCheck={false}
             maxLength={CODE_LENGTH}
             onChange={(e) => {

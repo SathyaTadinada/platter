@@ -35,6 +35,7 @@ type Ctx = {
   error: string | null
   syncedAt: number | null
   off: Category[]
+  syncNow: () => Promise<void>
   signIn: (password: string, fresh?: boolean) => Promise<void>
   join: (code: string) => Promise<void>
   pair: () => Promise<{ code: string; expiresAt: number }>
@@ -48,7 +49,10 @@ type Ctx = {
 
 const CloudContext = createContext<Ctx | null>(null)
 const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
-const PUSH_AFTER = 2000
+// Changes go up a few seconds after the last one, and automatic syncs are at least half a minute
+// apart: background work (album years, record lengths) saves something every couple of seconds
+const PUSH_AFTER = 5000
+const MIN_GAP = 30_000
 
 export function CloudProvider({ children }: { children: ReactNode }) {
   const { session, client } = useSession()
@@ -71,7 +75,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const failures = useRef(0)
   const retry = useRef<ReturnType<typeof setTimeout>>(undefined)
   const soon = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const runRef = useRef<() => Promise<void>>(async () => {})
+  const runRef = useRef<(shown?: boolean) => Promise<void>>(async () => {})
+  const lastRun = useRef(0)
 
   // "Which release is…?" records from another device come without Discogs' results; look them up here
   const refill = useCallback(async () => {
@@ -90,7 +95,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [client])
 
-  const run = useCallback(async () => {
+  // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
+  const run = useCallback(async (shown = false) => {
     if (!api) return
     if (busy.current) {
       again.current = true
@@ -98,7 +104,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     busy.current = true
     clearTimeout(retry.current)
-    setRunning(true)
+    clearTimeout(soon.current)
+    lastRun.current = Date.now()
+    if (shown) setRunning(true)
     try {
       if ((await syncNow(api)) === 'gone') setVersion((v) => v + 1)
       failures.current = 0
@@ -125,7 +133,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       // after a failure the retry timer goes next; changes wait for it rather than adding calls
       if (failures.current > 0) return
       clearTimeout(soon.current)
-      soon.current = setTimeout(() => runRef.current(), PUSH_AFTER)
+      const wait = Math.max(PUSH_AFTER, lastRun.current + MIN_GAP - Date.now())
+      soon.current = setTimeout(() => runRef.current(), wait)
     })
     return () => capture(false)
   }, [enabled])
@@ -180,6 +189,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     error,
     syncedAt: saved?.syncedAt ?? null,
     off: saved?.off ?? [],
+    syncNow: () => run(true),
     signIn: (password, fresh) => entered(() => signInSync(username, password, fresh)),
     join: (code) => entered(() => joinWithCode(username, code)),
     pair: async () => {
