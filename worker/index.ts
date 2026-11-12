@@ -1,10 +1,28 @@
 // Handles /api/*. Everything else is served from static assets.
-// For Discogs requests the Worker only signs: the browser sends them itself (sign-in steps
-// included), so Discogs sees the user's IP. The one call it makes itself is asking Discogs whose
-// sign-in it is, the first time a device turns on cloud sync (see sync.ts).
+// The Worker never talks to Discogs: it signs requests (including the sign-in steps) that the
+// browser then sends itself, so Discogs sees the user's IP. Discogs turns away requests from
+// Cloudflare's shared addresses, which is also why cloud sync has accounts of its own (see sync.ts).
 
 import { header, signParams } from './oauth'
-import { askDiscogs, forget, loginHash, parseLogin, parseRows, pull, push, remember, SyncError, whoIs, type DB } from './sync'
+import {
+  deviceAccount,
+  forget,
+  leave,
+  nameExists,
+  newPairing,
+  parseName,
+  parseProof,
+  parseRows,
+  pull,
+  push,
+  setOff,
+  setPassword,
+  sha256,
+  signIn,
+  SyncError,
+  usePairing,
+  type DB,
+} from './sync'
 
 type RateLimiter = { limit(opts: { key: string }): Promise<{ success: boolean }> }
 type Fetcher = { fetch(req: Request): Promise<Response> }
@@ -15,10 +33,10 @@ interface Env {
   SIGN_LIMITER: RateLimiter
   AUTH_LIMITER: RateLimiter
   SYNC_LIMITER: RateLimiter
+  LOGIN_LIMITER: RateLimiter
   ASSETS: Fetcher
   DB?: DB
   SYNC_KEY?: string
-  DEV_IDENTITY?: string // local testing only (.dev.vars): every sign-in belongs to this username
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -111,46 +129,64 @@ async function sign(req: Request, env: Env): Promise<Response> {
   return Response.json({ headers: params.map(header), params }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
-async function sync(req: Request, env: Env, action: 'pull' | 'push' | 'forget'): Promise<Response> {
+const SYNC_ACTIONS = ['exists', 'signin', 'join', 'pull', 'push', 'pair', 'password', 'off', 'leave', 'forget'] as const
+type SyncAction = (typeof SYNC_ACTIONS)[number]
+
+async function sync(req: Request, env: Env, action: SyncAction): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
   if (!allowedOrigin(req)) return new Response('Forbidden', { status: 403 })
   const db = env.DB
   if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
-  const noStore = { 'Cache-Control': 'no-store' }
+  const ok = (body: unknown) => Response.json(body, { headers: { 'Cache-Control': 'no-store' } })
   try {
-    let input: { login?: unknown; since?: unknown; rows?: unknown; check?: unknown }
+    let input: Record<string, unknown>
     try {
       input = await req.json()
     } catch {
       throw new SyncError(400, 'Bad JSON')
     }
-    const login = parseLogin(input.login)
-    if (!(await allowed(env.SYNC_LIMITER, `sync:${(await loginHash(login)).slice(0, 32)}`))) return tooMany()
-    const ask = async (l: typeof login) => {
-      if (env.DEV_IDENTITY) return env.DEV_IDENTITY
-      // checking with Discogs is the costly part, so it gets the stricter per-IP limit
-      if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) throw new SyncError(429, 'Too many requests')
-      return askDiscogs(l, { ...env, DB: db })
+
+    // Getting in: the per-IP limit for sign-in, and for passwords a per-name one too, so nobody can
+    // guess their way into an account however many addresses they use
+    if (action === 'exists' || action === 'signin' || action === 'join') {
+      if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) return tooMany()
+      if (action === 'join') return ok(await usePairing(db, input.code))
+      const name = parseName(input.name)
+      if (action === 'exists') return ok({ exists: await nameExists(db, name) })
+      if (!(await allowed(env.LOGIN_LIMITER, `name:${name}`))) return tooMany()
+      return ok(await signIn(db, name, parseProof(input.proof), input.fresh === true))
     }
-    // A new device checking whether its account syncs leaves nothing behind unless it does.
-    // Otherwise a confirmed sign-in is kept, so it isn't checked with Discogs on every call.
-    const check = action === 'pull' && input.check === true
-    const { username, hash } = await whoIs(db, login, ask, Date.now(), !check)
-    const syncEnv = { ...env, DB: db }
-    if (action === 'pull') {
-      const since = Number(input.since ?? 0)
-      if (!Number.isInteger(since) || since < 0) throw new SyncError(400, 'Bad cursor')
-      const result = await pull(db, syncEnv, username, since)
-      if (check && result.exists) await remember(db, hash, username)
-      // a device that was syncing, finding the account deleted: it switches off, and its sign-in goes too
-      if (!result.exists && since > 0) await db.prepare('DELETE FROM logins WHERE hash = ?1').bind(hash).run()
-      return Response.json(result, { headers: noStore })
+
+    // everything else is from a device that's already in
+    if (typeof input.device !== 'string' || !(await allowed(env.SYNC_LIMITER, `device:${(await sha256(input.device)).slice(0, 32)}`))) {
+      return tooMany()
     }
-    if (action === 'push') return Response.json(await push(db, syncEnv, username, parseRows(input.rows)), { headers: noStore })
-    await forget(db, username)
-    return Response.json({ ok: true }, { headers: noStore })
+    const account = await deviceAccount(db, input.device)
+    const syncEnv = { DB: db, SYNC_KEY: env.SYNC_KEY }
+    switch (action) {
+      case 'pull': {
+        const since = Number(input.since ?? 0)
+        if (!Number.isInteger(since) || since < 0) throw new SyncError(400, 'Bad cursor')
+        return ok(await pull(db, syncEnv, account, since))
+      }
+      case 'push':
+        return ok(await push(db, syncEnv, account, parseRows(input.rows)))
+      case 'pair':
+        return ok(await newPairing(db, account))
+      case 'password':
+        await setPassword(db, account, parseProof(input.proof))
+        return ok({ ok: true })
+      case 'off':
+        return ok({ off: await setOff(db, account, input.off) })
+      case 'leave':
+        await leave(db, input.device)
+        return ok({ ok: true })
+      case 'forget':
+        await forget(db, account)
+        return ok({ ok: true })
+    }
   } catch (e) {
-    if (e instanceof SyncError) return Response.json({ error: e.message }, { status: e.status, headers: noStore })
+    if (e instanceof SyncError) return Response.json({ error: e.message }, { status: e.status, headers: { 'Cache-Control': 'no-store' } })
     throw e
   }
 }
@@ -165,15 +201,11 @@ export default {
       if (!res.headers.get('Content-Type')?.startsWith('text/html')) return res
       return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
     }
+    const syncAction = pathname.startsWith('/api/sync/') ? (pathname.slice(10) as SyncAction) : null
+    if (syncAction && SYNC_ACTIONS.includes(syncAction)) return sync(req, env, syncAction)
     switch (pathname) {
       case '/api/sign':
         return sign(req, env)
-      case '/api/sync/pull':
-        return sync(req, env, 'pull')
-      case '/api/sync/push':
-        return sync(req, env, 'push')
-      case '/api/sync/forget':
-        return sync(req, env, 'forget')
       case '/api/health':
         return Response.json({
           ok: true,

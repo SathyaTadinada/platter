@@ -1,8 +1,10 @@
 // Cloud sync: keeps what a person saves in Platter (plays, value history, settings…) so every
-// device they sign in on gets the same. Who they are comes from their Discogs sign-in, which is
-// checked with Discogs once and then remembered only as a hash.
+// device they use gets the same. An account is a name (their Discogs username) and a password.
+// The password never reaches the server: the browser stretches it into a proof, and the server
+// keeps a fingerprint of that. Each browser that gets in holds a device key of its own, and a
+// device that's in can hand out a short pairing code to let another one in.
 
-import { header, signParams } from './oauth'
+import { categoryOf, parseOff, type Category } from './categories'
 
 // The parts of D1 used here, so tests can run the same code on SQLite
 export type Stmt = {
@@ -19,11 +21,7 @@ export type DB = {
 export type SyncEnv = {
   DB: DB
   SYNC_KEY?: string // base64, 32 bytes; encrypts secrets like the ListenBrainz token
-  DISCOGS_CONSUMER_KEY: string
-  DISCOGS_CONSUMER_SECRET: string
 }
-
-export type Login = { kind: 'token' | 'oauth'; token: string; secret?: string }
 
 export type InRow = { kind: string; key: string; value: string | null; updatedAt: number; deleted?: boolean; ifSeq?: number }
 export type OutRow = { kind: string; key: string; value: string | null; updatedAt: number; deleted: boolean; seq: number }
@@ -35,7 +33,7 @@ const SECRET = new Set(['setting:listenbrainz'])
 export const MAX_PUSH = 200
 export const MAX_PULL = 1000
 const MAX_VALUE = 100_000
-const REVERIFY = 30 * 24 * 60 * 60 * 1000
+export const PAIRING_TTL = 10 * 60 * 1000
 
 export class SyncError extends Error {
   constructor(
@@ -46,100 +44,148 @@ export class SyncError extends Error {
   }
 }
 
-// ---- who's asking ----
+// ---- bits ----
 
-export async function loginHash(l: Login): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${l.kind}\n${l.token}\n${l.secret ?? ''}`))
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+const hex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
+export const sha256 = async (s: string) => hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))))
+const random = (n: number) => crypto.getRandomValues(new Uint8Array(n))
+const b64url = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+
+export function parseName(x: unknown): string {
+  if (typeof x !== 'string' || !x.trim() || x.length > 100) throw new SyncError(400, 'Bad name')
+  return x.trim().toLowerCase()
 }
 
-export function parseLogin(x: unknown): Login {
-  const l = x as Login | undefined
-  if (!l || (l.kind !== 'token' && l.kind !== 'oauth') || typeof l.token !== 'string' || !l.token || l.token.length > 200) {
-    throw new SyncError(400, 'Bad sign-in')
-  }
-  if (l.kind === 'oauth' && (typeof l.secret !== 'string' || !l.secret || l.secret.length > 200)) throw new SyncError(400, 'Bad sign-in')
-  return { kind: l.kind, token: l.token, secret: l.kind === 'oauth' ? l.secret : undefined }
+export function parseProof(x: unknown): string {
+  if (typeof x !== 'string' || !/^[0-9a-f]{64}$/.test(x)) throw new SyncError(400, 'Bad password')
+  return x
 }
 
-const IDENTITY = 'https://api.discogs.com/oauth/identity'
-const USER_AGENT = 'Platter/1.0 +https://platter.tadinada.com'
+// ---- accounts and devices ----
 
-// Asks Discogs whose sign-in this is. null means Discogs turned it down. A busy Discogs gets
-// one more try after a moment: this goes out from Cloudflare's shared addresses.
-export async function askDiscogs(
-  l: Login,
-  env: SyncEnv,
-  fetchFn: typeof fetch = fetch,
-  sleep = (ms: number) => new Promise((r) => setTimeout(r, ms)),
-): Promise<string | null> {
-  let auth: string
-  if (l.kind === 'token') auth = `Discogs token=${l.token}`
-  else {
-    const params = await signParams({
-      method: 'GET',
-      url: IDENTITY,
-      consumerKey: env.DISCOGS_CONSUMER_KEY,
-      consumerSecret: env.DISCOGS_CONSUMER_SECRET,
-      token: l.token,
-      tokenSecret: l.secret,
-    })
-    auth = header(params)
-  }
-  for (let attempt = 0; ; attempt++) {
-    let res: Response | null = null
-    try {
-      res = await fetchFn(IDENTITY, { headers: { Authorization: auth, 'User-Agent': USER_AGENT } })
-    } catch {
-      // no answer at all
-    }
-    if (res?.status === 401 || res?.status === 403) return null
-    if (res?.ok) {
-      const body = (await res.json()) as { username?: unknown }
-      if (typeof body.username !== 'string' || !body.username) throw new SyncError(503, 'Discogs sent no username')
-      return body.username
-    }
-    if (attempt === 0 && (!res || res.status === 429 || res.status >= 500)) {
-      await sleep(1500)
-      continue
-    }
-    throw new SyncError(503, res ? `Discogs returned ${res.status}` : "Couldn't reach Discogs")
-  }
-}
-
-// The account a sign-in belongs to: remembered, or checked with Discogs (again after 30 days,
-// so a sign-in revoked on Discogs stops working here too). With remember off, a newly checked
-// sign-in isn't kept: a new device asking whether its account syncs leaves nothing behind
-// unless it does (see remember below).
-export async function whoIs(
-  db: DB,
-  l: Login,
-  ask: (l: Login) => Promise<string | null>,
-  now = Date.now(),
-  keep = true,
-): Promise<{ username: string; hash: string }> {
-  const hash = await loginHash(l)
-  const known = await db
-    .prepare('SELECT username, verified_at FROM logins WHERE hash = ?1')
-    .bind(hash)
-    .first<{ username: string; verified_at: number }>()
-  if (known && now - known.verified_at < REVERIFY) return { username: known.username, hash }
-  const username = await ask(l)
-  if (!username) {
-    await db.prepare('DELETE FROM logins WHERE hash = ?1').bind(hash).run()
-    throw new SyncError(401, 'Discogs no longer accepts this sign-in')
-  }
-  if (keep) await remember(db, hash, username, now)
-  return { username, hash }
-}
-
-export async function remember(db: DB, hash: string, username: string, now = Date.now()) {
+async function newDevice(db: DB, account: string, now: number): Promise<string> {
+  const token = b64url(random(32))
   await db
-    .prepare(
-      'INSERT INTO logins (hash, username, verified_at) VALUES (?1, ?2, ?3) ON CONFLICT (hash) DO UPDATE SET username = ?2, verified_at = ?3',
-    )
-    .bind(hash, username, now)
+    .prepare('INSERT INTO devices (token, account, created_at) VALUES (?1, ?2, ?3)')
+    .bind(await sha256(token), account, now)
     .run()
+  return token
+}
+
+export async function nameExists(db: DB, name: string): Promise<boolean> {
+  return Boolean(await db.prepare('SELECT 1 AS x FROM accounts WHERE name = ?1 LIMIT 1').bind(name).first())
+}
+
+// Lets a browser in with a name and password. With an account of that name but a different password
+// it says so, unless fresh: then it starts a new account (someone else already had the name, or the
+// old password is gone).
+export async function signIn(db: DB, name: string, proof: string, fresh: boolean, now = Date.now()): Promise<{ device: string }> {
+  const proofHash = await sha256(proof)
+  const found = await db.prepare('SELECT id FROM accounts WHERE name = ?1 AND proof = ?2').bind(name, proofHash).first<{ id: string }>()
+  if (found) return { device: await newDevice(db, found.id, now) }
+  if (!fresh && (await nameExists(db, name))) throw new SyncError(401, 'Wrong password')
+  const id = b64url(random(16))
+  await db.prepare('INSERT INTO accounts (id, name, proof, created_at) VALUES (?1, ?2, ?3, ?4)').bind(id, name, proofHash, now).run()
+  return { device: await newDevice(db, id, now) }
+}
+
+export async function deviceAccount(db: DB, device: unknown): Promise<string> {
+  if (typeof device !== 'string' || !device || device.length > 100) throw new SyncError(401, 'Not signed in to sync')
+  const row = await db
+    .prepare('SELECT account FROM devices WHERE token = ?1')
+    .bind(await sha256(device))
+    .first<{ account: string }>()
+  if (!row) throw new SyncError(401, 'Not signed in to sync')
+  return row.account
+}
+
+export async function setPassword(db: DB, account: string, proof: string) {
+  await db
+    .prepare('UPDATE accounts SET proof = ?2 WHERE id = ?1')
+    .bind(account, await sha256(proof))
+    .run()
+}
+
+// This browser stops syncing; the account and other devices carry on
+export async function leave(db: DB, device: string) {
+  await db
+    .prepare('DELETE FROM devices WHERE token = ?1')
+    .bind(await sha256(device))
+    .run()
+}
+
+// Everything kept for the account: its rows, devices, codes, and the account itself
+export async function forget(db: DB, account: string) {
+  await db.batch([
+    db.prepare('DELETE FROM rows WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM devices WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM pairings WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM accounts WHERE id = ?1').bind(account),
+  ])
+}
+
+// ---- pairing codes ----
+
+// no 0/O or 1/I, so a code read off a screen is typed right
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const normalCode = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+export async function newPairing(db: DB, account: string, now = Date.now()): Promise<{ code: string; expiresAt: number }> {
+  const raw = [...random(6)].map((b) => ALPHABET[b % ALPHABET.length]).join('')
+  const expiresAt = now + PAIRING_TTL
+  await db.batch([
+    db.prepare('DELETE FROM pairings WHERE expires_at < ?1 OR account = ?2').bind(now, account),
+    db.prepare('INSERT INTO pairings (code, account, expires_at) VALUES (?1, ?2, ?3)').bind(await sha256(raw), account, expiresAt),
+  ])
+  return { code: `${raw.slice(0, 3)}-${raw.slice(3)}`, expiresAt }
+}
+
+export async function usePairing(db: DB, code: unknown, now = Date.now()): Promise<{ device: string; name: string }> {
+  if (typeof code !== 'string' || normalCode(code).length !== 6) throw new SyncError(400, 'Bad code')
+  const hash = await sha256(normalCode(code))
+  const found = await db
+    .prepare('SELECT p.account, a.name FROM pairings p JOIN accounts a ON a.id = p.account WHERE p.code = ?1 AND p.expires_at >= ?2')
+    .bind(hash, now)
+    .first<{ account: string; name: string }>()
+  if (!found) throw new SyncError(401, 'That code is wrong or has expired')
+  await db.prepare('DELETE FROM pairings WHERE code = ?1').bind(hash).run()
+  return { device: await newDevice(db, found.account, now), name: found.name }
+}
+
+// ---- what syncs ----
+
+// The rows a category covers, as a WHERE clause on kind and key
+function rowsOf(c: Category): string {
+  switch (c) {
+    case 'plays':
+      return "kind = 'play'"
+    case 'value':
+      return "kind = 'value'"
+    case 'covers':
+      return "kind = 'cover'"
+    case 'batch':
+      return "(kind = 'batch' OR (kind = 'setting' AND key = 'batchShared'))"
+    case 'listenbrainz':
+      return "(kind = 'setting' AND key = 'listenbrainz')"
+    case 'catalog':
+      return "kind IN ('year', 'length', 'barcode')"
+    case 'settings':
+      return "(kind = 'pref' OR (kind = 'setting' AND key NOT IN ('listenbrainz', 'batchShared')))"
+  }
+}
+
+// Switching a category off deletes what the server has of it; devices keep their own
+export async function setOff(db: DB, account: string, off: unknown): Promise<Category[]> {
+  const list = parseOff(off)
+  await db.batch([
+    db.prepare('UPDATE accounts SET off = ?2 WHERE id = ?1').bind(account, JSON.stringify(list)),
+    ...list.map((c) => db.prepare(`DELETE FROM rows WHERE account = ?1 AND ${rowsOf(c)}`).bind(account)),
+  ])
+  return list
 }
 
 // ---- secrets ----
@@ -153,7 +199,7 @@ async function aesKey(env: SyncEnv): Promise<CryptoKey> {
 }
 
 export async function seal(env: SyncEnv, plain: string): Promise<string> {
-  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const iv = random(12)
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(env), new TextEncoder().encode(plain)))
   return 'enc1:' + b64(new Uint8Array([...iv, ...ct]))
 }
@@ -185,67 +231,76 @@ export function parseRows(x: unknown): InRow[] {
   })
 }
 
-// Saves rows; the newest edit of each wins. A row with ifSeq is only saved if nothing changed it
-// since the device last saw it (seq 0: it doesn't exist yet), which is how two devices can't both
-// start adding the same batch record. Returns each row's new seq, or 0 where it wasn't saved.
-export async function push(db: DB, env: SyncEnv, username: string, rows: InRow[]): Promise<{ seq: number; seqs: number[] }> {
-  if (!rows.length) {
-    const acc = await db.prepare('SELECT seq FROM accounts WHERE username = ?1').bind(username).first<{ seq: number }>()
-    return { seq: acc?.seq ?? 0, seqs: [] }
-  }
+async function accountState(db: DB, account: string): Promise<{ seq: number; off: Category[] } | null> {
+  const acc = await db.prepare('SELECT seq, off FROM accounts WHERE id = ?1').bind(account).first<{ seq: number; off: string }>()
+  return acc && { seq: acc.seq, off: parseOff(JSON.parse(acc.off)) }
+}
+
+// Saves rows; the newest edit of each wins, and rows in a switched-off category are left out. A row
+// with ifSeq is only saved if nothing changed it since the device last saw it (seq 0: it doesn't
+// exist yet), which is how two devices can't both start adding the same batch record. Returns each
+// row's new seq, or 0 where it wasn't saved.
+export async function push(db: DB, env: SyncEnv, account: string, input: InRow[]): Promise<{ seq: number; seqs: number[] }> {
+  const acc = await accountState(db, account)
+  if (!acc) throw new SyncError(401, 'Not signed in to sync')
+  const off = new Set(acc.off)
+  const keep = input.map((r) => !off.has(categoryOf(r.kind, r.key)))
+  const rows = input.filter((_, i) => keep[i])
+  if (!rows.length) return { seq: acc.seq, seqs: input.map(() => 0) }
+
   const values = await Promise.all(rows.map((r) => (r.value !== null && SECRET.has(`${r.kind}:${r.key}`) ? seal(env, r.value) : r.value)))
   const n = rows.length
+  const del = (r: InRow, i: number) => (r.deleted || values[i] === null ? 1 : 0)
   // every row gets the next number up, all in one transaction, so a pull never sees half a push
   const stmts = [
-    db
-      .prepare('INSERT INTO accounts (username, seq) VALUES (?1, ?2) ON CONFLICT (username) DO UPDATE SET seq = seq + ?2')
-      .bind(username, n),
+    db.prepare('UPDATE accounts SET seq = seq + ?2 WHERE id = ?1').bind(account, n),
     ...rows.map((r, i) => {
-      const seq = `(SELECT seq FROM accounts WHERE username = ?1) - ${n - 1 - i}`
+      const seq = `(SELECT seq FROM accounts WHERE id = ?1) - ${n - 1 - i}`
       if (r.ifSeq === undefined) {
         return db
           .prepare(
-            `INSERT INTO rows (username, kind, key, value, updated_at, deleted, seq) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ${seq})
-             ON CONFLICT (username, kind, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at,
+            `INSERT INTO rows (account, kind, key, value, updated_at, deleted, seq) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ${seq})
+             ON CONFLICT (account, kind, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at,
                deleted = excluded.deleted, seq = excluded.seq
              WHERE excluded.updated_at > rows.updated_at`,
           )
-          .bind(username, r.kind, r.key, values[i], r.updatedAt, r.deleted || values[i] === null ? 1 : 0)
+          .bind(account, r.kind, r.key, values[i], r.updatedAt, del(r, i))
       }
       if (r.ifSeq === 0) {
         return db
           .prepare(
-            `INSERT INTO rows (username, kind, key, value, updated_at, deleted, seq) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ${seq})
-             ON CONFLICT (username, kind, key) DO NOTHING`,
+            `INSERT INTO rows (account, kind, key, value, updated_at, deleted, seq) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ${seq})
+             ON CONFLICT (account, kind, key) DO NOTHING`,
           )
-          .bind(username, r.kind, r.key, values[i], r.updatedAt, r.deleted || values[i] === null ? 1 : 0)
+          .bind(account, r.kind, r.key, values[i], r.updatedAt, del(r, i))
       }
       return db
         .prepare(
           `UPDATE rows SET value = ?4, updated_at = ?5, deleted = ?6, seq = ${seq}
-           WHERE username = ?1 AND kind = ?2 AND key = ?3 AND seq = ?7`,
+           WHERE account = ?1 AND kind = ?2 AND key = ?3 AND seq = ?7`,
         )
-        .bind(username, r.kind, r.key, values[i], r.updatedAt, r.deleted || values[i] === null ? 1 : 0, r.ifSeq)
+        .bind(account, r.kind, r.key, values[i], r.updatedAt, del(r, i), r.ifSeq)
     }),
-    db.prepare('SELECT seq FROM accounts WHERE username = ?1').bind(username),
+    db.prepare('SELECT seq FROM accounts WHERE id = ?1').bind(account),
   ]
   const results = await db.batch(stmts)
   const last = (results.at(-1)?.results?.[0] as { seq: number } | undefined)?.seq ?? 0
-  const seqs = rows.map((_, i) => (results[i + 1].meta.changes > 0 ? last - (n - 1 - i) : 0))
-  return { seq: last, seqs }
+  const saved = rows.map((_, i) => (results[i + 1].meta.changes > 0 ? last - (n - 1 - i) : 0))
+  let j = 0
+  return { seq: last, seqs: keep.map((k) => (k ? saved[j++] : 0)) }
 }
 
 export async function pull(
   db: DB,
   env: SyncEnv,
-  username: string,
+  account: string,
   since: number,
-): Promise<{ exists: boolean; rows: OutRow[]; seq: number; more: boolean }> {
-  const acc = await db.prepare('SELECT seq FROM accounts WHERE username = ?1').bind(username).first<{ seq: number }>()
-  if (!acc) return { exists: false, rows: [], seq: 0, more: false }
+): Promise<{ rows: OutRow[]; seq: number; more: boolean; off: Category[] }> {
+  const acc = await accountState(db, account)
+  if (!acc) throw new SyncError(401, 'Not signed in to sync')
   const { results } = await db
-    .prepare('SELECT kind, key, value, updated_at, deleted, seq FROM rows WHERE username = ?1 AND seq > ?2 ORDER BY seq LIMIT ?3')
-    .bind(username, since, MAX_PULL)
+    .prepare('SELECT kind, key, value, updated_at, deleted, seq FROM rows WHERE account = ?1 AND seq > ?2 ORDER BY seq LIMIT ?3')
+    .bind(account, since, MAX_PULL)
     .all<{ kind: string; key: string; value: string | null; updated_at: number; deleted: number; seq: number }>()
   const rows = await Promise.all(
     results.map(async (r) => ({
@@ -261,14 +316,5 @@ export async function pull(
   // A push saves its rows and the account's seq together, so everything up to acc.seq was already
   // there for the query above. Numbers taken by edits that lost to a newer one leave gaps.
   const seq = more ? rows.at(-1)!.seq : Math.max(since, acc.seq, rows.at(-1)?.seq ?? 0)
-  return { exists: true, rows, seq, more }
-}
-
-// Everything kept for the account, and every sign-in remembered for it
-export async function forget(db: DB, username: string) {
-  await db.batch([
-    db.prepare('DELETE FROM rows WHERE username = ?1').bind(username),
-    db.prepare('DELETE FROM accounts WHERE username = ?1').bind(username),
-    db.prepare('DELETE FROM logins WHERE username = ?1').bind(username),
-  ])
+  return { rows, seq, more, off: acc.off }
 }

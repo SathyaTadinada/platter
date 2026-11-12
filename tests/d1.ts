@@ -1,11 +1,15 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import type { DB, Stmt } from '../worker/sync'
 
 // D1 on SQLite in memory, enough of it for the sync code, with the real migrations applied
 export function testDB(): DB {
   const sqlite = new DatabaseSync(':memory:')
-  sqlite.exec(readFileSync(new URL('../migrations/0001_sync.sql', import.meta.url), 'utf8'))
+  const dir = new URL('../migrations/', import.meta.url)
+  for (const f of readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort())
+    sqlite.exec(readFileSync(new URL(f, dir), 'utf8'))
 
   const stmt = (sql: string, values: unknown[] = []): Stmt & { exec(): { results: unknown[]; meta: { changes: number } } } => {
     const exec = () => {
