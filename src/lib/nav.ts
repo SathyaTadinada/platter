@@ -19,7 +19,7 @@ export function sectionOf(path: string): Section {
   if (/^\/(scan|batch|play)(\/|$)/.test(path)) return 'scan'
   if (/^\/(search|results|release)(\/|$)/.test(path)) return 'search'
   if (/^\/(stats|value)(\/|$)/.test(path)) return 'stats'
-  if (/^\/(settings|import|setup|crates|listenbrainz|about)(\/|$)/.test(path)) return 'settings'
+  if (/^\/(settings|import|setup|crates|listenbrainz|sync|about)(\/|$)/.test(path)) return 'settings'
   return 'collection'
 }
 
