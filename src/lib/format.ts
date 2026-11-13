@@ -79,5 +79,5 @@ export function toCard(r: SearchResult): ReleaseCard {
 export const shortGrade = <T extends string | undefined>(condition: T): T =>
   (condition?.match(/\(([^)]+)\)/)?.[1].split(' or ')[0] ?? condition) as T
 
-// Messages as sentences, for joining after one of our own: "Value too long" -> "Value too long."
+// Messages as sentences, for listing after one of our own: "Value too long" -> "Value too long."
 export const sentences = (messages: string[]) => messages.map((m) => (/[.!?]$/.test(m.trim()) ? m.trim() : `${m.trim()}.`)).join(' ')

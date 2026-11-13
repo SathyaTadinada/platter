@@ -297,7 +297,7 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       await db.queue.update(item.id!, {
         status: 'added',
         warning: problems.length
-          ? `${item.fill ? 'Some' : 'Added, but some'} details didn't save. ${sentences(problems.slice(0, 1))}`
+          ? `${item.fill ? 'Some' : 'Added, but some'} details didn't save: ${sentences(problems.slice(0, 1))}`
           : undefined,
       })
       added++

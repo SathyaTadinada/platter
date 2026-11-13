@@ -199,7 +199,7 @@ export function Release({ id }: { id: string }) {
               {added ? (
                 <div className="space-y-3">
                   <Notice tone="success">Added to {added.folder}.</Notice>
-                  {added.problems.length > 0 && <Notice tone="warn">Some details didn't save. {sentences(added.problems)}</Notice>}
+                  {added.problems.length > 0 && <Notice tone="warn">Some details didn't save: {sentences(added.problems)}</Notice>}
                   {own?.wanted && (
                     <Notice tone="info">
                       This was on your wantlist.{' '}
