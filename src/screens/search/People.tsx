@@ -7,6 +7,7 @@ import { timeAgo } from '../../lib/time'
 
 const input = 'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base dark:border-stone-700 dark:bg-stone-900'
 const TYPING = 300
+const MIN_SEARCH = 2 // the server waits for this much too
 
 function Avatar({ src, name }: { src?: string; name: string }) {
   const [broken, setBroken] = useState(false)
@@ -51,30 +52,34 @@ function Person({ person }: { person: Found }) {
   )
 }
 
-// Finding someone by their Discogs username. With nothing typed it shows whoever shared something
-// most recently, so there's a way in without knowing a name.
+// Finding someone by their Discogs username. Part of a name is enough; nobody is listed until
+// something is typed, so a profile is only ever found by someone looking for it.
 export function People() {
   const [q, setQ] = useState('')
   const [found, setFound] = useState<Found[] | null>(null)
   const [error, setError] = useState(false)
+  const asked = q.trim()
+  const enough = asked.length >= MIN_SEARCH
 
   useEffect(() => {
+    if (!enough) {
+      setFound(null)
+      setError(false)
+      return
+    }
     let dropped = false
     setError(false)
-    const t = setTimeout(
-      () => {
-        cloudEntry()
-          .searchProfiles(q.trim())
-          .then((r) => !dropped && setFound(r.found))
-          .catch(() => !dropped && setError(true))
-      },
-      q ? TYPING : 0,
-    )
+    const t = setTimeout(() => {
+      cloudEntry()
+        .searchProfiles(asked)
+        .then((r) => !dropped && setFound(r.found))
+        .catch(() => !dropped && setError(true))
+    }, TYPING)
     return () => {
       dropped = true
       clearTimeout(t)
     }
-  }, [q])
+  }, [asked, enough])
 
   return (
     <div className="space-y-4">
@@ -94,21 +99,18 @@ export function People() {
         />
       </div>
 
-      {error ? (
+      {!enough ? null : error ? (
         <Notice tone="error">Couldn’t search just now. Try again in a minute.</Notice>
       ) : !found ? (
         <Spinner />
       ) : !found.length ? (
-        <Notice>{q.trim() ? 'Nobody by that name is sharing a profile.' : 'Nobody is sharing a profile yet.'}</Notice>
+        <Notice>Nobody by that name is sharing a profile.</Notice>
       ) : (
-        <>
-          {!q.trim() && <h2 className="px-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">Recently shared</h2>}
-          <List>
-            {found.map((p) => (
-              <Person key={p.username} person={p} />
-            ))}
-          </List>
-        </>
+        <List>
+          {found.map((p) => (
+            <Person key={p.username} person={p} />
+          ))}
+        </List>
       )}
     </div>
   )

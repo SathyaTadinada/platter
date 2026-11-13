@@ -19,7 +19,6 @@ import {
   Tablet,
   Trash2,
   UserRound,
-  UserSearch,
   TrendingUp,
   Users,
 } from 'lucide-react'
@@ -31,7 +30,7 @@ import { PairingCodeDisplay, PairingCodeInput } from '../components/PairingCode'
 import { fieldClass, NewPassword, newPasswordReady, PasswordInput } from '../components/PasswordField'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
-import { Button, Card, IconButton, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
+import { Button, Card, IconButton, List, Notice, Row, Screen, Section, Segmented, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import { addPasskey, CloudError, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo, type WaysIn } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
@@ -451,6 +450,16 @@ function SignedIn() {
           )}
         </Section>
         <Section title="Profile">
+          <Segmented
+            label="Who your profile is for"
+            value={cloud.who}
+            onChange={(w) => attempt(() => cloud.setWho(w))}
+            options={[
+              { value: 'private', label: 'Private' },
+              { value: 'unlisted', label: 'Link only' },
+              { value: 'public', label: 'Public' },
+            ]}
+          />
           <List>
             {PROFILE_SECTIONS.map((p) => (
               <Row
@@ -470,13 +479,6 @@ function SignedIn() {
           </List>
           {anyShared && (
             <List>
-              <Row
-                icon={<UserSearch size={20} />}
-                label="Findable in search"
-                trailing={
-                  <Switch label="Findable in search" checked={cloud.listed} onChange={(on) => attempt(() => cloud.setListed(on))} />
-                }
-              />
               <Row icon={<UserRound size={20} />} label="View your profile" href={`/u/${cloud.username}`} />
               <Row
                 icon={<LinkIcon size={20} />}

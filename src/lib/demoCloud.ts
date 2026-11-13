@@ -1,4 +1,4 @@
-import type { Sections } from '../../worker/profile'
+import type { Sections, Who } from '../../worker/profile'
 import type { CloudApi, DeviceInfo, PasskeyInfo } from './cloud'
 import { deviceKind, deviceName } from './deviceName'
 
@@ -21,7 +21,7 @@ export function demoCloudApi(): CloudApi {
   ]
   let password = false
   let sections: Sections = { collection: 'public', wantlist: 'off', stats: 'off', year: 'off' }
-  let listed = true
+  let who: Who = 'public'
   const pause = () => new Promise<void>((r) => setTimeout(r, 300))
   const nothing = async () => {
     await pause()
@@ -67,16 +67,16 @@ export function demoCloudApi(): CloudApi {
       passkeys = passkeys.filter((p) => p.id !== id)
       return {}
     },
-    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, listed }),
+    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, who }),
     setSections: async (next) => {
       await pause()
       sections = { ...sections, ...next }
       return { sections }
     },
-    setListed: async (on) => {
+    setWho: async (next) => {
       await pause()
-      listed = on
-      return { listed }
+      who = next
+      return { who }
     },
     publishProfile: async (rows) => ({ saved: rows.length }),
     sweepProfile: async () => ({ gone: 0 }),

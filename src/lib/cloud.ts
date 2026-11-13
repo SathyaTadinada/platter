@@ -1,5 +1,5 @@
 import { categoryOf, type Category } from '../../worker/categories'
-import type { Sections, Section } from '../../worker/profile'
+import type { Sections, Section, Who } from '../../worker/profile'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
 import {
@@ -192,9 +192,9 @@ export type CloudApi = {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
-  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; listed: boolean }>
+  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; who: Who }>
   setSections(sections: Sections): Promise<{ sections: Sections }>
-  setListed(listed: boolean): Promise<{ listed: boolean }>
+  setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
   sweepProfile(section: Section, before: number): Promise<{ gone: number }>
   members(): Promise<{ members: Member[] }>
@@ -225,7 +225,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     removePasskey: (id) => c('passkey-remove', { id }),
     profileSettings: () => c('profile-settings'),
     setSections: (sections) => c('profile-sections', { sections }),
-    setListed: (listed) => c('profile-listed', { listed }),
+    setWho: (who) => c('profile-who', { who }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     members: () => c('admin-members'),

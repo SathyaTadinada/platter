@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation } from 'wouter'
 import type { Category } from '../../worker/categories'
-import type { Sections } from '../../worker/profile'
+import type { Sections, Who } from '../../worker/profile'
 import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
@@ -51,8 +51,8 @@ type Ctx = {
   // the profile's sections, once they've been read from the server. null while that's happening.
   sections: Sections | null
   setSections: (next: Sections) => Promise<void>
-  listed: boolean
-  setListed: (on: boolean) => Promise<void>
+  who: Who
+  setWho: (who: Who) => Promise<void>
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
   waysIn: () => Promise<WaysIn & { legacy: boolean }>
@@ -99,7 +99,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   const [sections, setSections] = useState<Sections | null>(null)
-  const [listed, setListed] = useState(true)
+  const [who, setWho] = useState<Who>('public')
   const shared = useRef<Sections>({})
   const busy = useRef(false)
   const again = useRef(false)
@@ -263,10 +263,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     api
       .profileSettings()
-      .then(({ sections: saved, listed: found }) => {
+      .then(({ sections: saved, who: found }) => {
         shared.current = saved
         setSections(saved)
-        setListed(found)
+        setWho(found)
       })
       .catch(() => {})
   }, [api])
@@ -297,10 +297,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       await forgetSent(saved)
       await share()
     },
-    listed,
-    setListed: async (on) => {
+    who,
+    setWho: async (next) => {
       if (!api) return
-      setListed((await api.setListed(on)).listed)
+      setWho((await api.setWho(next)).who)
     },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
@@ -345,7 +345,7 @@ function useDemoCloud(): Ctx {
   const [exists, setExists] = useState(true)
   const [off, setOff] = useState<Category[]>([])
   const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'off', stats: 'off', year: 'off' })
-  const [demoListed, setDemoListed] = useState(true)
+  const [demoWho, setDemoWho] = useState<Who>('public')
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
@@ -370,10 +370,10 @@ function useDemoCloud(): Ctx {
       await pause(300)
       setDemoSections((s) => ({ ...s, ...next }))
     },
-    listed: demoListed,
-    setListed: async (on) => {
+    who: demoWho,
+    setWho: async (next) => {
       await pause(300)
-      setDemoListed(on)
+      setDemoWho(next)
     },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {

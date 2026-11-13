@@ -11,9 +11,15 @@ import { MAX_PUSH, SyncError, type DB } from './sync'
 export const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
 export type Section = (typeof SECTIONS)[number]
 
-// Followers arrives with following, in phase 3
+// Whether a section is one of the parts the profile shows. Who gets to see the profile at all is
+// one setting for the whole thing (Who below), not something each section decides.
 export const VISIBILITY = ['off', 'public'] as const
 export type Visibility = (typeof VISIBILITY)[number]
+
+// private: nobody, and the link doesn't work. unlisted: anyone with the link. public: that, and
+// they turn up when people search.
+export const WHO = ['private', 'unlisted', 'public'] as const
+export type Who = (typeof WHO)[number]
 
 export type Sections = Partial<Record<Section, Visibility>>
 
@@ -63,34 +69,32 @@ function readSections(stored: string): Sections {
 
 const publicOnes = (s: Sections): Section[] => SECTIONS.filter((x) => s[x] === 'public')
 
-type ProfileRecord = { sections: string; published_at: number | null; listed: number }
+type ProfileRecord = { sections: string; published_at: number | null; visibility: Who }
 
 // The owner's own view: every section, with the ones they haven't touched off
-export async function settings(db: DB, account: string): Promise<{ sections: Sections; publishedAt: number | null; listed: boolean }> {
+export async function settings(db: DB, account: string): Promise<{ sections: Sections; publishedAt: number | null; who: Who }> {
   const row = await db
-    .prepare('SELECT sections, published_at, listed FROM profiles WHERE account = ?1')
+    .prepare('SELECT sections, published_at, visibility FROM profiles WHERE account = ?1')
     .bind(account)
     .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
   return {
     sections: Object.fromEntries(SECTIONS.map((s) => [s, saved[s] ?? 'off'])) as Sections,
     publishedAt: row?.published_at ?? null,
-    listed: row ? row.listed === 1 : true,
+    who: row?.visibility ?? 'public',
   }
 }
 
-// Whether people can find them by searching. Off means the profile is only there for someone who
-// already has the link.
-export async function setListed(db: DB, account: string, on: unknown, now = Date.now()): Promise<boolean> {
-  if (typeof on !== 'boolean') throw new SyncError(400, 'Bad setting')
+export async function setWho(db: DB, account: string, who: unknown, now = Date.now()): Promise<Who> {
+  if (!(WHO as readonly string[]).includes(who as string)) throw new SyncError(400, 'Bad setting')
   await db
     .prepare(
-      `INSERT INTO profiles (account, listed, created_at) VALUES (?1, ?2, ?3)
-       ON CONFLICT (account) DO UPDATE SET listed = excluded.listed`,
+      `INSERT INTO profiles (account, visibility, created_at) VALUES (?1, ?2, ?3)
+       ON CONFLICT (account) DO UPDATE SET visibility = excluded.visibility`,
     )
-    .bind(account, on ? 1 : 0, now)
+    .bind(account, who, now)
     .run()
-  return on
+  return who as Who
 }
 
 // Turning a section off deletes what the server holds for it, so nothing lingers after it stops
@@ -173,26 +177,25 @@ export async function sweep(db: DB, account: string, section: unknown, before: u
 export type Found = { username: string; about: string | null; publishedAt: number | null }
 
 export const MAX_FOUND = 20
+const MIN_SEARCH = 2 // a letter or two finds half of everyone, so it waits for more
 
-// Part of a username finds them, and an empty search gives whoever published most recently. Only
-// profiles with something on them, and only from people who left themselves findable.
+// Part of a username finds them, but only people whose profile is public and has something on it.
 export async function search(db: DB, query: unknown): Promise<{ found: Found[] }> {
   if (query !== undefined && typeof query !== 'string') throw new SyncError(400, 'Bad search')
   const q = (query ?? '').trim().toLowerCase().replace(/^@/, '').slice(0, 100)
+  if (q.length < MIN_SEARCH) return { found: [] }
   const like = `%${q.replace(/[%_\\]/g, '\\$&')}%`
-  const where = q ? `AND a.name LIKE ?2 ESCAPE '\\'` : ''
-  const order = q ? `(a.name = ?3) DESC, (instr(a.name, ?3) = 1) DESC,` : ''
-  const binds: unknown[] = q ? [MAX_FOUND * 3, like, q] : [MAX_FOUND * 3]
   const { results } = await db
     .prepare(
       `SELECT a.name, p.sections, p.published_at,
          (SELECT value FROM profile_rows r WHERE r.account = a.id AND r.kind = 'about' AND r.key = 'about') AS about
        FROM accounts a JOIN profiles p ON p.account = a.id
-       WHERE a.discogs_id IS NOT NULL AND p.listed = 1 AND p.sections LIKE '%\"public\"%' ${where}
-       ORDER BY ${order} p.published_at DESC
+       WHERE a.discogs_id IS NOT NULL AND p.visibility = 'public' AND p.sections LIKE '%\"public\"%'
+         AND a.name LIKE ?2 ESCAPE '\\'
+       ORDER BY (a.name = ?3) DESC, (instr(a.name, ?3) = 1) DESC, a.name
        LIMIT ?1`,
     )
-    .bind(...binds)
+    .bind(MAX_FOUND * 3, like, q)
     .all<{ name: string; sections: string; published_at: number | null; about: string | null }>()
   // the LIKE above only narrows it; this is the real check that something is shared
   const found = results
@@ -209,18 +212,26 @@ export async function search(db: DB, query: unknown): Promise<{ found: Found[] }
 async function owner(
   db: DB,
   username: unknown,
-): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections }) | null> {
+): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections; who: Who }) | null> {
   if (typeof username !== 'string' || !username.trim() || username.length > 100) throw new SyncError(400, 'Bad username')
   const row = await db
     .prepare(
-      `SELECT a.id, a.created_at, p.sections, p.published_at FROM accounts a JOIN profiles p ON p.account = a.id
-       WHERE a.name = ?1 AND a.discogs_id IS NOT NULL`,
+      `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility FROM accounts a JOIN profiles p ON p.account = a.id
+       WHERE a.name = ?1 AND a.discogs_id IS NOT NULL AND p.visibility <> 'private'`,
     )
     .bind(username.trim().toLowerCase())
     .first<ProfileRecord & { id: string; created_at: number }>()
   if (!row) return null
   const account = await accountById(db, row.id)
-  return account && { ...account, createdAt: row.created_at, publishedAt: row.published_at, sections: readSections(row.sections) }
+  return (
+    account && {
+      ...account,
+      createdAt: row.created_at,
+      publishedAt: row.published_at,
+      sections: readSections(row.sections),
+      who: row.visibility,
+    }
+  )
 }
 
 export async function head(db: DB, username: unknown): Promise<ProfileHead | null> {

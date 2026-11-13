@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
-import { head, parseRows, publish, rows, search, setListed, setSections, settings, sweep, type ProfileRow } from './profile'
+import { head, parseRows, publish, rows, search, setSections, settings, setWho, sweep, type ProfileRow } from './profile'
 import { deviceAccount, forget, push } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
@@ -169,26 +169,23 @@ describe('finding someone', () => {
     expect(await names(db, 'nobody')).toEqual([])
   })
 
-  it('lists whoever published most recently when nothing is typed', async () => {
+  it('waits for more than a letter, and gives nothing for an empty search', async () => {
     const db = testDB()
-    const mine = await shared(db)
-    const yours = await shared(db, YOU)
-    await publish(db, mine.id, [record(1, 'Rumours')], 1000)
-    await publish(db, yours.id, [record(1, 'Blue')], 5000)
-    expect(await names(db)).toEqual(['someone', 'tadinada'])
+    await shared(db)
+    expect(await names(db)).toEqual([])
+    expect(await names(db, '')).toEqual([])
+    expect(await names(db, 't')).toEqual([])
+    expect(await names(db, 'ta')).toEqual(['tadinada'])
   })
 
-  it('leaves out anyone who turned being findable off', async () => {
+  it('leaves out an unlisted profile, which still works by link', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    expect((await settings(db, id)).listed).toBe(true)
-    await setListed(db, id, false)
+    expect((await settings(db, id)).who).toBe('public')
+    await setWho(db, id, 'unlisted')
     expect(await names(db, 'tad')).toEqual([])
-    expect((await settings(db, id)).listed).toBe(false)
-    // their profile is still there for anyone with the link
     expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada' })
-    await setListed(db, id, true)
-    expect(await names(db, 'tad')).toEqual(['tadinada'])
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toHaveLength(2)
   })
 
   it('leaves out profiles with nothing shared and accounts not tied to Discogs', async () => {
@@ -212,8 +209,39 @@ describe('finding someone', () => {
   it('takes a name with wildcards in it literally', async () => {
     const db = testDB()
     await shared(db)
-    expect(await names(db, '%')).toEqual([])
+    expect(await names(db, '%%')).toEqual([])
     expect(await names(db, 'tad_nada')).toEqual([])
+  })
+})
+
+describe('who a profile is for', () => {
+  it('closes the link while it is private, and opens it again after', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setWho(db, id, 'private')
+    expect(await head(db, 'tadinada')).toBeNull()
+    await expect(rows(db, 'tadinada', 'collection', undefined)).rejects.toMatchObject({ status: 404 })
+    expect((await search(db, 'tad')).found).toEqual([])
+
+    await setWho(db, id, 'public')
+    expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada' })
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toHaveLength(2)
+  })
+
+  it('keeps what was published while it was private', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setWho(db, id, 'private')
+    await publish(db, id, [record(9, 'Added while private', 4000)])
+    await setWho(db, id, 'unlisted')
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toHaveLength(3)
+  })
+
+  it('turns away anything that is not one of the three', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await expect(setWho(db, id, 'everyone')).rejects.toMatchObject({ status: 400 })
+    await expect(setWho(db, id, true)).rejects.toMatchObject({ status: 400 })
   })
 })
 

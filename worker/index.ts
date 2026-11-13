@@ -25,7 +25,7 @@ import {
   rows as profileRows,
   search as searchProfiles,
   settings as profileSettings,
-  setListed,
+  setWho,
   setSections,
   sweep as sweepProfile,
 } from './profile'
@@ -205,7 +205,7 @@ const SYNC_ACTIONS = [
   'profile-sections',
   'profile-publish',
   'profile-sweep',
-  'profile-listed',
+  'profile-who',
   // admin only
   'admin-members',
   'admin-badge',
@@ -354,8 +354,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
       case 'profile-sweep':
         return ok(await sweepProfile(db, account, input.section, input.before))
-      case 'profile-listed':
-        return ok({ listed: await setListed(db, account, input.listed) })
+      case 'profile-who':
+        return ok({ who: await setWho(db, account, input.who) })
       case 'admin-members':
         return ok({ members: await members(db) })
       case 'admin-badge':
