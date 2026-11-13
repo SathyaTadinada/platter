@@ -1,6 +1,7 @@
 // For accounts with the admin flag, which is only ever set by hand with wrangler d1 execute
 
 import { accountById } from './account'
+import { isBadge } from './badges'
 import { forget, SyncError, type DB } from './sync'
 
 export type Member = {
@@ -61,7 +62,7 @@ const parseMember = (x: unknown) => {
 }
 
 export async function setBadge(db: DB, member: unknown, badge: unknown, on: boolean) {
-  if (typeof badge !== 'string' || !/^[a-z-]{1,20}$/.test(badge)) throw new SyncError(400, 'Bad badge')
+  if (!isBadge(badge)) throw new SyncError(400, 'Bad badge')
   const acc = await accountById(db, parseMember(member))
   if (!acc) throw new SyncError(404, 'No such member')
   const badges = on ? [...new Set([...acc.badges, badge])] : acc.badges.filter((b) => b !== badge)
