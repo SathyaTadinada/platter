@@ -22,11 +22,21 @@ import { rememberPage, savedPage } from '../lib/nav'
 import { rememberSearch } from '../lib/recent'
 import { activeResultFilters, filterResults, resultFacets, type ResultFilters } from '../lib/results'
 
-function describeQuery(p: URLSearchParams): string {
+// "Artist – Title", as Discogs writes it. Spelled the way Discogs has it when a result matches what
+// was typed, so "jane remover" shows as "Jane Remover".
+function describeQuery(p: URLSearchParams, cards: ReleaseCard[] = []): string {
   if (p.get('barcode')) return p.get('barcode')!
   if (p.get('catno')) return p.get('catno')!
-  return [p.get('artist'), p.get('title')].filter(Boolean).join(' – ')
+  const loose = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+  const artist = p.get('artist') ?? ''
+  const title = p.get('title') ?? ''
+  const match = cards.find((c) => (!artist || loose(c.artist) === loose(artist)) && (!title || loose(c.title) === loose(title)))
+  return [artist && (match?.artist ?? artist), title && (match?.title ?? title)].filter(Boolean).join(' – ')
 }
+
+// Formats with something etched or pressed by the label to match a runout against
+const RUNOUT_FORMATS = new Set(['Vinyl', 'Shellac', 'Lathe Cut', 'Acetate', 'Flexi-disc', 'CD', 'CDr', 'SACD', 'DVD', 'DVDr', 'Blu-ray'])
+const hasRunout = (c: ReleaseCard) => (c.raw.formats?.map((f) => f.name) ?? c.raw.format ?? []).some((n) => RUNOUT_FORMATS.has(n))
 
 export function Results() {
   const { client, session } = useSignedIn()
@@ -117,7 +127,7 @@ export function Results() {
 
   return (
     <Screen
-      title={params.get('barcode') ? formatBarcodeInput(params.get('barcode')!) : describeQuery(params) || 'Results'}
+      title={params.get('barcode') ? formatBarcodeInput(params.get('barcode')!) : describeQuery(params, cards) || 'Results'}
       back={back}
       width="wide"
     >
@@ -151,7 +161,8 @@ export function Results() {
                 Filters{activeResultFilters(filters) ? ` · ${activeResultFilters(filters)}` : ''}
               </button>
             )}
-            {cards.length > 1 && !runoutOpen && <RunoutButton onClick={() => setRunoutOpen(true)} />}
+            {/* only when there are at least two pressings a runout could tell apart, not cassettes or files */}
+            {cards.filter(hasRunout).length > 1 && !runoutOpen && <RunoutButton onClick={() => setRunoutOpen(true)} />}
           </div>
           <RunoutPanel candidates={results} onRanked={setRanked} open={runoutOpen} onOpenChange={setRunoutOpen} />
           <ShowFilter cards={cards} own={own} value={show} onChange={setShow} />

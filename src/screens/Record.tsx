@@ -158,8 +158,10 @@ export function Record({ id }: { id: string }) {
       actions={<ShareButton url={url} title={`${item.artist} – ${item.title}`} />}
     >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
-        {/* on wide screens the tracklist sits under the cover so the column isn't empty */}
-        <div className="space-y-6">
+        {/* on wide screens the tracklist sits under the cover, and both stay in view while the details
+            scroll past; a tracklist too long for the screen scrolls in its own column (cqh: the height of the app's scrolling area). The padding
+            leaves room for the cover's shadow, which the scrolling would otherwise cut off. */}
+        <div className="space-y-6 lg:sticky lg:top-20 lg:-m-4 lg:max-h-[calc(100cqh-5rem)] lg:self-start lg:overflow-y-auto lg:p-4 lg:[scrollbar-width:thin]">
           <div>
             <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
             {canPickCover && (
@@ -211,6 +213,9 @@ export function Record({ id }: { id: string }) {
           )}
 
           <div className="mt-6">
+            {/* phones: right after the record itself, in the same order as wide screens */}
+            <div className="lg:hidden">{tracklist}</div>
+
             <Section title="Your copy">
               {meta.data ? (
                 <CopyDetails
@@ -262,8 +267,6 @@ export function Record({ id }: { id: string }) {
                 <Identifiers identifiers={r.identifiers ?? []} />
               </Section>
             )}
-
-            <div className="lg:hidden">{tracklist}</div>
 
             <Section>
               <DiscogsCredit url={url} />

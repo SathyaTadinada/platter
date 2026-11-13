@@ -206,7 +206,9 @@ function Shell({ children }: { children: ReactNode }) {
           <main
             ref={scroller}
             onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}
-            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size] print:overflow-visible print:[container-type:normal]"
+            // the gutter keeps room for a scroll bar that's always shown, so pages don't shift sideways
+            // when they grow tall enough to scroll (Collection and Stats, once they load)
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size] [scrollbar-gutter:stable] print:overflow-visible print:[container-type:normal]"
           >
             {children}
           </main>
