@@ -5,7 +5,7 @@ import { fieldFor, matchFields } from './fields'
 import { loanName } from './loans'
 import { formatDay } from './time'
 import { parseMoney, PRICE_RANGES, rangeLabel, valueBracket } from './value'
-import { readChoice, writePref } from './prefs'
+import { readPref, writePref } from './prefs'
 
 // what the Format filter offers; "All Media" isn't a format (see format.ts)
 const formatNames = (formats: { name: string }[] = []) => [...new Set(formats.map((f) => f.name))].filter((n) => n !== ALL_MEDIA)
@@ -131,22 +131,34 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
 
 // ---- query ----
 
-export type SortKey =
-  'added' | 'added-old' | 'artist' | 'title' | 'year' | 'year-old' | 'rating' | 'value' | 'plays' | 'played' | 'location'
+export type SortKey = 'added' | 'artist' | 'title' | 'year' | 'rating' | 'value' | 'plays' | 'played' | 'location'
 
-export const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'added', label: 'Recently added' },
-  { key: 'added-old', label: 'Oldest added' },
-  { key: 'artist', label: 'Artist' },
-  { key: 'title', label: 'Title' },
-  { key: 'year', label: 'Newest release' },
-  { key: 'year-old', label: 'Oldest release' },
-  { key: 'rating', label: 'Rating' },
-  { key: 'value', label: 'Value' },
-  { key: 'plays', label: 'Most played' },
-  { key: 'played', label: 'Recently played' },
-  { key: 'location', label: 'Location' },
+// Each sort starts in the direction people usually want; picking it again reverses it.
+// order: what the first and the reversed direction are called.
+export const SORTS: { key: SortKey; label: string; order: [string, string] }[] = [
+  { key: 'added', label: 'Added', order: ['Newest first', 'Oldest first'] },
+  { key: 'artist', label: 'Artist', order: ['A to Z', 'Z to A'] },
+  { key: 'title', label: 'Title', order: ['A to Z', 'Z to A'] },
+  { key: 'year', label: 'Release year', order: ['Newest first', 'Oldest first'] },
+  { key: 'rating', label: 'Rating', order: ['Highest first', 'Lowest first'] },
+  { key: 'value', label: 'Value', order: ['Highest first', 'Lowest first'] },
+  { key: 'plays', label: 'Plays', order: ['Most first', 'Fewest first'] },
+  { key: 'played', label: 'Last played', order: ['Most recent first', 'Least recent first'] },
+  { key: 'location', label: 'Location', order: ['A to Z', 'Z to A'] },
 ]
+
+// Whether a sort's first direction runs from high to low (newest, highest, most)
+export const DESCENDING: Record<SortKey, boolean> = {
+  added: true,
+  artist: false,
+  title: false,
+  year: true,
+  rating: true,
+  value: true,
+  plays: true,
+  played: true,
+  location: false,
+}
 
 export type Filters = {
   folder?: number
@@ -159,30 +171,37 @@ export type Filters = {
   fields: Record<number, string>
 }
 
-export type LibraryQuery = { q: string; sort: SortKey; filters: Filters }
+export type LibraryQuery = { q: string; sort: SortKey; reversed: boolean; filters: Filters }
 
-export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', filters: { fields: {} } })
+export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', reversed: false, filters: { fields: {} } })
+
+// A sort as one string, for the URL and the saved choice: "artist", or "artist-rev" reversed.
+// "added-old" and "year-old" are how the reversed ones were saved before.
+export const sortParam = (sort: SortKey, reversed: boolean) => (reversed ? `${sort}-rev` : sort)
+
+export function parseSort(v: string | null): { sort: SortKey; reversed: boolean } | null {
+  if (!v) return null
+  const m = /^([a-z]+)(-rev|-old)?$/.exec(v)
+  const sort = SORTS.find((s) => s.key === m?.[1])?.key
+  return sort ? { sort, reversed: Boolean(m![2]) } : null
+}
 
 // The sort picked last time is the default, so it sticks without living in the URL
 const SORT_KEY = 'platter.sort'
 
-const savedSort = () =>
-  readChoice<SortKey>(
-    SORT_KEY,
-    SORTS.map((s) => s.key),
-    'added',
-  )
-export const saveSort = (sort: SortKey) => writePref(SORT_KEY, sort)
+const savedSort = () => parseSort(readPref(SORT_KEY)) ?? { sort: 'added' as SortKey, reversed: false }
+export const saveSort = (sort: SortKey, reversed: boolean) => writePref(SORT_KEY, sortParam(sort, reversed))
 
 export function parseQuery(search: string): LibraryQuery {
   const p = new URLSearchParams(search)
   const num = (k: string) => (p.get(k) ? Number(p.get(k)) : undefined)
   const fields: Record<number, string> = {}
   for (const [k, v] of p) if (k.startsWith('f.')) fields[Number(k.slice(2))] = v
-  const sort = (SORTS.some((s) => s.key === p.get('sort')) ? p.get('sort') : savedSort()) as SortKey
+  const { sort, reversed } = parseSort(p.get('sort')) ?? savedSort()
   return {
     q: p.get('q') ?? '',
     sort,
+    reversed,
     filters: {
       folder: num('folder'),
       format: p.get('format') ?? undefined,
@@ -199,7 +218,8 @@ export function parseQuery(search: string): LibraryQuery {
 export function serializeQuery(q: LibraryQuery): string {
   const p = new URLSearchParams()
   if (q.q) p.set('q', q.q)
-  if (q.sort !== savedSort()) p.set('sort', q.sort)
+  const saved = savedSort()
+  if (q.sort !== saved.sort || q.reversed !== saved.reversed) p.set('sort', sortParam(q.sort, q.reversed))
   const f = q.filters
   for (const k of ['folder', 'format', 'tag', 'genre', 'style', 'decade', 'rating'] as const) {
     if (f[k] !== undefined && f[k] !== '') p.set(k, String(f[k]))
@@ -294,27 +314,33 @@ export type SortContext = {
   location?: (i: LibraryItem) => string | undefined
 }
 
-export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}): LibraryItem[] {
-  const out = [...items]
+export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}, reversed = false): LibraryItem[] {
   const tie = (a: LibraryItem, b: LibraryItem) =>
     byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
-  const cmp: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
-    added: (a, b) => b.dateAdded.localeCompare(a.dateAdded),
-    'added-old': (a, b) => a.dateAdded.localeCompare(b.dateAdded),
+  const num = (f: (i: LibraryItem) => number | undefined) => (a: LibraryItem, b: LibraryItem) => (f(a) ?? 0) - (f(b) ?? 0)
+  // low to high, or A to Z
+  const ascending: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
+    added: (a, b) => a.dateAdded.localeCompare(b.dateAdded),
     artist: (a, b) => tie(a, b) || yearOf(a) - yearOf(b),
-    title: (a, b) => byText(sortName(a.title), sortName(b.title)) || tie(a, b),
-    // unknown years go last either way
-    year: (a, b) => (yearOf(b) || -1) - (yearOf(a) || -1) || tie(a, b),
-    'year-old': (a, b) => (yearOf(a) || 9999) - (yearOf(b) || 9999) || tie(a, b),
-    rating: (a, b) => b.rating - a.rating || tie(a, b),
-    // unpriced last
-    value: (a, b) => (ctx.value?.(b) ?? -1) - (ctx.value?.(a) ?? -1) || tie(a, b),
-    plays: (a, b) => (ctx.plays?.(b) ?? 0) - (ctx.plays?.(a) ?? 0) || tie(a, b),
-    played: (a, b) => (ctx.lastPlayed?.(b) ?? 0) - (ctx.lastPlayed?.(a) ?? 0) || tie(a, b),
-    // no location last
-    location: (a, b) => byText(ctx.location?.(a) || '\uffff', ctx.location?.(b) || '\uffff') || tie(a, b),
+    title: (a, b) => byText(sortName(a.title), sortName(b.title)),
+    year: num(yearOf),
+    rating: num((i) => i.rating),
+    value: num((i) => ctx.value?.(i)),
+    plays: num((i) => ctx.plays?.(i)),
+    played: num((i) => ctx.lastPlayed?.(i)),
+    location: (a, b) => byText(ctx.location?.(a) ?? '', ctx.location?.(b) ?? ''),
   }
-  return out.sort(cmp[sort])
+  // records missing what's sorted on go last, whichever way it runs
+  const missing: Partial<Record<SortKey, (i: LibraryItem) => boolean>> = {
+    year: (i) => !yearOf(i),
+    rating: (i) => !i.rating,
+    value: (i) => ctx.value?.(i) === undefined,
+    played: (i) => !ctx.lastPlayed?.(i),
+    location: (i) => !ctx.location?.(i)?.trim(),
+  }
+  const dir = DESCENDING[sort] !== reversed ? -1 : 1
+  const gone = missing[sort]
+  return [...items].sort((a, b) => (gone ? Number(gone(a)) - Number(gone(b)) : 0) || dir * ascending[sort](a, b) || tie(a, b))
 }
 
 export type Group = { key: string; label: string; items: LibraryItem[] }
@@ -326,8 +352,7 @@ const letter = (s: string) => {
 
 function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
   switch (sort) {
-    case 'added':
-    case 'added-old': {
+    case 'added': {
       const d = new Date(i.dateAdded)
       return Number.isNaN(d.getTime()) ? 'Unknown' : d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
     }
@@ -336,7 +361,6 @@ function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
     case 'title':
       return letter(i.title)
     case 'year':
-    case 'year-old':
       return yearOf(i) ? `${decadeOf(yearOf(i))}s` : 'Year unknown'
     case 'rating':
       return i.rating ? `${'★'.repeat(i.rating)}` : 'Not rated'

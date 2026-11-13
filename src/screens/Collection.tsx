@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  ArrowDownUp,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
   Disc3,
   Dices,
   Download,
@@ -34,6 +35,7 @@ import { download, today } from '../lib/download'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
 import {
   activeFilterCount,
+  DESCENDING,
   facets as buildFacets,
   filterItems,
   groupItems,
@@ -46,6 +48,7 @@ import {
   type Filters,
   type LibraryQuery,
   type SortContext,
+  type SortKey,
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
 import { parseLoan } from '../lib/loans'
@@ -142,7 +145,11 @@ export function Collection() {
     }
   }
 
-  const filtered = useMemo(() => (items ? sortItems(filterItems(items, query), query.sort, sortCtx) : []), [items, query, sortCtx])
+  const filtered = useMemo(
+    () => (items ? sortItems(filterItems(items, query), query.sort, sortCtx, query.reversed) : []),
+    [items, query, sortCtx],
+  )
+  const sorting = SORTS.find((s) => s.key === query.sort)!
   // headings only help when groups are reasonably full; sparse ones just break up the grid
   const groups = useMemo(() => {
     const shown = filtered.slice(0, limit)
@@ -219,17 +226,26 @@ export function Collection() {
           buttonClassName="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
           button={
             <>
-              <ArrowDownUp size={16} className="shrink-0" aria-hidden />
-              <span className="truncate whitespace-nowrap">{SORTS.find((s) => s.key === query.sort)?.label}</span>
+              <SortArrow sort={query.sort} reversed={query.reversed} size={16} />
+              <span className="truncate whitespace-nowrap">{sorting.label}</span>
+              <span className="sr-only">, {sorting.order[query.reversed ? 1 : 0].toLowerCase()}</span>
             </>
           }
+          // picking the current sort again turns it around
           items={SORTS.map((s) => ({
             label: s.label,
             checked: s.key === query.sort,
+            checkedMark: (
+              <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                {s.order[query.reversed ? 1 : 0]}
+                <SortArrow sort={s.key} reversed={query.reversed} size={16} className="text-accent" />
+              </span>
+            ),
             onSelect: () => {
-              saveSort(s.key)
+              const reversed = s.key === query.sort ? !query.reversed : false
+              saveSort(s.key, reversed)
               setSortPicked((n) => n + 1)
-              setQuery({ ...query, sort: s.key })
+              setQuery({ ...query, sort: s.key, reversed })
             },
           }))}
         />
@@ -508,4 +524,20 @@ export function Collection() {
       )}
     </Screen>
   )
+}
+
+// Which way a sort runs: high to low, or low to high (A to Z)
+function SortArrow({
+  sort,
+  reversed,
+  size,
+  className = 'shrink-0',
+}: {
+  sort: SortKey
+  reversed: boolean
+  size: number
+  className?: string
+}) {
+  const Icon = DESCENDING[sort] !== reversed ? ArrowDownWideNarrow : ArrowUpNarrowWide
+  return <Icon size={size} className={className} aria-hidden />
 }

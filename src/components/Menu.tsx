@@ -1,7 +1,15 @@
 import { Check, MoreHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 
-export type MenuItem = { label: string; icon?: ReactNode; onSelect: () => void; disabled?: boolean; checked?: boolean }
+// checkedMark: shown on the checked item in place of the tick, e.g. which way a sort runs
+export type MenuItem = {
+  label: string
+  icon?: ReactNode
+  onSelect: () => void
+  disabled?: boolean
+  checked?: boolean
+  checkedMark?: ReactNode
+}
 
 // Small dropdown, behind a "more" button unless given its own. Arrow keys move through it;
 // it closes on Escape, an outside click, or focus moving elsewhere.
@@ -90,7 +98,7 @@ export function Menu({
             >
               {item.icon && <span className="text-stone-500">{item.icon}</span>}
               <span className="flex-1">{item.label}</span>
-              {item.checked && <Check size={16} className="text-accent" aria-hidden />}
+              {item.checked && (item.checkedMark ?? <Check size={16} className="text-accent" aria-hidden />)}
             </button>
           ))}
         </div>

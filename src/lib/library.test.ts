@@ -14,7 +14,9 @@ import {
   parseQuery,
   saveSort,
   serializeQuery,
+  parseSort,
   sortItems,
+  sortParam,
   type SortContext,
   sortName,
   toCsv,
@@ -120,7 +122,7 @@ describe('sortItems', () => {
   it('puts unknown years last', () => {
     const withUnknown = [...items, { ...items[0], instanceId: 1, year: 0 }]
     expect(sortItems(withUnknown, 'year').at(-1)!.year).toBe(0)
-    expect(sortItems(withUnknown, 'year-old').at(-1)!.year).toBe(0)
+    expect(sortItems(withUnknown, 'year', {}, true).at(-1)!.year).toBe(0)
   })
 
   it('sorts by value, unpriced last', () => {
@@ -137,6 +139,23 @@ describe('sortItems', () => {
     const s = sortItems([a, b, c], 'location', ctx)
     expect(s.map((i) => i.instanceId)).toEqual([c.instanceId, a.instanceId, b.instanceId])
     expect(groupItems(s, 'location', ctx).map((g) => g.label)).toEqual(['Shelf A', 'Shelf B', 'No location'])
+  })
+
+  it('reverses a sort, keeping records without a value last', () => {
+    const [a, b, c] = items
+    const prices: SortContext = { value: (i) => ({ [a.instanceId]: 5, [b.instanceId]: 80 })[i.instanceId] }
+    expect(sortItems([a, b, c], 'value', prices, true).map((i) => i.instanceId)).toEqual([a.instanceId, b.instanceId, c.instanceId])
+    const s = sortItems(items, 'added', {}, true)
+    expect(s[0].dateAdded <= s.at(-1)!.dateAdded).toBe(true)
+  })
+
+  it('reads a sort from the URL or the saved choice, including the old reversed names', () => {
+    expect(parseSort('artist')).toEqual({ sort: 'artist', reversed: false })
+    expect(parseSort('artist-rev')).toEqual({ sort: 'artist', reversed: true })
+    expect(parseSort('added-old')).toEqual({ sort: 'added', reversed: true })
+    expect(parseSort('year-old')).toEqual({ sort: 'year', reversed: true })
+    expect(parseSort('nope')).toBeNull()
+    expect(sortParam('title', true)).toBe('title-rev')
   })
 
   it('sorts by plays and groups by how often', () => {
@@ -167,7 +186,7 @@ describe('groupItems', () => {
     const list = [reissue, undated]
     expect(filterItems(list, q({ filters: { decade: 1970, fields: {} } }))).toEqual([reissue])
     expect(filterItems(list, q({ filters: { decade: 2020, fields: {} } }))).toEqual([])
-    expect(groupItems(sortItems(list, 'year-old'), 'year-old').map((g) => g.label)).toEqual(['1970s', '2010s'])
+    expect(groupItems(sortItems(list, 'year', {}, true), 'year').map((g) => g.label)).toEqual(['1970s', '2010s'])
     expect(facets(list, q({}), folders, fields).decade.map((o) => o.label)).toEqual(['2010s', '1970s'])
   })
 })
@@ -233,10 +252,13 @@ describe('query in the URL', () => {
   })
 
   it('uses the last sort picked when the URL has none, and keeps others in the URL', () => {
-    saveSort('artist')
+    saveSort('artist', false)
     expect(parseQuery('').sort).toBe('artist')
     expect(serializeQuery(q({ sort: 'artist' }))).toBe('')
     expect(serializeQuery(q({ sort: 'added' }))).toBe('sort=added')
+    expect(serializeQuery(q({ sort: 'artist', reversed: true }))).toBe('sort=artist-rev')
+    saveSort('year', true)
+    expect(parseQuery('')).toMatchObject({ sort: 'year', reversed: true })
     localStorage.clear()
   })
 })
