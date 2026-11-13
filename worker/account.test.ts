@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Authenticator } from '../tests/authenticator'
 import { testDB } from '../tests/d1'
-import { accountById, discogsSignIn, link, listDevices, removeDevice, removePassword, waysIn } from './account'
+import { accountById, discogsSignIn, link, listDevices, removeDevice, removePassword, renameDevice, waysIn } from './account'
 import { clearWaysIn, deleteMember, members, requireAdmin, setBadge } from './admin'
 import { Busy, confirm, IDENTITY, type Browse } from './confirm'
 import {
@@ -22,7 +22,7 @@ const ME = { id: 42, username: 'Tadinada' }
 const YOU = { id: 7, username: 'someone' }
 
 async function account(db: ReturnType<typeof testDB>, who = ME) {
-  const { device } = await discogsSignIn(db, who, true, 1000, 'Safari on iPhone')
+  const { device } = await discogsSignIn(db, who, true, 1000, { name: 'Safari on iPhone', kind: 'phone' })
   return { device: device!, id: await deviceAccount(db, device!, 1000) }
 }
 
@@ -138,7 +138,7 @@ describe('devices', () => {
   it('lists them with this one marked, and signs another out', async () => {
     const db = testDB()
     const phone = await account(db)
-    const laptop = await discogsSignIn(db, ME, false, 2000, 'Chrome on Mac')
+    const laptop = await discogsSignIn(db, ME, false, 2000, { name: 'Chrome on Mac', kind: 'computer' })
     const list = await listDevices(db, phone.id, await sha256(laptop.device!))
     expect(list.map((d) => [d.name, d.current])).toEqual([
       ['Chrome on Mac', true],
@@ -152,11 +152,32 @@ describe('devices', () => {
     const db = testDB()
     const { id } = await account(db)
     const old = await discogsSignIn(db, ME, false, 2000)
-    await nameDevice(db, old.device!, 'Safari on Mac')
-    await nameDevice(db, old.device!, 'Chrome on Mac')
-    const names = (await listDevices(db, id, '')).map((d) => d.name)
-    expect(names).toContain('Safari on Mac')
-    expect(names).not.toContain('Chrome on Mac')
+    await nameDevice(db, old.device!, { name: 'Safari on Mac', kind: 'computer' })
+    await nameDevice(db, old.device!, { name: 'Chrome on Mac', kind: 'phone' })
+    const list = await listDevices(db, id, '')
+    expect(list.map((d) => d.name)).toContain('Safari on Mac')
+    expect(list.map((d) => d.name)).not.toContain('Chrome on Mac')
+    expect(list.find((d) => d.name === 'Safari on Mac')?.kind).toBe('computer')
+  })
+
+  it('renames one, and leaves its kind alone', async () => {
+    const db = testDB()
+    const { id, device } = await account(db)
+    const [mine] = await listDevices(db, id, await sha256(device))
+    await renameDevice(db, id, mine.id, '  Kitchen iPad  ')
+    const [renamed] = await listDevices(db, id, await sha256(device))
+    expect(renamed.name).toBe('Kitchen iPad')
+    expect(renamed.kind).toBe('phone')
+    await expect(renameDevice(db, id, mine.id, '   ')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("can't rename or sign out someone else's device", async () => {
+    const db = testDB()
+    const mine = await account(db)
+    const yours = await account(db, YOU)
+    const [theirs] = await listDevices(db, yours.id, '')
+    await renameDevice(db, mine.id, theirs.id, 'Mine now')
+    expect((await listDevices(db, yours.id, ''))[0].name).toBe('Safari on iPhone')
   })
 
   it("can't sign out someone else's device", async () => {
@@ -194,7 +215,7 @@ describe('passkeys', () => {
 
     const ch = await signInOptions(db, rp, ME.id, 2000)
     expect(ch.options.allowCredentials?.map((c) => c.id)).toEqual([key.id])
-    const r = await signInWithPasskey(db, rp, ch.id, key.signIn(ch.options), 2000, 'Firefox on Linux')
+    const r = await signInWithPasskey(db, rp, ch.id, key.signIn(ch.options), 2000, { name: 'Firefox on Linux', kind: 'computer' })
     expect(r.name).toBe('tadinada')
     expect(await deviceAccount(db, r.device)).toBe(id)
   })

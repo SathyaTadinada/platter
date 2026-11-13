@@ -3,7 +3,7 @@
 // codes are the others.
 
 import type { Identity } from './confirm'
-import { newDevice, newId, SyncError, type DB } from './sync'
+import { newDevice, newId, SyncError, UNSAID, type About, type DB, type DeviceKind } from './sync'
 
 export type Account = {
   id: string
@@ -68,18 +68,18 @@ export async function discogsSignIn(
   who: Identity,
   create: boolean,
   now = Date.now(),
-  deviceName: string | null = null,
+  about: About = UNSAID,
 ): Promise<{ device: string | null; created: boolean }> {
   const name = who.username.toLowerCase()
   const found = await accountByDiscogs(db, who.id)
   if (found) {
     if (found.name !== name) await db.prepare('UPDATE accounts SET name = ?2 WHERE id = ?1').bind(found.id, name).run()
-    return { device: await newDevice(db, found.id, now, deviceName), created: false }
+    return { device: await newDevice(db, found.id, now, about), created: false }
   }
   if (!create) return { device: null, created: false }
   const id = newId()
   await db.prepare('INSERT INTO accounts (id, name, discogs_id, created_at) VALUES (?1, ?2, ?3, ?4)').bind(id, name, who.id, now).run()
-  return { device: await newDevice(db, id, now, deviceName), created: true }
+  return { device: await newDevice(db, id, now, about), created: true }
 }
 
 // An account made before confirmation existed picks up its Discogs user the first time one of its
@@ -104,7 +104,14 @@ export async function removePassword(db: DB, accountId: string) {
 
 // ---- devices ----
 
-export type DeviceInfo = { id: string; name: string | null; createdAt: number; lastSeenAt: number | null; current: boolean }
+export type DeviceInfo = {
+  id: string
+  name: string | null
+  kind: DeviceKind | null
+  createdAt: number
+  lastSeenAt: number | null
+  current: boolean
+}
 
 // Devices are told apart by the start of their key's fingerprint, never the key itself
 const DEVICE_ID = 16
@@ -112,20 +119,33 @@ const DEVICE_ID = 16
 export async function listDevices(db: DB, accountId: string, currentToken: string): Promise<DeviceInfo[]> {
   const { results } = await db
     .prepare(
-      'SELECT token, name, created_at, last_seen_at FROM devices WHERE account = ?1 ORDER BY COALESCE(last_seen_at, created_at) DESC',
+      'SELECT token, name, kind, created_at, last_seen_at FROM devices WHERE account = ?1 ORDER BY COALESCE(last_seen_at, created_at) DESC',
     )
     .bind(accountId)
-    .all<{ token: string; name: string | null; created_at: number; last_seen_at: number | null }>()
+    .all<{ token: string; name: string | null; kind: DeviceKind | null; created_at: number; last_seen_at: number | null }>()
   return results.map((d) => ({
     id: d.token.slice(0, DEVICE_ID),
     name: d.name,
+    kind: d.kind,
     createdAt: d.created_at,
     lastSeenAt: d.last_seen_at,
     current: d.token === currentToken,
   }))
 }
 
-export async function removeDevice(db: DB, accountId: string, id: unknown) {
+const parseDeviceId = (id: unknown) => {
   if (typeof id !== 'string' || id.length !== DEVICE_ID) throw new SyncError(400, 'Bad device')
-  await db.prepare('DELETE FROM devices WHERE account = ?1 AND substr(token, 1, 16) = ?2').bind(accountId, id).run()
+  return id
+}
+
+export async function removeDevice(db: DB, accountId: string, id: unknown) {
+  await db.prepare('DELETE FROM devices WHERE account = ?1 AND substr(token, 1, 16) = ?2').bind(accountId, parseDeviceId(id)).run()
+}
+
+export async function renameDevice(db: DB, accountId: string, id: unknown, name: unknown) {
+  if (typeof name !== 'string' || !name.trim()) throw new SyncError(400, 'Bad name')
+  await db
+    .prepare('UPDATE devices SET name = ?3 WHERE account = ?1 AND substr(token, 1, 16) = ?2')
+    .bind(accountId, parseDeviceId(id), name.trim().slice(0, 60))
+    .run()
 }

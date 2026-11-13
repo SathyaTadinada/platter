@@ -4,7 +4,17 @@
 // Cloudflare's shared addresses. The one exception is confirming whose Discogs login a browser holds,
 // which goes through a Browser Run browser (see confirm.ts).
 
-import { accountById, discogsSignIn, link, listDevices, parseDiscogsId, removeDevice, removePassword, waysIn } from './account'
+import {
+  accountById,
+  discogsSignIn,
+  link,
+  listDevices,
+  parseDiscogsId,
+  removeDevice,
+  removePassword,
+  renameDevice,
+  waysIn,
+} from './account'
 import { clearWaysIn, deleteMember, members, requireAdmin, setBadge } from './admin'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { header, signParams } from './oauth'
@@ -27,6 +37,7 @@ import {
   nameExists,
   newPairing,
   parseDeviceName,
+  parseDeviceKind,
   parseName,
   parseProof,
   parseRows,
@@ -168,6 +179,7 @@ const SYNC_ACTIONS = [
   'account',
   'link',
   'devices',
+  'device-rename',
   'device-remove',
   'passkey-options',
   'passkey-register',
@@ -206,7 +218,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
     } catch {
       throw new SyncError(400, 'Bad JSON')
     }
-    const deviceName = parseDeviceName(input.deviceName)
+    const about = { name: parseDeviceName(input.deviceName), kind: parseDeviceKind(input.deviceKind) }
 
     // Getting in: the per-IP limit for sign-in, and for passwords and passkeys a per-account one too,
     // so nobody can guess their way in however many addresses they use
@@ -214,26 +226,26 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) return tooMany()
       switch (action) {
         case 'join':
-          return ok(await usePairing(db, input.code, Date.now(), deviceName))
+          return ok(await usePairing(db, input.code, Date.now(), about))
         case 'exists':
           if (input.discogsId !== undefined) return ok(await waysIn(db, parseDiscogsId(input.discogsId)))
           return ok({ exists: await nameExists(db, parseName(input.name)) })
         case 'discogs': {
           const who = await confirmed(input.login)
-          const r = await discogsSignIn(db, who, input.create === true, Date.now(), deviceName)
+          const r = await discogsSignIn(db, who, input.create === true, Date.now(), about)
           return ok({ ...r, name: who.username, discogsId: who.id })
         }
         case 'signin': {
           const name = parseName(input.name)
           const discogsId = input.discogsId === undefined ? undefined : parseDiscogsId(input.discogsId)
           if (!(await allowed(env.LOGIN_LIMITER, discogsId ? `discogs:${discogsId}` : `name:${name}`))) return tooMany()
-          return ok(await signIn(db, { name, discogsId }, parseProof(input.proof), Date.now(), deviceName))
+          return ok(await signIn(db, { name, discogsId }, parseProof(input.proof), Date.now(), about))
         }
         case 'passkey-signin-options':
           return ok(await signInOptions(db, relyingParty(req.headers.get('Origin')), parseDiscogsId(input.discogsId)))
         case 'passkey-signin': {
           if (!(await allowed(env.LOGIN_LIMITER, `discogs:${parseDiscogsId(input.discogsId)}`))) return tooMany()
-          return ok(await signInWithPasskey(db, relyingParty(req.headers.get('Origin')), input.id, input.response, Date.now(), deviceName))
+          return ok(await signInWithPasskey(db, relyingParty(req.headers.get('Origin')), input.id, input.response, Date.now(), about))
         }
       }
     }
@@ -270,7 +282,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         await forget(db, account)
         return ok({ ok: true })
       case 'account': {
-        await nameDevice(db, input.device, deviceName)
+        await nameDevice(db, input.device, about)
         const { id: _id, ...rest } = (await accountById(db, account))!
         return ok(rest)
       }
@@ -279,6 +291,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok({ ok: true })
       case 'devices':
         return ok({ devices: await listDevices(db, account, await sha256(input.device)) })
+      case 'device-rename':
+        await renameDevice(db, account, input.id, input.name)
+        return ok({ ok: true })
       case 'device-remove':
         await removeDevice(db, account, input.id)
         return ok({ ok: true })

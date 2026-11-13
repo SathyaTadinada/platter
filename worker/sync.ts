@@ -69,16 +69,27 @@ export function parseProof(x: unknown): string {
 
 export const newId = () => b64url(random(16))
 
-// What the browser calls itself ("Safari on iPhone"), for the device list
+// What the browser calls itself ("Safari on iPhone") and what sort of thing it is, for the device list
 export function parseDeviceName(x: unknown): string | null {
   return typeof x === 'string' && x.trim() ? x.trim().slice(0, 60) : null
 }
 
-export async function newDevice(db: DB, account: string, now: number, name: string | null = null): Promise<string> {
+export const KINDS_OF_DEVICE = ['phone', 'tablet', 'computer'] as const
+export type DeviceKind = (typeof KINDS_OF_DEVICE)[number]
+
+export function parseDeviceKind(x: unknown): DeviceKind | null {
+  return KINDS_OF_DEVICE.includes(x as DeviceKind) ? (x as DeviceKind) : null
+}
+
+// What a browser says about itself when it gets in
+export type About = { name: string | null; kind: DeviceKind | null }
+export const UNSAID: About = { name: null, kind: null }
+
+export async function newDevice(db: DB, account: string, now: number, about: About = UNSAID): Promise<string> {
   const token = b64url(random(32))
   await db
-    .prepare('INSERT INTO devices (token, account, created_at, name, last_seen_at) VALUES (?1, ?2, ?3, ?4, ?3)')
-    .bind(await sha256(token), account, now, name)
+    .prepare('INSERT INTO devices (token, account, created_at, name, kind, last_seen_at) VALUES (?1, ?2, ?3, ?4, ?5, ?3)')
+    .bind(await sha256(token), account, now, about.name, about.kind)
     .run()
   return token
 }
@@ -95,7 +106,7 @@ export async function signIn(
   who: { discogsId?: number; name: string },
   proof: string,
   now = Date.now(),
-  deviceName: string | null = null,
+  about: About = UNSAID,
 ): Promise<{ device: string }> {
   const proofHash = await sha256(proof)
   const found =
@@ -110,7 +121,7 @@ export async function signIn(
       .bind(who.name, proofHash)
       .first<{ id: string }>())
   if (!found) throw new SyncError(401, 'Wrong password')
-  return { device: await newDevice(db, found.id, now, deviceName) }
+  return { device: await newDevice(db, found.id, now, about) }
 }
 
 const SEEN_EVERY = 60 * 60 * 1000
@@ -129,12 +140,12 @@ export async function deviceAccount(db: DB, device: unknown, now = Date.now()): 
   return row.account
 }
 
-// Devices that got in before names were kept pick one up the next time they ask for the account
-export async function nameDevice(db: DB, device: string, name: string | null) {
-  if (!name) return
+// Devices that got in before these were kept pick them up the next time they ask for the account
+export async function nameDevice(db: DB, device: string, about: About) {
+  if (!about.name && !about.kind) return
   await db
-    .prepare('UPDATE devices SET name = ?2 WHERE token = ?1 AND name IS NULL')
-    .bind(await sha256(device), name)
+    .prepare('UPDATE devices SET name = COALESCE(name, ?2), kind = COALESCE(kind, ?3) WHERE token = ?1 AND (name IS NULL OR kind IS NULL)')
+    .bind(await sha256(device), about.name, about.kind)
     .run()
 }
 
@@ -185,7 +196,7 @@ export async function usePairing(
   db: DB,
   code: unknown,
   now = Date.now(),
-  deviceName: string | null = null,
+  about: About = UNSAID,
 ): Promise<{ device: string; name: string }> {
   if (typeof code !== 'string' || normalCode(code).length !== 6) throw new SyncError(400, 'Bad code')
   const hash = await sha256(normalCode(code))
@@ -195,7 +206,7 @@ export async function usePairing(
     .first<{ account: string; name: string }>()
   if (!found) throw new SyncError(401, 'That code is wrong or has expired')
   await db.prepare('DELETE FROM pairings WHERE code = ?1').bind(hash).run()
-  return { device: await newDevice(db, found.account, now, deviceName), name: found.name }
+  return { device: await newDevice(db, found.account, now, about), name: found.name }
 }
 
 // ---- what syncs ----

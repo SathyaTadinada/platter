@@ -11,7 +11,7 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/browser'
 import { applyAccent } from './accent'
-import { deviceName } from './deviceName'
+import { deviceKind, deviceName, type DeviceKind } from './deviceName'
 import { prefListeners, readPref, removePref, writePref } from './prefs'
 import { LAYOUTS } from './statsLayout'
 import { applyTheme } from './theme'
@@ -102,7 +102,14 @@ async function call<T>(fetchFn: typeof fetch, path: string, body: object): Promi
 export type Login = { token: string; tokenSecret?: string }
 export type WaysIn = { exists: boolean; password: boolean; passkeys: boolean }
 export type AccountInfo = { name: string; discogsId: number | null; password: boolean; passkeys: number; admin: boolean; badges: string[] }
-export type DeviceInfo = { id: string; name: string | null; createdAt: number; lastSeenAt: number | null; current: boolean }
+export type DeviceInfo = {
+  id: string
+  name: string | null
+  kind: DeviceKind | null
+  createdAt: number
+  lastSeenAt: number | null
+  current: boolean
+}
 export type PasskeyInfo = { id: string; name: string; createdAt: number; lastUsedAt: number | null }
 export type Member = {
   id: string
@@ -128,14 +135,22 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
       login,
       create,
       deviceName: deviceName(),
+      deviceKind: deviceKind(),
     }),
   signIn: (name: string, proof: string, discogsId?: number) =>
-    call<{ device: string }>(fetchFn, 'signin', { name, proof, discogsId, deviceName: deviceName() }),
-  join: (code: string) => call<{ device: string; name: string }>(fetchFn, 'join', { code, deviceName: deviceName() }),
+    call<{ device: string }>(fetchFn, 'signin', { name, proof, discogsId, deviceName: deviceName(), deviceKind: deviceKind() }),
+  join: (code: string) =>
+    call<{ device: string; name: string }>(fetchFn, 'join', { code, deviceName: deviceName(), deviceKind: deviceKind() }),
   passkeyOptions: (discogsId: number) =>
     call<Challenge<PublicKeyCredentialRequestOptionsJSON>>(fetchFn, 'passkey-signin-options', { discogsId }),
   passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
-    call<{ device: string; name: string }>(fetchFn, 'passkey-signin', { discogsId, id, response, deviceName: deviceName() }),
+    call<{ device: string; name: string }>(fetchFn, 'passkey-signin', {
+      discogsId,
+      id,
+      response,
+      deviceName: deviceName(),
+      deviceKind: deviceKind(),
+    }),
 })
 
 export type CloudApi = {
@@ -149,6 +164,7 @@ export type CloudApi = {
   account(): Promise<AccountInfo>
   link(login: Login): Promise<unknown>
   devices(): Promise<{ devices: DeviceInfo[] }>
+  renameDevice(id: string, name: string): Promise<unknown>
   removeDevice(id: string): Promise<unknown>
   passkeyOptions(): Promise<Challenge<PublicKeyCredentialCreationOptionsJSON>>
   registerPasskey(id: string, response: RegistrationResponseJSON, name: string): Promise<PasskeyInfo>
@@ -171,9 +187,10 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setOff: (off) => c('off', { off }),
     leave: () => c('leave'),
     forget: () => c('forget'),
-    account: () => c('account', { deviceName: deviceName() }),
+    account: () => c('account', { deviceName: deviceName(), deviceKind: deviceKind() }),
     link: (login) => c('link', { login }),
     devices: () => c('devices'),
+    renameDevice: (id, name) => c('device-rename', { id, name }),
     removeDevice: (id) => c('device-remove', { id }),
     passkeyOptions: () => c('passkey-options'),
     registerPasskey: (id, response, name) => c('passkey-register', { id, response, name }),

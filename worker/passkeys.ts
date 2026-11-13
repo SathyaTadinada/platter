@@ -11,7 +11,7 @@ import {
 } from '@simplewebauthn/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import { accountByDiscogs, accountById } from './account'
-import { newDevice, newId, SyncError, type DB } from './sync'
+import { newDevice, newId, SyncError, UNSAID, type About, type DB } from './sync'
 
 // Passkeys belong to a domain, so they only work on the real site and in local testing. Preview
 // links and 127.0.0.1 (an IP can't have passkeys) use the other ways in.
@@ -166,7 +166,7 @@ export async function signInWithPasskey(
   challengeId: unknown,
   response: unknown,
   now = Date.now(),
-  deviceName: string | null = null,
+  about: About = UNSAID,
 ): Promise<{ device: string; name: string }> {
   const ch = await takeChallenge(db, challengeId, 'signin', now)
   const res = response as AuthenticationResponseJSON
@@ -193,7 +193,7 @@ export async function signInWithPasskey(
     .run()
   const acc = await accountById(db, key.account)
   if (!acc) throw new SyncError(401, "That passkey isn't for this account")
-  return { device: await newDevice(db, acc.id, now, deviceName), name: acc.name }
+  return { device: await newDevice(db, acc.id, now, about), name: acc.name }
 }
 
 // ---- managing them ----

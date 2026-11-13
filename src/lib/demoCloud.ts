@@ -1,12 +1,19 @@
 import type { CloudApi, DeviceInfo, PasskeyInfo } from './cloud'
-import { deviceName } from './deviceName'
+import { deviceKind, deviceName } from './deviceName'
 
 // The account page in the demo: a couple of devices and a passkey, kept in memory, with nothing sent
 export function demoCloudApi(): CloudApi {
   const now = Date.now()
   let devices: DeviceInfo[] = [
-    { id: 'this', name: deviceName(), createdAt: now - 40 * 86_400_000, lastSeenAt: now, current: true },
-    { id: 'phone', name: 'Safari on iPhone', createdAt: now - 90 * 86_400_000, lastSeenAt: now - 3 * 3_600_000, current: false },
+    { id: 'this', name: deviceName(), kind: deviceKind(), createdAt: now - 40 * 86_400_000, lastSeenAt: now, current: true },
+    {
+      id: 'phone',
+      name: 'Safari on iPhone',
+      kind: 'phone',
+      createdAt: now - 90 * 86_400_000,
+      lastSeenAt: now - 3 * 3_600_000,
+      current: false,
+    },
   ]
   let passkeys: PasskeyInfo[] = [
     { id: 'demo', name: 'Safari on iPhone', createdAt: now - 90 * 86_400_000, lastUsedAt: now - 30 * 86_400_000 },
@@ -32,6 +39,10 @@ export function demoCloudApi(): CloudApi {
     account: async () => ({ name: 'demo', discogsId: 1, password, passkeys: passkeys.length, admin: false, badges: [] }),
     link: nothing,
     devices: async () => ({ devices }),
+    renameDevice: async (id, name) => {
+      devices = devices.map((d) => (d.id === id ? { ...d, name } : d))
+      return {}
+    },
     removeDevice: async (id) => {
       await pause()
       devices = devices.filter((d) => d.id !== id)
