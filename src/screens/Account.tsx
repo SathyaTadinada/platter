@@ -1,9 +1,12 @@
 import {
   Fingerprint,
   Headphones,
+  Heart,
   Image,
   KeyRound,
   Layers,
+  LibraryBig,
+  Link as LinkIcon,
   LogOut,
   Monitor,
   MonitorSmartphone,
@@ -15,11 +18,15 @@ import {
   Smartphone,
   Tablet,
   Trash2,
+  UserRound,
+  UserSearch,
   TrendingUp,
   Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useLocation } from 'wouter'
 import type { Category } from '../../worker/categories'
+import type { Section as ProfileSection } from '../../worker/profile'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PairingCodeDisplay, PairingCodeInput } from '../components/PairingCode'
 import { fieldClass, NewPassword, newPasswordReady, PasswordInput } from '../components/PasswordField'
@@ -29,6 +36,12 @@ import { Button, Card, IconButton, List, Notice, Row, Screen, Section, Switch } 
 import { useCloud } from '../hooks/cloud'
 import { addPasskey, CloudError, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo, type WaysIn } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
+
+// What a profile can show. Stats and Your year come with their summaries, later in this phase.
+const PROFILE_SECTIONS: { id: ProfileSection; label: string; icon: ReactNode }[] = [
+  { id: 'collection', label: 'Collection', icon: <LibraryBig size={20} /> },
+  { id: 'wantlist', label: 'Wantlist', icon: <Heart size={20} /> },
+]
 
 // Album years, record lengths, and the barcode index ('catalog') aren't listed: they're public catalog
 // data that only makes a new device quicker to set up, so they always sync
@@ -264,6 +277,8 @@ function SignedIn() {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [editing, setEditing] = useState<PasskeyInfo | null>(null)
   const [offer, setOffer] = useState(() => justCreated && passkeysHere())
+  const anyShared = Object.values(cloud.sections ?? {}).some((v) => v === 'public')
+  const [finding, setFinding] = useState(false)
 
   const attempt = async (task: () => Promise<unknown>) => {
     setError(null)
@@ -437,6 +452,45 @@ function SignedIn() {
             </List>
           )}
         </Section>
+        <Section title="Profile">
+          <List>
+            {PROFILE_SECTIONS.map((p) => (
+              <Row
+                key={p.id}
+                icon={p.icon}
+                label={p.label}
+                trailing={
+                  <Switch
+                    label={p.label}
+                    disabled={!cloud.sections}
+                    checked={cloud.sections?.[p.id] === 'public'}
+                    onChange={(on) => attempt(() => cloud.setSections({ [p.id]: on ? 'public' : 'off' }))}
+                  />
+                }
+              />
+            ))}
+          </List>
+          <List>
+            {finding ? (
+              <FindSomeone onClose={() => setFinding(false)} />
+            ) : (
+              <Row icon={<UserSearch size={20} />} label="Find someone" onClick={() => setFinding(true)} />
+            )}
+          </List>
+          {anyShared && (
+            <List>
+              <Row icon={<UserRound size={20} />} label="View your profile" href={`/u/${cloud.username}`} />
+              <Row
+                icon={<LinkIcon size={20} />}
+                label="Copy link"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`${location.origin}/u/${cloud.username}`)
+                  toast('Link copied', { tone: 'success' })
+                }}
+              />
+            </List>
+          )}
+        </Section>
         {account?.admin && (
           <Section>
             <List>
@@ -574,6 +628,44 @@ function Device({
           <LogOut size={18} />
         </IconButton>
       )}
+    </li>
+  )
+}
+
+// Their Discogs username, which you have to know: profiles aren't listed anywhere and can't be
+// searched for by part of a name.
+function FindSomeone({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('')
+  const [, navigate] = useLocation()
+  return (
+    <li className="px-4 py-2">
+      <form
+        className="flex w-full flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const who = name.trim().replace(/^@/, '')
+          if (who) navigate(`/u/${encodeURIComponent(who)}`)
+        }}
+      >
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Discogs username"
+          placeholder="Discogs username"
+          autoFocus
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={100}
+          className="min-h-10 w-full min-w-0 rounded-lg border border-stone-300 bg-transparent px-3 sm:w-auto sm:flex-1 dark:border-stone-700"
+        />
+        <Button type="submit" className="min-h-10 flex-1 sm:flex-none" disabled={!name.trim()}>
+          Go
+        </Button>
+        <Button variant="ghost" className="min-h-10 flex-1 sm:flex-none" onClick={onClose}>
+          Cancel
+        </Button>
+      </form>
     </li>
   )
 }

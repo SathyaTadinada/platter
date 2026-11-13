@@ -25,6 +25,7 @@ import {
   rows as profileRows,
   settings as profileSettings,
   setSections,
+  sweep as sweepProfile,
 } from './profile'
 import {
   listPasskeys,
@@ -200,6 +201,7 @@ const SYNC_ACTIONS = [
   'profile-settings',
   'profile-sections',
   'profile-publish',
+  'profile-sweep',
   // admin only
   'admin-members',
   'admin-badge',
@@ -344,7 +346,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'profile-sections':
         return ok({ sections: await setSections(db, account, input.sections) })
       case 'profile-publish':
-        return ok(await publishProfile(db, account, parseProfileRows(input.rows), input.gone))
+        return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
+      case 'profile-sweep':
+        return ok(await sweepProfile(db, account, input.section, input.before))
       case 'admin-members':
         return ok({ members: await members(db) })
       case 'admin-badge':

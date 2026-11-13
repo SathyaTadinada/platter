@@ -19,9 +19,11 @@ export type Sections = Partial<Record<Section, Visibility>>
 
 // The rows each section covers. A section that's off has none of them.
 export const KINDS = { collection: 'item', wantlist: 'want', stats: 'stats', year: 'year' } as const
-export type ProfileKind = (typeof KINDS)[Section]
+// Their Discogs picture, which belongs to no section: it goes up while any of them is on
+export const ABOUT = 'about'
+export type ProfileKind = (typeof KINDS)[Section] | typeof ABOUT
 
-const SECTION_OF = Object.fromEntries(Object.entries(KINDS).map(([s, k]) => [k, s])) as Record<ProfileKind, Section>
+const SECTION_OF = Object.fromEntries(Object.entries(KINDS).map(([s, k]) => [k, s])) as Record<string, Section>
 
 export const MAX_ROWS = 100 // one page of a profile's records
 const MAX_VALUE = 4000
@@ -35,6 +37,7 @@ export type ProfileHead = {
   memberSince: number
   publishedAt: number | null
   sections: Section[]
+  about: string | null // JSON their devices sent, with their Discogs picture
 }
 
 // ---- reading what the owner chose ----
@@ -96,7 +99,7 @@ export function parseRows(x: unknown): ProfileRow[] {
     const ok =
       r &&
       typeof r.kind === 'string' &&
-      r.kind in SECTION_OF &&
+      (r.kind === ABOUT || r.kind in SECTION_OF) &&
       typeof r.key === 'string' &&
       r.key.length > 0 &&
       r.key.length <= 200 &&
@@ -110,13 +113,12 @@ export function parseRows(x: unknown): ProfileRow[] {
 
 // Rows for a section that's off are dropped rather than refused: a device that hasn't heard about
 // the change yet shouldn't have its whole push turned away.
-export async function publish(db: DB, account: string, rows: ProfileRow[], keys: unknown, now = Date.now()): Promise<{ saved: number }> {
+export async function publish(db: DB, account: string, rows: ProfileRow[], now = Date.now()): Promise<{ saved: number }> {
   const { sections } = await settings(db, account)
-  const on = (kind: ProfileKind) => sections[SECTION_OF[kind]] === 'public'
+  const anything = SECTIONS.some((x) => sections[x] === 'public')
+  const on = (kind: ProfileKind) => (kind === ABOUT ? anything : sections[SECTION_OF[kind]] === 'public')
   const wanted = rows.filter((r) => on(r.kind))
-  // the records this device no longer has, so a sold record leaves the profile
-  const dropping = parseKeys(keys).filter((k) => on(k.kind))
-  if (!wanted.length && !dropping.length) return { saved: 0 }
+  if (!wanted.length) return { saved: 0 }
   await db.batch([
     db.prepare('UPDATE profiles SET published_at = ?2 WHERE account = ?1').bind(account, now),
     ...wanted.map((r) =>
@@ -128,20 +130,21 @@ export async function publish(db: DB, account: string, rows: ProfileRow[], keys:
         )
         .bind(account, r.kind, r.key, r.value, r.updatedAt),
     ),
-    ...dropping.map((k) =>
-      db.prepare('DELETE FROM profile_rows WHERE account = ?1 AND kind = ?2 AND key = ?3').bind(account, k.kind, k.key),
-    ),
   ])
   return { saved: wanted.length }
 }
 
-function parseKeys(x: unknown): { kind: ProfileKind; key: string }[] {
-  if (x === undefined) return []
-  if (!Array.isArray(x) || x.length > MAX_PUSH) throw new SyncError(400, 'Bad keys')
-  return x.map((k: { kind: ProfileKind; key: string }) => {
-    if (!k || typeof k.key !== 'string' || !(k.kind in SECTION_OF)) throw new SyncError(400, 'Bad key')
-    return { kind: k.kind, key: k.key }
-  })
+// After a device has sent a whole section, whatever it didn't send isn't there any more: a sold
+// record, or one it moved out of a crate. Everything in a pass carries the same time, so anything
+// older than it was left out.
+export async function sweep(db: DB, account: string, section: unknown, before: unknown): Promise<{ gone: number }> {
+  if (!(SECTIONS as readonly string[]).includes(section as string)) throw new SyncError(400, 'Bad section')
+  if (!Number.isFinite(before)) throw new SyncError(400, 'Bad time')
+  const r = await db
+    .prepare('DELETE FROM profile_rows WHERE account = ?1 AND kind = ?2 AND updated_at < ?3')
+    .bind(account, KINDS[section as Section], before)
+    .run()
+  return { gone: r.meta.changes }
 }
 
 // ---- reading a profile ----
@@ -170,7 +173,18 @@ export async function head(db: DB, username: unknown): Promise<ProfileHead | nul
   if (!found) return null
   const sections = publicOnes(found.sections)
   if (!sections.length) return null // nothing shared, so there's nothing to show
-  return { username: found.name, badges: found.badges, memberSince: found.createdAt, publishedAt: found.publishedAt, sections }
+  const about = await db
+    .prepare('SELECT value FROM profile_rows WHERE account = ?1 AND kind = ?2 AND key = ?2')
+    .bind(found.id, ABOUT)
+    .first<{ value: string }>()
+  return {
+    username: found.name,
+    badges: found.badges,
+    memberSince: found.createdAt,
+    publishedAt: found.publishedAt,
+    sections,
+    about: about?.value ?? null,
+  }
 }
 
 // A page of one section's rows. Refused unless that section is on, whoever is asking.

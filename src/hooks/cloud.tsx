@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation } from 'wouter'
 import type { Category } from '../../worker/categories'
+import type { Sections } from '../../worker/profile'
 import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
@@ -33,6 +34,8 @@ import {
 } from '../lib/cloud'
 import { demoCloudApi } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
+import { forgetSent, publishProfile, type ProfileAbout } from '../lib/profile'
+import { getProfile } from '../api/discogs/endpoints'
 import { lookupBarcode } from '../lib/lookup'
 import { useSession } from './session'
 
@@ -45,6 +48,9 @@ type Ctx = {
   syncedAt: number | null
   off: Category[]
   api: CloudApi | null // while this device is in: the account's devices, passkeys, and so on
+  // the profile's sections, once they've been read from the server. null while that's happening.
+  sections: Sections | null
+  setSections: (next: Sections) => Promise<void>
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
   waysIn: () => Promise<WaysIn & { legacy: boolean }>
@@ -69,6 +75,7 @@ const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
 // Changes go up a few seconds after the last one, and automatic syncs are at least half a minute
 // apart: background work (album years, record lengths) saves something every couple of seconds
 const PUSH_AFTER = 5000
+const AVATAR_WAIT = 4000
 const MIN_GAP = 30_000
 
 const loginOf = (s: Session): Login => (s.kind === 'oauth' ? { token: s.token, tokenSecret: s.secret ?? '' } : { token: s.token })
@@ -89,6 +96,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [sections, setSections] = useState<Sections | null>(null)
+  const shared = useRef<Sections>({})
   const busy = useRef(false)
   const again = useRef(false)
   const failures = useRef(0)
@@ -114,6 +123,25 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [client])
 
+  // What the profile shows goes up after a sync, and only when something in it changed
+  const share = useCallback(async () => {
+    if (!api || !Object.values(shared.current).some((v) => v === 'public')) return
+    const about: ProfileAbout = { records: await db.collection.count() }
+    if (client && session && session.kind !== 'demo') {
+      // Their Discogs picture is worth having but not worth waiting on: the client keeps retrying a
+      // request Discogs turns down, and the profile shouldn't sit unpublished while it does. Without
+      // it the profile goes up anyway, and the next pass picks the picture up.
+      const avatar = await Promise.race([
+        getProfile(client, session.username)
+          .then((p) => p.avatar_url)
+          .catch(() => undefined),
+        new Promise<undefined>((r) => setTimeout(r, AVATAR_WAIT)),
+      ])
+      if (avatar) about.avatar = avatar
+    }
+    await publishProfile(api, shared.current, about)
+  }, [api, client, session])
+
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
   const run = useCallback(
     async (shown = false) => {
@@ -132,6 +160,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         failures.current = 0
         setError(null)
         await refill()
+        await share()
       } catch (e) {
         setError((e as Error).message)
         const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
@@ -223,6 +252,21 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     })()
   }, [api, session])
 
+  useEffect(() => {
+    if (!api) {
+      setSections(null)
+      shared.current = {}
+      return
+    }
+    api
+      .profileSettings()
+      .then(({ sections: saved }) => {
+        shared.current = saved
+        setSections(saved)
+      })
+      .catch(() => {})
+  }, [api])
+
   const demoValue = useDemoCloud()
   const value: Ctx = {
     api,
@@ -240,6 +284,15 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     error,
     syncedAt: saved?.syncedAt ?? null,
     off: saved?.off ?? [],
+    sections,
+    setSections: async (next) => {
+      if (!api) return
+      const { sections: saved } = await api.setSections(next)
+      shared.current = saved
+      setSections(saved)
+      await forgetSent(saved)
+      await share()
+    },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
       let joined = false
@@ -282,6 +335,7 @@ function useDemoCloud(): Ctx {
   const [enabled, setEnabled] = useState(true)
   const [exists, setExists] = useState(true)
   const [off, setOff] = useState<Category[]>([])
+  const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'off', stats: 'off', year: 'off' })
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
@@ -301,6 +355,11 @@ function useDemoCloud(): Ctx {
     syncedAt,
     off,
     api: enabled ? api : null,
+    sections: demoSections,
+    setSections: async (next) => {
+      await pause(300)
+      setDemoSections((s) => ({ ...s, ...next }))
+    },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {
       await signIn()

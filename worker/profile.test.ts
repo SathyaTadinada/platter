@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
-import { head, parseRows, publish, rows, setSections, settings, type ProfileRow } from './profile'
+import { head, parseRows, publish, rows, setSections, settings, sweep, type ProfileRow } from './profile'
 import { deviceAccount, forget, push } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
@@ -24,7 +24,7 @@ const record = (id: number, title: string, updatedAt = 1000) => row('item', Stri
 async function shared(db: ReturnType<typeof testDB>, who = ME) {
   const acc = await account(db, who)
   await setSections(db, acc.id, { collection: 'public' })
-  await publish(db, acc.id, [record(1, 'Rumours'), record(2, 'Kind of Blue')], [])
+  await publish(db, acc.id, [record(1, 'Rumours'), record(2, 'Kind of Blue')])
   return acc
 }
 
@@ -83,8 +83,8 @@ describe('reading a section', () => {
     const { id } = await shared(db)
     // keys sort as text, so pad them the way the app will
     const many = Array.from({ length: 120 }, (_, i) => record(i, `Album ${i}`)).map((r) => ({ ...r, key: r.key.padStart(8, '0') }))
-    await publish(db, id, many.slice(0, 100), [])
-    await publish(db, id, many.slice(100), [])
+    await publish(db, id, many.slice(0, 100))
+    await publish(db, id, many.slice(100))
     const first = await rows(db, 'tadinada', 'collection', undefined)
     expect(first.rows).toHaveLength(100)
     expect(first.more).toBe(true)
@@ -100,28 +100,50 @@ describe('publishing', () => {
   it('keeps out rows for a section that is off', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    expect(await publish(db, id, [row('want', '9', { title: 'Wanted' })], [])).toEqual({ saved: 0 })
+    expect(await publish(db, id, [row('want', '9', { title: 'Wanted' })])).toEqual({ saved: 0 })
     await setSections(db, id, { wantlist: 'public' })
-    expect(await publish(db, id, [row('want', '9', { title: 'Wanted' })], [])).toEqual({ saved: 1 })
+    expect(await publish(db, id, [row('want', '9', { title: 'Wanted' })])).toEqual({ saved: 1 })
     expect((await head(db, 'tadinada'))?.sections).toEqual(['collection', 'wantlist'])
   })
 
   it('keeps the newest version of a record and drops ones the owner no longer has', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    await publish(db, id, [record(1, 'Rumours (2011 reissue)', 2000)], [])
-    await publish(db, id, [record(1, 'Stale', 500)], [])
+    await publish(db, id, [record(1, 'Rumours (2011 reissue)', 2000)])
+    await publish(db, id, [record(1, 'Stale', 500)])
     const after = await rows(db, 'tadinada', 'collection', undefined)
     expect(JSON.parse(after.rows[0].value).title).toBe('Rumours (2011 reissue)')
 
-    await publish(db, id, [], [{ kind: 'item', key: '2' }])
+    // a later pass that leaves out record 2: it isn't theirs any more
+    await publish(db, id, [record(1, 'Rumours (2011 reissue)', 3000)])
+    expect(await sweep(db, id, 'collection', 3000)).toEqual({ gone: 1 })
     expect((await rows(db, 'tadinada', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['1'])
+  })
+
+  it('sweeps only the section it is given', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setSections(db, id, { wantlist: 'public' })
+    await publish(db, id, [row('want', '9', { title: 'Wanted' }, 1000), row('about', 'about', { avatar: 'a.jpg' }, 1000)])
+    await publish(db, id, [record(1, 'Rumours', 2000)])
+    await sweep(db, id, 'collection', 2000)
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['1'])
+    expect((await rows(db, 'tadinada', 'wantlist', undefined)).rows.map((r) => r.key)).toEqual(['9'])
+    expect(JSON.parse((await head(db, 'tadinada'))!.about!).avatar).toBe('a.jpg')
+  })
+
+  it("sends their Discogs picture while anything is shared, and not once it isn't", async () => {
+    const db = testDB()
+    const { id } = await account(db)
+    expect(await publish(db, id, [row('about', 'about', { avatar: 'a.jpg' })])).toEqual({ saved: 0 })
+    await setSections(db, id, { collection: 'public' })
+    expect(await publish(db, id, [row('about', 'about', { avatar: 'a.jpg' })])).toEqual({ saved: 1 })
   })
 
   it('notes when it last heard from the owner', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    await publish(db, id, [record(3, 'Blue')], [], 5000)
+    await publish(db, id, [record(3, 'Blue')], 5000)
     expect((await settings(db, id)).publishedAt).toBe(5000)
     expect((await head(db, 'tadinada'))?.publishedAt).toBe(5000)
   })
@@ -156,7 +178,7 @@ describe('switching off and deleting', () => {
     const db = testDB()
     const mine = await shared(db)
     const yours = await shared(db, YOU)
-    await publish(db, yours.id, [record(5, 'Yours only')], [])
+    await publish(db, yours.id, [record(5, 'Yours only')])
     await push(db, { DB: db }, mine.id, [{ kind: 'play', key: 'p1', value: '{"secret":true}', updatedAt: 1, deleted: false }])
 
     const seen = (await rows(db, 'tadinada', 'collection', undefined)).rows

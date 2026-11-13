@@ -1,3 +1,4 @@
+import type { Sections } from '../../worker/profile'
 import type { CloudApi, DeviceInfo, PasskeyInfo } from './cloud'
 import { deviceKind, deviceName } from './deviceName'
 
@@ -19,6 +20,7 @@ export function demoCloudApi(): CloudApi {
     { id: 'demo', name: 'Safari on iPhone', createdAt: now - 90 * 86_400_000, lastUsedAt: now - 30 * 86_400_000 },
   ]
   let password = false
+  let sections: Sections = { collection: 'public', wantlist: 'off', stats: 'off', year: 'off' }
   const pause = () => new Promise<void>((r) => setTimeout(r, 300))
   const nothing = async () => {
     await pause()
@@ -64,6 +66,14 @@ export function demoCloudApi(): CloudApi {
       passkeys = passkeys.filter((p) => p.id !== id)
       return {}
     },
+    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000 }),
+    setSections: async (next) => {
+      await pause()
+      sections = { ...sections, ...next }
+      return { sections }
+    },
+    publishProfile: async (rows) => ({ saved: rows.length }),
+    sweepProfile: async () => ({ gone: 0 }),
     members: async () => ({ members: [] }),
     setBadge: async () => ({ badges: [] }),
     clearWaysIn: nothing,

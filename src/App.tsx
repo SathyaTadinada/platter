@@ -26,6 +26,7 @@ import { Import } from './screens/Import'
 import { Results } from './screens/Results'
 import { Account } from './screens/Account'
 import { Admin } from './screens/Admin'
+import { Profile } from './screens/Profile'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -139,6 +140,7 @@ function Routes({ error }: { error?: string }) {
                 <Redirect to="/account" replace />
               </Route>
               <Route path="/admin" component={Admin} />
+              <Route path="/u/:username">{(p) => <Profile username={p.username!} />}</Route>
               <Route path="/value" component={Stats} />
               <Route path="/about" component={About} />
               <Route component={Collection} />

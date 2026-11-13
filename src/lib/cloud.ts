@@ -1,4 +1,5 @@
 import { categoryOf, type Category } from '../../worker/categories'
+import type { Sections, Section } from '../../worker/profile'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
 import {
@@ -125,6 +126,16 @@ export type Member = {
 }
 type Challenge<T> = { id: string; options: T }
 
+export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
+export type ProfileHead = {
+  username: string
+  badges: string[]
+  memberSince: number
+  publishedAt: number | null
+  sections: Section[]
+  about: string | null
+}
+
 // Getting in, before there's a device key
 export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
   // by name: accounts made before Discogs logins were confirmed
@@ -143,6 +154,14 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
     call<{ device: string; name: string }>(fetchFn, 'join', { code, deviceName: deviceName(), deviceKind: deviceKind() }),
   passkeyOptions: (discogsId: number) =>
     call<Challenge<PublicKeyCredentialRequestOptionsJSON>>(fetchFn, 'passkey-signin-options', { discogsId }),
+  // a profile is read by anyone with the link, so it goes through the same door as signing in
+  profile: (username: string) => call<ProfileHead>(fetchFn, 'profile', { username }),
+  profileRows: (username: string, section: Section, after?: string) =>
+    call<{ rows: { key: string; value: string; updatedAt: number }[]; more: boolean }>(fetchFn, 'profile-rows', {
+      username,
+      section,
+      after,
+    }),
   passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
     call<{ device: string; name: string }>(fetchFn, 'passkey-signin', {
       discogsId,
@@ -171,6 +190,10 @@ export type CloudApi = {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
+  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null }>
+  setSections(sections: Sections): Promise<{ sections: Sections }>
+  publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
+  sweepProfile(section: Section, before: number): Promise<{ gone: number }>
   members(): Promise<{ members: Member[] }>
   setBadge(member: string, badge: string, on: boolean): Promise<{ badges: string[] }>
   clearWaysIn(member: string): Promise<unknown>
@@ -197,6 +220,10 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     passkeys: () => c('passkeys'),
     renamePasskey: (id, name) => c('passkey-rename', { id, name }),
     removePasskey: (id) => c('passkey-remove', { id }),
+    profileSettings: () => c('profile-settings'),
+    setSections: (sections) => c('profile-sections', { sections }),
+    publishProfile: (rows) => c('profile-publish', { rows }),
+    sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     members: () => c('admin-members'),
     setBadge: (member, badge, on) => c('admin-badge', { member, badge, on }),
     clearWaysIn: (member) => c('admin-clear', { member }),
