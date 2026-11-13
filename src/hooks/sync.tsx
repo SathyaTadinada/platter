@@ -6,7 +6,7 @@ import { db } from '../db/db'
 import { flushScrobbles } from '../lib/plays'
 import { recordCollectionValue, recordedToday } from '../lib/pricing'
 import { checkPrices } from './prices'
-import { checkSignIn } from '../lib/signIn'
+import { recheckSession } from '../lib/signIn'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
 import { useSession } from './session'
 
@@ -47,11 +47,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         updateValues(client, session.username)
       } catch (e) {
         if (e instanceof DiscogsError && (e.status === 401 || e.status === 403)) {
-          const check = await checkSignIn(client, session.username).catch(() => 'ok' as const)
-          if (check !== 'ok') {
-            // a banner asks to sign in again; a changed username just needs the session updated
-            const next = check === 'expired' ? { ...session, expired: true } : { ...session, username: check.username }
-            await db.session.put(next)
+          const next = await recheckSession(client, session)
+          if (next) {
             setState(idle)
             setSession(next)
             return

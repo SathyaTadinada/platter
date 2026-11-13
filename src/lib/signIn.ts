@@ -1,7 +1,7 @@
 import { DiscogsClient, DiscogsError } from '../api/discogs/client'
 import { getIdentity } from '../api/discogs/endpoints'
 import { loadSession, oauthAuth, saveSession, tokenAuth, wipeLocalData } from '../auth/auth'
-import type { Session } from '../db/db'
+import { db, type Session } from '../db/db'
 
 const pending = { username: '', id: 0 }
 
@@ -35,4 +35,15 @@ export async function checkSignIn(client: DiscogsClient, username: string): Prom
     if (e instanceof DiscogsError && (e.status === 401 || e.status === 403)) return 'expired'
     throw e
   }
+}
+
+// After Discogs turns down a request: a sign-in that stopped working is marked so the app asks to
+// log in again (keeping everything here), and a changed username just updates the session.
+// Returns the new session, or null when the sign-in still works.
+export async function recheckSession(client: DiscogsClient, session: Session): Promise<Session | null> {
+  const check = await checkSignIn(client, session.username).catch(() => 'ok' as const)
+  if (check === 'ok') return null
+  const next = check === 'expired' ? { ...session, expired: true } : { ...session, username: check.username }
+  await db.session.put(next)
+  return next
 }
