@@ -18,6 +18,7 @@ import { Button, List, Notice, Screen, Section, Spinner, useBack } from '../comp
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
+import { useStickyColumn } from '../hooks/useStickyColumn'
 import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
@@ -59,6 +60,8 @@ export function Record({ id }: { id: string }) {
       pressings: pressings.filter((p) => p.releaseId !== item.releaseId),
     }
   }, [item?.instanceId, item?.releaseId, item?.masterId])
+
+  const stickyColumn = useStickyColumn()
 
   if (item === undefined) {
     return (
@@ -158,10 +161,8 @@ export function Record({ id }: { id: string }) {
       actions={<ShareButton url={url} title={`${item.artist} – ${item.title}`} />}
     >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
-        {/* on wide screens the tracklist sits under the cover, and both stay in view while the details
-            scroll past; a tracklist too long for the screen scrolls in its own column (cqh: the height of the app's scrolling area). The padding
-            leaves room for the cover's shadow, which the scrolling would otherwise cut off. */}
-        <div className="space-y-6 lg:sticky lg:top-20 lg:-m-4 lg:max-h-[calc(100cqh-5rem)] lg:self-start lg:overflow-y-auto lg:p-4 lg:[scrollbar-width:thin]">
+        {/* on wide screens the tracklist sits under the cover, and both stay in view while the details scroll past */}
+        <div ref={stickyColumn} className="space-y-6 lg:sticky lg:self-start">
           <div>
             <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
             {canPickCover && (
