@@ -259,10 +259,10 @@ export function Settings() {
               {cloud.available && (
                 <Row
                   icon={<Cloud size={20} />}
-                  label="Sync across devices"
+                  label="Platter account"
                   detail={cloud.enabled ? (cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : 'On') : undefined}
                   value={cloud.enabled ? undefined : 'Off'}
-                  href="/sync"
+                  href="/account"
                 />
               )}
               <Row

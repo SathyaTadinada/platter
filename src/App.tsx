@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Route, Switch, useLocation, useSearch } from 'wouter'
+import { Redirect, Route, Switch, useLocation, useSearch } from 'wouter'
 import { loadSession } from './auth/auth'
 import { finishOAuth } from './auth/oauthFlow'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -24,7 +24,8 @@ import { Batch } from './screens/Batch'
 import { Crates } from './screens/Crates'
 import { Import } from './screens/Import'
 import { Results } from './screens/Results'
-import { CloudSync } from './screens/CloudSync'
+import { Account } from './screens/Account'
+import { Admin } from './screens/Admin'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -133,7 +134,11 @@ function Routes({ error }: { error?: string }) {
               <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
               <Route path="/play" component={NowPlaying} />
               <Route path="/listenbrainz" component={ListenBrainz} />
-              <Route path="/sync" component={CloudSync} />
+              <Route path="/account" component={Account} />
+              <Route path="/sync">
+                <Redirect to="/account" replace />
+              </Route>
+              <Route path="/admin" component={Admin} />
               <Route path="/value" component={Stats} />
               <Route path="/about" component={About} />
               <Route component={Collection} />

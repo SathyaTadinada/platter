@@ -6,13 +6,15 @@ import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
 import { quiet } from '../db/capture'
-import { db, getSetting, setSetting, type QueueItem } from '../db/db'
+import { db, getSetting, type QueueItem } from '../db/db'
+import type { Session } from '../db/db'
 import {
   capture,
   changePassword as savePassword,
   claimBatch,
   CLOUD,
   cloudApi,
+  CloudError,
   cloudEntry,
   deviceFor,
   forgetAccount,
@@ -20,10 +22,16 @@ import {
   leave as leaveSync,
   setWhatSyncs,
   signIn as signInSync,
+  signInWithDiscogs,
+  signInWithPasskey,
   signOutOfSync,
   syncNow,
   takeNeedCandidates,
+  type CloudApi,
+  type Login,
+  type WaysIn,
 } from '../lib/cloud'
+import { demoCloudApi } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
 import { lookupBarcode } from '../lib/lookup'
 import { useSession } from './session'
@@ -36,9 +44,14 @@ type Ctx = {
   error: string | null
   syncedAt: number | null
   off: Category[]
-  exists: () => Promise<boolean> // whether this Discogs account already syncs somewhere
+  api: CloudApi | null // while this device is in: the account's devices, passkeys, and so on
+  // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
+  // logins were confirmed, which only its password or a code opens
+  waysIn: () => Promise<WaysIn & { legacy: boolean }>
   syncNow: () => Promise<void>
-  signIn: (password: string, fresh?: boolean) => Promise<void>
+  signInWithDiscogs: (create: boolean) => Promise<boolean>
+  signInWithPasskey: () => Promise<void>
+  signIn: (password: string) => Promise<void>
   join: (code: string) => Promise<void>
   pair: () => Promise<{ code: string; expiresAt: number }>
   changePassword: (password: string) => Promise<void>
@@ -57,6 +70,8 @@ const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
 // apart: background work (album years, record lengths) saves something every couple of seconds
 const PUSH_AFTER = 5000
 const MIN_GAP = 30_000
+
+const loginOf = (s: Session): Login => (s.kind === 'oauth' ? { token: s.token, tokenSecret: s.secret ?? '' } : { token: s.token })
 
 export function CloudProvider({ children }: { children: ReactNode }) {
   const { session, client } = useSession()
@@ -162,20 +177,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [api, run])
 
-  // Once per sign-in on a browser that isn't syncing: if this Discogs account syncs elsewhere, say so
-  useEffect(() => {
-    if (!username || device) return
-    ;(async () => {
-      if (await getSetting<boolean>(CLOUD.checked)) return
-      const exists = await cloudEntry()
-        .exists(username)
-        .catch(() => null)
-      if (exists === null) return // try again next time
-      await setSetting(CLOUD.checked, true)
-      if (exists) toast('Sync is set up on another device', { action: { label: 'Sync here', onClick: () => navigate('/sync') } })
-    })()
-  }, [username, device, navigate])
-
   // getting in or out: the saved key changes, so read it again either way
   const entered = useCallback(async (go: () => Promise<void>) => {
     setRunning(true)
@@ -188,9 +189,50 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Once per open on a browser that isn't in: if this Discogs user has an account, confirm the login
+  // and join it. Nothing to click; the synced data just arrives. When the check can't run, say so
+  // once, with the other ways in a tap away.
+  const joining = useRef(false)
+  useEffect(() => {
+    if (!username || device || joining.current || !session || session.kind === 'demo' || session.expired) return
+    joining.current = true
+    ;(async () => {
+      if (await getSetting<boolean>(CLOUD.left)) return
+      const ways = await cloudEntry()
+        .waysIn(session.userId)
+        .catch(() => null)
+      if (!ways?.exists) return
+      try {
+        await entered(async () => void (await signInWithDiscogs(username, loginOf(session), false)))
+      } catch (e) {
+        if (e instanceof CloudError && e.status !== 401)
+          toast('Couldn’t sign in to your Platter account', { action: { label: 'Sign in', onClick: () => navigate('/account') } })
+      }
+    })()
+  }, [username, device, session, entered, navigate])
+
+  // An account made before Discogs logins were confirmed picks up its Discogs user from the first
+  // device that's in, once per open until it has
+  const linking = useRef(false)
+  useEffect(() => {
+    if (!api || linking.current || !session || session.kind === 'demo' || session.expired) return
+    linking.current = true
+    ;(async () => {
+      const acc = await api.account().catch(() => null)
+      if (acc && acc.discogsId === null) await api.link(loginOf(session)).catch(() => {})
+    })()
+  }, [api, session])
+
   const demoValue = useDemoCloud()
   const value: Ctx = {
-    exists: () => cloudEntry().exists(username),
+    api,
+    waysIn: async () => {
+      const entry = cloudEntry()
+      const ways = await entry.waysIn(session!.userId)
+      if (ways.exists) return { ...ways, legacy: false }
+      const legacy = await entry.exists(username)
+      return { exists: legacy, password: legacy, passkeys: false, legacy }
+    },
     available: Boolean(username),
     username,
     enabled,
@@ -199,7 +241,15 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     syncedAt: saved?.syncedAt ?? null,
     off: saved?.off ?? [],
     syncNow: () => run(true),
-    signIn: (password, fresh) => entered(() => signInSync(username, password, fresh)),
+    signInWithDiscogs: async (create) => {
+      let joined = false
+      await entered(async () => {
+        joined = await signInWithDiscogs(username, loginOf(session!), create)
+      })
+      return joined
+    },
+    signInWithPasskey: () => entered(() => signInWithPasskey(username, session!.userId)),
+    signIn: (password) => entered(() => signInSync(username, password, session!.userId)),
     join: (code) => entered(() => joinWithCode(username, code)),
     pair: async () => {
       if (!api) throw new Error('Not syncing')
@@ -233,6 +283,7 @@ function useDemoCloud(): Ctx {
   const [off, setOff] = useState<Category[]>([])
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
+  const api = useMemo(() => demoCloudApi(), [])
   const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
   const signIn = async () => {
     await pause(600)
@@ -247,7 +298,13 @@ function useDemoCloud(): Ctx {
     error: null,
     syncedAt,
     off,
-    exists: async () => true,
+    api: enabled ? api : null,
+    waysIn: async () => ({ exists: true, password: false, passkeys: true, legacy: false }),
+    signInWithDiscogs: async () => {
+      await signIn()
+      return true
+    },
+    signInWithPasskey: signIn,
     syncNow: async () => {
       setRunning(true)
       await pause(800)

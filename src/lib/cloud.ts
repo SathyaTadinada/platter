@@ -1,21 +1,33 @@
 import { categoryOf, type Category } from '../../worker/categories'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
+import {
+  browserSupportsWebAuthn,
+  startAuthentication,
+  startRegistration,
+  type AuthenticationResponseJSON,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+  type RegistrationResponseJSON,
+} from '@simplewebauthn/browser'
 import { applyAccent } from './accent'
+import { deviceName } from './deviceName'
 import { prefListeners, readPref, removePref, writePref } from './prefs'
 import { LAYOUTS } from './statsLayout'
 import { applyTheme } from './theme'
 
-// Cloud sync: what you save in Platter follows you to every device. An account is your Discogs
-// username and a sync password; each browser that gets in (with the password, or a pairing code from
-// a device that's already in) keeps a device key. Changes are noted as they happen (db/capture.ts),
+// Cloud sync: what you save in Platter follows you to every device. It's the first thing the Platter
+// account does, which belongs to your Discogs user: the server confirms a Discogs login itself, and a
+// passkey, a password, or a pairing code from a device that's already in are the other ways in. Each
+// browser that gets in keeps a device key. Changes are noted as they happen (db/capture.ts),
 // sent in batches, and other devices' changes come back by number (the server's seq) so each pull
 // only carries what's new. The newest edit wins.
 
 export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', ...LAYOUTS.map((l) => l.pref)])
 
 // per device, so none of these sync
-export const CLOUD = { cursor: 'cloudCursor', syncedAt: 'cloudSyncedAt', checked: 'cloudChecked', off: 'cloudOff' } as const
+// left: sync was turned off on this device, so it doesn't join the account again by itself
+export const CLOUD = { cursor: 'cloudCursor', syncedAt: 'cloudSyncedAt', left: 'cloudLeft', off: 'cloudOff' } as const
 
 export type Row = { kind: Kind; key: string; value: string | null; updatedAt: number; deleted?: boolean; ifSeq?: number; seq?: number }
 type PullResult = { rows: Row[]; seq: number; more: boolean; off: Category[] }
@@ -85,11 +97,45 @@ async function call<T>(fetchFn: typeof fetch, path: string, body: object): Promi
   return res.json() as Promise<T>
 }
 
+// A Discogs login as the server needs it to confirm whose it is: a personal token alone, or an OAuth
+// token and secret. Sent only for that check, never kept.
+export type Login = { token: string; tokenSecret?: string }
+export type WaysIn = { exists: boolean; password: boolean; passkeys: boolean }
+export type AccountInfo = { name: string; discogsId: number | null; password: boolean; passkeys: number; admin: boolean; badges: string[] }
+export type DeviceInfo = { id: string; name: string | null; createdAt: number; lastSeenAt: number | null; current: boolean }
+export type PasskeyInfo = { id: string; name: string; createdAt: number; lastUsedAt: number | null }
+export type Member = {
+  id: string
+  name: string
+  discogsId: number | null
+  createdAt: number
+  lastSeenAt: number | null
+  devices: number
+  passkeys: number
+  password: boolean
+  admin: boolean
+  badges: string[]
+}
+type Challenge<T> = { id: string; options: T }
+
 // Getting in, before there's a device key
 export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
+  // by name: accounts made before Discogs logins were confirmed
   exists: (name: string) => call<{ exists: boolean }>(fetchFn, 'exists', { name }).then((r) => r.exists),
-  signIn: (name: string, proof: string, fresh = false) => call<{ device: string }>(fetchFn, 'signin', { name, proof, fresh }),
-  join: (code: string) => call<{ device: string; name: string }>(fetchFn, 'join', { code }),
+  waysIn: (discogsId: number) => call<WaysIn>(fetchFn, 'exists', { discogsId }),
+  discogs: (login: Login, create: boolean) =>
+    call<{ device: string | null; created: boolean; name: string; discogsId: number }>(fetchFn, 'discogs', {
+      login,
+      create,
+      deviceName: deviceName(),
+    }),
+  signIn: (name: string, proof: string, discogsId?: number) =>
+    call<{ device: string }>(fetchFn, 'signin', { name, proof, discogsId, deviceName: deviceName() }),
+  join: (code: string) => call<{ device: string; name: string }>(fetchFn, 'join', { code, deviceName: deviceName() }),
+  passkeyOptions: (discogsId: number) =>
+    call<Challenge<PublicKeyCredentialRequestOptionsJSON>>(fetchFn, 'passkey-signin-options', { discogsId }),
+  passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
+    call<{ device: string; name: string }>(fetchFn, 'passkey-signin', { discogsId, id, response, deviceName: deviceName() }),
 })
 
 export type CloudApi = {
@@ -100,6 +146,19 @@ export type CloudApi = {
   setOff(off: Category[]): Promise<{ off: Category[] }>
   leave(): Promise<unknown>
   forget(): Promise<unknown>
+  account(): Promise<AccountInfo>
+  link(login: Login): Promise<unknown>
+  devices(): Promise<{ devices: DeviceInfo[] }>
+  removeDevice(id: string): Promise<unknown>
+  passkeyOptions(): Promise<Challenge<PublicKeyCredentialCreationOptionsJSON>>
+  registerPasskey(id: string, response: RegistrationResponseJSON, name: string): Promise<PasskeyInfo>
+  passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
+  renamePasskey(id: string, name: string): Promise<unknown>
+  removePasskey(id: string): Promise<unknown>
+  members(): Promise<{ members: Member[] }>
+  setBadge(member: string, badge: string, on: boolean): Promise<{ badges: string[] }>
+  clearWaysIn(member: string): Promise<unknown>
+  deleteMember(member: string): Promise<unknown>
 }
 
 export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch(...a)): CloudApi {
@@ -112,6 +171,19 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setOff: (off) => c('off', { off }),
     leave: () => c('leave'),
     forget: () => c('forget'),
+    account: () => c('account'),
+    link: (login) => c('link', { login }),
+    devices: () => c('devices'),
+    removeDevice: (id) => c('device-remove', { id }),
+    passkeyOptions: () => c('passkey-options'),
+    registerPasskey: (id, response, name) => c('passkey-register', { id, response, name }),
+    passkeys: () => c('passkeys'),
+    renamePasskey: (id, name) => c('passkey-rename', { id, name }),
+    removePasskey: (id) => c('passkey-remove', { id }),
+    members: () => c('admin-members'),
+    setBadge: (member, badge, on) => c('admin-badge', { member, badge, on }),
+    clearWaysIn: (member) => c('admin-clear', { member }),
+    deleteMember: (member) => c('admin-delete', { member }),
   }
 }
 
@@ -377,6 +449,7 @@ async function firstRound(api: CloudApi) {
 
 async function start(name: string, device: string) {
   saveDevice({ name: name.toLowerCase(), device })
+  await db.settings.delete(CLOUD.left)
   try {
     await firstRound(cloudApi(device))
   } catch (e) {
@@ -386,11 +459,37 @@ async function start(name: string, device: string) {
   }
 }
 
-// With the sync password. fresh starts a separate account when the name already has one with another password.
-export async function signIn(username: string, password: string, fresh = false, entry = cloudEntry()) {
-  const { device } = await entry.signIn(username, await proofFor(username, password), fresh)
+// With the account's password
+export async function signIn(username: string, password: string, discogsId?: number, entry = cloudEntry()) {
+  const { device } = await entry.signIn(username, await proofFor(username, password), discogsId)
   await start(username, device)
 }
+
+// With the Discogs login this browser already has, once the server has confirmed whose it is. Makes
+// the account when asked; otherwise false when there isn't one.
+export async function signInWithDiscogs(username: string, login: Login, create: boolean, entry = cloudEntry()): Promise<boolean> {
+  const { device } = await entry.discogs(login, create)
+  if (!device) return false
+  await start(username, device)
+  return true
+}
+
+export async function signInWithPasskey(username: string, discogsId: number, entry = cloudEntry()) {
+  const { id, options } = await entry.passkeyOptions(discogsId)
+  const response = await startAuthentication({ optionsJSON: options })
+  const { device } = await entry.passkeySignIn(discogsId, id, response)
+  await start(username, device)
+}
+
+export async function addPasskey(api: CloudApi): Promise<PasskeyInfo> {
+  const { id, options } = await api.passkeyOptions()
+  const response = await startRegistration({ optionsJSON: options })
+  return api.registerPasskey(id, response, deviceName())
+}
+
+// Passkeys belong to the real site's address (and localhost for testing)
+export const passkeysHere = () =>
+  browserSupportsWebAuthn() && (location.hostname === 'platter.tadinada.com' || location.hostname === 'localhost')
 
 // With a code from a device that's already in. The code has to be for the Discogs account signed in here.
 export async function joinWithCode(username: string, code: string, entry = cloudEntry()) {
@@ -417,13 +516,15 @@ export async function setWhatSyncs(api: CloudApi, next: Category[]) {
 export async function leave(api: CloudApi) {
   await api.leave().catch(() => {})
   await resetDevice()
+  await setSetting(CLOUD.left, true)
 }
 
 // Signing out of Discogs on a device that syncs: anything not sent yet goes first (this throws if it
 // can't), then the device leaves sync, so its key isn't left behind in a browser that's been signed out of
 export async function signOutOfSync(api: CloudApi) {
   await pushAll(api)
-  await leave(api)
+  await api.leave().catch(() => {})
+  await resetDevice()
 }
 
 // The whole account, from every device

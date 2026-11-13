@@ -8,7 +8,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <ShieldCheck size={20} />,
     title: 'No tracking',
-    text: 'No ads or analytics. You only need an account if you want to sync between devices.',
+    text: 'No ads or analytics. You only need a Platter account if you want to sync between devices.',
   },
   {
     icon: <Camera size={20} />,
@@ -24,12 +24,12 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <KeyRound size={20} />,
     title: 'Log in with Discogs',
-    text: 'Your Discogs sign-in stays in this browser, and Platter talks to Discogs directly. If you log in with Discogs, Platter’s server signs each request without storing your key or seeing the response.',
+    text: 'Your Discogs sign-in stays in this browser, and Platter talks to Discogs directly. If you log in with Discogs, Platter’s server signs each request without storing your key or seeing the response. With a Platter account, it also checks who you are once on each new device.',
   },
   {
     icon: <Cloud size={20} />,
-    title: 'Sync',
-    text: 'Enable sync to keep your plays, value history, covers, batch, and settings on your other devices. This feature is off by default.',
+    title: 'Platter account',
+    text: 'Create a Platter account to keep your plays, value history, covers, batch, and settings on your other devices. It belongs to your Discogs account, so logging in with Discogs gets you back in. It’s off by default.',
   },
   {
     icon: <Plug size={20} />,
@@ -39,7 +39,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <LogOut size={20} />,
     title: 'Signing out',
-    text: 'Signing out clears this browser. With sync on, your data remains in Platter. Without sync, album years, record lengths, and preferences stay unless you delete everything.',
+    text: 'Signing out clears this browser. With a Platter account, your data stays in it. Without one, album years, record lengths, and preferences stay unless you delete everything.',
   },
 ]
 

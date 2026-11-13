@@ -13,6 +13,7 @@ import {
   leave,
   setWhatSyncs,
   signIn,
+  signInWithDiscogs,
   signOutOfSync,
   syncNow,
   takeNeedCandidates,
@@ -48,6 +49,16 @@ function fakeServer() {
         accounts.push(a)
       }
       return json({ device: newDevice(a) })
+    }
+    // the real server asks Discogs; here a token names its user
+    if (action === 'discogs') {
+      const name = b.login.token.replace('tok-', '')
+      let a = accounts.find((x) => x.name === name)
+      if (!a && b.create) {
+        a = { id: `acc-${++n}`, name, proof: '', seq: 0, off: [], rows: new Map() }
+        accounts.push(a)
+      }
+      return json({ device: a ? newDevice(a) : null, created: Boolean(a && b.create), name, discogsId: 1 })
     }
     if (action === 'join') {
       const a = pairings.get(b.code.replace('-', ''))
@@ -184,13 +195,33 @@ describe('getting in', () => {
     expect(await db.outbox.count()).toBe(0)
   })
 
-  it('turns away a wrong password, and can start over with it', async () => {
+  it('turns away a wrong password', async () => {
     await signIn('tadinada', PASSWORD)
     await newDevice()
     await expect(signIn('tadinada', 'not it at all')).rejects.toMatchObject({ status: 401 })
     expect(deviceFor('tadinada')).toBeNull()
-    await signIn('tadinada', 'not it at all', true)
-    expect(server.accounts).toHaveLength(2)
+  })
+
+  it('joins the account with a Discogs login, and only makes one when asked', async () => {
+    await setSetting('stylus', { lifespan: 5 })
+    expect(await signInWithDiscogs('Tadinada', { token: 'tok-tadinada' }, false)).toBe(false)
+    expect(deviceFor('tadinada')).toBeNull()
+    expect(await signInWithDiscogs('Tadinada', { token: 'tok-tadinada' }, true)).toBe(true)
+    expect(server.accounts).toHaveLength(1)
+
+    await newDevice()
+    expect(await signInWithDiscogs('tadinada', { token: 'tok-tadinada' }, false)).toBe(true)
+    expect(await getSetting('stylus')).toEqual({ lifespan: 5 })
+  })
+
+  it("doesn't join again by itself after sync is turned off here", async () => {
+    await signIn('tadinada', PASSWORD)
+    await leave(api())
+    expect(await getSetting(CLOUD.left)).toBe(true)
+    await signIn('tadinada', PASSWORD)
+    expect(await getSetting(CLOUD.left)).toBeUndefined()
+    await signOutOfSync(api())
+    expect(await getSetting(CLOUD.left)).toBeUndefined()
   })
 
   it('lets a device in with a pairing code, but only for the same Discogs account', async () => {
