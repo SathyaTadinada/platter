@@ -8,6 +8,10 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Profiles are unlisted: they're there for anyone with the link, not for search engines
+/u/*
+  X-Robots-Tag: noindex, nofollow
+
 # OCR runs in a worker that loads its engine with importScripts, which the
 # page's Trusted Types rule would block; give the worker its own policy
 /ocr/*

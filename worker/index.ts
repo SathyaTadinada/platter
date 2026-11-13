@@ -19,6 +19,14 @@ import { clearWaysIn, deleteMember, members, requireAdmin, setBadge } from './ad
 import { browserRun, confirm, parseLogin } from './confirm'
 import { header, signParams } from './oauth'
 import {
+  head as profileHead,
+  parseRows as parseProfileRows,
+  publish as publishProfile,
+  rows as profileRows,
+  settings as profileSettings,
+  setSections,
+} from './profile'
+import {
   listPasskeys,
   parsePasskeyName,
   register,
@@ -178,6 +186,9 @@ const SYNC_ACTIONS = [
   'forget',
   'account',
   'link',
+  // a profile anyone with the link can read
+  'profile',
+  'profile-rows',
   'devices',
   'device-rename',
   'device-remove',
@@ -186,6 +197,9 @@ const SYNC_ACTIONS = [
   'passkeys',
   'passkey-rename',
   'passkey-remove',
+  'profile-settings',
+  'profile-sections',
+  'profile-publish',
   // admin only
   'admin-members',
   'admin-badge',
@@ -194,6 +208,8 @@ const SYNC_ACTIONS = [
 ] as const
 type SyncAction = (typeof SYNC_ACTIONS)[number]
 const ENTRY = new Set<SyncAction>(['exists', 'signin', 'join', 'discogs', 'passkey-signin-options', 'passkey-signin'])
+// read by anyone who has the link, so they take the per-IP limit rather than a device key
+const PUBLIC = new Set<SyncAction>(['profile', 'profile-rows'])
 
 async function sync(req: Request, env: Env, action: SyncAction): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
@@ -219,6 +235,18 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       throw new SyncError(400, 'Bad JSON')
     }
     const about = { name: parseDeviceName(input.deviceName), kind: parseDeviceKind(input.deviceKind) }
+
+    // Profiles are unlisted rather than private: anyone with the username can read the sections their
+    // owner switched on, and nothing else.
+    if (PUBLIC.has(action)) {
+      if (!(await allowed(env.SYNC_LIMITER, ipKey(req)))) return tooMany()
+      if (action === 'profile') {
+        const found = await profileHead(db, input.username)
+        if (!found) throw new SyncError(404, 'No profile here')
+        return ok(found)
+      }
+      return ok(await profileRows(db, input.username, input.section, input.after))
+    }
 
     // Getting in: the per-IP limit for sign-in, and for passwords and passkeys a per-account one too,
     // so nobody can guess their way in however many addresses they use
@@ -311,6 +339,12 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'passkey-remove':
         await removePasskey(db, account, input.id)
         return ok({ ok: true })
+      case 'profile-settings':
+        return ok(await profileSettings(db, account))
+      case 'profile-sections':
+        return ok({ sections: await setSections(db, account, input.sections) })
+      case 'profile-publish':
+        return ok(await publishProfile(db, account, parseProfileRows(input.rows), input.gone))
       case 'admin-members':
         return ok({ members: await members(db) })
       case 'admin-badge':
