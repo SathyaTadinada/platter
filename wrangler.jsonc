@@ -17,7 +17,11 @@
     { "name": "SYNC_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
     // wrong sync passwords, per account name, wherever they come from
     { "name": "LOGIN_LIMITER", "namespace_id": "1004", "simple": { "limit": 10, "period": 60 } },
+    // Discogs login checks through Browser Run, which has 10 minutes a day on the free plan
+    { "name": "CONFIRM_LIMITER", "namespace_id": "1005", "simple": { "limit": 3, "period": 60 } },
   ],
+  // a headless browser that can reach Discogs when the Worker can't (worker/confirm.ts)
+  "browser": { "binding": "BROWSER" },
   // cloud sync
   "d1_databases": [
     { "binding": "DB", "database_name": "platter", "database_id": "925a7706-80d0-4657-86d7-91fc13c4afc5", "migrations_dir": "migrations" },

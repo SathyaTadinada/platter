@@ -1,8 +1,8 @@
 // Cloud sync: keeps what a person saves in Platter (plays, value history, settings…) so every
-// device they use gets the same. An account is a name (their Discogs username) and a password.
-// The password never reaches the server: the browser stretches it into a proof, and the server
-// keeps a fingerprint of that. Each browser that gets in holds a device key of its own, and a
-// device that's in can hand out a short pairing code to let another one in.
+// device they use gets the same. An account belongs to a Discogs user, confirmed by the server
+// (account.ts). A password is optional and never reaches the server: the browser stretches it into
+// a proof, and the server keeps a fingerprint of that. Each browser that gets in holds a device key
+// of its own, and a device that's in can hand out a short pairing code to let another one in.
 
 import { categoryOf, parseOff, type Category } from './categories'
 
@@ -67,11 +67,18 @@ export function parseProof(x: unknown): string {
 
 // ---- accounts and devices ----
 
-async function newDevice(db: DB, account: string, now: number): Promise<string> {
+export const newId = () => b64url(random(16))
+
+// What the browser calls itself ("Safari on iPhone"), for the device list
+export function parseDeviceName(x: unknown): string | null {
+  return typeof x === 'string' && x.trim() ? x.trim().slice(0, 60) : null
+}
+
+export async function newDevice(db: DB, account: string, now: number, name: string | null = null): Promise<string> {
   const token = b64url(random(32))
   await db
-    .prepare('INSERT INTO devices (token, account, created_at) VALUES (?1, ?2, ?3)')
-    .bind(await sha256(token), account, now)
+    .prepare('INSERT INTO devices (token, account, created_at, name, last_seen_at) VALUES (?1, ?2, ?3, ?4, ?3)')
+    .bind(await sha256(token), account, now, name)
     .run()
   return token
 }
@@ -80,26 +87,45 @@ export async function nameExists(db: DB, name: string): Promise<boolean> {
   return Boolean(await db.prepare('SELECT 1 AS x FROM accounts WHERE name = ?1 LIMIT 1').bind(name).first())
 }
 
-// Lets a browser in with a name and password. With an account of that name but a different password
-// it says so, unless fresh: then it starts a new account (someone else already had the name, or the
-// old password is gone).
-export async function signIn(db: DB, name: string, proof: string, fresh: boolean, now = Date.now()): Promise<{ device: string }> {
+// Lets a browser in with a password. Accounts are found by Discogs user ID; one that hasn't been
+// tied to its Discogs user yet (made before the server could confirm them) by name. A password
+// never makes an account.
+export async function signIn(
+  db: DB,
+  who: { discogsId?: number; name: string },
+  proof: string,
+  now = Date.now(),
+  deviceName: string | null = null,
+): Promise<{ device: string }> {
   const proofHash = await sha256(proof)
-  const found = await db.prepare('SELECT id FROM accounts WHERE name = ?1 AND proof = ?2').bind(name, proofHash).first<{ id: string }>()
-  if (found) return { device: await newDevice(db, found.id, now) }
-  if (!fresh && (await nameExists(db, name))) throw new SyncError(401, 'Wrong password')
-  const id = b64url(random(16))
-  await db.prepare('INSERT INTO accounts (id, name, proof, created_at) VALUES (?1, ?2, ?3, ?4)').bind(id, name, proofHash, now).run()
-  return { device: await newDevice(db, id, now) }
+  const found =
+    (who.discogsId !== undefined
+      ? await db
+          .prepare('SELECT id FROM accounts WHERE discogs_id = ?1 AND proof = ?2')
+          .bind(who.discogsId, proofHash)
+          .first<{ id: string }>()
+      : null) ??
+    (await db
+      .prepare('SELECT id FROM accounts WHERE name = ?1 AND proof = ?2 AND discogs_id IS NULL')
+      .bind(who.name, proofHash)
+      .first<{ id: string }>())
+  if (!found) throw new SyncError(401, 'Wrong password')
+  return { device: await newDevice(db, found.id, now, deviceName) }
 }
 
-export async function deviceAccount(db: DB, device: unknown): Promise<string> {
+const SEEN_EVERY = 60 * 60 * 1000
+
+export async function deviceAccount(db: DB, device: unknown, now = Date.now()): Promise<string> {
   if (typeof device !== 'string' || !device || device.length > 100) throw new SyncError(401, 'Not signed in to sync')
+  const token = await sha256(device)
   const row = await db
-    .prepare('SELECT account FROM devices WHERE token = ?1')
-    .bind(await sha256(device))
-    .first<{ account: string }>()
+    .prepare('SELECT account, last_seen_at FROM devices WHERE token = ?1')
+    .bind(token)
+    .first<{ account: string; last_seen_at: number | null }>()
   if (!row) throw new SyncError(401, 'Not signed in to sync')
+  // for the device list; an hour is close enough, and saves a write on every request
+  if ((row.last_seen_at ?? 0) < now - SEEN_EVERY)
+    await db.prepare('UPDATE devices SET last_seen_at = ?2 WHERE token = ?1').bind(token, now).run()
   return row.account
 }
 
@@ -118,12 +144,14 @@ export async function leave(db: DB, device: string) {
     .run()
 }
 
-// Everything kept for the account: its rows, devices, codes, and the account itself
+// Everything kept for the account: its rows, devices, codes, passkeys, and the account itself
 export async function forget(db: DB, account: string) {
   await db.batch([
     db.prepare('DELETE FROM rows WHERE account = ?1').bind(account),
     db.prepare('DELETE FROM devices WHERE account = ?1').bind(account),
     db.prepare('DELETE FROM pairings WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM passkeys WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM challenges WHERE account = ?1').bind(account),
     db.prepare('DELETE FROM accounts WHERE id = ?1').bind(account),
   ])
 }
@@ -144,7 +172,12 @@ export async function newPairing(db: DB, account: string, now = Date.now()): Pro
   return { code: `${raw.slice(0, 3)}-${raw.slice(3)}`, expiresAt }
 }
 
-export async function usePairing(db: DB, code: unknown, now = Date.now()): Promise<{ device: string; name: string }> {
+export async function usePairing(
+  db: DB,
+  code: unknown,
+  now = Date.now(),
+  deviceName: string | null = null,
+): Promise<{ device: string; name: string }> {
   if (typeof code !== 'string' || normalCode(code).length !== 6) throw new SyncError(400, 'Bad code')
   const hash = await sha256(normalCode(code))
   const found = await db
@@ -153,7 +186,7 @@ export async function usePairing(db: DB, code: unknown, now = Date.now()): Promi
     .first<{ account: string; name: string }>()
   if (!found) throw new SyncError(401, 'That code is wrong or has expired')
   await db.prepare('DELETE FROM pairings WHERE code = ?1').bind(hash).run()
-  return { device: await newDevice(db, found.account, now), name: found.name }
+  return { device: await newDevice(db, found.account, now, deviceName), name: found.name }
 }
 
 // ---- what syncs ----

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
+import { discogsSignIn } from './account'
 import {
   deviceAccount,
   forget,
@@ -12,6 +13,7 @@ import {
   seal,
   setOff,
   setPassword,
+  sha256,
   signIn,
   SyncError,
   unseal,
@@ -37,44 +39,56 @@ const proof = (p: string) => p.padEnd(64, '0')
 const PW = proof('a1')
 const OTHER = proof('b2')
 
-// an account with one device in it, ready to sync
-async function account(db: ReturnType<typeof testDB>, name = 'tadinada', pw = PW) {
-  const { device } = await signIn(db, name, pw, false)
-  return { device, id: await deviceAccount(db, device) }
+let nextId = 1
+// an account with one device in it, ready to sync, made the way they're made now: from a Discogs
+// login the server confirmed
+async function account(db: ReturnType<typeof testDB>, name = 'tadinada', discogsId = nextId++) {
+  const { device } = await discogsSignIn(db, { id: discogsId, username: name }, true)
+  return { device: device!, id: await deviceAccount(db, device!) }
+}
+
+// one made before the server could confirm Discogs logins: a name and a password
+async function oldAccount(db: ReturnType<typeof testDB>, name: string, pw: string) {
+  const id = `old-${name}-${pw.slice(0, 2)}`
+  await db
+    .prepare('INSERT INTO accounts (id, name, proof, created_at) VALUES (?1, ?2, ?3, 0)')
+    .bind(id, name, await sha256(pw))
+    .run()
+  return id
 }
 
 describe('getting in', () => {
-  it('starts an account the first time, then lets the same password back in', async () => {
+  it('lets a password into the account it was set on', async () => {
     const { db } = setup()
-    const first = await account(db)
-    const second = await account(db)
-    expect(second.id).toBe(first.id)
-    expect(second.device).not.toBe(first.device)
+    const { id } = await account(db, 'tadinada', 42)
+    await setPassword(db, id, PW)
+    const { device } = await signIn(db, { discogsId: 42, name: 'tadinada' }, PW)
+    expect(await deviceAccount(db, device)).toBe(id)
   })
 
-  it('turns away a wrong password', async () => {
+  it('turns away a wrong password, and never makes an account from one', async () => {
     const { db } = setup()
-    await account(db)
-    await expect(signIn(db, 'tadinada', OTHER, false)).rejects.toMatchObject({ status: 401 })
+    const { id } = await account(db, 'tadinada', 42)
+    await setPassword(db, id, PW)
+    await expect(signIn(db, { discogsId: 42, name: 'tadinada' }, OTHER)).rejects.toMatchObject({ status: 401 })
+    await expect(signIn(db, { discogsId: 7, name: 'someone' }, PW)).rejects.toMatchObject({ status: 401 })
   })
 
-  it("can't be blocked by someone taking the name first", async () => {
+  it("keeps letting the password into an account that hasn't met its Discogs user yet", async () => {
     const { db } = setup()
-    const squatter = await account(db, 'tadinada', OTHER)
-    // the real one starts fresh with their own password
-    const { device } = await signIn(db, 'tadinada', PW, true)
-    const mine = await deviceAccount(db, device)
-    expect(mine).not.toBe(squatter.id)
-    await push(db, { DB: db }, mine, [row('play', 'a', {}, 1)])
-    expect((await pull(db, { DB: db }, squatter.id, 0)).rows).toEqual([])
+    const squatter = await oldAccount(db, 'tadinada', OTHER)
+    const mine = await oldAccount(db, 'tadinada', PW)
+    expect(await deviceAccount(db, (await signIn(db, { discogsId: 42, name: 'tadinada' }, PW)).device)).toBe(mine)
+    expect(await deviceAccount(db, (await signIn(db, { name: 'tadinada' }, OTHER)).device)).toBe(squatter)
   })
 
   it('lets any signed-in device change the password', async () => {
     const { db } = setup()
-    const { id } = await account(db)
+    const { id } = await account(db, 'tadinada', 42)
+    await setPassword(db, id, PW)
     await setPassword(db, id, OTHER)
-    await expect(signIn(db, 'tadinada', PW, false)).rejects.toMatchObject({ status: 401 })
-    expect(await deviceAccount(db, (await signIn(db, 'tadinada', OTHER, false)).device)).toBe(id)
+    await expect(signIn(db, { discogsId: 42, name: 'tadinada' }, PW)).rejects.toMatchObject({ status: 401 })
+    expect(await deviceAccount(db, (await signIn(db, { discogsId: 42, name: 'tadinada' }, OTHER)).device)).toBe(id)
   })
 
   it('forgets a device that leaves', async () => {

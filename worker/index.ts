@@ -1,15 +1,31 @@
 // Handles /api/*. Everything else is served from static assets.
 // The Worker never talks to Discogs: it signs requests (including the sign-in steps) that the
 // browser then sends itself, so Discogs sees the user's IP. Discogs turns away requests from
-// Cloudflare's shared addresses, which is also why cloud sync has accounts of its own (see sync.ts).
+// Cloudflare's shared addresses. The one exception is confirming whose Discogs login a browser holds,
+// which goes through a Browser Run browser (see confirm.ts).
 
+import { accountById, discogsSignIn, link, listDevices, parseDiscogsId, removeDevice, removePassword, waysIn } from './account'
+import { clearWaysIn, deleteMember, members, requireAdmin, setBadge } from './admin'
+import { browserRun, confirm, parseLogin } from './confirm'
 import { header, signParams } from './oauth'
+import {
+  listPasskeys,
+  parsePasskeyName,
+  register,
+  registerOptions,
+  relyingParty,
+  removePasskey,
+  renamePasskey,
+  signInOptions,
+  signInWithPasskey,
+} from './passkeys'
 import {
   deviceAccount,
   forget,
   leave,
   nameExists,
   newPairing,
+  parseDeviceName,
   parseName,
   parseProof,
   parseRows,
@@ -34,7 +50,9 @@ interface Env {
   AUTH_LIMITER: RateLimiter
   SYNC_LIMITER: RateLimiter
   LOGIN_LIMITER: RateLimiter
+  CONFIRM_LIMITER: RateLimiter
   ASSETS: Fetcher
+  BROWSER?: unknown
   DB?: DB
   SYNC_KEY?: string
 }
@@ -129,8 +147,40 @@ async function sign(req: Request, env: Env): Promise<Response> {
   return Response.json({ headers: params.map(header), params }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
-const SYNC_ACTIONS = ['exists', 'signin', 'join', 'pull', 'push', 'pair', 'password', 'off', 'leave', 'forget'] as const
+const SYNC_ACTIONS = [
+  // getting in
+  'exists',
+  'signin',
+  'join',
+  'discogs',
+  'passkey-signin-options',
+  'passkey-signin',
+  // from a device that's in
+  'pull',
+  'push',
+  'pair',
+  'password',
+  'password-remove',
+  'off',
+  'leave',
+  'forget',
+  'account',
+  'link',
+  'devices',
+  'device-remove',
+  'passkey-options',
+  'passkey-register',
+  'passkeys',
+  'passkey-rename',
+  'passkey-remove',
+  // admin only
+  'admin-members',
+  'admin-badge',
+  'admin-clear',
+  'admin-delete',
+] as const
 type SyncAction = (typeof SYNC_ACTIONS)[number]
+const ENTRY = new Set<SyncAction>(['exists', 'signin', 'join', 'discogs', 'passkey-signin-options', 'passkey-signin'])
 
 async function sync(req: Request, env: Env, action: SyncAction): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
@@ -138,6 +188,16 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
   const db = env.DB
   if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
   const ok = (body: unknown) => Response.json(body, { headers: { 'Cache-Control': 'no-store' } })
+
+  // Asks Discogs, through Browser Run, whose login this is. Browser time is scarce on the free plan,
+  // so each address gets only a few a minute.
+  const confirmed = async (login: unknown) => {
+    const parsed = parseLogin(login)
+    if (!env.BROWSER) throw new SyncError(503, "Can't check with Discogs right now")
+    if (!(await allowed(env.CONFIRM_LIMITER, ipKey(req)))) throw new SyncError(429, 'Too many requests')
+    return confirm(parsed, browserRun(env.BROWSER), env.DISCOGS_CONSUMER_KEY, env.DISCOGS_CONSUMER_SECRET)
+  }
+
   try {
     let input: Record<string, unknown>
     try {
@@ -145,16 +205,36 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
     } catch {
       throw new SyncError(400, 'Bad JSON')
     }
+    const deviceName = parseDeviceName(input.deviceName)
 
-    // Getting in: the per-IP limit for sign-in, and for passwords a per-name one too, so nobody can
-    // guess their way into an account however many addresses they use
-    if (action === 'exists' || action === 'signin' || action === 'join') {
+    // Getting in: the per-IP limit for sign-in, and for passwords and passkeys a per-account one too,
+    // so nobody can guess their way in however many addresses they use
+    if (ENTRY.has(action)) {
       if (!(await allowed(env.AUTH_LIMITER, ipKey(req)))) return tooMany()
-      if (action === 'join') return ok(await usePairing(db, input.code))
-      const name = parseName(input.name)
-      if (action === 'exists') return ok({ exists: await nameExists(db, name) })
-      if (!(await allowed(env.LOGIN_LIMITER, `name:${name}`))) return tooMany()
-      return ok(await signIn(db, name, parseProof(input.proof), input.fresh === true))
+      switch (action) {
+        case 'join':
+          return ok(await usePairing(db, input.code, Date.now(), deviceName))
+        case 'exists':
+          if (input.discogsId !== undefined) return ok(await waysIn(db, parseDiscogsId(input.discogsId)))
+          return ok({ exists: await nameExists(db, parseName(input.name)) })
+        case 'discogs': {
+          const who = await confirmed(input.login)
+          const r = await discogsSignIn(db, who, input.create === true, Date.now(), deviceName)
+          return ok({ ...r, name: who.username, discogsId: who.id })
+        }
+        case 'signin': {
+          const name = parseName(input.name)
+          const discogsId = input.discogsId === undefined ? undefined : parseDiscogsId(input.discogsId)
+          if (!(await allowed(env.LOGIN_LIMITER, discogsId ? `discogs:${discogsId}` : `name:${name}`))) return tooMany()
+          return ok(await signIn(db, { name, discogsId }, parseProof(input.proof), Date.now(), deviceName))
+        }
+        case 'passkey-signin-options':
+          return ok(await signInOptions(db, relyingParty(req.headers.get('Origin')), parseDiscogsId(input.discogsId)))
+        case 'passkey-signin': {
+          if (!(await allowed(env.LOGIN_LIMITER, `discogs:${parseDiscogsId(input.discogsId)}`))) return tooMany()
+          return ok(await signInWithPasskey(db, relyingParty(req.headers.get('Origin')), input.id, input.response, Date.now(), deviceName))
+        }
+      }
     }
 
     // everything else is from a device that's already in
@@ -163,6 +243,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
     }
     const account = await deviceAccount(db, input.device)
     const syncEnv = { DB: db, SYNC_KEY: env.SYNC_KEY }
+    if (action.startsWith('admin-')) await requireAdmin(db, account)
     switch (action) {
       case 'pull': {
         const since = Number(input.since ?? 0)
@@ -176,6 +257,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'password':
         await setPassword(db, account, parseProof(input.proof))
         return ok({ ok: true })
+      case 'password-remove':
+        await removePassword(db, account)
+        return ok({ ok: true })
       case 'off':
         return ok({ off: await setOff(db, account, input.off) })
       case 'leave':
@@ -184,9 +268,50 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'forget':
         await forget(db, account)
         return ok({ ok: true })
+      case 'account': {
+        const { id: _id, ...rest } = (await accountById(db, account))!
+        return ok(rest)
+      }
+      case 'link':
+        await link(db, account, await confirmed(input.login))
+        return ok({ ok: true })
+      case 'devices':
+        return ok({ devices: await listDevices(db, account, await sha256(input.device)) })
+      case 'device-remove':
+        await removeDevice(db, account, input.id)
+        return ok({ ok: true })
+      case 'passkey-options':
+        return ok(await registerOptions(db, account, relyingParty(req.headers.get('Origin'))))
+      case 'passkey-register':
+        return ok(
+          await register(db, account, relyingParty(req.headers.get('Origin')), input.id, input.response, parsePasskeyName(input.name)),
+        )
+      case 'passkeys':
+        return ok({ passkeys: await listPasskeys(db, account) })
+      case 'passkey-rename':
+        await renamePasskey(db, account, input.id, input.name)
+        return ok({ ok: true })
+      case 'passkey-remove':
+        await removePasskey(db, account, input.id)
+        return ok({ ok: true })
+      case 'admin-members':
+        return ok({ members: await members(db) })
+      case 'admin-badge':
+        return ok({ badges: await setBadge(db, input.member, input.badge, input.on === true) })
+      case 'admin-clear':
+        await clearWaysIn(db, input.member)
+        return ok({ ok: true })
+      case 'admin-delete':
+        await deleteMember(db, input.member)
+        return ok({ ok: true })
     }
+    throw new SyncError(404, 'Not found')
   } catch (e) {
-    if (e instanceof SyncError) return Response.json({ error: e.message }, { status: e.status, headers: { 'Cache-Control': 'no-store' } })
+    if (e instanceof SyncError) {
+      const headers: Record<string, string> = { 'Cache-Control': 'no-store' }
+      if (e.status === 429) headers['Retry-After'] = '60'
+      return Response.json({ error: e.message }, { status: e.status, headers })
+    }
     throw e
   }
 }
