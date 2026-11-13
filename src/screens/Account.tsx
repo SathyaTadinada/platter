@@ -409,7 +409,7 @@ function SignedIn() {
           </List>
           {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
         </Section>
-        <Section title="Ways in">
+        <Section title="Sign-in">
           <List>
             <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
             <Row
