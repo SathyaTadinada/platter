@@ -144,20 +144,32 @@ export function Screen({
   )
 }
 
-// info: a note about the section, behind an (i) next to the title
-export function Section({ title, info, children }: { title?: string; info?: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(false)
+// info: a note about the section, behind an (i) next to the title. Or the section shows more
+// itself: details is whether that's open, and the (i) toggles it.
+export function Section({
+  title,
+  info,
+  details,
+  children,
+}: {
+  title?: string
+  info?: ReactNode
+  details?: { open: boolean; toggle: () => void }
+  children: ReactNode
+}) {
+  const [noteOpen, setNoteOpen] = useState(false)
+  const open = details ? details.open : noteOpen
   return (
     <section className="mb-6">
       {title && (
         <div className="mb-2 flex items-center gap-1 px-1">
           <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">{title}</h2>
-          {info && (
+          {(info || details) && (
             <button
               type="button"
               aria-label={`About ${title.toLowerCase()}`}
               aria-expanded={open}
-              onClick={() => setOpen(!open)}
+              onClick={() => (details ? details.toggle() : setNoteOpen(!open))}
               className={`-my-1.5 rounded-full p-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 ${open ? 'text-stone-900 dark:text-stone-100' : 'text-stone-500'}`}
             >
               <Info size={14} />
@@ -165,7 +177,7 @@ export function Section({ title, info, children }: { title?: string; info?: Reac
           )}
         </div>
       )}
-      {info && open && <p className="mb-3 px-1 text-sm text-stone-500">{info}</p>}
+      {info && !details && open && <p className="mb-3 px-1 text-sm text-stone-500">{info}</p>}
       <div className="space-y-3">{children}</div>
     </section>
   )

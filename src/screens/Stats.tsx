@@ -47,9 +47,6 @@ export function Stats() {
       toolbar={toggle}
       actions={
         <>
-          <IconButton label="Choose charts" onClick={() => setChoosing(true)}>
-            <SlidersHorizontal size={20} />
-          </IconButton>
           {/* named from sm up, since no icon says "your year so far" on its own */}
           <IconButton label="Your year" className="sm:hidden" onClick={() => navigate('/stats/year')}>
             <CalendarRange size={20} />
@@ -62,6 +59,9 @@ export function Stats() {
             <CalendarRange size={20} aria-hidden />
             Your year
           </button>
+          <IconButton label="Choose charts" onClick={() => setChoosing(true)}>
+            <SlidersHorizontal size={20} />
+          </IconButton>
           <IconButton label="Share" onClick={() => setSharing(true)}>
             <Share size={20} />
           </IconButton>

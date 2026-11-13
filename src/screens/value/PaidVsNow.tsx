@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'wouter'
-import { Sheet } from '../../components/Sheet'
 import { Card, Section } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { change, paidTotal, parseMoney } from '../../lib/value'
@@ -67,36 +66,31 @@ export function PaidVsNow({
   const gains = rows.filter((r) => r.diff > 0).sort((a, b) => b.diff - a.diff)
   const losses = rows.filter((r) => r.diff < 0).sort((a, b) => a.diff - b.diff)
 
-  // behind the (i), so the card itself stays clean; the (i) only shows when something's left out
-  const note = rows.length > 0 && left.length > 0 && (
-    <>
-      Leaves out {left.length} record{left.length === 1 ? '' : 's'} without a current price.{' '}
-      <button type="button" onClick={() => setListing(true)} className="font-medium underline underline-offset-2">
-        See which
-      </button>
-    </>
-  )
+  // the records left out open below the bar from the (i), so the card stays clean otherwise.
+  // The (i) only shows when some are.
+  const details = rows.length > 0 && left.length > 0 ? { open: listing, toggle: () => setListing(!listing) } : undefined
 
   return (
-    <Section title="Paid vs now" info={note}>
-      {listing && (
-        <Sheet title="Not counted" onClose={() => setListing(false)}>
-          <ul className="divide-y divide-stone-200 dark:divide-stone-800">
-            {left.map((i) => (
-              <li key={i.instanceId}>
-                <RecordRow item={i} detail={i.artist}>
-                  <span className="text-sm text-stone-500 tabular-nums">Paid {money(parseMoney(i.fields[paidField])!)}</span>
-                </RecordRow>
-              </li>
-            ))}
-          </ul>
-        </Sheet>
-      )}
-      <Card>
+    <Section title="Paid vs now" details={details}>
+      <Card className="overflow-hidden">
         {rows.length ? (
           <>
             <Delta {...change(spent, worth)} money={money} />
             <PaidBar paid={spent} now={worth} money={money} />
+            {details?.open && (
+              <div className="-mx-4 mt-4 -mb-4 border-t border-stone-200 dark:border-stone-800">
+                <p className="px-4 pt-3 pb-1 text-xs font-semibold text-stone-500">Not counted: no current price</p>
+                <ul className="divide-y divide-stone-200 dark:divide-stone-800">
+                  {left.map((i) => (
+                    <li key={i.instanceId}>
+                      <RecordRow item={i}>
+                        <span className="text-sm text-stone-500 tabular-nums">Paid {money(parseMoney(i.fields[paidField])!)}</span>
+                      </RecordRow>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         ) : (
           <>

@@ -168,6 +168,12 @@ body {
   overscroll-behavior: none;
 }
 
+/* With scroll bars always shown, a page that grows tall enough to scroll would get narrower and
+   shift its content sideways (Collection and Stats, once they load). Keep the room for it. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
   font-family:

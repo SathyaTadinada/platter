@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
+  ArrowDownUp,
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
   Disc3,
@@ -150,6 +151,11 @@ export function Collection() {
     [items, query, sortCtx],
   )
   const sorting = SORTS.find((s) => s.key === query.sort)!
+  function sortBy(sort: SortKey, reversed: boolean) {
+    saveSort(sort, reversed)
+    setSortPicked((n) => n + 1)
+    setQuery({ ...query, sort, reversed })
+  }
   // headings only help when groups are reasonably full; sparse ones just break up the grid
   const groups = useMemo(() => {
     const shown = filtered.slice(0, limit)
@@ -219,36 +225,42 @@ export function Collection() {
         )}
       </label>
       <div className="flex items-center gap-2">
-        <Menu
-          label="Sort by"
-          align="left"
-          className="min-w-0"
-          buttonClassName="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full bg-stone-200 px-3 text-sm font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
-          button={
-            <>
-              <SortArrow sort={query.sort} reversed={query.reversed} size={16} />
-              <span className="truncate whitespace-nowrap">{sorting.label}</span>
-              <span className="sr-only">, {sorting.order[query.reversed ? 1 : 0].toLowerCase()}</span>
-            </>
-          }
-          // picking the current sort again turns it around
-          items={SORTS.map((s) => ({
-            label: s.label,
-            checked: s.key === query.sort,
-            checkedMark: (
-              <span className="flex items-center gap-1.5 text-xs text-stone-500">
-                {s.order[query.reversed ? 1 : 0]}
-                <SortArrow sort={s.key} reversed={query.reversed} size={16} className="text-accent" />
-              </span>
-            ),
-            onSelect: () => {
-              const reversed = s.key === query.sort ? !query.reversed : false
-              saveSort(s.key, reversed)
-              setSortPicked((n) => n + 1)
-              setQuery({ ...query, sort: s.key, reversed })
-            },
-          }))}
-        />
+        {/* what to sort by, and a separate button that turns it around in one tap */}
+        <div className="flex min-w-0 items-center rounded-full bg-stone-200 dark:bg-stone-800">
+          <Menu
+            label="Sort by"
+            align="left"
+            className="min-w-0"
+            buttonClassName="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-l-full py-1 pr-2.5 pl-3 text-sm font-medium hover:bg-stone-300 dark:hover:bg-stone-700"
+            button={
+              <>
+                <ArrowDownUp size={16} className="shrink-0" aria-hidden />
+                <span className="truncate whitespace-nowrap">{sorting.label}</span>
+              </>
+            }
+            // picking the current sort again turns it around too
+            items={SORTS.map((s) => ({
+              label: s.label,
+              checked: s.key === query.sort,
+              checkedMark: (
+                <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                  {s.order[query.reversed ? 1 : 0]}
+                  <SortArrow sort={s.key} reversed={query.reversed} size={16} className="text-accent" />
+                </span>
+              ),
+              onSelect: () => sortBy(s.key, s.key === query.sort ? !query.reversed : false),
+            }))}
+          />
+          <button
+            type="button"
+            onClick={() => sortBy(query.sort, !query.reversed)}
+            aria-label={`${sorting.order[query.reversed ? 1 : 0]}. Reverse order`}
+            title={sorting.order[query.reversed ? 1 : 0]}
+            className="inline-flex min-h-9 items-center rounded-r-full border-l border-stone-300 pr-3 pl-2.5 hover:bg-stone-300 dark:border-stone-700 dark:hover:bg-stone-700"
+          >
+            <SortArrow sort={query.sort} reversed={query.reversed} size={16} />
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}

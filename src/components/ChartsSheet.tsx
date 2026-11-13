@@ -16,21 +16,32 @@ type Drag<K> = {
   dx: number
   dy: number
   rowH: number
-  // where each column and its rows were when the drag started
+  // where the row, both columns, and their rows were when the drag started
+  row: DOMRect
+  bounds: DOMRect
   lists: Record<Side, { rect: DOMRect; rows: DOMRect[] }>
 }
 
-// Where a dragged row would land: the column under the pointer (or the nearest one), and the
+// How far the row has moved, kept inside the two columns so it never slides off the sheet
+function moveBy<K>(d: Drag<K>, x: number, y: number): Drag<K> {
+  const clamp = (n: number, lo: number, hi: number) => Math.min(Math.max(n, lo), hi)
+  return {
+    ...d,
+    dx: clamp(x - d.startX, d.bounds.left - d.row.left, d.bounds.right - d.row.right),
+    // a row's worth below, to reach the end of the longer column
+    dy: clamp(y - d.startY, d.bounds.top - d.row.top, d.bounds.bottom - d.row.bottom + d.rowH),
+  }
+}
+
+// Where a dragged row would land: the column its middle is over (or the nearest one), and the
 // position among that column's other rows
 function dropAt<K>(d: Drag<K>): { side: Side; index: number } {
-  const x = d.startX + d.dx
-  const y = d.startY + d.dy
+  const x = d.row.left + d.row.width / 2 + d.dx
+  const y = d.row.top + d.row.height / 2 + d.dy
   const distance = (r: DOMRect) => Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom))
   const side = distance(d.lists.left.rect) <= distance(d.lists.right.rect) ? 'left' : 'right'
-  const center = d.lists[d.from].rows[d.index]
-  const middle = center.top + center.height / 2 + d.dy
   const rows = d.lists[side].rows.filter((_, i) => !(side === d.from && i === d.index))
-  return { side, index: rows.filter((r) => r.top + r.height / 2 < middle).length }
+  return { side, index: rows.filter((r) => r.top + r.height / 2 < y).length }
 }
 
 // Turn a Stats view's sections on and off, and drag them into either column and a different order
@@ -39,6 +50,7 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
   const label = Object.fromEntries(store.sections) as Record<K, string>
   const [drag, setDrag] = useState<Drag<K> | null>(null)
   const lists = useRef<Record<Side, HTMLUListElement | null>>({ left: null, right: null })
+  const columns = useRef<HTMLDivElement>(null)
   const drop = drag ? dropAt(drag) : null
   // a row moved to the other column with the keyboard is a new element there; keep focus on it
   const [moved, setMoved] = useState<K | null>(null)
@@ -62,7 +74,8 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
       const ul = lists.current[s]!
       return { rect: ul.getBoundingClientRect(), rows: [...ul.children].map((li) => li.getBoundingClientRect()) }
     }
-    const rowH = e.currentTarget.closest('li')!.offsetHeight
+    const li = e.currentTarget.closest('li')!
+    const rowH = li.offsetHeight
     setDrag({
       key,
       from: side,
@@ -72,6 +85,8 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
       dx: 0,
       dy: 0,
       rowH,
+      row: li.getBoundingClientRect(),
+      bounds: columns.current!.getBoundingClientRect(),
       lists: { left: measure('left'), right: measure('right') },
     })
   }
@@ -90,7 +105,7 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
         </div>
       }
     >
-      <div className="grid gap-x-4 gap-y-2 p-4 sm:grid-cols-2">
+      <div ref={columns} className="grid gap-x-4 gap-y-2 p-4 sm:grid-cols-2">
         {SIDES.map((side) => (
           <section key={side} aria-labelledby={`charts-${side}`}>
             <h3 id={`charts-${side}`} className="mb-2 px-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
@@ -100,6 +115,8 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
               ref={(el) => {
                 lists.current[side] = el
               }}
+              // the column a row is headed for grows by a row, so the ones pushed down stay inside it
+              style={{ paddingBottom: drag && drop?.side === side && side !== drag.from ? drag.rowH : undefined }}
               className={`min-h-14 rounded-2xl ${
                 layout[side].length
                   ? 'ring-1 ring-stone-200 dark:ring-stone-800'
@@ -132,7 +149,7 @@ export function ChartsSheet<K extends string>({ store, onClose }: { store: Layou
                       aria-label={`Move ${label[k]}`}
                       title="Drag to move"
                       onPointerDown={(e) => start(e, k, side, i)}
-                      onPointerMove={(e) => drag && setDrag({ ...drag, dx: e.clientX - drag.startX, dy: e.clientY - drag.startY })}
+                      onPointerMove={(e) => drag && setDrag(moveBy(drag, e.clientX, e.clientY))}
                       onPointerUp={() => {
                         if (drag && drop && (drop.side !== drag.from || drop.index !== drag.index))
                           store.set(place(layout, drag.key, drop.side, drop.index))
