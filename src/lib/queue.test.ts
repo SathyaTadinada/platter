@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import search from '../../tests/fixtures/search-barcode.json'
 import { OfflineError } from '../api/discogs/client'
 import type { CollectionField, SearchResponse } from '../api/discogs/types'
-import { db } from '../db/db'
+import { db, type LibraryItem } from '../db/db'
 import { parseDiscogsExport, planImport } from './csv'
 import type { LookupResult } from './lookup'
 import { matchFields } from './fields'
@@ -13,8 +13,10 @@ import {
   enqueueBarcode,
   enqueueCsv,
   lookupPending,
+  planFills,
   resetInterrupted,
   retryFailed,
+  waitingInBatch,
   type AddDeps,
 } from './queue'
 
@@ -206,5 +208,70 @@ describe('enqueueCsv', () => {
       { masterId: 10, year: 1973, at: 5 },
       { masterId: 20, year: 1999, at: 1 },
     ])
+  })
+})
+
+describe('filling in copies already in the collection', () => {
+  const fields = [
+    { id: 1, name: 'Media Condition', type: 'dropdown', position: 1, public: false, options: ['Mint (M)', 'Very Good (VG)'] },
+    { id: 3, name: 'Notes', type: 'textarea', position: 3, public: false },
+  ] as CollectionField[]
+  const parsed = parseDiscogsExport(
+    'release_id,Artist,Title,Rating,Collection Media Condition,Collection Notes\n' +
+      '1,A,One,4,Mint (M),from the file\n' +
+      '1,A,One,5,Mint (M),second copy\n' +
+      '2,B,Two,3,Very Good (VG),\n' +
+      '3,C,Three,,,\n',
+  )
+  const plan = planImport(parsed, fields, [])
+  const copy = (instanceId: number, releaseId: number, more: Partial<LibraryItem> = {}) =>
+    ({
+      instanceId,
+      releaseId,
+      folderId: 4,
+      title: 'T',
+      artist: 'A',
+      year: 0,
+      format: '',
+      rating: 0,
+      fields: {},
+      dateAdded: '2026-01-01',
+      ...more,
+    }) as LibraryItem
+
+  it("fills only what's empty, never what's set, pairing rows with copies in order", () => {
+    const fills = planFills(parsed.rows, plan, [
+      copy(10, 1, { fields: { 3: 'mine' }, dateAdded: '2026-01-01' }),
+      copy(11, 1, { rating: 2, dateAdded: '2026-02-01' }),
+      copy(20, 2, { rating: 5, fields: { 1: 'Mint (M)' } }),
+      copy(30, 3),
+    ])
+    // the first copy keeps its notes and gets a condition and rating; the second keeps its rating
+    expect(fills.map((f) => [f.instanceId, f.fields, f.rating])).toEqual([
+      [10, { 1: 'Mint (M)' }, 4],
+      [11, { 1: 'Mint (M)', 3: 'second copy' }, undefined],
+    ])
+    expect(fills[0]).toMatchObject({ fill: true, status: 'ready', folderId: 4, release: { id: 1 } })
+  })
+
+  it('saves to the copy without adding one, and updates it here', async () => {
+    await db.collection.put(copy(10, 1, { fields: { 3: 'mine' } }))
+    const [fill] = planFills(parsed.rows, plan, [copy(10, 1, { fields: { 3: 'mine' } })])
+    const id = (await db.queue.add(fill)) as number
+    const d = deps()
+    await addReady(d, { ...addOpts, removeFromWantlist: true, wants: new Set([1]) })
+    expect(d.addToFolder).not.toHaveBeenCalled()
+    expect(d.removeWant).not.toHaveBeenCalled()
+    expect(d.setField).toHaveBeenCalledWith({ folderId: 4, releaseId: 1, instanceId: 10 }, 1, 'Mint (M)')
+    expect((await db.queue.get(id))?.status).toBe('added')
+    expect(await db.collection.get(10)).toMatchObject({ rating: 4, fields: { 1: 'Mint (M)', 3: 'mine' } })
+  })
+
+  it('knows what is already waiting in the batch', async () => {
+    await enqueueCsv(parsed.rows.slice(2, 3), plan)
+    await db.queue.add({ ...planFills(parsed.rows, plan, [copy(10, 1)])[0] })
+    const waiting = await waitingInBatch()
+    expect([...waiting.releases]).toEqual([2])
+    expect([...waiting.copies]).toEqual([10])
   })
 })

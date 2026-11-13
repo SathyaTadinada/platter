@@ -28,6 +28,7 @@ type RowProps = {
   onTakeOver?: () => void
   currency?: string
   cover?: string // for rows that came without one
+  fills?: string // for a copy being filled in: what it gets, e.g. "Media Condition, Notes, and rating"
 }
 
 function metaSummary(m: Metadata, currency: string): string {
@@ -49,6 +50,7 @@ export function Row({
   onTakeOver,
   currency = 'USD',
   cover,
+  fills,
 }: RowProps) {
   const r = item.release
   // not picked yet: the releases sharing a barcode are nearly always the same album, so
@@ -106,7 +108,7 @@ export function Row({
         <span className="text-amber-700 dark:text-amber-400">{item.warning}</span>
       ) : (
         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-          <CircleCheck size={14} aria-hidden /> Added
+          <CircleCheck size={14} aria-hidden /> {item.fill ? 'Filled in' : 'Added'}
         </span>
       )
       break
@@ -125,13 +127,14 @@ export function Row({
         <p className="truncate font-medium">{r ? r.title : (guess?.title ?? (item.barcode && formatBarcodeInput(item.barcode)))}</p>
         {(r ?? guess) && <p className="truncate text-sm text-stone-600 dark:text-stone-400">{(r ?? guess)!.artist}</p>}
         {meta && <p className="truncate text-xs text-stone-500">{meta}</p>}
+        {fills && item.status !== 'added' && <p className="truncate text-xs text-stone-600 dark:text-stone-400">Adds {fills}</p>}
         {status && <p className="text-xs text-stone-500">{status}</p>}
         {item.meta && hasMetadata(item.meta) && item.status !== 'added' && (
           <p className="truncate text-xs text-stone-600 dark:text-stone-400">{metaSummary(item.meta, currency)}</p>
         )}
         {(dupe || ownedExact || ownedOther || wanted || item.source === 'csv') && item.status !== 'added' && (
           <div className="mt-1 flex flex-wrap gap-1">
-            {ownedExact && <Badge tone="warn">Already in collection</Badge>}
+            {ownedExact && !item.fill && <Badge tone="warn">Already in collection</Badge>}
             {ownedOther && <Badge tone="plain">Own another pressing</Badge>}
             {wanted && <Badge tone="good">On your wantlist</Badge>}
             {dupe && <Badge tone="warn">Scanned twice</Badge>}

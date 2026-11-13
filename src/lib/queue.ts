@@ -1,7 +1,7 @@
 import { OfflineError } from '../api/discogs/client'
 import type { InstanceTarget } from '../api/discogs/endpoints'
 import type { SearchResult } from '../api/discogs/types'
-import { db, type QueueItem, type ReleaseSummary } from '../db/db'
+import { db, type LibraryItem, type QueueItem, type ReleaseSummary } from '../db/db'
 import { digitsOnly } from './barcode'
 import { deviceId } from './device'
 import { rememberBarcode } from './barcodes'
@@ -64,6 +64,60 @@ export async function enqueueCsv(rows: ImportRow[], plan: ImportPlan, now = Date
 }
 
 // Years that came with the file, for albums Platter doesn't have one for yet
+// What a file can add to copies already in the collection: values for fields that are empty on the
+// copy, and a rating where it has none. Nothing already set changes. A file's rows pair up with copies
+// of the same release in the order they were added; extra rows have no copy to fill.
+export function planFills(rows: ImportRow[], plan: ImportPlan, copies: LibraryItem[], now = Date.now()): QueueItem[] {
+  const free = new Map<number, LibraryItem[]>()
+  for (const c of [...copies].sort((a, b) => a.dateAdded.localeCompare(b.dateAdded))) {
+    free.set(c.releaseId, [...(free.get(c.releaseId) ?? []), c])
+  }
+  const fills: QueueItem[] = []
+  for (const [i, r] of rows.entries()) {
+    const copy = free.get(r.releaseId)?.shift()
+    if (!copy) continue
+    const fields: Record<number, string> = {}
+    for (const [name, value] of Object.entries(r.fields)) {
+      const f = plan.fieldMap[name]
+      if (f && value.trim() && !copy.fields[f.id]?.trim() && fieldValueFits(f, value)) fields[f.id] = value
+    }
+    const rating = !copy.rating && r.rating ? r.rating : undefined
+    if (!Object.keys(fields).length && !rating) continue
+    fills.push({
+      createdAt: now + i,
+      source: 'csv',
+      status: 'ready',
+      fill: true,
+      instanceId: copy.instanceId,
+      folderId: copy.folderId,
+      release: {
+        id: copy.releaseId,
+        masterId: copy.masterId || undefined,
+        title: copy.title,
+        artist: copy.artist,
+        thumb: copy.thumb,
+        label: copy.label,
+        catno: copy.catno,
+        year: copy.year ? String(copy.year) : undefined,
+        format: copy.format,
+      },
+      rating,
+      fields,
+    })
+  }
+  return fills
+}
+
+// Records already waiting in the batch, so importing the same file twice doesn't queue them twice:
+// releases waiting to be added, and copies waiting to be filled in
+export async function waitingInBatch(): Promise<{ releases: Set<number>; copies: Set<number> }> {
+  const waiting = (await db.queue.toArray()).filter((i) => i.status !== 'added')
+  return {
+    releases: new Set(waiting.filter((i) => !i.fill && i.release).map((i) => i.release!.id)),
+    copies: new Set(waiting.filter((i) => i.fill && i.instanceId).map((i) => i.instanceId!)),
+  }
+}
+
 async function seedMasterYears(rows: ImportRow[], now: number) {
   const known = new Set((await db.masters.toArray()).map((m) => m.masterId))
   const seeds = new Map<number, number>()
@@ -200,8 +254,13 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
           (e: Error) => problems.push(e.message),
         )
       }
-      if (item.rating) await deps.setRating(target, item.rating).catch((e: Error) => problems.push(e.message))
-      if (opts.removeFromWantlist && opts.wants.has(release.id)) {
+      let rated = false
+      if (item.rating)
+        await deps.setRating(target, item.rating).then(
+          () => (rated = true),
+          (e: Error) => problems.push(e.message),
+        )
+      if (!item.fill && opts.removeFromWantlist && opts.wants.has(release.id)) {
         await deps.removeWant(release.id).then(
           () => db.wants.delete(release.id),
           (e: Error) => problems.push(e.message),
@@ -209,10 +268,16 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       }
 
       if (item.raw) await db.collection.put({ ...itemFromSearch(item.raw, instanceId, folderId), fields: saved })
+      if (item.fill) {
+        const copy = await db.collection.get(instanceId)
+        if (copy) {
+          await db.collection.update(instanceId, { fields: { ...copy.fields, ...saved }, ...(rated ? { rating: item.rating } : {}) })
+        }
+      }
       if (item.barcode) await rememberBarcode(item.barcode, [release.id])
       await db.queue.update(item.id!, {
         status: 'added',
-        warning: problems.length ? `Added, but some details didn't save: ${problems[0]}` : undefined,
+        warning: problems.length ? `${item.fill ? 'Some' : 'Added, but some'} details didn't save: ${problems[0]}` : undefined,
       })
       added++
     } catch (e) {

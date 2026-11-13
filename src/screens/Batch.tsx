@@ -70,7 +70,9 @@ export function Batch() {
     return {
       attention: list.filter(needsYou),
       waiting: list.filter(inFlight),
-      ready: list.filter((i) => i.status === 'ready' || i.status === 'adding'),
+      ready: list.filter((i) => !i.fill && (i.status === 'ready' || i.status === 'adding')),
+      // copies already in the collection, getting details from an import
+      fill: list.filter((i) => i.fill && (i.status === 'ready' || i.status === 'adding')),
       added: list.filter((i) => i.status === 'added').reverse(), // newest first
     }
   }, [items])
@@ -97,7 +99,15 @@ export function Batch() {
   const readyWanted = groups.ready.filter((i) => i.release && wants?.has(i.release.id)).length
   // records another device is adding aren't this one's to add
   const addable = groups.ready.filter((i) => !addingElsewhere(i)).length
+  const fillable = groups.fill.filter((i) => !addingElsewhere(i)).length
   const adding = run?.kind === 'add'
+
+  const fieldNames = new Map((meta.data?.fields ?? []).map((f) => [f.id, f.name]))
+  const fills = (i: QueueItem) => {
+    const names = Object.keys(i.fields ?? {}).map((id) => fieldNames.get(Number(id)) ?? 'a field')
+    if (i.rating) names.push(names.length ? 'rating' : 'Rating')
+    return names.length > 2 ? `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}` : names.join(' and ')
+  }
 
   async function remove(id: number) {
     await db.queue.delete(id)
@@ -225,6 +235,23 @@ export function Batch() {
         </Section>
       )}
 
+      {groups.fill.length > 0 && (
+        <Section title={`Fill in details (${groups.fill.length})`}>
+          <List>
+            {groups.fill.map((i) => (
+              <Row
+                key={i.id}
+                item={i}
+                fills={fills(i)}
+                cover={i.release && owned?.covers.get(i.release.id)}
+                onTakeOver={() => takeOver(i.id!)}
+                onRemove={adding ? undefined : () => remove(i.id!)}
+              />
+            ))}
+          </List>
+        </Section>
+      )}
+
       {groups.ready.length > 0 && shared && groups.ready.some((i) => i.source !== 'csv') && (
         <Section title="For all records">
           <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
@@ -232,7 +259,7 @@ export function Batch() {
       )}
 
       {groups.added.length > 0 && (
-        <Section title={`Added (${groups.added.length})`}>
+        <Section title={`${groups.added.some((i) => i.fill) ? 'Done' : 'Added'} (${groups.added.length})`}>
           <List>
             {groups.added.map((i) => (
               <Row key={i.id} item={i} cover={i.release && owned?.covers.get(i.release.id)} onRemove={() => remove(i.id!)} />
@@ -241,22 +268,24 @@ export function Batch() {
         </Section>
       )}
 
-      {groups.ready.length > 0 && (
+      {groups.ready.length + groups.fill.length > 0 && (
         <div className="sticky bottom-3 z-10 mt-auto pt-4">
           <div
             ref={liftStatus}
             className="mx-auto max-w-lg space-y-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
           >
-            <label className="flex items-center gap-3 pl-1 text-sm">
-              <span className="shrink-0 text-stone-500">{readyByCrate.length > 1 ? 'Default crate' : 'Crate'}</span>
-              <CrateSelect
-                value={folderId}
-                folders={folders}
-                onChange={setFolderId}
-                disabled={adding || !folders.length}
-                className={`${inline} cursor-pointer appearance-none text-base [text-align-last:right]`}
-              />
-            </label>
+            {groups.ready.length > 0 && (
+              <label className="flex items-center gap-3 pl-1 text-sm">
+                <span className="shrink-0 text-stone-500">{readyByCrate.length > 1 ? 'Default crate' : 'Crate'}</span>
+                <CrateSelect
+                  value={folderId}
+                  folders={folders}
+                  onChange={setFolderId}
+                  disabled={adding || !folders.length}
+                  className={`${inline} cursor-pointer appearance-none text-base [text-align-last:right]`}
+                />
+              </label>
+            )}
             {groups.ready.some((i) => i.source === 'csv' && i.folderId) && (
               <p className="text-xs text-stone-500">Imported records go to the crate named in the file, if you have one by that name.</p>
             )}
@@ -274,7 +303,7 @@ export function Batch() {
             )}
             <Button
               className="w-full"
-              disabled={adding || !folderId || !online || !addable}
+              disabled={adding || !folderId || !online || !(addable + fillable)}
               onClick={() => {
                 if (!folderId) return
                 setSetting('lastFolderId', folderId)
@@ -282,10 +311,14 @@ export function Batch() {
               }}
             >
               {adding
-                ? `Adding ${Math.min(run.done + 1, run.total)} of ${run.total}…`
+                ? `${addable ? 'Adding' : 'Filling in'} ${Math.min(run.done + 1, run.total)} of ${run.total}…`
                 : !online
                   ? 'Offline'
-                  : `Add ${addable} to collection`}
+                  : !fillable
+                    ? `Add ${addable} to collection`
+                    : !addable
+                      ? `Fill in ${fillable}`
+                      : `Add ${addable}, fill in ${fillable}`}
             </Button>
           </div>
         </div>
