@@ -254,6 +254,14 @@ describe('filling in copies already in the collection', () => {
     expect(fills[0]).toMatchObject({ fill: true, status: 'ready', folderId: 4, release: { id: 1 } })
   })
 
+  it("takes the file's values where they differ when asked, keeping the old ones to show", () => {
+    const copies = [copy(10, 1, { rating: 2, fields: { 1: 'Very Good (VG)', 3: 'from the file' } })]
+    expect(planFills(parsed.rows, plan, copies)).toEqual([])
+    const [fill] = planFills(parsed.rows, plan, copies, { replace: true })
+    // notes already match, so only the condition and rating change
+    expect(fill).toMatchObject({ fields: { 1: 'Mint (M)' }, rating: 4, was: { fields: { 1: 'Very Good (VG)' }, rating: 2 } })
+  })
+
   it('saves to the copy without adding one, and updates it here', async () => {
     await db.collection.put(copy(10, 1, { fields: { 3: 'mine' } }))
     const [fill] = planFills(parsed.rows, plan, [copy(10, 1, { fields: { 3: 'mine' } })])

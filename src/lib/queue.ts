@@ -65,9 +65,15 @@ export async function enqueueCsv(rows: ImportRow[], plan: ImportPlan, now = Date
 
 // Years that came with the file, for albums Platter doesn't have one for yet
 // What a file can add to copies already in the collection: values for fields that are empty on the
-// copy, and a rating where it has none. Nothing already set changes. A file's rows pair up with copies
-// of the same release in the order they were added; extra rows have no copy to fill.
-export function planFills(rows: ImportRow[], plan: ImportPlan, copies: LibraryItem[], now = Date.now()): QueueItem[] {
+// copy, and a rating where it has none. With replace, values that differ from the copy's are taken
+// too, and the copy's are kept in `was` to show what changes. A file's rows pair up with copies of the
+// same release in the order they were added; extra rows have no copy to fill.
+export function planFills(
+  rows: ImportRow[],
+  plan: ImportPlan,
+  copies: LibraryItem[],
+  { replace = false, now = Date.now() } = {},
+): QueueItem[] {
   const free = new Map<number, LibraryItem[]>()
   for (const c of [...copies].sort((a, b) => a.dateAdded.localeCompare(b.dateAdded))) {
     free.set(c.releaseId, [...(free.get(c.releaseId) ?? []), c])
@@ -77,11 +83,23 @@ export function planFills(rows: ImportRow[], plan: ImportPlan, copies: LibraryIt
     const copy = free.get(r.releaseId)?.shift()
     if (!copy) continue
     const fields: Record<number, string> = {}
+    const was: NonNullable<QueueItem['was']> = { fields: {} }
     for (const [name, value] of Object.entries(r.fields)) {
       const f = plan.fieldMap[name]
-      if (f && value.trim() && !copy.fields[f.id]?.trim() && fieldValueFits(f, value)) fields[f.id] = value
+      if (!f) continue
+      const mine = copy.fields[f.id]?.trim()
+      if (!value.trim() || value.trim() === mine || !fieldValueFits(f, value)) continue
+      if (!mine) fields[f.id] = value
+      else if (replace) {
+        fields[f.id] = value
+        was.fields[f.id] = mine
+      }
     }
-    const rating = !copy.rating && r.rating ? r.rating : undefined
+    let rating: number | undefined
+    if (r.rating && r.rating !== copy.rating && (!copy.rating || replace)) {
+      rating = r.rating
+      if (copy.rating) was.rating = copy.rating
+    }
     if (!Object.keys(fields).length && !rating) continue
     fills.push({
       createdAt: now + i,
@@ -103,6 +121,7 @@ export function planFills(rows: ImportRow[], plan: ImportPlan, copies: LibraryIt
       },
       rating,
       fields,
+      ...(Object.keys(was.fields).length || was.rating ? { was } : {}),
     })
   }
   return fills
@@ -277,7 +296,11 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       if (item.barcode) await rememberBarcode(item.barcode, [release.id])
       await db.queue.update(item.id!, {
         status: 'added',
-        warning: problems.length ? `${item.fill ? 'Some' : 'Added, but some'} details didn't save: ${problems[0]}` : undefined,
+        warning: problems.length
+          ? item.fill
+            ? `Some details didn't save. ${problems[0]}`
+            : `Added, but some details didn't save: ${problems[0]}`
+          : undefined,
       })
       added++
     } catch (e) {

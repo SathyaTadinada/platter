@@ -17,9 +17,13 @@ import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import type { Metadata } from '../lib/metadata'
+import { shortGrade } from '../lib/format'
 import { addingElsewhere, chooseRelease, retryFailed, takeOver } from '../lib/queue'
 import { Row } from './batch/BatchRow'
 import { DetailsSheet } from './batch/DetailsSheet'
+
+// "A", "A and B", "A, B, and C"
+const list = (names: string[]) => (names.length > 2 ? `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}` : names.join(' and '))
 
 const needsYou = (i: QueueItem) => i.status === 'choose' || i.status === 'notfound' || i.status === 'failed'
 const inFlight = (i: QueueItem) => i.status === 'pending' || i.status === 'looking'
@@ -102,11 +106,25 @@ export function Batch() {
   const fillable = groups.fill.filter((i) => !addingElsewhere(i)).length
   const adding = run?.kind === 'add'
 
-  const fieldNames = new Map((meta.data?.fields ?? []).map((f) => [f.id, f.name]))
+  // what a fill adds and changes, one line each, e.g. "Adds Notes and rating" or
+  // "Changes Media Condition from VG to M"
+  const fieldsById = new Map((meta.data?.fields ?? []).map((f) => [f.id, f]))
   const fills = (i: QueueItem) => {
-    const names = Object.keys(i.fields ?? {}).map((id) => fieldNames.get(Number(id)) ?? 'a field')
-    if (i.rating) names.push(names.length ? 'rating' : 'Rating')
-    return names.length > 2 ? `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}` : names.join(' and ')
+    const name = (id: number) => fieldsById.get(id)?.name ?? 'a field'
+    // grades read shorter as VG+ than as Very Good Plus (VG+); typed text goes in quotes
+    const value = (id: number, v: string) => (fieldsById.get(id)?.type === 'dropdown' ? shortGrade(v) : `“${v}”`)
+    const was = i.was?.fields ?? {}
+    const added = Object.keys(i.fields ?? {})
+      .map(Number)
+      .filter((id) => !(id in was))
+      .map(name)
+    if (i.rating && !i.was?.rating) added.push('rating')
+    const lines = added.length ? [`Adds ${list(added)}`] : []
+    for (const [id, old] of Object.entries(was)) {
+      lines.push(`Changes ${name(Number(id))} from ${value(Number(id), old)} to ${value(Number(id), i.fields![Number(id)])}`)
+    }
+    if (i.rating && i.was?.rating) lines.push(`Changes rating from ${i.was.rating} to ${i.rating} stars`)
+    return lines
   }
 
   async function remove(id: number) {
@@ -236,7 +254,7 @@ export function Batch() {
       )}
 
       {groups.fill.length > 0 && (
-        <Section title={`Fill in details (${groups.fill.length})`}>
+        <Section title={`Update details (${groups.fill.length})`}>
           <List>
             {groups.fill.map((i) => (
               <Row
@@ -311,14 +329,14 @@ export function Batch() {
               }}
             >
               {adding
-                ? `${addable ? 'Adding' : 'Filling in'} ${Math.min(run.done + 1, run.total)} of ${run.total}…`
+                ? `${addable ? 'Adding' : 'Updating'} ${Math.min(run.done + 1, run.total)} of ${run.total}…`
                 : !online
                   ? 'Offline'
                   : !fillable
                     ? `Add ${addable} to collection`
                     : !addable
-                      ? `Fill in ${fillable}`
-                      : `Add ${addable}, fill in ${fillable}`}
+                      ? `Update ${fillable} ${fillable === 1 ? 'record' : 'records'}`
+                      : `Add ${addable}, update ${fillable}`}
             </Button>
           </div>
         </div>

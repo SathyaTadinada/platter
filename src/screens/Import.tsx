@@ -14,7 +14,9 @@ type Loaded = {
   plan: ImportPlan
   owned: Set<number>
   waiting: Set<number> // releases already in the batch
-  fills: QueueItem[] // details the file can add to copies already in the collection
+  // details the file can add to copies already in the collection, keeping theirs where the two
+  // differ or taking the file's
+  fills: { keep: QueueItem[]; replace: QueueItem[] }
 }
 
 // What to do with records the collection already has
@@ -30,6 +32,7 @@ export function Import() {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ownedChoice, setOwnedChoice] = useState<Owned>('skip')
+  const [replace, setReplace] = useState(false)
   const [busy, setBusy] = useState(false)
 
   async function onFile(file: File) {
@@ -42,11 +45,14 @@ export function Import() {
       const copies = await db.collection.toArray()
       const owned = new Set(copies.map((c) => c.releaseId))
       const waiting = await waitingInBatch()
-      const fills = planFills(
-        parsed.rows.filter((r) => owned.has(r.releaseId)),
-        plan,
-        copies,
-      ).filter((f) => !waiting.copies.has(f.instanceId!))
+      const fillsFor = (replace: boolean) =>
+        planFills(
+          parsed.rows.filter((r) => owned.has(r.releaseId)),
+          plan,
+          copies,
+          { replace },
+        ).filter((f) => !waiting.copies.has(f.instanceId!))
+      const fills = { keep: fillsFor(false), replace: fillsFor(true) }
       setLoaded({ name: file.name, parsed, plan, owned, waiting: waiting.releases, fills })
     } catch (e) {
       setError((e as Error).message)
@@ -57,7 +63,10 @@ export function Import() {
   const rows = loaded ? loaded.parsed.rows.filter((r) => !loaded.waiting.has(r.releaseId)) : []
   const ownedCount = loaded ? rows.filter((r) => loaded.owned.has(r.releaseId)).length : 0
   const toAdd = ownedChoice === 'copy' ? rows : rows.filter((r) => !loaded?.owned.has(r.releaseId))
-  const toFill = loaded && ownedChoice === 'fill' ? loaded.fills : []
+  const fills = loaded ? (replace ? loaded.fills.replace : loaded.fills.keep) : []
+  const toFill = ownedChoice === 'fill' ? fills : []
+  // copies where the file says something different from what's there
+  const differ = loaded ? loaded.fills.replace.filter((f) => f.was).length : 0
   const waitingCount = loaded ? loaded.parsed.rows.length - rows.length : 0
 
   async function queue() {
@@ -157,32 +166,51 @@ export function Import() {
               {(
                 [
                   ['skip', 'Skip them'],
-                  ['fill', 'Fill in missing details'],
+                  ['fill', 'Add details from the file'],
                   ['copy', 'Add another copy of each'],
                 ] as const
               ).map(([value, label]) => {
-                const nothing = value === 'fill' && !loaded.fills.length
+                const nothing = value === 'fill' && !loaded.fills.replace.length
                 return (
-                  <label
-                    key={value}
-                    className={`flex min-h-10 items-center gap-3 text-sm ${nothing ? 'text-stone-500' : 'cursor-pointer'}`}
-                  >
-                    <input
-                      type="radio"
-                      name="owned"
-                      value={value}
-                      checked={ownedChoice === value}
-                      disabled={nothing}
-                      onChange={() => setOwnedChoice(value)}
-                      className="size-4"
-                    />
-                    <span className="flex-1">{label}</span>
-                    {value === 'fill' && (
-                      <span className="text-stone-500 tabular-nums">
-                        {nothing ? 'Nothing to fill in' : plural(loaded.fills.length, 'record')}
-                      </span>
+                  <div key={value}>
+                    <label className={`flex min-h-10 items-center gap-3 text-sm ${nothing ? 'text-stone-500' : 'cursor-pointer'}`}>
+                      <input
+                        type="radio"
+                        name="owned"
+                        value={value}
+                        checked={ownedChoice === value}
+                        disabled={nothing}
+                        onChange={() => setOwnedChoice(value)}
+                        className="size-4"
+                      />
+                      <span className="flex-1">{label}</span>
+                      {value === 'fill' && (
+                        <span className="text-stone-500 tabular-nums">
+                          {nothing ? 'Nothing to add' : fills.length ? plural(fills.length, 'record') : 'Nothing missing'}
+                        </span>
+                      )}
+                    </label>
+                    {value === 'fill' && ownedChoice === 'fill' && differ > 0 && (
+                      <div
+                        role="radiogroup"
+                        aria-label="Where they differ"
+                        className="mb-1 ml-7 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                      >
+                        <span className="text-stone-500">Where they differ</span>
+                        {(
+                          [
+                            [false, 'Keep mine'],
+                            [true, "Use the file's"],
+                          ] as const
+                        ).map(([on, text]) => (
+                          <label key={text} className="flex min-h-9 cursor-pointer items-center gap-2">
+                            <input type="radio" name="differ" checked={replace === on} onChange={() => setReplace(on)} className="size-4" />
+                            {text}
+                          </label>
+                        ))}
+                      </div>
                     )}
-                  </label>
+                  </div>
                 )
               })}
             </fieldset>

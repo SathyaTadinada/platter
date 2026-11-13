@@ -106,6 +106,7 @@ export type QueueItem = {
   addingBy?: string // the device adding it, when cloud sync is on
   instanceId?: number
   fill?: boolean // fills in details on the copy at instanceId instead of adding one
+  was?: { fields: Record<number, string>; rating?: number } // a fill's values it replaces, to show what changes
   warning?: string // added, but something minor went wrong (e.g. a field didn't save)
   uid?: string // the same record on every device
   seq?: number // where the server had it when this device last heard; claims check it hasn't moved
