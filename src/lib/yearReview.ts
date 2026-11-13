@@ -21,7 +21,12 @@ export type YearReview = {
   topArtists: { name: string; count: number }[]
   genres: { name: string; count: number }[] // of the records added
   decade?: number // the decade most of the year's plays came from
+  busiestDay?: number // 0 Sunday to 6 Saturday, when one day clearly leads (and there are enough plays to say)
+  biggestBuy?: { item: LibraryItem; amount: number }
+  oldest?: { item: LibraryItem; year: number } // of the records added, by the album's original year
 }
+
+const ENOUGH_FOR_A_DAY = 5
 
 const TOP = 5
 
@@ -30,6 +35,12 @@ function ranked<K>(counts: Map<K, number>, top: number) {
 }
 
 const bump = <K>(m: Map<K, number>, k: K, n = 1) => m.set(k, (m.get(k) ?? 0) + n)
+
+// The top key, unless another ties it
+function clearLeader<K>(counts: Map<K, number>): K | undefined {
+  const [first, second] = ranked(counts, 2)
+  return first && (!second || first[1] > second[1]) ? first[0] : undefined
+}
 
 export function yearReview(
   year: number,
@@ -43,6 +54,7 @@ export function yearReview(
   const added = items.filter((i) => i.dateAdded.startsWith(y)).sort((a, b) => a.dateAdded.localeCompare(b.dateAdded))
 
   let spent: YearReview['spent']
+  let biggestBuy: YearReview['biggestBuy']
   if (fields.paid !== undefined) {
     spent = { total: 0, count: 0 }
     for (const i of items) {
@@ -51,7 +63,14 @@ export function yearReview(
       if (amount === undefined || !date.startsWith(y)) continue
       spent.total += amount
       spent.count++
+      if (amount > (biggestBuy?.amount ?? 0)) biggestBuy = { item: i, amount }
     }
+  }
+
+  let oldest: YearReview['oldest']
+  for (const i of added) {
+    const from = i.originalYear || i.year
+    if (from && from < (oldest?.year ?? Infinity)) oldest = { item: i, year: from }
   }
 
   const byId = new Map(items.map((i) => [i.instanceId, i]))
@@ -60,8 +79,10 @@ export function yearReview(
   const records = new Map<number, number>()
   const artists = new Map<string, number>()
   const decades = new Map<number, number>()
+  const days = new Map<number, number>()
   for (const p of inYear) {
     bump(records, p.instanceId)
+    bump(days, new Date(p.at).getDay())
     const item = byId.get(p.instanceId)
     if (!item) continue
     bump(artists, item.artist)
@@ -96,6 +117,9 @@ export function yearReview(
     topArtists: ranked(artists, TOP).map(([name, count]) => ({ name, count })),
     genres: ranked(genres, 3).map(([name, count]) => ({ name, count })),
     decade: ranked(decades, 1)[0]?.[0],
+    busiestDay: inYear.length >= ENOUGH_FOR_A_DAY ? clearLeader(days) : undefined,
+    biggestBuy,
+    oldest,
   }
 }
 

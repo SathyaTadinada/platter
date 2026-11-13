@@ -75,6 +75,24 @@ describe('yearReview', () => {
   })
 })
 
+describe('highlights', () => {
+  it('finds the biggest buy and the oldest album added', () => {
+    const r = yearReview(2026, items, plays, lengths, { paid: 5, date: 7 })
+    expect(r.biggestBuy).toMatchObject({ item: { instanceId: 3 }, amount: 15 })
+    expect(yearReview(2025, items, plays, lengths, { paid: 5, date: 7 }).biggestBuy).toMatchObject({ item: { instanceId: 2 }, amount: 30 })
+    expect(r.oldest).toMatchObject({ item: { instanceId: 2 }, year: 1977 })
+  })
+
+  it('names the busiest day only when one leads and there are enough plays', () => {
+    // five plays on five different days: no leader
+    expect(yearReview(2026, items, plays, lengths).busiestDay).toBeUndefined()
+    // two more on Sundays (March 1 2026 is one)
+    const more = [...plays, play(2, '2026-03-08'), play(3, '2026-03-15')]
+    expect(yearReview(2026, items, more, lengths).busiestDay).toBe(0)
+    expect(yearReview(2026, items, more.slice(0, 2), lengths).busiestDay).toBeUndefined()
+  })
+})
+
 describe('reviewYears', () => {
   it('lists years with records added or played, newest first', () => {
     expect(reviewYears(items, plays)).toEqual([2026, 2025])

@@ -1,6 +1,6 @@
 import { readPref, writePref } from './prefs'
 
-// Which sections each Stats view shows, in which column, and in what order. Wide screens show the
+// Which sections each Stats view (and Your year) shows, in which column, and in what order. Wide screens show the
 // two columns side by side; phones show the left one, then the right. Kept per device, and synced.
 
 export const VALUE_SECTIONS = [
@@ -21,7 +21,17 @@ export const LISTENING_SECTIONS = [
   ['dusty', 'Not played in a year'],
 ] as const
 
+export const YEAR_SECTIONS = [
+  ['month', 'Plays by month'],
+  ['most', 'Most played'],
+  ['artists', 'Top artists'],
+  ['added', 'Added by month'],
+  ['new', 'New records'],
+  ['highlights', 'Highlights'],
+] as const
+
 export type ValueKey = (typeof VALUE_SECTIONS)[number][0]
+export type YearKey = (typeof YEAR_SECTIONS)[number][0]
 export type ListeningKey = (typeof LISTENING_SECTIONS)[number][0]
 export type Side = 'left' | 'right'
 export type Layout<K extends string = string> = { left: K[]; right: K[]; hidden: K[] }
@@ -116,4 +126,5 @@ function layoutStore<K extends string>(pref: string, sections: readonly (readonl
 
 export const valueLayout = layoutStore('platter.valueLayout', VALUE_SECTIONS, ['month', 'top', 'overTime'])
 export const listeningLayout = layoutStore('platter.listeningLayout', LISTENING_SECTIONS, ['totals', 'month', 'most'])
-export const LAYOUTS = [valueLayout, listeningLayout]
+export const yearLayout = layoutStore('platter.yearLayout', YEAR_SECTIONS, ['month', 'most', 'artists', 'added'])
+export const LAYOUTS = [valueLayout, listeningLayout, yearLayout]
