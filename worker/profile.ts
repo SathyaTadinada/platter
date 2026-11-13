@@ -63,13 +63,34 @@ function readSections(stored: string): Sections {
 
 const publicOnes = (s: Sections): Section[] => SECTIONS.filter((x) => s[x] === 'public')
 
-type ProfileRecord = { sections: string; published_at: number | null }
+type ProfileRecord = { sections: string; published_at: number | null; listed: number }
 
 // The owner's own view: every section, with the ones they haven't touched off
-export async function settings(db: DB, account: string): Promise<{ sections: Sections; publishedAt: number | null }> {
-  const row = await db.prepare('SELECT sections, published_at FROM profiles WHERE account = ?1').bind(account).first<ProfileRecord>()
+export async function settings(db: DB, account: string): Promise<{ sections: Sections; publishedAt: number | null; listed: boolean }> {
+  const row = await db
+    .prepare('SELECT sections, published_at, listed FROM profiles WHERE account = ?1')
+    .bind(account)
+    .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
-  return { sections: Object.fromEntries(SECTIONS.map((s) => [s, saved[s] ?? 'off'])) as Sections, publishedAt: row?.published_at ?? null }
+  return {
+    sections: Object.fromEntries(SECTIONS.map((s) => [s, saved[s] ?? 'off'])) as Sections,
+    publishedAt: row?.published_at ?? null,
+    listed: row ? row.listed === 1 : true,
+  }
+}
+
+// Whether people can find them by searching. Off means the profile is only there for someone who
+// already has the link.
+export async function setListed(db: DB, account: string, on: unknown, now = Date.now()): Promise<boolean> {
+  if (typeof on !== 'boolean') throw new SyncError(400, 'Bad setting')
+  await db
+    .prepare(
+      `INSERT INTO profiles (account, listed, created_at) VALUES (?1, ?2, ?3)
+       ON CONFLICT (account) DO UPDATE SET listed = excluded.listed`,
+    )
+    .bind(account, on ? 1 : 0, now)
+    .run()
+  return on
 }
 
 // Turning a section off deletes what the server holds for it, so nothing lingers after it stops
@@ -145,6 +166,40 @@ export async function sweep(db: DB, account: string, section: unknown, before: u
     .bind(account, KINDS[section as Section], before)
     .run()
   return { gone: r.meta.changes }
+}
+
+// ---- finding someone ----
+
+export type Found = { username: string; about: string | null; publishedAt: number | null }
+
+export const MAX_FOUND = 20
+
+// Part of a username finds them, and an empty search gives whoever published most recently. Only
+// profiles with something on them, and only from people who left themselves findable.
+export async function search(db: DB, query: unknown): Promise<{ found: Found[] }> {
+  if (query !== undefined && typeof query !== 'string') throw new SyncError(400, 'Bad search')
+  const q = (query ?? '').trim().toLowerCase().replace(/^@/, '').slice(0, 100)
+  const like = `%${q.replace(/[%_\\]/g, '\\$&')}%`
+  const where = q ? `AND a.name LIKE ?2 ESCAPE '\\'` : ''
+  const order = q ? `(a.name = ?3) DESC, (instr(a.name, ?3) = 1) DESC,` : ''
+  const binds: unknown[] = q ? [MAX_FOUND * 3, like, q] : [MAX_FOUND * 3]
+  const { results } = await db
+    .prepare(
+      `SELECT a.name, p.sections, p.published_at,
+         (SELECT value FROM profile_rows r WHERE r.account = a.id AND r.kind = 'about' AND r.key = 'about') AS about
+       FROM accounts a JOIN profiles p ON p.account = a.id
+       WHERE a.discogs_id IS NOT NULL AND p.listed = 1 AND p.sections LIKE '%\"public\"%' ${where}
+       ORDER BY ${order} p.published_at DESC
+       LIMIT ?1`,
+    )
+    .bind(...binds)
+    .all<{ name: string; sections: string; published_at: number | null; about: string | null }>()
+  // the LIKE above only narrows it; this is the real check that something is shared
+  const found = results
+    .filter((r) => publicOnes(readSections(r.sections)).length)
+    .slice(0, MAX_FOUND)
+    .map((r) => ({ username: r.name, about: r.about, publishedAt: r.published_at }))
+  return { found }
 }
 
 // ---- reading a profile ----

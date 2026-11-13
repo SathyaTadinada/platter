@@ -23,7 +23,9 @@ import {
   parseRows as parseProfileRows,
   publish as publishProfile,
   rows as profileRows,
+  search as searchProfiles,
   settings as profileSettings,
+  setListed,
   setSections,
   sweep as sweepProfile,
 } from './profile'
@@ -190,6 +192,7 @@ const SYNC_ACTIONS = [
   // a profile anyone with the link can read
   'profile',
   'profile-rows',
+  'profile-search',
   'devices',
   'device-rename',
   'device-remove',
@@ -202,6 +205,7 @@ const SYNC_ACTIONS = [
   'profile-sections',
   'profile-publish',
   'profile-sweep',
+  'profile-listed',
   // admin only
   'admin-members',
   'admin-badge',
@@ -211,7 +215,7 @@ const SYNC_ACTIONS = [
 type SyncAction = (typeof SYNC_ACTIONS)[number]
 const ENTRY = new Set<SyncAction>(['exists', 'signin', 'join', 'discogs', 'passkey-signin-options', 'passkey-signin'])
 // read by anyone who has the link, so they take the per-IP limit rather than a device key
-const PUBLIC = new Set<SyncAction>(['profile', 'profile-rows'])
+const PUBLIC = new Set<SyncAction>(['profile', 'profile-rows', 'profile-search'])
 
 async function sync(req: Request, env: Env, action: SyncAction): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
@@ -242,6 +246,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
     // owner switched on, and nothing else.
     if (PUBLIC.has(action)) {
       if (!(await allowed(env.SYNC_LIMITER, ipKey(req)))) return tooMany()
+      if (action === 'profile-search') return ok(await searchProfiles(db, input.q))
       if (action === 'profile') {
         const found = await profileHead(db, input.username)
         if (!found) throw new SyncError(404, 'No profile here')
@@ -349,6 +354,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
       case 'profile-sweep':
         return ok(await sweepProfile(db, account, input.section, input.before))
+      case 'profile-listed':
+        return ok({ listed: await setListed(db, account, input.listed) })
       case 'admin-members':
         return ok({ members: await members(db) })
       case 'admin-badge':

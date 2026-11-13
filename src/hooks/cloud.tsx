@@ -51,6 +51,8 @@ type Ctx = {
   // the profile's sections, once they've been read from the server. null while that's happening.
   sections: Sections | null
   setSections: (next: Sections) => Promise<void>
+  listed: boolean
+  setListed: (on: boolean) => Promise<void>
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
   waysIn: () => Promise<WaysIn & { legacy: boolean }>
@@ -97,6 +99,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   const [sections, setSections] = useState<Sections | null>(null)
+  const [listed, setListed] = useState(true)
   const shared = useRef<Sections>({})
   const busy = useRef(false)
   const again = useRef(false)
@@ -260,9 +263,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     api
       .profileSettings()
-      .then(({ sections: saved }) => {
+      .then(({ sections: saved, listed: found }) => {
         shared.current = saved
         setSections(saved)
+        setListed(found)
       })
       .catch(() => {})
   }, [api])
@@ -292,6 +296,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setSections(saved)
       await forgetSent(saved)
       await share()
+    },
+    listed,
+    setListed: async (on) => {
+      if (!api) return
+      setListed((await api.setListed(on)).listed)
     },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
@@ -336,6 +345,7 @@ function useDemoCloud(): Ctx {
   const [exists, setExists] = useState(true)
   const [off, setOff] = useState<Category[]>([])
   const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'off', stats: 'off', year: 'off' })
+  const [demoListed, setDemoListed] = useState(true)
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
@@ -359,6 +369,11 @@ function useDemoCloud(): Ctx {
     setSections: async (next) => {
       await pause(300)
       setDemoSections((s) => ({ ...s, ...next }))
+    },
+    listed: demoListed,
+    setListed: async (on) => {
+      await pause(300)
+      setDemoListed(on)
     },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {

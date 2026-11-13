@@ -21,6 +21,7 @@ export function demoCloudApi(): CloudApi {
   ]
   let password = false
   let sections: Sections = { collection: 'public', wantlist: 'off', stats: 'off', year: 'off' }
+  let listed = true
   const pause = () => new Promise<void>((r) => setTimeout(r, 300))
   const nothing = async () => {
     await pause()
@@ -66,11 +67,16 @@ export function demoCloudApi(): CloudApi {
       passkeys = passkeys.filter((p) => p.id !== id)
       return {}
     },
-    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000 }),
+    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, listed }),
     setSections: async (next) => {
       await pause()
       sections = { ...sections, ...next }
       return { sections }
+    },
+    setListed: async (on) => {
+      await pause()
+      listed = on
+      return { listed }
     },
     publishProfile: async (rows) => ({ saved: rows.length }),
     sweepProfile: async () => ({ gone: 0 }),

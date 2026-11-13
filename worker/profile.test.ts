@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
-import { head, parseRows, publish, rows, setSections, settings, sweep, type ProfileRow } from './profile'
+import { head, parseRows, publish, rows, search, setListed, setSections, settings, sweep, type ProfileRow } from './profile'
 import { deviceAccount, forget, push } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
@@ -153,6 +153,67 @@ describe('publishing', () => {
     expect(() => parseRows([{ kind: 'item', key: '', value: '{}', updatedAt: 1 }])).toThrow()
     expect(() => parseRows([{ kind: 'item', key: '1', value: 'x'.repeat(5000), updatedAt: 1 }])).toThrow()
     expect(parseRows([{ kind: 'item', key: '1', value: '{}', updatedAt: 1 }])).toHaveLength(1)
+  })
+})
+
+describe('finding someone', () => {
+  const names = async (db: ReturnType<typeof testDB>, q?: string) => (await search(db, q)).found.map((f) => f.username)
+
+  it('finds them by part of their name, best match first', async () => {
+    const db = testDB()
+    await shared(db)
+    await shared(db, { id: 8, username: 'tad' })
+    await shared(db, { id: 9, username: 'mrtadpole' })
+    expect(await names(db, 'tad')).toEqual(['tad', 'tadinada', 'mrtadpole'])
+    expect(await names(db, 'TAD')).toEqual(['tad', 'tadinada', 'mrtadpole'])
+    expect(await names(db, 'nobody')).toEqual([])
+  })
+
+  it('lists whoever published most recently when nothing is typed', async () => {
+    const db = testDB()
+    const mine = await shared(db)
+    const yours = await shared(db, YOU)
+    await publish(db, mine.id, [record(1, 'Rumours')], 1000)
+    await publish(db, yours.id, [record(1, 'Blue')], 5000)
+    expect(await names(db)).toEqual(['someone', 'tadinada'])
+  })
+
+  it('leaves out anyone who turned being findable off', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    expect((await settings(db, id)).listed).toBe(true)
+    await setListed(db, id, false)
+    expect(await names(db, 'tad')).toEqual([])
+    expect((await settings(db, id)).listed).toBe(false)
+    // their profile is still there for anyone with the link
+    expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada' })
+    await setListed(db, id, true)
+    expect(await names(db, 'tad')).toEqual(['tadinada'])
+  })
+
+  it('leaves out profiles with nothing shared and accounts not tied to Discogs', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await db.prepare("INSERT INTO accounts (id, name, proof, discogs_id, created_at) VALUES ('old', 'tadpole', 'x', NULL, 0)").run()
+    await setSections(db, 'old', { collection: 'public' })
+    expect(await names(db, 'tad')).toEqual(['tadinada'])
+    await setSections(db, id, { collection: 'off' })
+    expect(await names(db, 'tad')).toEqual([])
+  })
+
+  it('carries their picture and record count', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await publish(db, id, [row('about', 'about', { avatar: 'a.jpg', records: 43 })])
+    const [found] = (await search(db, 'tadinada')).found
+    expect(JSON.parse(found.about!)).toEqual({ avatar: 'a.jpg', records: 43 })
+  })
+
+  it('takes a name with wildcards in it literally', async () => {
+    const db = testDB()
+    await shared(db)
+    expect(await names(db, '%')).toEqual([])
+    expect(await names(db, 'tad_nada')).toEqual([])
   })
 })
 

@@ -24,7 +24,6 @@ import {
   Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { useLocation } from 'wouter'
 import type { Category } from '../../worker/categories'
 import type { Section as ProfileSection } from '../../worker/profile'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -278,7 +277,6 @@ function SignedIn() {
   const [editing, setEditing] = useState<PasskeyInfo | null>(null)
   const [offer, setOffer] = useState(() => justCreated && passkeysHere())
   const anyShared = Object.values(cloud.sections ?? {}).some((v) => v === 'public')
-  const [finding, setFinding] = useState(false)
 
   const attempt = async (task: () => Promise<unknown>) => {
     setError(null)
@@ -470,15 +468,15 @@ function SignedIn() {
               />
             ))}
           </List>
-          <List>
-            {finding ? (
-              <FindSomeone onClose={() => setFinding(false)} />
-            ) : (
-              <Row icon={<UserSearch size={20} />} label="Find someone" onClick={() => setFinding(true)} />
-            )}
-          </List>
           {anyShared && (
             <List>
+              <Row
+                icon={<UserSearch size={20} />}
+                label="Findable in search"
+                trailing={
+                  <Switch label="Findable in search" checked={cloud.listed} onChange={(on) => attempt(() => cloud.setListed(on))} />
+                }
+              />
               <Row icon={<UserRound size={20} />} label="View your profile" href={`/u/${cloud.username}`} />
               <Row
                 icon={<LinkIcon size={20} />}
@@ -628,44 +626,6 @@ function Device({
           <LogOut size={18} />
         </IconButton>
       )}
-    </li>
-  )
-}
-
-// Their Discogs username, which you have to know: profiles aren't listed anywhere and can't be
-// searched for by part of a name.
-function FindSomeone({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [, navigate] = useLocation()
-  return (
-    <li className="px-4 py-2">
-      <form
-        className="flex w-full flex-wrap items-center gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          const who = name.trim().replace(/^@/, '')
-          if (who) navigate(`/u/${encodeURIComponent(who)}`)
-        }}
-      >
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label="Discogs username"
-          placeholder="Discogs username"
-          autoFocus
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          maxLength={100}
-          className="min-h-10 w-full min-w-0 rounded-lg border border-stone-300 bg-transparent px-3 sm:w-auto sm:flex-1 dark:border-stone-700"
-        />
-        <Button type="submit" className="min-h-10 flex-1 sm:flex-none" disabled={!name.trim()}>
-          Go
-        </Button>
-        <Button variant="ghost" className="min-h-10 flex-1 sm:flex-none" onClick={onClose}>
-          Cancel
-        </Button>
-      </form>
     </li>
   )
 }

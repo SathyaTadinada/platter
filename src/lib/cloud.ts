@@ -127,6 +127,7 @@ export type Member = {
 type Challenge<T> = { id: string; options: T }
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
+export type Found = { username: string; about: string | null; publishedAt: number | null }
 export type ProfileHead = {
   username: string
   badges: string[]
@@ -156,6 +157,7 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
     call<Challenge<PublicKeyCredentialRequestOptionsJSON>>(fetchFn, 'passkey-signin-options', { discogsId }),
   // a profile is read by anyone with the link, so it goes through the same door as signing in
   profile: (username: string) => call<ProfileHead>(fetchFn, 'profile', { username }),
+  searchProfiles: (q: string) => call<{ found: Found[] }>(fetchFn, 'profile-search', { q }),
   profileRows: (username: string, section: Section, after?: string) =>
     call<{ rows: { key: string; value: string; updatedAt: number }[]; more: boolean }>(fetchFn, 'profile-rows', {
       username,
@@ -190,8 +192,9 @@ export type CloudApi = {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
-  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null }>
+  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; listed: boolean }>
   setSections(sections: Sections): Promise<{ sections: Sections }>
+  setListed(listed: boolean): Promise<{ listed: boolean }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
   sweepProfile(section: Section, before: number): Promise<{ gone: number }>
   members(): Promise<{ members: Member[] }>
@@ -222,6 +225,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     removePasskey: (id) => c('passkey-remove', { id }),
     profileSettings: () => c('profile-settings'),
     setSections: (sections) => c('profile-sections', { sections }),
+    setListed: (listed) => c('profile-listed', { listed }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     members: () => c('admin-members'),

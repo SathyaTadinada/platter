@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react'
+import { Disc3, History, Music2, ScanBarcode, Tag, Users, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
@@ -13,6 +13,12 @@ import { replaceAddress } from '../lib/nav'
 import { clearSearches, RECENT_SEARCHES_KEY, type RecentSearch } from '../lib/recent'
 import { Cover } from '../components/Cover'
 import { readChoice, writePref } from '../lib/prefs'
+import { People } from './search/People'
+
+// Records or the people sharing them, each with its own way of searching
+type Kind = 'records' | 'people'
+const KIND_KEY = 'platter.searchKind'
+const savedKind = () => readChoice<Kind>(KIND_KEY, ['records', 'people'], 'records')
 
 type Mode = 'barcode' | 'catno' | 'title'
 
@@ -40,6 +46,11 @@ export function Search() {
     setModeState(m)
     writePref(MODE_KEY, m)
   }
+  const [kind, setKindState] = useState<Kind>(() => (params.get('who') ? 'people' : savedKind()))
+  function setKind(k: Kind) {
+    setKindState(k)
+    writePref(KIND_KEY, k)
+  }
   const [barcode, setBarcode] = useState(formatBarcodeInput(params.get('barcode') ?? ''))
   const [catno, setCatno] = useState(params.get('catno') ?? '')
   const [artist, setArtist] = useState(params.get('artist') ?? '')
@@ -61,8 +72,9 @@ export function Search() {
   // the page's address follows the form, so coming back to it (Back from the results, the tab,
   // a reload) finds it as it was left, and clearing a field clears it there too
   useEffect(() => {
+    if (kind === 'people') return replaceAddress('/search?who=1')
     replaceAddress(query ? `/search?mode=${mode}&${query}` : '/search')
-  }, [mode, query])
+  }, [kind, mode, query])
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -74,112 +86,129 @@ export function Search() {
       <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-12">
         <div>
           <Segmented
-            label="Search by"
+            label="What to search"
             className="mb-4"
-            value={mode}
-            onChange={setMode}
-            options={modes.map(({ id, label, Icon }) => ({
-              value: id,
-              label,
-              icon: <Icon size={16} aria-hidden className="hidden sm:block" />,
-            }))}
+            value={kind}
+            onChange={setKind}
+            options={[
+              { value: 'records', label: 'Records', icon: <Disc3 size={16} aria-hidden className="hidden sm:block" /> },
+              { value: 'people', label: 'People', icon: <Users size={16} aria-hidden className="hidden sm:block" /> },
+            ]}
           />
+          {kind === 'people' && <People />}
+          {kind === 'records' && (
+            <>
+              <Segmented
+                label="Search by"
+                className="mb-4"
+                value={mode}
+                onChange={setMode}
+                options={modes.map(({ id, label, Icon }) => ({
+                  value: id,
+                  label,
+                  icon: <Icon size={16} aria-hidden className="hidden sm:block" />,
+                }))}
+              />
 
-          <form onSubmit={submit} className="space-y-3">
-            {mode === 'barcode' && (
-              <>
-                <label htmlFor="barcode" className="mb-1 block text-sm font-medium">
-                  Barcode number
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="barcode"
-                    className={`${input} min-w-0 flex-1`}
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={barcode}
-                    onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
-                    placeholder="e.g. 5 012394 144777"
-                  />
-                  {/* the scanner lives on the Scan tab; this opens it set to look a record up */}
-                  <Link
-                    href="/scan?mode=single"
-                    aria-label="Scan the barcode"
-                    title="Scan the barcode"
-                    className={buttonClass('secondary', 'w-12 shrink-0 px-0')}
-                  >
-                    <ScanBarcode size={20} aria-hidden />
-                  </Link>
-                </div>
-              </>
-            )}
-            {mode === 'catno' && (
-              <>
-                <label htmlFor="catno" className="mb-1 block text-sm font-medium">
-                  Catalog number
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="catno"
-                    className={`${input} min-w-0 flex-1`}
-                    autoCapitalize="characters"
-                    autoComplete="off"
-                    value={catno}
-                    onChange={(e) => setCatno(e.target.value)}
-                    placeholder="e.g. PB 41447"
-                  />
-                  {/* spines are usually printed sideways, so try both ways round */}
-                  <ReadPhotoButton
-                    compact
-                    label="Read it from a photo of the spine"
-                    rotations={[90, 270, 0]}
-                    onText={(t) => setSpine(catnoCandidates(t))}
-                  />
-                </div>
-                {spine && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs text-stone-500">
-                      {spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {spine.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setCatno(c)}
-                          className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800"
-                        >
-                          {c}
-                        </button>
-                      ))}
+              <form onSubmit={submit} className="space-y-3">
+                {mode === 'barcode' && (
+                  <>
+                    <label htmlFor="barcode" className="mb-1 block text-sm font-medium">
+                      Barcode number
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="barcode"
+                        className={`${input} min-w-0 flex-1`}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={barcode}
+                        onChange={(e) => setBarcode(formatBarcodeInput(e.target.value))}
+                        placeholder="e.g. 5 012394 144777"
+                      />
+                      {/* the scanner lives on the Scan tab; this opens it set to look a record up */}
+                      <Link
+                        href="/scan?mode=single"
+                        aria-label="Scan the barcode"
+                        title="Scan the barcode"
+                        className={buttonClass('secondary', 'w-12 shrink-0 px-0')}
+                      >
+                        <ScanBarcode size={20} aria-hidden />
+                      </Link>
                     </div>
-                  </div>
+                  </>
                 )}
-              </>
-            )}
-            {mode === 'title' && (
-              <>
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium">Artist</span>
-                  <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} />
-                </label>
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium">Title</span>
-                  <input className={input} autoComplete="off" value={title} onChange={(e) => setTitle(e.target.value)} />
-                </label>
-              </>
-            )}
-            <Button type="submit" className="w-full" disabled={!ready}>
-              Search Discogs
-            </Button>
-          </form>
+                {mode === 'catno' && (
+                  <>
+                    <label htmlFor="catno" className="mb-1 block text-sm font-medium">
+                      Catalog number
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="catno"
+                        className={`${input} min-w-0 flex-1`}
+                        autoCapitalize="characters"
+                        autoComplete="off"
+                        value={catno}
+                        onChange={(e) => setCatno(e.target.value)}
+                        placeholder="e.g. PB 41447"
+                      />
+                      {/* spines are usually printed sideways, so try both ways round */}
+                      <ReadPhotoButton
+                        compact
+                        label="Read it from a photo of the spine"
+                        rotations={[90, 270, 0]}
+                        onText={(t) => setSpine(catnoCandidates(t))}
+                      />
+                    </div>
+                    {spine && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-stone-500">
+                          {spine.length ? 'Found on the spine:' : "Couldn't find a catalog number. Try a closer, straighter photo."}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {spine.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setCatno(c)}
+                              className="rounded-full bg-stone-200 px-3 py-1 font-mono text-sm dark:bg-stone-800"
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                {mode === 'title' && (
+                  <>
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium">Artist</span>
+                      <input className={input} autoComplete="off" value={artist} onChange={(e) => setArtist(e.target.value)} />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium">Title</span>
+                      <input className={input} autoComplete="off" value={title} onChange={(e) => setTitle(e.target.value)} />
+                    </label>
+                  </>
+                )}
+                <Button type="submit" className="w-full" disabled={!ready}>
+                  Search Discogs
+                </Button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* a line between the two lists when both are there */}
-        <div className="mt-8 lg:mt-0 [&>*+*]:border-t [&>*+*]:border-stone-200 [&>*+*]:pt-6 dark:[&>*+*]:border-stone-800">
-          <RecentSearches />
-          <RecentlyAdded />
-        </div>
+        {kind === 'records' && (
+          <div className="mt-8 lg:mt-0 [&>*+*]:border-t [&>*+*]:border-stone-200 [&>*+*]:pt-6 dark:[&>*+*]:border-stone-800">
+            <RecentSearches />
+            <RecentlyAdded />
+          </div>
+        )}
       </div>
     </Screen>
   )
