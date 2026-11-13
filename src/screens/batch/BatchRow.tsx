@@ -198,8 +198,9 @@ export function Row({
         <button
           type="button"
           aria-label="Remove from batch"
+          title="Remove from batch"
           onClick={onRemove}
-          className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+          className="rounded-full p-2 text-stone-500 hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-800 dark:hover:text-red-400"
         >
           <X size={18} />
         </button>

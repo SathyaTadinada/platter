@@ -115,7 +115,8 @@ export function SideNav() {
       </ul>
       {session && (
         <ProfileLink
-          to={cloud.available ? '/account' : '/settings'}
+          // the account is opt-in, so without one this stays the Discogs profile
+          to={cloud.enabled ? '/account' : undefined}
           compact={collapsed}
           className={`mt-auto rounded-lg py-2 hover:bg-stone-100 dark:hover:bg-stone-900 ${collapsed ? 'justify-center px-1.5' : 'px-3'}`}
         />

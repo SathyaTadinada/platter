@@ -280,6 +280,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 // and nothing leaves the browser
 function useDemoCloud(): Ctx {
   const [enabled, setEnabled] = useState(true)
+  const [exists, setExists] = useState(true)
   const [off, setOff] = useState<Category[]>([])
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
@@ -288,6 +289,7 @@ function useDemoCloud(): Ctx {
   const signIn = async () => {
     await pause(600)
     setEnabled(true)
+    setExists(true)
     setSyncedAt(Date.now())
   }
   return {
@@ -299,7 +301,7 @@ function useDemoCloud(): Ctx {
     syncedAt,
     off,
     api: enabled ? api : null,
-    waysIn: async () => ({ exists: true, password: false, passkeys: true, legacy: false }),
+    waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {
       await signIn()
       return true
@@ -322,7 +324,10 @@ function useDemoCloud(): Ctx {
     changePassword: () => pause(500),
     setOff: async (next) => setOff(next),
     leave: async () => setEnabled(false),
-    forget: async () => setEnabled(false),
+    forget: async () => {
+      setEnabled(false)
+      setExists(false)
+    },
     beforeSignOut: async () => {},
   }
 }

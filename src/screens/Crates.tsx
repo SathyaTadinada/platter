@@ -101,11 +101,7 @@ export function Crates() {
                     >
                       <Pencil size={18} />
                     </IconButton>
-                    <IconButton
-                      label={`Delete ${f.name}`}
-                      onClick={() => setConfirmDelete(f)}
-                      className="hover:text-red-600! dark:hover:text-red-400!"
-                    >
+                    <IconButton label={`Delete ${f.name}`} onClick={() => setConfirmDelete(f)} danger>
                       <Trash2 size={18} />
                     </IconButton>
                   </span>

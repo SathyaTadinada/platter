@@ -9,6 +9,7 @@ export type MenuItem = {
   disabled?: boolean
   checked?: boolean
   checkedMark?: ReactNode
+  danger?: boolean
 }
 
 // Small dropdown, behind a "more" button unless given its own. Arrow keys move through it;
@@ -94,9 +95,9 @@ export function Menu({
                 trigger.current?.focus()
                 item.onSelect()
               }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-stone-100 focus-visible:bg-stone-100 disabled:opacity-40 dark:hover:bg-stone-800 dark:focus-visible:bg-stone-800"
+              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-stone-100 focus-visible:bg-stone-100 disabled:opacity-40 dark:hover:bg-stone-800 dark:focus-visible:bg-stone-800 ${item.danger ? 'text-red-600 dark:text-red-400' : ''}`}
             >
-              {item.icon && <span className="text-stone-500">{item.icon}</span>}
+              {item.icon && <span className={item.danger ? '' : 'text-stone-500'}>{item.icon}</span>}
               <span className="flex-1">{item.label}</span>
               {item.checked && (item.checkedMark ?? <Check size={16} className="text-accent" aria-hidden />)}
             </button>

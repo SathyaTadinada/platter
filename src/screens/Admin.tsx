@@ -122,7 +122,7 @@ export function Admin() {
       label={`More for ${m.name}`}
       items={[
         { label: 'Clear ways in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
-        { label: 'Delete account', icon: <Trash2 size={18} />, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
+        { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
       ]}
     />
   )

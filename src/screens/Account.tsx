@@ -478,7 +478,7 @@ function SignedIn() {
                   detail={d.current ? 'This device' : `Last used ${timeAgo(d.lastSeenAt ?? d.createdAt)}`}
                   trailing={
                     !d.current && (
-                      <IconButton label={`Sign out ${d.name ?? 'device'}`} onClick={() => setSigningOut(d)}>
+                      <IconButton label={`Sign out ${d.name ?? 'device'}`} danger onClick={() => setSigningOut(d)}>
                         <LogOut size={20} />
                       </IconButton>
                     )
