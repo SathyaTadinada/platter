@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'wouter'
 import { getProfile } from '../api/discogs/endpoints'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -29,34 +30,52 @@ function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; si
   )
 }
 
-// Avatar and username, linking to the Discogs profile
-export function ProfileLink({ detail, className = '', compact }: { detail?: string; className?: string; compact?: boolean }) {
+// Avatar and username, linking to the Discogs profile, or to a page here when given one
+export function ProfileLink({
+  detail,
+  className = '',
+  compact,
+  to,
+}: {
+  detail?: string
+  className?: string
+  compact?: boolean
+  to?: string
+}) {
   const { username, session } = useSignedIn()
   const profile = useProfile()
   // the demo has no Discogs profile to link to
-  if (session.kind === 'demo') {
+  const demo = session.kind === 'demo'
+  const name = demo ? 'Demo' : username
+  const inner = (
+    <>
+      <Avatar src={demo ? undefined : profile?.avatar_url} name={name} />
+      <span className={compact ? 'sr-only' : 'min-w-0'}>
+        <span className="block truncate font-medium">{name}</span>
+        {detail && <span className="block truncate text-sm text-stone-500">{detail}</span>}
+      </span>
+    </>
+  )
+  const classes = `flex min-w-0 items-center gap-3 ${className}`
+  const title = compact ? name : undefined
+  if (to) {
     return (
-      <span className={`flex min-w-0 items-center gap-3 ${className}`} title={compact ? 'Demo' : undefined}>
-        <Avatar name="D" />
-        <span className={compact ? 'sr-only' : 'min-w-0'}>
-          <span className="block truncate font-medium">Demo</span>
-        </span>
+      <Link href={to} title={title} className={classes}>
+        {inner}
+      </Link>
+    )
+  }
+  // the demo has no Discogs profile to link to
+  if (demo) {
+    return (
+      <span className={classes} title={title}>
+        {inner}
       </span>
     )
   }
   return (
-    <a
-      href={profileUrl(username)}
-      target="_blank"
-      rel="noopener"
-      title={compact ? username : undefined}
-      className={`flex min-w-0 items-center gap-3 ${className}`}
-    >
-      <Avatar src={profile?.avatar_url} name={username} />
-      <span className={compact ? 'sr-only' : 'min-w-0'}>
-        <span className="block truncate font-medium">{username}</span>
-        {detail && <span className="block truncate text-sm text-stone-500">{detail}</span>}
-      </span>
+    <a href={profileUrl(username)} target="_blank" rel="noopener" title={title} className={classes}>
+      {inner}
     </a>
   )
 }

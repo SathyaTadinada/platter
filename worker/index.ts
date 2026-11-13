@@ -23,6 +23,7 @@ import {
   deviceAccount,
   forget,
   leave,
+  nameDevice,
   nameExists,
   newPairing,
   parseDeviceName,
@@ -269,6 +270,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         await forget(db, account)
         return ok({ ok: true })
       case 'account': {
+        await nameDevice(db, input.device, deviceName)
         const { id: _id, ...rest } = (await accountById(db, account))!
         return ok(rest)
       }

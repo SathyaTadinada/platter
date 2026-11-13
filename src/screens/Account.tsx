@@ -4,6 +4,7 @@ import {
   Image,
   KeyRound,
   Layers,
+  LogOut,
   Monitor,
   MonitorSmartphone,
   Plus,
@@ -22,7 +23,7 @@ import { PairingCodeDisplay, PairingCodeInput } from '../components/PairingCode'
 import { fieldClass, NewPassword, newPasswordReady, PasswordInput } from '../components/PasswordField'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
-import { Button, Card, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
+import { Button, Card, IconButton, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import { addPasskey, CloudError, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo, type WaysIn } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
@@ -315,7 +316,7 @@ function SignedIn() {
       )}
       {signingOut && (
         <ConfirmDialog
-          title={`Sign out ${signingOut.name ?? 'this device'}?`}
+          title={`Sign out ${signingOut.name ?? 'that device'}?`}
           action="Sign out"
           onConfirm={() => {
             const id = signingOut.id
@@ -327,7 +328,7 @@ function SignedIn() {
           }}
           onCancel={() => setSigningOut(null)}
         >
-          It stops syncing and keeps its own copies.
+          It won’t sync until it’s signed in again.
         </ConfirmDialog>
       )}
       {pairing && (
@@ -475,7 +476,13 @@ function SignedIn() {
                   icon={/iPhone|Android/.test(d.name ?? '') ? <Smartphone size={20} /> : <Monitor size={20} />}
                   label={d.name ?? 'Unknown device'}
                   detail={d.current ? 'This device' : `Last used ${timeAgo(d.lastSeenAt ?? d.createdAt)}`}
-                  onClick={d.current ? undefined : () => setSigningOut(d)}
+                  trailing={
+                    !d.current && (
+                      <IconButton label={`Sign out ${d.name ?? 'device'}`} onClick={() => setSigningOut(d)}>
+                        <LogOut size={20} />
+                      </IconButton>
+                    )
+                  }
                 />
               ))}
             </List>

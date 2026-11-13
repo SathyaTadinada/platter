@@ -171,7 +171,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setOff: (off) => c('off', { off }),
     leave: () => c('leave'),
     forget: () => c('forget'),
-    account: () => c('account'),
+    account: () => c('account', { deviceName: deviceName() }),
     link: (login) => c('link', { login }),
     devices: () => c('devices'),
     removeDevice: (id) => c('device-remove', { id }),
@@ -533,7 +533,7 @@ export async function forgetAccount(api: CloudApi) {
   await resetDevice()
 }
 
-// 'gone' when the device was signed out of sync elsewhere (or the account deleted): it stops here too
+// 'gone' when the device was signed out elsewhere (or the account deleted): it stops here too
 export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
   off = new Set((await getSetting<Category[]>(CLOUD.off)) ?? [])
   try {
@@ -547,7 +547,9 @@ export async function syncNow(api: CloudApi): Promise<'ok' | 'gone'> {
     return 'ok'
   } catch (e) {
     if (e instanceof CloudError && e.status === 401) {
+      // signed out from another device (or the account deleted): it stays out until someone signs in here
       await resetDevice()
+      await setSetting(CLOUD.left, true)
       return 'gone'
     }
     throw e

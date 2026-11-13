@@ -1,6 +1,7 @@
 import { ChartLine, Disc3, LibraryBig, PanelLeftClose, PanelLeftOpen, ScanBarcode, Search, Settings2, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation } from 'wouter'
+import { useCloud } from '../hooks/cloud'
 import { useSession } from '../hooks/session'
 import { sectionFor, tabTarget, type Section } from '../lib/nav'
 import { ProfileLink } from './Profile'
@@ -62,6 +63,7 @@ export function SideNav() {
   const isCurrent = useCurrent()
   const targetOf = useTarget()
   const { session } = useSession()
+  const cloud = useCloud()
   const [collapsed, setCollapsed] = useState(loadCollapsed)
 
   function toggle() {
@@ -113,6 +115,7 @@ export function SideNav() {
       </ul>
       {session && (
         <ProfileLink
+          to={cloud.available ? '/account' : '/settings'}
           compact={collapsed}
           className={`mt-auto rounded-lg py-2 hover:bg-stone-100 dark:hover:bg-stone-900 ${collapsed ? 'justify-center px-1.5' : 'px-3'}`}
         />

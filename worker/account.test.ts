@@ -16,7 +16,7 @@ import {
   signInWithPasskey,
   CHALLENGE_TTL,
 } from './passkeys'
-import { deviceAccount, forget, setPassword, sha256, signIn } from './sync'
+import { deviceAccount, forget, nameDevice, setPassword, sha256, signIn } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
 const YOU = { id: 7, username: 'someone' }
@@ -146,6 +146,17 @@ describe('devices', () => {
     ])
     await removeDevice(db, phone.id, list[1].id)
     await expect(deviceAccount(db, phone.device)).rejects.toMatchObject({ status: 401 })
+  })
+
+  it('names a device that got in before names were kept, once', async () => {
+    const db = testDB()
+    const { id } = await account(db)
+    const old = await discogsSignIn(db, ME, false, 2000)
+    await nameDevice(db, old.device!, 'Safari on Mac')
+    await nameDevice(db, old.device!, 'Chrome on Mac')
+    const names = (await listDevices(db, id, '')).map((d) => d.name)
+    expect(names).toContain('Safari on Mac')
+    expect(names).not.toContain('Chrome on Mac')
   })
 
   it("can't sign out someone else's device", async () => {

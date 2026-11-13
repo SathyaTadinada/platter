@@ -214,6 +214,15 @@ describe('getting in', () => {
     expect(await getSetting('stylus')).toEqual({ lifespan: 5 })
   })
 
+  it("doesn't join again by itself after another device signs this one out", async () => {
+    await signIn('tadinada', PASSWORD)
+    const mine = api()
+    server.fetchFn('/api/sync/leave', { body: JSON.stringify({ device: deviceFor('tadinada')!.device }) })
+    expect(await syncNow(mine)).toBe('gone')
+    expect(deviceFor('tadinada')).toBeNull()
+    expect(await getSetting(CLOUD.left)).toBe(true)
+  })
+
   it("doesn't join again by itself after sync is turned off here", async () => {
     await signIn('tadinada', PASSWORD)
     await leave(api())

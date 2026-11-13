@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Boxes,
-  Cloud,
   Check,
   MonitorSmartphone,
   Moon,
@@ -13,6 +12,7 @@ import {
   FileUp,
   Info,
   ListChecks,
+  LibraryBig,
   LogOut,
   MonitorDown,
   RefreshCw,
@@ -181,6 +181,15 @@ export function Settings() {
                   className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
                 />
               </li>
+              {cloud.available && (
+                <Row
+                  icon={<Disc3 size={20} />}
+                  label="Platter account"
+                  detail={cloud.enabled ? (cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : 'On') : undefined}
+                  value={cloud.enabled ? undefined : 'Off'}
+                  href="/account"
+                />
+              )}
               <Row
                 icon={<LogOut size={20} />}
                 label={demo ? 'Leave demo' : 'Sign out'}
@@ -193,7 +202,7 @@ export function Settings() {
           <Section title="Collection">
             <List>
               <Row
-                icon={<Disc3 size={20} />}
+                icon={<LibraryBig size={20} />}
                 label={stats ? plural(stats.records, 'record') : 'Collection'}
                 detail={
                   sync.running
@@ -256,15 +265,6 @@ export function Settings() {
 
           <Section title="Your data">
             <List>
-              {cloud.available && (
-                <Row
-                  icon={<Cloud size={20} />}
-                  label="Platter account"
-                  detail={cloud.enabled ? (cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : 'On') : undefined}
-                  value={cloud.enabled ? undefined : 'Off'}
-                  href="/account"
-                />
-              )}
               <Row
                 icon={<Download size={20} />}
                 label="Back up to a file"

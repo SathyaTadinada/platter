@@ -129,6 +129,15 @@ export async function deviceAccount(db: DB, device: unknown, now = Date.now()): 
   return row.account
 }
 
+// Devices that got in before names were kept pick one up the next time they ask for the account
+export async function nameDevice(db: DB, device: string, name: string | null) {
+  if (!name) return
+  await db
+    .prepare('UPDATE devices SET name = ?2 WHERE token = ?1 AND name IS NULL')
+    .bind(await sha256(device), name)
+    .run()
+}
+
 export async function setPassword(db: DB, account: string, proof: string) {
   await db
     .prepare('UPDATE accounts SET proof = ?2 WHERE id = ?1')
