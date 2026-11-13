@@ -6,11 +6,11 @@ import { useCurrency, useFreshPrices } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
-import { useFieldMatches } from '../hooks/useFields'
+import { useFieldState } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
-import { getLayout, subscribeLayout, type SectionKey } from '../lib/statsLayout'
+import { shown, valueLayout, type ValueKey } from '../lib/statsLayout'
 import { change, formatMoney, valueOf } from '../lib/value'
 import { RecordRow } from '../components/stats'
 import { PriceCoverage } from '../components/PriceCoverage'
@@ -29,13 +29,13 @@ export function ValueStats() {
   const items = useLiveQuery(libraryItems, [])
   const history = useLiveQuery(() => db.valueHistory.orderBy('date').toArray(), [])
   const prices = useFreshPrices(currency)
-  const matches = useFieldMatches()
+  const { matches, error: fieldsError } = useFieldState()
   const current = useAsync(
     () => (currency ? recordCollectionValue(client, username, currency) : Promise.resolve(undefined)),
     [client, username, currency, items?.length],
   )
 
-  const layout = useSyncExternalStore(subscribeLayout, getLayout)
+  const layout = useSyncExternalStore(valueLayout.subscribe, valueLayout.get)
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
@@ -55,7 +55,7 @@ export function ValueStats() {
   const series = (history ?? []).filter((h) => h.currency === currency)
   const anySuggested = valued.some((v) => v.value.basis === 'suggested')
 
-  const sections: Record<SectionKey, ReactNode> = {
+  const sections: Record<ValueKey, ReactNode> = {
     overTime: (
       <Section title="Over time">
         <Card>
@@ -67,7 +67,15 @@ export function ValueStats() {
         </Card>
       </Section>
     ),
-    paid: <PaidVsNow items={items} valued={valued} paidField={paidField} money={money} />,
+    paid: (
+      <PaidVsNow
+        items={items}
+        valued={valued}
+        fields={matches ? 'ready' : fieldsError ? 'error' : 'loading'}
+        paidField={paidField}
+        money={money}
+      />
+    ),
     month: (
       <Section title="By month">
         <Monthly items={items} paidField={paidField} dateField={dateField} money={money} currency={currency} />
@@ -143,14 +151,14 @@ export function ValueStats() {
   return (
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
-      {/* sections flow down two columns on wide screens, in the order picked in "Choose charts" */}
-      <div className="lg:columns-2 lg:gap-x-8 [&>*]:inline-block [&>*]:w-full [&>*]:break-inside-avoid [&>*]:align-top">
-        <div>{first}</div>
-        {layout.order
-          .filter((k) => !layout.hidden.includes(k) && sections[k])
-          .map((k) => (
-            <div key={k}>{sections[k]}</div>
-          ))}
+      {/* the columns picked in "Choose charts": side by side on wide screens, left then right on phones */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+        {(['left', 'right'] as const).map((side) => (
+          <div key={side}>
+            {side === 'left' && first}
+            {shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}
+          </div>
+        ))}
       </div>
       <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />

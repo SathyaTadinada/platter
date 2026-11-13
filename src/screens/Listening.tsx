@@ -1,5 +1,5 @@
 import { Dices } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { MonthBars, RecordRow, statCard } from '../components/stats'
@@ -11,6 +11,7 @@ import { dayAgo } from '../lib/time'
 import { byMonth, localDate } from '../lib/value'
 import { PlayPicker } from './collection/PlayPicker'
 import { Stylus } from './listening/Stylus'
+import { listeningLayout, shown, type ListeningKey } from '../lib/statsLayout'
 
 const TOP = 8
 
@@ -20,6 +21,7 @@ export function ListeningStats() {
   const { username } = useSignedIn()
   const ids = usePlayFields()
   const [picking, setPicking] = useState(false)
+  const layout = useSyncExternalStore(listeningLayout.subscribe, listeningLayout.get)
   if (!data) return <Spinner />
 
   const { rows, plays } = data
@@ -57,56 +59,64 @@ export function ListeningStats() {
     )
   }
 
-  return (
-    <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
-      <div>
-        {nudge && <div className="mb-4">{nudge}</div>}
-        <Section>
-          <div className="grid grid-cols-3 gap-3">
-            <Tile label="This month" value={months.at(-1)!.total} />
-            <Tile label="This year" value={thisYear} />
-            <Tile label={`of ${rows.length} played`} value={playedCount} />
-          </div>
-        </Section>
-
-        <Section title="Plays by month">
-          <Card>
-            <MonthBars months={months} text={(n) => `${n} play${n === 1 ? '' : 's'}`} short={String} />
-          </Card>
-        </Section>
-
-        <Section title="Most played">
-          <List rows={stats.mostPlayed.slice(0, TOP)} right={(r) => `${r.count} ${r.count === 1 ? 'play' : 'plays'}`} />
-        </Section>
-      </div>
-
-      <div>
-        <Stylus />
-
-        <Section title="Recently played">
-          <List rows={stats.recent.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />
-        </Section>
-
-        {forgotten.length > 0 && (
-          <Section title="Not played in a year">
-            {stats.dusty.length > 0 && <List rows={stats.dusty.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />}
-            <div className="flex items-center justify-between gap-3 px-1">
-              <p className="text-sm text-stone-500">{stats.never.length > 0 && `${stats.never.length} never played`}</p>
-              <button type="button" onClick={() => setPicking(true)} className={buttonClass('secondary', 'min-h-9 shrink-0 px-3 text-sm')}>
-                <Dices size={16} aria-hidden />
-                Pick one
-              </button>
-            </div>
-            {picking && (
-              <PlayPicker
-                items={forgotten.map((r) => r.item)}
-                scope={`${forgotten.length} records not played in a year`}
-                onClose={() => setPicking(false)}
-              />
-            )}
-          </Section>
+  const sections: Record<ListeningKey, ReactNode> = {
+    totals: (
+      <Section>
+        <div className="grid grid-cols-3 gap-3">
+          <Tile label="This month" value={months.at(-1)!.total} />
+          <Tile label="This year" value={thisYear} />
+          <Tile label={`of ${rows.length} played`} value={playedCount} />
+        </div>
+      </Section>
+    ),
+    month: (
+      <Section title="Plays by month">
+        <Card>
+          <MonthBars months={months} text={(n) => `${n} play${n === 1 ? '' : 's'}`} short={String} />
+        </Card>
+      </Section>
+    ),
+    most: (
+      <Section title="Most played">
+        <List rows={stats.mostPlayed.slice(0, TOP)} right={(r) => `${r.count} ${r.count === 1 ? 'play' : 'plays'}`} />
+      </Section>
+    ),
+    stylus: <Stylus />,
+    recent: (
+      <Section title="Recently played">
+        <List rows={stats.recent.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />
+      </Section>
+    ),
+    dusty: forgotten.length > 0 && (
+      <Section title="Not played in a year">
+        {stats.dusty.length > 0 && <List rows={stats.dusty.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />}
+        <div className="flex items-center justify-between gap-3 px-1">
+          <p className="text-sm text-stone-500">{stats.never.length > 0 && `${stats.never.length} never played`}</p>
+          <button type="button" onClick={() => setPicking(true)} className={buttonClass('secondary', 'min-h-9 shrink-0 px-3 text-sm')}>
+            <Dices size={16} aria-hidden />
+            Pick one
+          </button>
+        </div>
+        {picking && (
+          <PlayPicker
+            items={forgotten.map((r) => r.item)}
+            scope={`${forgotten.length} records not played in a year`}
+            onClose={() => setPicking(false)}
+          />
         )}
-      </div>
+      </Section>
+    ),
+  }
+
+  // the columns picked in "Choose charts": side by side on wide screens, left then right on phones
+  return (
+    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+      {(['left', 'right'] as const).map((side) => (
+        <div key={side}>
+          {side === 'left' && nudge && <div className="mb-4">{nudge}</div>}
+          {shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}
+        </div>
+      ))}
       <p className="lg:col-span-2">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </p>

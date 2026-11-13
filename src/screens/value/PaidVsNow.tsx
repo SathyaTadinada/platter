@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'wouter'
+import { Sheet } from '../../components/Sheet'
 import { Card, Section } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { change, paidTotal, parseMoney } from '../../lib/value'
@@ -9,15 +11,30 @@ import { Delta } from './ValueChart'
 export function PaidVsNow({
   items,
   valued,
+  fields,
   paidField,
   money,
 }: {
   items: LibraryItem[]
   valued: Valued[]
+  fields: 'loading' | 'error' | 'ready' // the collection fields from Discogs, which say where the price paid is
   paidField?: number
   money: Money
 }) {
   const paid = paidTotal(items, paidField)
+  const [listing, setListing] = useState(false)
+  if (fields !== 'ready')
+    return (
+      <Section title="Paid vs now">
+        <Card>
+          {fields === 'loading' ? (
+            <p className="h-12 animate-pulse rounded-lg bg-stone-200 dark:bg-stone-800" />
+          ) : (
+            <p className="text-sm text-stone-500">Couldn't get your collection fields from Discogs right now.</p>
+          )}
+        </Card>
+      </Section>
+    )
   if (!paid.count || paidField === undefined)
     return (
       <Section title="Paid vs now">
@@ -44,21 +61,42 @@ export function PaidVsNow({
     .map((v) => ({ ...v, diff: v.value.amount - v.paid }))
   const spent = rows.reduce((n, r) => n + r.paid, 0)
   const worth = rows.reduce((n, r) => n + r.value.amount, 0)
+  // bought, but nothing to compare with: nobody's selling a copy, or the price isn't checked yet
+  const counted = new Set(rows.map((r) => r.item.instanceId))
+  const left = items.filter((i) => (parseMoney(i.fields[paidField]) ?? -1) >= 0 && !counted.has(i.instanceId))
   const gains = rows.filter((r) => r.diff > 0).sort((a, b) => b.diff - a.diff)
   const losses = rows.filter((r) => r.diff < 0).sort((a, b) => a.diff - b.diff)
 
+  // behind the (i), so the card itself stays clean; the (i) only shows when something's left out
+  const note = rows.length > 0 && left.length > 0 && (
+    <>
+      Leaves out {left.length} record{left.length === 1 ? '' : 's'} without a current price.{' '}
+      <button type="button" onClick={() => setListing(true)} className="font-medium underline underline-offset-2">
+        See which
+      </button>
+    </>
+  )
+
   return (
-    <Section title="Paid vs now">
+    <Section title="Paid vs now" info={note}>
+      {listing && (
+        <Sheet title="Not counted" onClose={() => setListing(false)}>
+          <ul className="divide-y divide-stone-200 dark:divide-stone-800">
+            {left.map((i) => (
+              <li key={i.instanceId}>
+                <RecordRow item={i} detail={i.artist}>
+                  <span className="text-sm text-stone-500 tabular-nums">Paid {money(parseMoney(i.fields[paidField])!)}</span>
+                </RecordRow>
+              </li>
+            ))}
+          </ul>
+        </Sheet>
+      )}
       <Card>
         {rows.length ? (
           <>
             <Delta {...change(spent, worth)} money={money} />
             <PaidBar paid={spent} now={worth} money={money} />
-            {rows.length < paid.count && (
-              <p className="mt-3 text-sm text-stone-500">
-                Leaves out {paid.count - rows.length} record{paid.count - rows.length === 1 ? '' : 's'} without a current price.
-              </p>
-            )}
           </>
         ) : (
           <>

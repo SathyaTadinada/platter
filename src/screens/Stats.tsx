@@ -1,12 +1,13 @@
 import { useLocation, useSearch } from 'wouter'
 import { useState } from 'react'
-import { History, Share, SlidersHorizontal } from 'lucide-react'
+import { CalendarRange, Share, SlidersHorizontal } from 'lucide-react'
 import { ChartsSheet } from '../components/ChartsSheet'
 import { CollectionShare } from '../components/ShareSheet'
 import { IconButton, Screen, Segmented } from '../components/ui'
 import { ListeningStats } from './Listening'
 import { ValueStats } from './Value'
 import { readChoice, writePref } from '../lib/prefs'
+import { listeningLayout, valueLayout } from '../lib/statsLayout'
 
 type View = 'value' | 'listening'
 const VIEW_KEY = 'platter.statsView'
@@ -46,14 +47,21 @@ export function Stats() {
       toolbar={toggle}
       actions={
         <>
-          {view === 'value' && (
-            <IconButton label="Choose charts" onClick={() => setChoosing(true)}>
-              <SlidersHorizontal size={20} />
-            </IconButton>
-          )}
-          <IconButton label="Your year" onClick={() => navigate('/stats/year')}>
-            <History size={20} />
+          <IconButton label="Choose charts" onClick={() => setChoosing(true)}>
+            <SlidersHorizontal size={20} />
           </IconButton>
+          {/* named from sm up, since no icon says "your year so far" on its own */}
+          <IconButton label="Your year" className="sm:hidden" onClick={() => navigate('/stats/year')}>
+            <CalendarRange size={20} />
+          </IconButton>
+          <button
+            type="button"
+            onClick={() => navigate('/stats/year')}
+            className="hidden items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 active:bg-stone-200 sm:flex dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800"
+          >
+            <CalendarRange size={20} aria-hidden />
+            Your year
+          </button>
           <IconButton label="Share" onClick={() => setSharing(true)}>
             <Share size={20} />
           </IconButton>
@@ -64,7 +72,12 @@ export function Stats() {
       <div className="pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]">
         {view === 'value' ? <ValueStats /> : <ListeningStats />}
       </div>
-      {choosing && <ChartsSheet onClose={() => setChoosing(false)} />}
+      {choosing &&
+        (view === 'value' ? (
+          <ChartsSheet store={valueLayout} onClose={() => setChoosing(false)} />
+        ) : (
+          <ChartsSheet store={listeningLayout} onClose={() => setChoosing(false)} />
+        ))}
       {sharing && <CollectionShare onClose={() => setSharing(false)} />}
     </Screen>
   )

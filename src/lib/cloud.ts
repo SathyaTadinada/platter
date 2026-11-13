@@ -3,7 +3,7 @@ import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capt
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
 import { applyAccent } from './accent'
 import { prefListeners, readPref, removePref, writePref } from './prefs'
-import { reloadLayout } from './statsLayout'
+import { LAYOUTS } from './statsLayout'
 import { applyTheme } from './theme'
 
 // Cloud sync: what you save in Platter follows you to every device. An account is your Discogs
@@ -12,7 +12,7 @@ import { applyTheme } from './theme'
 // sent in batches, and other devices' changes come back by number (the server's seq) so each pull
 // only carries what's new. The newest edit wins.
 
-export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', 'platter.valueLayout'])
+export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', ...LAYOUTS.map((l) => l.pref)])
 
 // per device, so none of these sync
 export const CLOUD = { cursor: 'cloudCursor', syncedAt: 'cloudSyncedAt', checked: 'cloudChecked', off: 'cloudOff' } as const
@@ -265,7 +265,7 @@ function applyPref(r: Row) {
   }
   if (r.key === 'platter.theme') applyTheme()
   if (r.key === 'platter.accent') applyAccent()
-  if (r.key === 'platter.valueLayout') reloadLayout()
+  LAYOUTS.find((l) => l.pref === r.key)?.reload()
   window.dispatchEvent(new Event('platter-prefs'))
 }
 

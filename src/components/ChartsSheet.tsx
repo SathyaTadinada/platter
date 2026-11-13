@@ -1,92 +1,168 @@
 import { Menu } from 'lucide-react'
-import { useState, useSyncExternalStore } from 'react'
-import { defaultLayout, getLayout, move, setLayout, subscribeLayout, toggle, VALUE_SECTIONS, type SectionKey } from '../lib/statsLayout'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { place, toggle, type LayoutStore, type Side } from '../lib/statsLayout'
 import { Sheet } from './Sheet'
 import { Button } from './ui'
 
-const label = Object.fromEntries(VALUE_SECTIONS) as Record<string, string>
+const SIDES: Side[] = ['left', 'right']
+const other = (s: Side): Side => (s === 'left' ? 'right' : 'left')
 
-type Drag = { key: SectionKey; from: number; startY: number; dy: number; rowH: number }
+type Drag<K> = {
+  key: K
+  from: Side
+  index: number
+  startX: number
+  startY: number
+  dx: number
+  dy: number
+  rowH: number
+  // where each column and its rows were when the drag started
+  lists: Record<Side, { rect: DOMRect; rows: DOMRect[] }>
+}
 
-// Turn the Value view's sections on and off, and drag them into a different order
-export function ChartsSheet({ onClose }: { onClose: () => void }) {
-  const layout = useSyncExternalStore(subscribeLayout, getLayout)
-  const [drag, setDrag] = useState<Drag | null>(null)
+// Where a dragged row would land: the column under the pointer (or the nearest one), and the
+// position among that column's other rows
+function dropAt<K>(d: Drag<K>): { side: Side; index: number } {
+  const x = d.startX + d.dx
+  const y = d.startY + d.dy
+  const distance = (r: DOMRect) => Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom))
+  const side = distance(d.lists.left.rect) <= distance(d.lists.right.rect) ? 'left' : 'right'
+  const center = d.lists[d.from].rows[d.index]
+  const middle = center.top + center.height / 2 + d.dy
+  const rows = d.lists[side].rows.filter((_, i) => !(side === d.from && i === d.index))
+  return { side, index: rows.filter((r) => r.top + r.height / 2 < middle).length }
+}
 
-  const last = layout.order.length - 1
-  const target = drag ? Math.min(last, Math.max(0, drag.from + Math.round(drag.dy / drag.rowH))) : -1
+// Turn a Stats view's sections on and off, and drag them into either column and a different order
+export function ChartsSheet<K extends string>({ store, onClose }: { store: LayoutStore<K>; onClose: () => void }) {
+  const layout = useSyncExternalStore(store.subscribe, store.get)
+  const label = Object.fromEntries(store.sections) as Record<K, string>
+  const [drag, setDrag] = useState<Drag<K> | null>(null)
+  const lists = useRef<Record<Side, HTMLUListElement | null>>({ left: null, right: null })
+  const drop = drag ? dropAt(drag) : null
+  // a row moved to the other column with the keyboard is a new element there; keep focus on it
+  const [moved, setMoved] = useState<K | null>(null)
+  useEffect(() => {
+    if (moved) document.querySelector<HTMLElement>(`[data-move="${moved}"]`)?.focus()
+  }, [moved, layout])
 
-  // rows between the dragged one and where it would land slide over to make room
-  const offset = (i: number) => {
-    if (!drag) return 0
-    if (i === drag.from) return drag.dy
-    if (drag.from < target && i > drag.from && i <= target) return -drag.rowH
-    if (target < drag.from && i >= target && i < drag.from) return drag.rowH
-    return 0
+  // rows after the dragged one close its gap, and rows from where it would land open one
+  const offset = (side: Side, i: number) => {
+    if (!drag || !drop) return { x: 0, y: 0 }
+    if (side === drag.from && i === drag.index) return { x: drag.dx, y: drag.dy }
+    const closing = side === drag.from && i > drag.index
+    const at = closing ? i - 1 : i
+    const opening = side === drop.side && at >= drop.index
+    return { x: 0, y: (closing ? -drag.rowH : 0) + (opening ? drag.rowH : 0) }
+  }
+
+  function start(e: React.PointerEvent<HTMLButtonElement>, key: K, side: Side, index: number) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const measure = (s: Side) => {
+      const ul = lists.current[s]!
+      return { rect: ul.getBoundingClientRect(), rows: [...ul.children].map((li) => li.getBoundingClientRect()) }
+    }
+    const rowH = e.currentTarget.closest('li')!.offsetHeight
+    setDrag({
+      key,
+      from: side,
+      index,
+      startX: e.clientX,
+      startY: e.clientY,
+      dx: 0,
+      dy: 0,
+      rowH,
+      lists: { left: measure('left'), right: measure('right') },
+    })
   }
 
   return (
     <Sheet
       title="Choose charts"
       onClose={onClose}
-      width="md"
+      width="xl"
       footer={
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => setLayout(defaultLayout())}>
+          <Button variant="secondary" onClick={() => store.set(store.defaults())}>
             Reset
           </Button>
           <Button onClick={onClose}>Done</Button>
         </div>
       }
     >
-      <ul>
-        {layout.order.map((k, i) => {
-          const shown = !layout.hidden.includes(k)
-          const dragging = drag?.key === k
-          return (
-            <li
-              key={k}
-              style={{ transform: `translateY(${offset(i)}px)` }}
-              className={`relative flex items-center gap-2 border-b border-stone-200 bg-white px-5 py-2 last:border-b-0 dark:border-stone-800 dark:bg-stone-900 ${
-                dragging ? 'z-10 shadow-lg ring-1 ring-stone-200 dark:ring-stone-700' : drag ? 'transition-transform duration-150' : ''
+      <div className="grid gap-x-4 gap-y-2 p-4 sm:grid-cols-2">
+        {SIDES.map((side) => (
+          <section key={side} aria-labelledby={`charts-${side}`}>
+            <h3 id={`charts-${side}`} className="mb-2 px-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+              {side === 'left' ? 'Left column' : 'Right column'}
+            </h3>
+            <ul
+              ref={(el) => {
+                lists.current[side] = el
+              }}
+              className={`min-h-14 rounded-2xl ${
+                layout[side].length
+                  ? 'ring-1 ring-stone-200 dark:ring-stone-800'
+                  : 'border-2 border-dashed border-stone-300 dark:border-stone-700'
               }`}
             >
-              <label className="flex min-h-10 flex-1 cursor-pointer items-center gap-3">
-                <input type="checkbox" checked={shown} onChange={() => setLayout(toggle(layout, k))} className="size-5" />
-                <span className={shown ? '' : 'text-stone-500'}>{label[k]}</span>
-              </label>
-              <button
-                type="button"
-                aria-label={`Reorder ${label[k]}`}
-                title="Drag to reorder"
-                onPointerDown={(e) => {
-                  e.currentTarget.setPointerCapture(e.pointerId)
-                  const rowH = e.currentTarget.closest('li')!.offsetHeight
-                  setDrag({ key: k, from: i, startY: e.clientY, dy: 0, rowH })
-                }}
-                onPointerMove={(e) => drag && setDrag({ ...drag, dy: e.clientY - drag.startY })}
-                onPointerUp={() => {
-                  if (drag && target !== drag.from) setLayout(move(layout, drag.key, target))
-                  setDrag(null)
-                }}
-                onPointerCancel={() => setDrag(null)}
-                // arrow keys do the same without a pointer
-                onKeyDown={(e) => {
-                  const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : -1
-                  if (to < 0 || to > last) return
-                  e.preventDefault()
-                  setLayout(move(layout, k, to))
-                }}
-                className={`-mr-2 touch-none rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 ${
-                  dragging ? 'cursor-grabbing' : 'cursor-grab'
-                }`}
-              >
-                <Menu size={20} />
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+              {layout[side].map((k, i) => {
+                const on = !layout.hidden.includes(k)
+                const dragging = drag?.key === k
+                const { x, y } = offset(side, i)
+                return (
+                  <li
+                    key={k}
+                    style={{ transform: `translate(${x}px, ${y}px)` }}
+                    className={`relative flex items-center gap-2 border-b border-stone-200 bg-white px-4 py-1.5 first:rounded-t-2xl last:rounded-b-2xl last:border-b-0 dark:border-stone-800 dark:bg-stone-900 ${
+                      dragging
+                        ? 'z-10 rounded-2xl shadow-lg ring-1 ring-stone-200 dark:ring-stone-700'
+                        : drag
+                          ? 'transition-transform duration-150'
+                          : ''
+                    }`}
+                  >
+                    <label className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-3">
+                      <input type="checkbox" checked={on} onChange={() => store.set(toggle(layout, k))} className="size-5 shrink-0" />
+                      <span className={on ? '' : 'text-stone-500'}>{label[k]}</span>
+                    </label>
+                    <button
+                      type="button"
+                      data-move={k}
+                      aria-label={`Move ${label[k]}`}
+                      title="Drag to move"
+                      onPointerDown={(e) => start(e, k, side, i)}
+                      onPointerMove={(e) => drag && setDrag({ ...drag, dx: e.clientX - drag.startX, dy: e.clientY - drag.startY })}
+                      onPointerUp={() => {
+                        if (drag && drop && (drop.side !== drag.from || drop.index !== drag.index))
+                          store.set(place(layout, drag.key, drop.side, drop.index))
+                        setDrag(null)
+                      }}
+                      onPointerCancel={() => setDrag(null)}
+                      // arrow keys do the same without a pointer: up and down within a column, left and right across
+                      onKeyDown={(e) => {
+                        const across = (e.key === 'ArrowLeft' && side === 'right') || (e.key === 'ArrowRight' && side === 'left')
+                        const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : -1
+                        if (across) {
+                          store.set(place(layout, k, other(side), Math.min(i, layout[other(side)].length)))
+                          setMoved(k)
+                        } else if (to >= 0 && to < layout[side].length) store.set(place(layout, k, side, to))
+                        else return
+                        e.preventDefault()
+                      }}
+                      className={`-mr-2 shrink-0 touch-none rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 ${
+                        dragging ? 'cursor-grabbing' : 'cursor-grab'
+                      }`}
+                    >
+                      <Menu size={20} />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
     </Sheet>
   )
 }
