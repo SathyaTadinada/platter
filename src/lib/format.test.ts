@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import search from '../../tests/fixtures/search-barcode.json'
 import type { SearchResponse } from '../api/discogs/types'
-import { cleanArtist, cleanLabel, describeFormats, shortGrade, splitTitle, toCard } from './format'
+import { cleanArtist, cleanLabel, describeFormats, sentences, shortGrade, splitTitle, toCard } from './format'
 
 describe('format', () => {
   it('shortens grades to their abbreviation', () => {
@@ -45,5 +45,11 @@ describe('format', () => {
     expect(card.title).toBe('Invisible Touch')
     expect(card.discogsUrl).toMatch(/^https:\/\/www\.discogs\.com\/release\//)
     expect(card.id).toBeGreaterThan(0)
+  })
+})
+
+describe('sentences', () => {
+  it('ends each message with a stop and joins them', () => {
+    expect(sentences(['Value too long', 'Not allowed.'])).toBe('Value too long. Not allowed.')
   })
 })

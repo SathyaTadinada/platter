@@ -6,7 +6,7 @@ import { digitsOnly } from './barcode'
 import { deviceId } from './device'
 import { rememberBarcode } from './barcodes'
 import { fieldValueFits, type ImportPlan, type ImportRow } from './csv'
-import { toCard } from './format'
+import { sentences, toCard } from './format'
 import { itemFromSearch } from './library'
 import type { FieldMatch } from './fields'
 import type { LookupResult } from './lookup'
@@ -297,9 +297,7 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       await db.queue.update(item.id!, {
         status: 'added',
         warning: problems.length
-          ? item.fill
-            ? `Some details didn't save. ${problems[0]}`
-            : `Added, but some details didn't save: ${problems[0]}`
+          ? `${item.fill ? 'Some' : 'Added, but some'} details didn't save. ${sentences(problems.slice(0, 1))}`
           : undefined,
       })
       added++

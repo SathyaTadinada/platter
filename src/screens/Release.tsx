@@ -16,7 +16,7 @@ import { buttonClass, IconButton, Notice, Screen, Section, Spinner, useBack } fr
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
-import { cleanLabel, discogsUrl } from '../lib/format'
+import { cleanLabel, discogsUrl, sentences } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
 import { Cover } from '../components/Cover'
 import { Tracklist } from './Record'
@@ -199,7 +199,7 @@ export function Release({ id }: { id: string }) {
               {added ? (
                 <div className="space-y-3">
                   <Notice tone="success">Added to {added.folder}.</Notice>
-                  {added.problems.length > 0 && <Notice tone="warn">Some details didn't save: {added.problems.join('; ')}</Notice>}
+                  {added.problems.length > 0 && <Notice tone="warn">Some details didn't save. {sentences(added.problems)}</Notice>}
                   {own?.wanted && (
                     <Notice tone="info">
                       This was on your wantlist.{' '}
