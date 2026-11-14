@@ -39,7 +39,7 @@ export function demoCloudApi(): CloudApi {
     setOff: async (off) => ({ off }),
     leave: nothing,
     forget: nothing,
-    account: async () => ({ name: 'demo', discogsId: 1, password, passkeys: passkeys.length, admin: false, badges: [] }),
+    account: async () => ({ name: 'demo', discogsId: 1, password, passkeys: passkeys.length, admin: false, badges: [], requests: 0 }),
     link: nothing,
     devices: async () => ({ devices }),
     renameDevice: async (id, name) => {

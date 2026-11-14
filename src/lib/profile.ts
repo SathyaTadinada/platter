@@ -3,7 +3,7 @@ import { db, type LibraryItem, type WantItem } from '../db/db'
 import type { CloudApi, ProfileRow } from './cloud'
 import { decadeOf, yearOf } from './library'
 import { libraryItems } from './masters'
-import { listening, listeningStats, type PlayFields } from './plays'
+import { listening, listeningStats, type Play, type PlayFields } from './plays'
 import { byMonth, localDate, type MonthTotal } from './value'
 import { reviewYears, yearReview } from './yearReview'
 
@@ -102,9 +102,8 @@ export const addedAt = (key: string) => UNTIL - Number(key.split(':')[0])
 const keyOf = (added: string | undefined, id: number) =>
   `${String(UNTIL - (added ? Date.parse(added) || 0 : 0)).padStart(13, '0')}:${String(id).padStart(10, '0')}`
 
-async function itemRows(): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
-  const all = await db.collection.toArray()
-  return all.map((r) => ({ kind: 'item', key: keyOf(r.dateAdded, r.instanceId), value: JSON.stringify(item(r)) }))
+function itemRows(items: LibraryItem[]): Omit<ProfileRow, 'updatedAt'>[] {
+  return items.map((r) => ({ kind: 'item', key: keyOf(r.dateAdded, r.instanceId), value: JSON.stringify(item(r)) }))
 }
 
 async function wantRows(): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
@@ -131,9 +130,8 @@ function counted(labels: string[], top = TOP): ProfileCount[] {
     .map(([label, count]) => ({ label, count }))
 }
 
-async function statsRows(): Promise<Omit<ProfileRow, 'updatedAt'>[] | null> {
+function statsRows(items: LibraryItem[], plays: Play[]): Omit<ProfileRow, 'updatedAt'>[] | null {
   if (!playFieldIds) return null
-  const [items, plays] = await Promise.all([libraryItems(), db.plays.toArray()])
   const s = listeningStats(listening(items, plays, playFieldIds))
   const decades = items.map(yearOf).filter(Boolean)
   const stats: ProfileStats = {
@@ -159,8 +157,8 @@ async function statsRows(): Promise<Omit<ProfileRow, 'updatedAt'>[] | null> {
   return [{ kind: 'stats', key: 'summary', value: JSON.stringify(stats) }]
 }
 
-async function yearRows(): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
-  const [items, plays, lengths] = await Promise.all([libraryItems(), db.plays.toArray(), db.lengths.toArray()])
+async function yearRows(items: LibraryItem[], plays: Play[]): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
+  const lengths = await db.lengths.toArray()
   const times = new Map(lengths.map((l) => [l.releaseId, l]))
   return reviewYears(items, plays).flatMap((year) => {
     // without the paid field, what was spent and the biggest buy aren't worked out at all
@@ -222,8 +220,14 @@ export async function publishProfile(
   const next: Sent = { ...sent }
   const done: (Section | 'about')[] = []
 
+  // the collection and plays, read once for every section that needs them
+  const on = (x: Section) => sections[x] === 'public'
+  const items = on('collection') || on('stats') || on('year') ? await libraryItems() : []
+  const plays = on('stats') || on('year') ? await db.plays.toArray() : []
+
   // build gives null when it can't say yet, which leaves the section as it was
-  const pass = async (section: Section, build: () => Promise<Omit<ProfileRow, 'updatedAt'>[] | null>) => {
+  type Rows = Omit<ProfileRow, 'updatedAt'>[] | null
+  const pass = async (section: Section, build: () => Rows | Promise<Rows>) => {
     if (sections[section] !== 'public') {
       delete next[section] // switched off, so the next time it goes on everything goes up again
       return
@@ -237,10 +241,10 @@ export async function publishProfile(
     done.push(section)
   }
 
-  await pass('collection', itemRows)
+  await pass('collection', () => itemRows(items))
   await pass('wantlist', wantRows)
-  await pass('stats', statsRows)
-  await pass('year', yearRows)
+  await pass('stats', () => statsRows(items, plays))
+  await pass('year', () => yearRows(items, plays))
 
   // their Discogs picture, while any section is on
   const anything = Object.values(sections).some((v) => v === 'public')

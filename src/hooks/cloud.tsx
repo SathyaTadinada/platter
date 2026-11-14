@@ -82,6 +82,7 @@ const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
 // apart: background work (album years, record lengths) saves something every couple of seconds
 const PUSH_AFTER = 5000
 const AVATAR_WAIT = 4000
+const SHARE_EVERY = 10 * 60_000
 const MIN_GAP = 30_000
 
 const loginOf = (s: Session): Login => (s.kind === 'oauth' ? { token: s.token, tokenSecret: s.secret ?? '' } : { token: s.token })
@@ -151,12 +152,20 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     await publishProfile(api, shared.current, about)
   }, [api, client, session])
-  // one pass at a time: two switches flipped in a row shouldn't send everything twice at once
-  const share = useCallback(() => {
-    const next = sharing.current.then(shareNow)
-    sharing.current = next.catch(() => {})
-    return next
-  }, [shareNow])
+  // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
+  // a sync it waits SHARE_EVERY since the last one, so a busy session doesn't rework the whole
+  // collection every half minute; changing the profile's settings sends straight away.
+  const lastShared = useRef(0)
+  const share = useCallback(
+    (now = true) => {
+      if (!now && Date.now() - lastShared.current < SHARE_EVERY) return Promise.resolve()
+      lastShared.current = Date.now()
+      const next = sharing.current.then(shareNow)
+      sharing.current = next.catch(() => {})
+      return next
+    },
+    [shareNow],
+  )
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
   const run = useCallback(
@@ -176,7 +185,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         failures.current = 0
         setError(null)
         await refill()
-        await share()
+        await share(false)
       } catch (e) {
         setError((e as Error).message)
         const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]

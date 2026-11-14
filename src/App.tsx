@@ -29,6 +29,7 @@ import { Account } from './screens/Account'
 import { Admin } from './screens/Admin'
 import { Following } from './screens/Following'
 import { Profile } from './screens/Profile'
+import { ProfileSettings } from './screens/ProfileSettings'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -138,6 +139,7 @@ function Routes({ error }: { error?: string }) {
               <Route path="/play" component={NowPlaying} />
               <Route path="/listenbrainz" component={ListenBrainz} />
               <Route path="/account" component={Account} />
+              <Route path="/account/profile" component={ProfileSettings} />
               <Route path="/sync">
                 <Redirect to="/account" replace />
               </Route>

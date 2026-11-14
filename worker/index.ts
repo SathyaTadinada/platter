@@ -18,7 +18,7 @@ import {
 import { clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
 import { createBadge, deleteBadge, listBadges, renameBadge } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
-import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow } from './follow'
+import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow, waiting as waitingFollows } from './follow'
 import { header, signParams } from './oauth'
 import {
   head as profileHead,
@@ -336,7 +336,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'account': {
         await nameDevice(db, input.device, about)
         const { id: _id, ...rest } = (await accountById(db, account))!
-        return ok(rest)
+        return ok({ ...rest, requests: await waitingFollows(db, account) })
       }
       case 'link':
         await link(db, account, await confirmed(input.login))

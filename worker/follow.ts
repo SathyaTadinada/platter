@@ -102,6 +102,12 @@ export async function removeFollower(db: DB, me: string, username: unknown) {
   if (them) await db.prepare('DELETE FROM follows WHERE follower = ?1 AND followee = ?2').bind(them, me).run()
 }
 
+// How many are waiting to be approved, for the account page
+export async function waiting(db: DB, me: string): Promise<number> {
+  const r = await db.prepare("SELECT COUNT(*) AS n FROM follows WHERE followee = ?1 AND status = 'pending'").bind(me).first<{ n: number }>()
+  return r?.n ?? 0
+}
+
 // Moving off Followers lets in everyone who was waiting, since they could see it now anyway
 export async function approveWaiting(db: DB, me: string) {
   await db.prepare("UPDATE follows SET status = 'accepted' WHERE followee = ?1 AND status = 'pending'").bind(me).run()

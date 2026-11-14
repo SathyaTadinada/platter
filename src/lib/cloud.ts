@@ -102,7 +102,15 @@ async function call<T>(fetchFn: typeof fetch, path: string, body: object): Promi
 // token and secret. Sent only for that check, never kept.
 export type Login = { token: string; tokenSecret?: string }
 export type WaysIn = { exists: boolean; password: boolean; passkeys: boolean }
-export type AccountInfo = { name: string; discogsId: number | null; password: boolean; passkeys: number; admin: boolean; badges: string[] }
+export type AccountInfo = {
+  name: string
+  discogsId: number | null
+  password: boolean
+  passkeys: number
+  admin: boolean
+  badges: string[]
+  requests: number // waiting to follow you
+}
 export type DeviceInfo = {
   id: string
   name: string | null

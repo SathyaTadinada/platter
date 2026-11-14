@@ -244,7 +244,7 @@ export function Profile({ username }: { username: string }) {
           }}
           onCancel={() => setBlocking(false)}
         >
-          They’ll stop following you, and won’t be able to again.
+          They’ll stop following you and can’t follow you again.
         </ConfirmDialog>
       )}
 

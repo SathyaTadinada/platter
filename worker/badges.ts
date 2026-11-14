@@ -41,8 +41,11 @@ export async function isBadge(db: DB, id: unknown): Promise<boolean> {
 // What a profile shows: each badge's name, in the order the badges were made
 export async function labelsOf(db: DB, ids: string[]): Promise<string[]> {
   if (!ids.length) return []
-  const all = await listBadges(db)
-  return all.filter((b) => ids.includes(b.id)).map((b) => b.label)
+  const { results } = await db
+    .prepare(`SELECT label FROM badges WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(', ')}) ORDER BY created_at`)
+    .bind(...ids)
+    .all<{ label: string }>()
+  return results.map((r) => r.label)
 }
 
 const taken = async (db: DB, label: string, except?: string) =>
