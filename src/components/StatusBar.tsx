@@ -23,14 +23,24 @@ function useNow(enabled: boolean) {
 }
 
 // For a bar pinned to the bottom of a page (the batch's Add bar), as its ref: keeps the
-// status pill and toasts above the bar instead of on top of it
+// status pill and toasts above the bar instead of on top of it. Measured from where the bar
+// is, since on a short page it rests higher up, above whatever follows it.
 export function liftStatus(el: HTMLElement | null) {
   if (!el) return
   const root = document.documentElement
-  const ro = new ResizeObserver(() => root.style.setProperty('--status-lift', `${el.offsetHeight + 8}px`))
+  const main = el.closest('main')
+  const update = () => {
+    const bottom = main?.getBoundingClientRect().bottom ?? innerHeight
+    // the pill already sits 0.75rem up; leave 8px between it and the bar
+    root.style.setProperty('--status-lift', `${Math.max(0, bottom - el.getBoundingClientRect().top - 4)}px`)
+  }
+  const ro = new ResizeObserver(update)
   ro.observe(el)
+  for (const x of [main, main?.firstElementChild]) if (x) ro.observe(x)
+  main?.addEventListener('scroll', update, { passive: true })
   return () => {
     ro.disconnect()
+    main?.removeEventListener('scroll', update)
     root.style.removeProperty('--status-lift')
   }
 }
@@ -38,7 +48,7 @@ export function liftStatus(el: HTMLElement | null) {
 // Small pill for background work: sync progress and rate-limit waits.
 export function StatusBar() {
   const [path] = useLocation()
-  const { client } = useSession()
+  const { client, session } = useSession()
   const status = useClientStatus(client)
   const sync = useSync()
   const { run } = useQueue()
@@ -61,9 +71,10 @@ export function StatusBar() {
   }
   // While records are being added, the time the whole batch has left, rather than a countdown at
   // every pause: the pauses are Discogs' rate limit, spread over the batch, not one record stuck
-  const left = run?.kind === 'add' && client && run.left ? timeLeft(run.left, client.requestsPerMinute) : null
+  // (the demo adds records itself, without the limit)
+  const left = run?.kind === 'add' && client && run.left && session?.kind !== 'demo' ? timeLeft(run.left, client.requestsPerMinute) : null
   if (left) {
-    text = text ? `${text} · ${left.charAt(0).toLowerCase()}${left.slice(1)}` : left
+    text = text ? `${text.replace(/…$/, '')} · ${left.charAt(0).toLowerCase()}${left.slice(1)}` : left
   } else if (waiting) {
     const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
     text = text ? `${text.replace(/…$/, '')} · waiting on Discogs (${s}s)` : `Waiting on Discogs (${s}s)`
