@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
 import { head, parseRows, publish, rows, search, setSections, settings, setWho, sweep, type ProfileRow } from './profile'
+import { members, setHidden } from './admin'
 import { deviceAccount, forget, push } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
@@ -242,6 +243,37 @@ describe('who a profile is for', () => {
     const { id } = await shared(db)
     await expect(setWho(db, id, 'everyone')).rejects.toMatchObject({ status: 400 })
     await expect(setWho(db, id, true)).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('hidden by an admin', () => {
+  it('takes the profile off links and search, whoever its owner says it is for', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setHidden(db, id, true)
+    expect(await head(db, 'tadinada')).toBeNull()
+    await expect(rows(db, 'tadinada', 'collection', undefined)).rejects.toMatchObject({ status: 404 })
+    expect((await search(db, 'tad')).found).toEqual([])
+    // the owner can't bring it back by changing who it's for
+    await setWho(db, id, 'public')
+    expect(await head(db, 'tadinada')).toBeNull()
+    expect((await settings(db, id)).hidden).toBe(true)
+
+    await setHidden(db, id, false)
+    expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada' })
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toHaveLength(2)
+  })
+
+  it('shows in the member list with what it was for', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await account(db, YOU)
+    await setWho(db, id, 'unlisted')
+    await setHidden(db, id, true)
+    expect((await members(db)).map((m) => [m.name, m.profile, m.hidden])).toEqual([
+      ['tadinada', 'unlisted', true],
+      ['someone', 'none', false],
+    ])
   })
 })
 

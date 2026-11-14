@@ -1,7 +1,8 @@
 import { Heart, LibraryBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { ExternalLink, Notice, Screen, Section, Segmented, Spinner } from '../components/ui'
-import { useCloud } from '../hooks/cloud'
+import { Cover } from '../components/Cover'
+import { DiscogsCredit } from '../components/ReleaseCardView'
+import { Button, ExternalLink, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
 import { CloudError, cloudEntry, type ProfileHead } from '../lib/cloud'
 import type { ProfileAbout, ProfileItem } from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
@@ -13,22 +14,10 @@ const ICONS: Record<string, React.ReactNode> = { collection: <LibraryBig size={1
 const discogsUser = (name: string) => `https://www.discogs.com/user/${encodeURIComponent(name)}`
 const memberSince = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
-function Cover({ item }: { item: ProfileItem }) {
-  const [broken, setBroken] = useState(false)
-  const src = item.cover ?? item.thumb
-  return src && !broken ? (
-    <img src={src} alt="" loading="lazy" onError={() => setBroken(true)} className="aspect-square w-full rounded-lg object-cover" />
-  ) : (
-    <span className="flex aspect-square w-full items-center justify-center rounded-lg bg-stone-200 dark:bg-stone-800" aria-hidden>
-      <LibraryBig size={24} className="text-stone-400" />
-    </span>
-  )
-}
-
 // Someone's profile, as anyone with the link sees it: only the sections they switched on, and only
 // what their devices published.
 export function Profile({ username }: { username: string }) {
-  const { username: mine } = useCloud()
+  const back = useBack('/')
   const [head, setHead] = useState<ProfileHead | null>(null)
   const [missing, setMissing] = useState(false)
   const [section, setSection] = useState<ProfileSection | null>(null)
@@ -76,26 +65,25 @@ export function Profile({ username }: { username: string }) {
 
   if (missing) {
     return (
-      <Screen title="Profile" back="/" width="narrow">
+      <Screen title="Profile" back={back} width="narrow">
         <Section>
-          <Notice>Nothing shared here. Either the name is wrong, or they haven’t turned a profile on.</Notice>
+          <Notice>Nobody by that name is sharing a profile.</Notice>
         </Section>
       </Screen>
     )
   }
   if (!head) {
     return (
-      <Screen title="Profile" back="/" width="full">
+      <Screen title="Profile" back={back} width="full">
         <Spinner />
       </Screen>
     )
   }
 
   const about: ProfileAbout = head.about ? JSON.parse(head.about) : {}
-  const isMine = head.username === mine.toLowerCase()
 
   return (
-    <Screen title={head.username} back={isMine ? '/account' : '/'} width="wide">
+    <Screen title={head.username} back={back} width="wide">
       <Section>
         <div className="flex items-center gap-4">
           {about.avatar ? (
@@ -109,7 +97,6 @@ export function Profile({ username }: { username: string }) {
             </span>
           )}
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold">{head.username}</h2>
             <p className="text-sm text-stone-500">
               Member since {memberSince(head.memberSince)}
               {head.badges.includes('early') && ' · Early supporter'}
@@ -134,7 +121,8 @@ export function Profile({ username }: { username: string }) {
         </Section>
       )}
 
-      <Section title={section ? LABELS[section] : undefined}>
+      {/* with tabs above, they already say which section this is */}
+      <Section title={section && head.sections.length === 1 ? LABELS[section] : undefined}>
         {error && <Notice tone="error">{error}</Notice>}
         {!items && loading ? (
           <Spinner />
@@ -142,31 +130,27 @@ export function Profile({ username }: { username: string }) {
           <Notice>Nothing here yet.</Notice>
         ) : (
           <>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {/* the same tiles as the collection grid */}
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {items?.map((r, i) => (
                 <li key={`${r.id}-${i}`} className="min-w-0">
-                  <Cover item={r} />
-                  <p className="mt-1.5 truncate text-sm font-medium">{r.title}</p>
+                  <Cover item={r} className="aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5" />
+                  <p className="mt-2 truncate text-sm font-semibold">{r.title}</p>
                   <p className="truncate text-sm text-stone-500">{r.artist}</p>
                 </li>
               ))}
             </ul>
             {more && (
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => load(more)}
-                  className="text-sm font-semibold text-accent disabled:opacity-40"
-                >
-                  {loading ? 'Loading…' : 'Show more'}
-                </button>
-              </div>
+              <Button variant="secondary" className="mt-4 w-full" disabled={loading} onClick={() => load(more)}>
+                {loading ? 'Loading…' : 'Show more'}
+              </Button>
             )}
           </>
         )}
+        <p className="mt-4">
+          <DiscogsCredit url={`${discogsUser(head.username)}/collection`} />
+        </p>
       </Section>
-      <p className="mt-6 text-center text-sm text-stone-500">Data provided by Discogs.</p>
     </Screen>
   )
 }

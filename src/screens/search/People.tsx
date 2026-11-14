@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'wouter'
-import { List, Notice, Spinner } from '../../components/ui'
+import { DiscogsCredit } from '../../components/ReleaseCardView'
+import { List, Notice, Row, Spinner } from '../../components/ui'
 import { cloudEntry, type Found } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
 import { timeAgo } from '../../lib/time'
@@ -30,25 +30,18 @@ function Avatar({ src, name }: { src?: string; name: string }) {
 
 function Person({ person }: { person: Found }) {
   const about: ProfileAbout = person.about ? JSON.parse(person.about) : {}
-  const detail = [
-    about.records !== undefined && `${about.records} ${about.records === 1 ? 'record' : 'records'}`,
+  const parts = [
+    about.records !== undefined && `${about.records.toLocaleString()} ${about.records === 1 ? 'record' : 'records'}`,
     person.publishedAt && `updated ${timeAgo(person.publishedAt)}`,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  ].filter(Boolean) as string[]
+  const detail = parts.join(' · ')
   return (
-    <li>
-      <Link
-        href={`/u/${encodeURIComponent(person.username)}`}
-        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
-      >
-        <Avatar src={about.avatar} name={person.username} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{person.username}</span>
-          {detail && <span className="block truncate text-sm text-stone-500 first-letter:uppercase">{detail}</span>}
-        </span>
-      </Link>
-    </li>
+    <Row
+      icon={<Avatar src={about.avatar} name={person.username} />}
+      label={person.username}
+      detail={detail && detail.charAt(0).toUpperCase() + detail.slice(1)}
+      href={`/u/${encodeURIComponent(person.username)}`}
+    />
   )
 }
 
@@ -106,11 +99,16 @@ export function People() {
       ) : !found.length ? (
         <Notice>Nobody by that name is sharing a profile.</Notice>
       ) : (
-        <List>
-          {found.map((p) => (
-            <Person key={p.username} person={p} />
-          ))}
-        </List>
+        <>
+          <List>
+            {found.map((p) => (
+              <Person key={p.username} person={p} />
+            ))}
+          </List>
+          <p>
+            <DiscogsCredit />
+          </p>
+        </>
       )}
     </div>
   )

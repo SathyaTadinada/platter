@@ -1,6 +1,6 @@
-import { ChevronDown, KeyRound, Trash2 } from 'lucide-react'
+import { ChevronDown, Eye, EyeOff, KeyRound, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Redirect } from 'wouter'
+import { Link, Redirect } from 'wouter'
 import { BADGES } from '../../worker/badges'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Menu } from '../components/Menu'
@@ -69,6 +69,23 @@ function Badges({ m, onToggle }: { m: Member; onToggle: (badge: string, on: bool
   )
 }
 
+const WHO: Record<Member['profile'], string> = { none: 'None', private: 'Private', unlisted: 'Link only', public: 'Public' }
+
+function ProfileState({ m }: { m: Member }) {
+  if (m.profile === 'none' && !m.hidden) return <span className="text-sm text-stone-500">None</span>
+  return (
+    <span className="flex flex-wrap gap-1">
+      {m.hidden ? (
+        <Chip tone="warn">Taken down</Chip>
+      ) : (
+        <Link href={`/u/${encodeURIComponent(m.name)}`} className="rounded-md hover:opacity-80">
+          <Chip>{WHO[m.profile]}</Chip>
+        </Link>
+      )}
+    </span>
+  )
+}
+
 function Name({ m }: { m: Member }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
@@ -121,6 +138,15 @@ export function Admin() {
     <Menu
       label={`More for ${m.name}`}
       items={[
+        ...(m.profile === 'none' && !m.hidden
+          ? []
+          : [
+              {
+                label: m.hidden ? 'Put profile back' : 'Take profile down',
+                icon: m.hidden ? <Eye size={18} /> : <EyeOff size={18} />,
+                onSelect: () => attempt(() => api.hideProfile(m.id, !m.hidden)),
+              },
+            ]),
         { label: 'Clear ways in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
         { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
       ]}
@@ -165,6 +191,7 @@ export function Admin() {
                   <th className="px-3 py-3 font-medium">Last seen</th>
                   <th className="px-3 py-3 text-right font-medium">Devices</th>
                   <th className="px-3 py-3 font-medium">Sign-in</th>
+                  <th className="px-3 py-3 font-medium">Profile</th>
                   <th className="px-3 py-3 font-medium">Badges</th>
                   <th className="py-3 pr-2 pl-3">
                     <span className="sr-only">Actions</span>
@@ -182,6 +209,9 @@ export function Admin() {
                     <td className="px-3 py-2.5 text-right text-stone-600 tabular-nums dark:text-stone-400">{m.devices}</td>
                     <td className="px-3 py-2.5">
                       <SignIn m={m} wrap={false} />
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <ProfileState m={m} />
                     </td>
                     <td className="px-1.5 py-1.5">
                       <Badges m={m} onToggle={toggle(m)} />
@@ -213,6 +243,10 @@ export function Admin() {
                   <dt className="text-stone-500">Sign-in</dt>
                   <dd>
                     <SignIn m={m} />
+                  </dd>
+                  <dt className="text-stone-500">Profile</dt>
+                  <dd>
+                    <ProfileState m={m} />
                   </dd>
                   <dt className="text-stone-500">Badges</dt>
                   <dd className="-ml-1.5">

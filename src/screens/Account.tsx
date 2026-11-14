@@ -386,7 +386,7 @@ function SignedIn() {
           <Section>
             <Card>
               <div className="space-y-3">
-                <p>Add a passkey to sign in on a new device without waiting on Discogs.</p>
+                <p>Add a passkey as a way in when Discogs can’t be reached.</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="secondary"
@@ -449,48 +449,52 @@ function SignedIn() {
             </List>
           )}
         </Section>
-        <Section title="Profile">
-          <Segmented
-            label="Who your profile is for"
-            value={cloud.who}
-            onChange={(w) => attempt(() => cloud.setWho(w))}
-            options={[
-              { value: 'private', label: 'Private' },
-              { value: 'unlisted', label: 'Link only' },
-              { value: 'public', label: 'Public' },
-            ]}
-          />
-          <List>
-            {PROFILE_SECTIONS.map((p) => (
-              <Row
-                key={p.id}
-                icon={p.icon}
-                label={p.label}
-                trailing={
-                  <Switch
-                    label={p.label}
-                    disabled={!cloud.sections}
-                    checked={cloud.sections?.[p.id] === 'public'}
-                    onChange={(on) => attempt(() => cloud.setSections({ [p.id]: on ? 'public' : 'off' }))}
-                  />
-                }
-              />
-            ))}
-          </List>
-          {anyShared && (
+        {/* drawn once its settings have come back, so it never shows Public or off by mistake */}
+        {cloud.sections && (
+          <Section title="Profile">
+            {cloud.hidden && <Notice tone="warn">Your profile has been taken down.</Notice>}
+            <Segmented
+              label="Who your profile is for"
+              value={cloud.who}
+              onChange={(w) => attempt(() => cloud.setWho(w))}
+              options={[
+                { value: 'private', label: 'Private' },
+                { value: 'unlisted', label: 'Link only' },
+                { value: 'public', label: 'Public' },
+              ]}
+            />
             <List>
-              <Row icon={<UserRound size={20} />} label="View your profile" href={`/u/${cloud.username}`} />
-              <Row
-                icon={<LinkIcon size={20} />}
-                label="Copy link"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(`${location.origin}/u/${cloud.username}`)
-                  toast('Link copied', { tone: 'success' })
-                }}
-              />
+              {PROFILE_SECTIONS.map((p) => (
+                <Row
+                  key={p.id}
+                  icon={p.icon}
+                  label={p.label}
+                  trailing={
+                    <Switch
+                      label={p.label}
+                      checked={cloud.sections?.[p.id] === 'public'}
+                      onChange={(on) => attempt(() => cloud.setSections({ [p.id]: on ? 'public' : 'off' }))}
+                    />
+                  }
+                />
+              ))}
             </List>
-          )}
-        </Section>
+            {/* a private profile's link goes nowhere, so there's nothing to view or copy */}
+            {anyShared && cloud.who !== 'private' && !cloud.hidden && (
+              <List>
+                <Row icon={<UserRound size={20} />} label="View your profile" href={`/u/${cloud.username}`} />
+                <Row
+                  icon={<LinkIcon size={20} />}
+                  label="Copy link"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(`${location.origin}/u/${cloud.username}`)
+                    toast('Link copied', { tone: 'success' })
+                  }}
+                />
+              </List>
+            )}
+          </Section>
+        )}
         {account?.admin && (
           <Section>
             <List>

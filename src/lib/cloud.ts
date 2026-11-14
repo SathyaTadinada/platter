@@ -123,6 +123,8 @@ export type Member = {
   password: boolean
   admin: boolean
   badges: string[]
+  profile: 'none' | Who
+  hidden: boolean
 }
 type Challenge<T> = { id: string; options: T }
 
@@ -192,7 +194,7 @@ export type CloudApi = {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
-  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; who: Who }>
+  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean }>
   setSections(sections: Sections): Promise<{ sections: Sections }>
   setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
@@ -200,6 +202,7 @@ export type CloudApi = {
   members(): Promise<{ members: Member[] }>
   setBadge(member: string, badge: string, on: boolean): Promise<{ badges: string[] }>
   clearWaysIn(member: string): Promise<unknown>
+  hideProfile(member: string, on: boolean): Promise<{ hidden: boolean }>
   deleteMember(member: string): Promise<unknown>
 }
 
@@ -231,6 +234,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     members: () => c('admin-members'),
     setBadge: (member, badge, on) => c('admin-badge', { member, badge, on }),
     clearWaysIn: (member) => c('admin-clear', { member }),
+    hideProfile: (member, on) => c('admin-hide', { member, on }),
     deleteMember: (member) => c('admin-delete', { member }),
   }
 }

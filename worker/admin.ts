@@ -2,6 +2,7 @@
 
 import { accountById } from './account'
 import { isBadge } from './badges'
+import type { Who } from './profile'
 import { forget, SyncError, type DB } from './sync'
 
 export type Member = {
@@ -15,6 +16,9 @@ export type Member = {
   password: boolean
   admin: boolean
   badges: string[]
+  // none when nothing is switched on, so there's no profile to see whoever it's for
+  profile: 'none' | Who
+  hidden: boolean
 }
 
 export async function requireAdmin(db: DB, account: string) {
@@ -27,8 +31,9 @@ export async function members(db: DB): Promise<Member[]> {
       `SELECT a.id, a.name, a.discogs_id, a.created_at, a.proof IS NOT NULL AS password, a.admin, a.badges,
          (SELECT COUNT(*) FROM devices d WHERE d.account = a.id) AS devices,
          (SELECT MAX(last_seen_at) FROM devices d WHERE d.account = a.id) AS last_seen_at,
-         (SELECT COUNT(*) FROM passkeys p WHERE p.account = a.id) AS passkeys
-       FROM accounts a ORDER BY a.created_at`,
+         (SELECT COUNT(*) FROM passkeys p WHERE p.account = a.id) AS passkeys,
+         pr.sections, pr.visibility, pr.hidden
+       FROM accounts a LEFT JOIN profiles pr ON pr.account = a.id ORDER BY a.created_at`,
     )
     .all<{
       id: string
@@ -41,6 +46,9 @@ export async function members(db: DB): Promise<Member[]> {
       devices: number
       last_seen_at: number | null
       passkeys: number
+      sections: string | null
+      visibility: Who | null
+      hidden: number | null
     }>()
   return results.map((r) => ({
     id: r.id,
@@ -53,7 +61,32 @@ export async function members(db: DB): Promise<Member[]> {
     password: r.password === 1,
     admin: r.admin === 1,
     badges: JSON.parse(r.badges),
+    profile: r.sections && r.visibility && sharesSomething(r.sections) ? r.visibility : 'none',
+    hidden: r.hidden === 1,
   }))
+}
+
+const sharesSomething = (sections: string) => {
+  try {
+    return Object.values(JSON.parse(sections) as Record<string, string>).includes('public')
+  } catch {
+    return false
+  }
+}
+
+// Takes a profile down whoever it's for, until an admin puts it back. Its owner keeps what they
+// published, and can still change who it's for, but nobody sees it meanwhile.
+export async function setHidden(db: DB, member: unknown, on: unknown) {
+  if (typeof on !== 'boolean') throw new SyncError(400, 'Bad setting')
+  const id = parseMember(member)
+  await db
+    .prepare(
+      `INSERT INTO profiles (account, hidden, created_at) VALUES (?1, ?2, ?3)
+       ON CONFLICT (account) DO UPDATE SET hidden = excluded.hidden`,
+    )
+    .bind(id, on ? 1 : 0, Date.now())
+    .run()
+  return on
 }
 
 const parseMember = (x: unknown) => {

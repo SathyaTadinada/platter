@@ -8,7 +8,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <ShieldCheck size={20} />,
     title: 'No tracking',
-    text: 'No ads or analytics. You only need a Platter account if you want to sync between devices.',
+    text: 'No ads or analytics. You only need a Platter account to sync between devices or share a profile.',
   },
   {
     icon: <Camera size={20} />,
@@ -29,7 +29,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <Cloud size={20} />,
     title: 'Platter account',
-    text: 'Create a Platter account to keep your plays, value history, covers, batch, and settings on your other devices. It belongs to your Discogs account, so logging in with Discogs gets you back in. It’s off by default.',
+    text: 'Create a Platter account to keep your plays, value history, covers, batch, and settings on your other devices, and to share your collection on a profile if you like. It belongs to your Discogs account, so logging in with Discogs gets you back in. It’s off by default.',
   },
   {
     icon: <Plug size={20} />,

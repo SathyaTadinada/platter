@@ -69,12 +69,15 @@ function readSections(stored: string): Sections {
 
 const publicOnes = (s: Sections): Section[] => SECTIONS.filter((x) => s[x] === 'public')
 
-type ProfileRecord = { sections: string; published_at: number | null; visibility: Who }
+type ProfileRecord = { sections: string; published_at: number | null; visibility: Who; hidden: number }
 
 // The owner's own view: every section, with the ones they haven't touched off
-export async function settings(db: DB, account: string): Promise<{ sections: Sections; publishedAt: number | null; who: Who }> {
+export async function settings(
+  db: DB,
+  account: string,
+): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean }> {
   const row = await db
-    .prepare('SELECT sections, published_at, visibility FROM profiles WHERE account = ?1')
+    .prepare('SELECT sections, published_at, visibility, hidden FROM profiles WHERE account = ?1')
     .bind(account)
     .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
@@ -82,6 +85,7 @@ export async function settings(db: DB, account: string): Promise<{ sections: Sec
     sections: Object.fromEntries(SECTIONS.map((s) => [s, saved[s] ?? 'off'])) as Sections,
     publishedAt: row?.published_at ?? null,
     who: row?.visibility ?? 'public',
+    hidden: row?.hidden === 1,
   }
 }
 
@@ -190,7 +194,7 @@ export async function search(db: DB, query: unknown): Promise<{ found: Found[] }
       `SELECT a.name, p.sections, p.published_at,
          (SELECT value FROM profile_rows r WHERE r.account = a.id AND r.kind = 'about' AND r.key = 'about') AS about
        FROM accounts a JOIN profiles p ON p.account = a.id
-       WHERE a.discogs_id IS NOT NULL AND p.visibility = 'public' AND p.sections LIKE '%\"public\"%'
+       WHERE a.discogs_id IS NOT NULL AND p.visibility = 'public' AND p.hidden = 0 AND p.sections LIKE '%\"public\"%'
          AND a.name LIKE ?2 ESCAPE '\\'
        ORDER BY (a.name = ?3) DESC, (instr(a.name, ?3) = 1) DESC, a.name
        LIMIT ?1`,
@@ -217,7 +221,7 @@ async function owner(
   const row = await db
     .prepare(
       `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility FROM accounts a JOIN profiles p ON p.account = a.id
-       WHERE a.name = ?1 AND a.discogs_id IS NOT NULL AND p.visibility <> 'private'`,
+       WHERE a.name = ?1 AND a.discogs_id IS NOT NULL AND p.visibility <> 'private' AND p.hidden = 0`,
     )
     .bind(username.trim().toLowerCase())
     .first<ProfileRecord & { id: string; created_at: number }>()

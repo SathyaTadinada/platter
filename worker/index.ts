@@ -15,7 +15,7 @@ import {
   renameDevice,
   waysIn,
 } from './account'
-import { clearWaysIn, deleteMember, members, requireAdmin, setBadge } from './admin'
+import { clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { header, signParams } from './oauth'
 import {
@@ -210,6 +210,7 @@ const SYNC_ACTIONS = [
   'admin-members',
   'admin-badge',
   'admin-clear',
+  'admin-hide',
   'admin-delete',
 ] as const
 type SyncAction = (typeof SYNC_ACTIONS)[number]
@@ -360,6 +361,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok({ members: await members(db) })
       case 'admin-badge':
         return ok({ badges: await setBadge(db, input.member, input.badge, input.on === true) })
+      case 'admin-hide':
+        return ok({ hidden: await setHidden(db, input.member, input.on) })
       case 'admin-clear':
         await clearWaysIn(db, input.member)
         return ok({ ok: true })

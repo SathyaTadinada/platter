@@ -67,7 +67,7 @@ export function demoCloudApi(): CloudApi {
       passkeys = passkeys.filter((p) => p.id !== id)
       return {}
     },
-    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, who }),
+    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, who, hidden: false }),
     setSections: async (next) => {
       await pause()
       sections = { ...sections, ...next }
@@ -83,6 +83,7 @@ export function demoCloudApi(): CloudApi {
     members: async () => ({ members: [] }),
     setBadge: async () => ({ badges: [] }),
     clearWaysIn: nothing,
+    hideProfile: async (_member, on) => ({ hidden: on }),
     deleteMember: nothing,
   }
 }

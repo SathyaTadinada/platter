@@ -208,3 +208,24 @@ describe('back labels', () => {
     expect(nav.backLabel('/settings')).toBe('Settings')
   })
 })
+
+describe('which tab a page belongs to', () => {
+  it('puts each page under its tab', async () => {
+    const { sectionOf } = await fresh()
+    expect(sectionOf('/')).toBe('collection')
+    expect(sectionOf('/collection/12')).toBe('collection')
+    expect(sectionOf('/scan')).toBe('scan')
+    expect(sectionOf('/results')).toBe('search')
+    expect(sectionOf('/u/tadinada')).toBe('search')
+    expect(sectionOf('/stats/year')).toBe('stats')
+    expect(sectionOf('/account')).toBe('settings')
+    expect(sectionOf('/admin')).toBe('settings')
+    expect(sectionOf('/sync')).toBe('settings')
+  })
+
+  it("doesn't match a page that only starts the same way", async () => {
+    const { sectionOf } = await fresh()
+    expect(sectionOf('/users')).toBe('collection')
+    expect(sectionOf('/accounts')).toBe('collection')
+  })
+})

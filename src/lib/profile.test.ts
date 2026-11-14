@@ -92,7 +92,7 @@ describe('publishing a profile', () => {
     expect(server.of('item').map((r) => r.title)).toEqual(['Rumours'])
   })
 
-  it('never sends what the owner paid, where it is kept, or their notes', async () => {
+  it('never sends their rating, what they paid, where it is kept, or their notes', async () => {
     const server = fakeServer()
     await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z', 4)
     await publishProfile(server.api, ON, {}, 1000)
@@ -100,7 +100,7 @@ describe('publishing a profile', () => {
     expect(sent).not.toContain('Shelf B')
     expect(sent).not.toContain('Paid 30')
     expect(sent).not.toContain('fields')
-    expect(server.of('item')[0].rating).toBe(4)
+    expect(sent).not.toContain('rating')
   })
 
   it('sends a section once it goes on, and stops once it goes off', async () => {

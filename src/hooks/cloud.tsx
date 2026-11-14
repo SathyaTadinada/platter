@@ -53,6 +53,7 @@ type Ctx = {
   setSections: (next: Sections) => Promise<void>
   who: Who
   setWho: (who: Who) => Promise<void>
+  hidden: boolean // taken down by an admin
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
   waysIn: () => Promise<WaysIn & { legacy: boolean }>
@@ -100,6 +101,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const [sections, setSections] = useState<Sections | null>(null)
   const [who, setWho] = useState<Who>('public')
+  const [hidden, setHidden] = useState(false)
   const shared = useRef<Sections>({})
   const busy = useRef(false)
   const again = useRef(false)
@@ -129,7 +131,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   // What the profile shows goes up after a sync, and only when something in it changed
   const share = useCallback(async () => {
     if (!api || !Object.values(shared.current).some((v) => v === 'public')) return
-    const about: ProfileAbout = { records: await db.collection.count() }
+    // how many records they have is part of their collection, so it only goes with that section
+    const about: ProfileAbout = shared.current.collection === 'public' ? { records: await db.collection.count() } : {}
     if (client && session && session.kind !== 'demo') {
       // Their Discogs picture is worth having but not worth waiting on: the client keeps retrying a
       // request Discogs turns down, and the profile shouldn't sit unpublished while it does. Without
@@ -263,10 +266,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     api
       .profileSettings()
-      .then(({ sections: saved, who: found }) => {
+      .then(({ sections: saved, who: found, hidden: down }) => {
         shared.current = saved
         setSections(saved)
         setWho(found)
+        setHidden(down)
       })
       .catch(() => {})
   }, [api])
@@ -298,6 +302,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       await share()
     },
     who,
+    hidden,
     setWho: async (next) => {
       if (!api) return
       setWho((await api.setWho(next)).who)
@@ -371,6 +376,7 @@ function useDemoCloud(): Ctx {
       setDemoSections((s) => ({ ...s, ...next }))
     },
     who: demoWho,
+    hidden: false,
     setWho: async (next) => {
       await pause(300)
       setDemoWho(next)

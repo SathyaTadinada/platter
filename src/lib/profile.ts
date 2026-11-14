@@ -3,8 +3,8 @@ import { db, type LibraryItem, type WantItem } from '../db/db'
 import type { CloudApi, ProfileRow } from './cloud'
 
 // Publishing a profile: the owner's devices send what each switched-on section shows, and nothing
-// else. Release details are Discogs' catalog data, which can be kept; the owner's own notes,
-// conditions, and what they paid never leave the device.
+// else. Release details are Discogs' catalog data, which can be kept; the owner's own ratings,
+// notes, conditions, and what they paid never leave the device.
 //
 // A pass sends every row of a section with the same time on it, then sweeps the ones older than
 // that, so a record they no longer have drops off. Passes are rare: each section carries a
@@ -13,7 +13,8 @@ import type { CloudApi, ProfileRow } from './cloud'
 export const SENT = 'profileSent'
 type Sent = Partial<Record<Section | 'about', string>>
 
-// What a visitor sees for one record. Covers are Discogs links, as they are everywhere else.
+// What a visitor sees for one record: Discogs' catalog details and its cover, as a Discogs link. Not
+// the owner's rating, notes, or condition, which would need a switch of their own to share.
 export type ProfileItem = {
   id: number
   title: string
@@ -23,7 +24,6 @@ export type ProfileItem = {
   format?: string
   thumb?: string
   cover?: string
-  rating?: number
 }
 
 export type ProfileAbout = { avatar?: string; records?: number }
@@ -37,7 +37,6 @@ const item = (r: LibraryItem): ProfileItem => ({
   format: r.format,
   thumb: r.thumb,
   cover: r.cover,
-  rating: r.rating || undefined,
 })
 
 const want = (w: WantItem): ProfileItem => ({
