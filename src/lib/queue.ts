@@ -129,6 +129,43 @@ export function planFills(
 
 // Records already waiting in the batch, so importing the same file twice doesn't queue them twice:
 // releases waiting to be added, and copies waiting to be filled in
+// Records picked from someone's profile, as Batch items: like an import, the release is known, but
+// there are no details to copy, since a profile doesn't share them. Ones already waiting in the batch
+// are left out, and ones already in the collection unless another copy is wanted. Returns how many
+// went in.
+export async function enqueueFromProfile(
+  picked: { id: number; title: string; artist: string; year?: number; label?: string; format?: string; thumb?: string }[],
+  from: string,
+  { copies = false, now = Date.now() } = {},
+): Promise<number> {
+  const waiting = await waitingInBatch()
+  const owned = new Set((await db.collection.toArray()).map((c) => c.releaseId))
+  const seen = new Set<number>()
+  const items: QueueItem[] = []
+  for (const r of picked) {
+    if (waiting.releases.has(r.id) || seen.has(r.id) || (!copies && owned.has(r.id))) continue
+    seen.add(r.id)
+    items.push({
+      createdAt: now + items.length,
+      source: 'csv',
+      from,
+      status: 'ready',
+      release: {
+        id: r.id,
+        title: r.title,
+        artist: r.artist,
+        year: r.year ? String(r.year) : undefined,
+        label: r.label,
+        format: r.format,
+        thumb: r.thumb,
+      },
+      fields: {},
+    })
+  }
+  await db.queue.bulkAdd(items)
+  return items.length
+}
+
 export async function waitingInBatch(): Promise<{ releases: Set<number>; copies: Set<number> }> {
   const waiting = (await db.queue.toArray()).filter((i) => i.status !== 'added')
   return {

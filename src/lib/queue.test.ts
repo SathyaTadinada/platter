@@ -12,6 +12,7 @@ import {
   chooseRelease,
   enqueueBarcode,
   enqueueCsv,
+  enqueueFromProfile,
   lookupPending,
   planFills,
   resetInterrupted,
@@ -281,5 +282,34 @@ describe('filling in copies already in the collection', () => {
     const waiting = await waitingInBatch()
     expect([...waiting.releases]).toEqual([2])
     expect([...waiting.copies]).toEqual([10])
+  })
+})
+
+describe('enqueueFromProfile', () => {
+  const picked = [
+    { id: 10, title: 'Rumours', artist: 'Fleetwood Mac', year: 1977 },
+    { id: 20, title: 'Tusk', artist: 'Fleetwood Mac' },
+    { id: 30, title: 'Mirage', artist: 'Fleetwood Mac' },
+  ]
+
+  it('adds them ready to go, marked with whose profile they came from', async () => {
+    expect(await enqueueFromProfile(picked, 'someone')).toBe(3)
+    const queued = await db.queue.orderBy('createdAt').toArray()
+    expect(queued.map((q) => [q.release?.title, q.status, q.from, q.source])).toEqual([
+      ['Rumours', 'ready', 'someone', 'csv'],
+      ['Tusk', 'ready', 'someone', 'csv'],
+      ['Mirage', 'ready', 'someone', 'csv'],
+    ])
+    expect(queued[0].release?.year).toBe('1977')
+  })
+
+  it('skips what is already in the collection unless another copy is wanted, and what is waiting', async () => {
+    await db.collection.put({ instanceId: 1, releaseId: 10 } as LibraryItem)
+    await enqueueFromProfile([picked[1]], 'someone')
+    expect(await enqueueFromProfile(picked, 'someone')).toBe(1)
+    expect((await db.queue.toArray()).map((q) => q.release?.id).sort()).toEqual([20, 30])
+
+    expect(await enqueueFromProfile(picked, 'someone', { copies: true })).toBe(1)
+    expect((await db.queue.toArray()).map((q) => q.release?.id).sort()).toEqual([10, 20, 30])
   })
 })

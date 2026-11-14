@@ -1,14 +1,20 @@
-import { CalendarRange, ChartLine, Heart, LibraryBig } from 'lucide-react'
+import { CalendarRange, ChartLine, Heart, LibraryBig, SquareCheckBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'wouter'
+import { Link, useLocation } from 'wouter'
 import { BADGES } from '../../worker/badges'
 import { Cover } from '../components/Cover'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { Button, ExternalLink, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
+import { Button, ExternalLink, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
+import { db } from '../db/db'
+import { useSession } from '../hooks/session'
+import { rememberTitle } from '../lib/nav'
+import { enqueueFromProfile, waitingInBatch } from '../lib/queue'
 import { CloudError, cloudEntry, type ProfileHead } from '../lib/cloud'
 import type { ProfileAbout, ProfileItem, ProfileStats, ProfileYear } from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
 import { timeAgo } from '../lib/time'
+import { Tick } from './collection/RecordTiles'
+import { AddSheet } from './profile/AddSheet'
 import { StatsView, YearView } from './profile/Summaries'
 
 const LABELS: Record<ProfileSection, string> = { collection: 'Collection', wantlist: 'Wantlist', stats: 'Stats', year: 'Your year' }
@@ -38,9 +44,15 @@ export function Profile({ username }: { username: string }) {
   const [more, setMore] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { session } = useSession()
+  const [, navigate] = useLocation()
+  // records picked to add to your own collection, by their row; null when not picking
+  const [picked, setPicked] = useState<Set<string> | null>(null)
+  const [adding, setAdding] = useState<{ items: ProfileItem[]; owned: number; waiting: number } | null>(null)
 
   useEffect(() => {
     setHead(null)
+    setPicked(null)
     setMissing(false)
     cloudEntry()
       .profile(username)
@@ -94,9 +106,53 @@ export function Profile({ username }: { username: string }) {
 
   const about: ProfileAbout = head.about ? JSON.parse(head.about) : {}
   const rows = loaded && loaded.section === section ? loaded.rows : null
+  const mine = session?.kind !== 'demo' && head.username === session?.username.toLowerCase()
+  // someone else's records can be picked out and added to yours
+  const pickable = !mine && section === 'collection' && !!rows?.length
+  const picking = pickable && picked
+  const chosen = picking ? picked.size : 0
+
+  async function review() {
+    if (!rows || !picked) return
+    const items = rows.filter((r) => picked.has(r.key)).map((r) => JSON.parse(r.value) as ProfileItem)
+    const ids = new Set(items.map((i) => i.id))
+    const have = new Set((await db.collection.toArray()).map((c) => c.releaseId))
+    const queued = (await waitingInBatch()).releases
+    const waiting = [...ids].filter((id) => queued.has(id)).length
+    const owned = [...ids].filter((id) => have.has(id) && !queued.has(id)).length
+    // nothing to decide, so no sheet to ask it in
+    if (!owned && !waiting) {
+      await enqueueFromProfile(items, head!.username)
+      rememberTitle(head!.username)
+      navigate('/batch')
+      return
+    }
+    setAdding({ items, owned, waiting })
+  }
+
+  const actions = picking ? (
+    <>
+      <button
+        type="button"
+        onClick={() => setPicked(new Set(chosen === rows!.length ? [] : rows!.map((r) => r.key)))}
+        className="rounded-lg px-2 py-1.5 text-sm font-medium"
+      >
+        {chosen === rows!.length ? 'Select none' : 'Select all'}
+      </button>
+      <button type="button" onClick={() => setPicked(null)} className="rounded-lg px-2 py-1.5 text-sm font-semibold">
+        Done
+      </button>
+    </>
+  ) : (
+    pickable && (
+      <IconButton label="Select records" onClick={() => setPicked(new Set())}>
+        <SquareCheckBig size={20} />
+      </IconButton>
+    )
+  )
 
   return (
-    <Screen title={head.username} back={back} width="wide">
+    <Screen title={picking ? (chosen ? `${chosen} selected` : 'Select records') : head.username} back={back} width="wide" actions={actions}>
       <Section>
         <div className="flex items-center gap-4">
           {about.avatar ? (
@@ -154,16 +210,47 @@ export function Profile({ username }: { username: string }) {
             <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {rows.map((row) => {
                 const r = JSON.parse(row.value) as ProfileItem
-                return (
-                  <li key={row.key} className="min-w-0">
-                    <Link href={`/release/${r.id}`} className="group block">
+                const on = Boolean(picking && picked.has(row.key))
+                const tile = (
+                  <>
+                    <div className="relative">
                       <Cover
                         item={r}
-                        className="aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98]"
+                        className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${on ? 'opacity-70 ring-4 ring-accent' : ''}`}
                       />
-                      <p className="mt-2 truncate text-sm font-semibold">{r.title}</p>
-                      <p className="truncate text-sm text-stone-500">{r.artist}</p>
-                    </Link>
+                      {picking && (
+                        <span className="absolute top-2 right-2">
+                          <Tick on={on} />
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 truncate text-sm font-semibold">{r.title}</p>
+                    <p className="truncate text-sm text-stone-500">{r.artist}</p>
+                  </>
+                )
+                return (
+                  <li key={row.key} className="min-w-0">
+                    {picking ? (
+                      <button
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() =>
+                          setPicked((old) => {
+                            const next = new Set(old)
+                            if (next.has(row.key)) next.delete(row.key)
+                            else next.add(row.key)
+                            return next
+                          })
+                        }
+                        className="group block w-full text-left"
+                      >
+                        {tile}
+                      </button>
+                    ) : (
+                      <Link href={`/release/${r.id}`} className="group block">
+                        {tile}
+                      </Link>
+                    )}
                   </li>
                 )
               })}
@@ -179,6 +266,26 @@ export function Profile({ username }: { username: string }) {
           <DiscogsCredit url={`${discogsUser(head.username)}/collection`} />
         </p>
       </Section>
+      {chosen > 0 && (
+        <div className="sticky bottom-3 z-10 mt-4">
+          <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">
+            <Button className="w-full sm:min-h-10 sm:px-3.5 sm:text-sm" onClick={review}>
+              Add to my collection
+            </Button>
+          </div>
+        </div>
+      )}
+      {adding && (
+        <AddSheet
+          picked={adding.items}
+          owned={adding.owned}
+          waiting={adding.waiting}
+          from={head.username}
+          // Batch's Back button should name the profile, not the selection
+          onAdded={() => rememberTitle(head.username)}
+          onClose={() => setAdding(null)}
+        />
+      )}
     </Screen>
   )
 }

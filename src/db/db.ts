@@ -84,11 +84,13 @@ export type QueueStatus =
   | 'added'
   | 'failed' // lookup or add went wrong; error says why
 
-// One record in a batch: a scan, a typed barcode, or a row from a CSV import
+// One record in a batch: a scan, a typed barcode, or a release known up front ('csv'), from an import
+// or picked from someone's profile
 export type QueueItem = {
   id?: number
   createdAt: number
   source: 'scan' | 'typed' | 'csv'
+  from?: string // the profile it was picked from, if it was
   status: QueueStatus
   barcode?: string
   candidates?: SearchResult[]

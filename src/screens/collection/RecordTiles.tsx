@@ -26,7 +26,7 @@ function Tap({
   )
 }
 
-function Tick({ on }: { on?: boolean }) {
+export function Tick({ on }: { on?: boolean }) {
   return (
     <span
       className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${

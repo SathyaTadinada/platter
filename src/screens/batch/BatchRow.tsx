@@ -143,7 +143,7 @@ export function Row({
             {ownedOther && <Badge tone="plain">Own another pressing</Badge>}
             {wanted && <Badge tone="good">On your wantlist</Badge>}
             {dupe && <Badge tone="warn">Scanned twice</Badge>}
-            {item.source === 'csv' && <Badge tone="plain">Imported</Badge>}
+            {item.source === 'csv' && <Badge tone="plain">{item.from ? `From ${item.from}` : 'Imported'}</Badge>}
           </div>
         )}
       </div>
