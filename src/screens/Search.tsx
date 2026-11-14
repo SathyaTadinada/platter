@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronDown, Disc3, History, Music2, ScanBarcode, Tag, Users, type LucideIcon } from 'lucide-react'
+import { ChevronDown, History, Music2, ScanBarcode, Tag, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
@@ -86,22 +86,24 @@ export function Search() {
     if (ready) navigate(`/results?${query}`)
   }
 
+  // like Scan's modes and Stats' views, in the header
+  const kinds = social ? (
+    <Segmented
+      label="What to search"
+      className="lg:max-w-[26rem]"
+      value={kind}
+      onChange={setKind}
+      options={[
+        { value: 'music', label: 'Music' },
+        { value: 'people', label: 'People' },
+      ]}
+    />
+  ) : undefined
+
   return (
-    <Screen title="Search" width="wide">
+    <Screen title="Search" width="wide" toolbar={kinds}>
       <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-12">
         <div>
-          {social && (
-            <Segmented
-              label="What to search"
-              className="mb-4"
-              value={kind}
-              onChange={setKind}
-              options={[
-                { value: 'music', label: 'Music', icon: <Disc3 size={16} aria-hidden className="hidden sm:block" /> },
-                { value: 'people', label: 'People', icon: <Users size={16} aria-hidden className="hidden sm:block" /> },
-              ]}
-            />
-          )}
           {kind === 'people' && <People />}
           {kind === 'music' && (
             <>
