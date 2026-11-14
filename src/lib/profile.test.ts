@@ -17,10 +17,18 @@ import {
 function fakeServer() {
   const rows = new Map<string, ProfileRow>()
   const passes: { section: string; before: number }[] = []
+  const KIND = { collection: 'item', wantlist: 'want', stats: 'stats', year: 'year' } as Record<string, string>
+  let written = 0
   const api: Publisher = {
     publishProfile: async (sent) => {
       for (const r of sent) rows.set(`${r.kind}:${r.key}`, r)
+      written += sent.length
       return { saved: sent.length }
+    },
+    unpublishProfile: async (section, keys) => {
+      for (const k of keys) rows.delete(`${KIND[section]}:${k}`)
+      written += keys.length
+      return { gone: keys.length }
     },
     sweepProfile: async (section, before) => {
       passes.push({ section, before })
@@ -35,7 +43,7 @@ function fakeServer() {
       .filter((r) => r.kind === kind)
       .sort((a, b) => a.key.localeCompare(b.key))
       .map((r) => JSON.parse(r.value) as ProfileItem)
-  return { api, passes, of, count: () => rows.size }
+  return { api, passes, of, count: () => rows.size, written: () => written }
 }
 
 const ON: Sections = { collection: 'public', wantlist: 'off', stats: 'off', year: 'off' }
@@ -138,6 +146,45 @@ describe('publishing a profile', () => {
     const off: Sections = { collection: 'off', wantlist: 'off', stats: 'off', year: 'off' }
     expect(await publishProfile(server.api, off, { avatar: 'a.jpg' }, 1000)).toEqual([])
     expect(server.count()).toBe(0)
+  })
+
+  it('sends only what changed after the first pass, and takes down what went', async () => {
+    const server = fakeServer()
+    for (let i = 1; i <= 50; i++) await addRecord(i, `Album ${i}`, '2026-01-01T00:00:00Z')
+    await publishProfile(server.api, ON, {}, 1000)
+    const first = server.written()
+
+    await addRecord(51, 'Tusk', '2026-03-01T00:00:00Z')
+    await db.collection.update(3, { title: 'Album 3 (remaster)' })
+    await db.collection.delete(7)
+    expect(await publishProfile(server.api, ON, {}, 2000)).toEqual(['collection'])
+    expect(server.written() - first).toBe(3) // one added, one changed, one gone
+    const titles = server.of('item').map((r) => r.title)
+    expect(titles).toHaveLength(50)
+    expect(titles).toContain('Tusk')
+    expect(titles).toContain('Album 3 (remaster)')
+    expect(titles).not.toContain('Album 7')
+    // no sweep, since nothing had to be sent from scratch
+    expect(server.passes).toHaveLength(1)
+  })
+
+  it('sends everything again once a week, sweeping what another device left', async () => {
+    const server = fakeServer()
+    await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z')
+    await publishProfile(server.api, ON, {}, 1000)
+    await server.api.publishProfile([{ kind: 'item', key: 'stray', value: '{}', updatedAt: 500 }])
+    await addRecord(2, 'Tusk', '2026-03-01T00:00:00Z')
+    await publishProfile(server.api, ON, {}, 1000 + 8 * 24 * 60 * 60_000)
+    expect(server.of('item').map((r) => r.title)).toEqual(['Tusk', 'Rumours'])
+    expect(server.passes).toHaveLength(2)
+  })
+
+  it('treats what an older version remembered as nothing sent', async () => {
+    const server = fakeServer()
+    await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z')
+    await db.settings.put({ key: SENT, value: { collection: 'abc123' } })
+    expect(await publishProfile(server.api, ON, {}, 1000)).toEqual(['collection', 'about'])
+    expect(server.passes).toEqual([{ section: 'collection', before: 1000 }])
   })
 
   it('pages a big collection and sweeps once', async () => {

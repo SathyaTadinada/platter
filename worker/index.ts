@@ -30,6 +30,7 @@ import {
   setWho,
   setSections,
   sweep as sweepProfile,
+  unpublish as unpublishProfile,
 } from './profile'
 import {
   listPasskeys,
@@ -207,6 +208,7 @@ const SYNC_ACTIONS = [
   'profile-sections',
   'profile-publish',
   'profile-sweep',
+  'profile-unpublish',
   'follow',
   'unfollow',
   'follow-respond',
@@ -392,6 +394,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await feed(db, account, input.after))
       case 'profile-sweep':
         return ok(await sweepProfile(db, account, input.section, input.before))
+      case 'profile-unpublish':
+        return ok(await unpublishProfile(db, account, input.section, input.keys))
       case 'profile-who':
         return ok({ who: await setWho(db, account, input.who) })
       case 'admin-members':

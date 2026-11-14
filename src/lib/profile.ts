@@ -11,12 +11,16 @@ import { reviewYears, yearReview } from './yearReview'
 // else. Release details are Discogs' catalog data, which can be kept; the owner's own ratings,
 // notes, conditions, and what they paid never leave the device.
 //
-// A pass sends every row of a section with the same time on it, then sweeps the ones older than
-// that, so a record they no longer have drops off. Passes are rare: each section carries a
-// fingerprint of what was last sent, and an unchanged section isn't sent again.
+// Each device remembers what it last sent, row by row, so a pass sends only the rows that changed
+// and takes down the ones that are gone, rather than writing the whole section again. The first
+// pass, and one a week after that, sends everything and sweeps whatever it didn't send, which also
+// clears out anything another device left behind.
 
 export const SENT = 'profileSent'
-type Sent = Partial<Record<Section | 'about', string>>
+const FULL_EVERY = 7 * 24 * 60 * 60_000
+// mark: the whole section's fingerprint. rows: each row's, by key. full: when everything last went up.
+type SentSection = { mark: string; rows: Record<string, string>; full: number }
+type Sent = Partial<Record<Section, SentSection>> & { about?: string }
 
 // What a visitor sees for one record: Discogs' catalog details and its cover, as a Discogs link. Not
 // the owner's rating, notes, or condition, which would need a switch of their own to share.
@@ -198,15 +202,28 @@ async function fingerprint(rows: { key: string; value: string }[]): Promise<stri
   return [...new Uint8Array(digest).slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+// A row's fingerprint, to tell whether it changed: quick rather than secure (cyrb53)
+function rowMark(value: string): string {
+  let h1 = 0xdeadbeef
+  let h2 = 0x41c6ce57
+  for (let i = 0; i < value.length; i++) {
+    const c = value.charCodeAt(i)
+    h1 = Math.imul(h1 ^ c, 2654435761)
+    h2 = Math.imul(h2 ^ c, 1597334677)
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)
+}
+
 const PAGE = 200 // the server takes this many rows at a time
 
-export type Publisher = Pick<CloudApi, 'publishProfile' | 'sweepProfile'>
+export type Publisher = Pick<CloudApi, 'publishProfile' | 'sweepProfile' | 'unpublishProfile'>
 
-async function sendPass(api: Publisher, rows: Omit<ProfileRow, 'updatedAt'>[], section: Section, at: number) {
+async function send(api: Publisher, rows: Omit<ProfileRow, 'updatedAt'>[], at: number) {
   for (let i = 0; i < rows.length; i += PAGE) {
     await api.publishProfile(rows.slice(i, i + PAGE).map((r) => ({ ...r, updatedAt: at })))
   }
-  await api.sweepProfile(section, at)
 }
 
 // Sends what's changed in the sections that are on. Returns the sections it sent.
@@ -235,9 +252,24 @@ export async function publishProfile(
     const rows = await build()
     if (!rows) return
     const mark = await fingerprint(rows)
-    if (mark === sent[section]) return
-    await sendPass(api, rows, section, at)
-    next[section] = mark
+    // (what an older version kept was just the mark, a string, which counts as nothing sent)
+    const before = typeof sent[section] === 'object' ? sent[section] : undefined
+    if (mark === before?.mark) return
+    const marks = Object.fromEntries(rows.map((r) => [r.key, rowMark(r.value)]))
+    if (!before || at - before.full >= FULL_EVERY) {
+      await send(api, rows, at)
+      await api.sweepProfile(section, at)
+      next[section] = { mark, rows: marks, full: at }
+    } else {
+      await send(
+        api,
+        rows.filter((r) => before.rows[r.key] !== marks[r.key]),
+        at,
+      )
+      const gone = Object.keys(before.rows).filter((k) => !(k in marks))
+      for (let i = 0; i < gone.length; i += PAGE) await api.unpublishProfile(section, gone.slice(i, i + PAGE))
+      next[section] = { mark, rows: marks, full: before.full }
+    }
     done.push(section)
   }
 

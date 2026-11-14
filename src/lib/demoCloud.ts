@@ -80,6 +80,7 @@ export function demoCloudApi(): CloudApi {
     },
     publishProfile: async (rows) => ({ saved: rows.length }),
     sweepProfile: async () => ({ gone: 0 }),
+    unpublishProfile: async (_section, keys) => ({ gone: keys.length }),
     // the demo has nobody to follow, and its profile reads go nowhere
     profile: async () => {
       throw new Error('Not in the demo')

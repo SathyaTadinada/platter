@@ -49,6 +49,8 @@ export type ProfileHead = {
   publishedAt: number | null
   sections: Section[]
   about: string | null // JSON their devices sent, with their Discogs picture
+  followers: number
+  following: number
 }
 
 // ---- reading what the owner chose ----
@@ -182,6 +184,29 @@ export async function sweep(db: DB, account: string, section: unknown, before: u
   return { gone: r.meta.changes }
 }
 
+// Takes down rows by key. A device that knows which records went sends just those, so a pass only
+// writes what changed rather than the whole section again.
+const DELETE_AT_ONCE = 90 // D1 takes up to 100 values per statement
+
+export async function unpublish(db: DB, account: string, section: unknown, keys: unknown): Promise<{ gone: number }> {
+  if (!(SECTIONS as readonly string[]).includes(section as string)) throw new SyncError(400, 'Bad section')
+  if (!Array.isArray(keys) || keys.length > MAX_PUSH || !keys.every((k) => typeof k === 'string' && k.length > 0 && k.length <= 200)) {
+    throw new SyncError(400, 'Bad keys')
+  }
+  if (!keys.length) return { gone: 0 }
+  const kind = KINDS[section as Section]
+  const chunks: string[][] = []
+  for (let i = 0; i < keys.length; i += DELETE_AT_ONCE) chunks.push(keys.slice(i, i + DELETE_AT_ONCE))
+  const results = await db.batch(
+    chunks.map((c) =>
+      db
+        .prepare(`DELETE FROM profile_rows WHERE account = ?1 AND kind = ?2 AND key IN (${c.map((_, i) => `?${i + 3}`).join(', ')})`)
+        .bind(account, kind, ...c),
+    ),
+  )
+  return { gone: results.reduce((n, r) => n + (r.meta?.changes ?? 0), 0) }
+}
+
 // ---- who can see what ----
 
 // What a viewer gets of a profile: all of it, just the name and picture (a Followers profile they
@@ -287,7 +312,20 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
     .bind(found.id, ABOUT)
     .first<{ value: string }>()
   const locked = can === 'locked'
+  // how many, never who: the lists themselves are only for their owner
+  const count = (sql: string) =>
+    db
+      .prepare(sql)
+      .bind(found.id)
+      .first<{ n: number }>()
+      .then((r) => r?.n ?? 0)
+  const [followers, following] = await Promise.all([
+    count("SELECT COUNT(*) AS n FROM follows WHERE followee = ?1 AND status = 'accepted'"),
+    count("SELECT COUNT(*) AS n FROM follows WHERE follower = ?1 AND status = 'accepted'"),
+  ])
   return {
+    followers,
+    following,
     locked,
     relation: viewer && viewer !== found.id ? await relation(db, viewer, found.id) : undefined,
     username: found.name,

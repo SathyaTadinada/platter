@@ -149,6 +149,8 @@ export type ProfileHead = {
   publishedAt: number | null
   sections: Section[]
   about: string | null
+  followers: number
+  following: number
 }
 export type Person = { username: string; about: string | null; since: number }
 export type Follows = { followers: Person[]; following: Person[]; requests: Person[]; blocked: Person[] }
@@ -222,6 +224,7 @@ export type CloudApi = ProfileReader & {
   setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
   sweepProfile(section: Section, before: number): Promise<{ gone: number }>
+  unpublishProfile(section: Section, keys: string[]): Promise<{ gone: number }>
   follow(username: string): Promise<{ status: 'pending' | 'accepted' }>
   unfollow(username: string): Promise<unknown>
   respondFollow(username: string, approve: boolean): Promise<unknown>
@@ -266,6 +269,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setWho: (who) => c('profile-who', { who }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
+    unpublishProfile: (section, keys) => c('profile-unpublish', { section, keys }),
     profile: (username) => c('profile', { username }),
     profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
     searchProfiles: (q) => c('profile-search', { q }),

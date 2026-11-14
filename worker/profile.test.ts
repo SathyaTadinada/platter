@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
-import { head, parseRows, publish, rows, search, setSections, settings, setWho, sweep, type ProfileRow } from './profile'
+import { head, parseRows, publish, rows, search, setSections, settings, setWho, sweep, unpublish, type ProfileRow } from './profile'
 import { members, setHidden } from './admin'
 import { deviceAccount, forget, push } from './sync'
 
@@ -119,6 +119,23 @@ describe('publishing', () => {
     await publish(db, id, [record(1, 'Rumours (2011 reissue)', 3000)])
     expect(await sweep(db, id, 'collection', 3000)).toEqual({ gone: 1 })
     expect((await rows(db, 'tadinada', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['1'])
+  })
+
+  it('takes down rows by key, in that section only, many at a time', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setSections(db, id, { wantlist: 'public' })
+    await publish(db, id, [row('want', '1', { title: 'Wanted' })])
+    await publish(
+      db,
+      id,
+      Array.from({ length: 150 }, (_, i) => record(100 + i, `Album ${i}`)),
+    )
+    const keys = Array.from({ length: 150 }, (_, i) => String(100 + i))
+    expect(await unpublish(db, id, 'collection', ['1', ...keys])).toEqual({ gone: 151 })
+    expect((await rows(db, 'tadinada', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['2'])
+    expect((await rows(db, 'tadinada', 'wantlist', undefined)).rows.map((r) => r.key)).toEqual(['1'])
+    await expect(unpublish(db, id, 'collection', [42])).rejects.toThrow('Bad keys')
   })
 
   it('sweeps only the section it is given', async () => {
