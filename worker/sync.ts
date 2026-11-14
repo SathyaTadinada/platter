@@ -164,10 +164,13 @@ export async function leave(db: DB, device: string) {
     .run()
 }
 
-// Everything kept for the account: its rows, devices, codes, passkeys, profile, and the account itself
+// Everything kept for the account: its rows, devices, codes, passkeys, profile, follows both ways, and
+// the account itself
 export async function forget(db: DB, account: string) {
   await db.batch([
     db.prepare('DELETE FROM profile_rows WHERE account = ?1').bind(account),
+    db.prepare('DELETE FROM follows WHERE follower = ?1 OR followee = ?1').bind(account),
+    db.prepare('DELETE FROM blocks WHERE blocker = ?1 OR blocked = ?1').bind(account),
     db.prepare('DELETE FROM profiles WHERE account = ?1').bind(account),
     db.prepare('DELETE FROM rows WHERE account = ?1').bind(account),
     db.prepare('DELETE FROM devices WHERE account = ?1').bind(account),

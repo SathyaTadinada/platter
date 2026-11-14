@@ -36,7 +36,13 @@ function SignIn({ m, wrap = true }: { m: Member; wrap?: boolean }) {
   )
 }
 
-const WHO: Record<Member['profile'], string> = { none: 'None', private: 'Private', unlisted: 'Link only', public: 'Public' }
+const WHO: Record<Member['profile'], string> = {
+  none: 'None',
+  private: 'Private',
+  followers: 'Followers',
+  unlisted: 'Link only',
+  public: 'Public',
+}
 
 function ProfileState({ m }: { m: Member }) {
   if (m.profile === 'none' && !m.hidden) return <span className="text-sm text-stone-500">None</span>

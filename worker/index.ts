@@ -18,6 +18,7 @@ import {
 import { clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
 import { createBadge, deleteBadge, listBadges, renameBadge } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
+import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow } from './follow'
 import { header, signParams } from './oauth'
 import {
   head as profileHead,
@@ -206,6 +207,14 @@ const SYNC_ACTIONS = [
   'profile-sections',
   'profile-publish',
   'profile-sweep',
+  'follow',
+  'unfollow',
+  'follow-respond',
+  'follower-remove',
+  'block',
+  'unblock',
+  'follows',
+  'feed',
   'profile-who',
   // admin only
   'admin-members',
@@ -252,13 +261,15 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
     // owner switched on, and nothing else.
     if (PUBLIC.has(action)) {
       if (!(await allowed(env.SYNC_LIMITER, ipKey(req)))) return tooMany()
-      if (action === 'profile-search') return ok(await searchProfiles(db, input.q))
+      // signed in, the viewer is known: enough for a Followers profile, and for blocks
+      const viewer = typeof input.device === 'string' ? await deviceAccount(db, input.device).catch(() => null) : null
+      if (action === 'profile-search') return ok(await searchProfiles(db, input.q, viewer))
       if (action === 'profile') {
-        const found = await profileHead(db, input.username)
+        const found = await profileHead(db, input.username, viewer)
         if (!found) throw new SyncError(404, 'No profile here')
         return ok(found)
       }
-      return ok(await profileRows(db, input.username, input.section, input.after))
+      return ok(await profileRows(db, input.username, input.section, input.after, viewer))
     }
 
     // Getting in: the per-IP limit for sign-in, and for passwords and passkeys a per-account one too,
@@ -358,6 +369,27 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok({ sections: await setSections(db, account, input.sections) })
       case 'profile-publish':
         return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
+      case 'follow':
+        return ok(await follow(db, account, input.username))
+      case 'unfollow':
+        await unfollow(db, account, input.username)
+        return ok({ ok: true })
+      case 'follow-respond':
+        await respond(db, account, input.username, input.approve === true)
+        return ok({ ok: true })
+      case 'follower-remove':
+        await removeFollower(db, account, input.username)
+        return ok({ ok: true })
+      case 'block':
+        await block(db, account, input.username)
+        return ok({ ok: true })
+      case 'unblock':
+        await unblock(db, account, input.username)
+        return ok({ ok: true })
+      case 'follows':
+        return ok(await followLists(db, account))
+      case 'feed':
+        return ok(await feed(db, account, input.after))
       case 'profile-sweep':
         return ok(await sweepProfile(db, account, input.section, input.before))
       case 'profile-who':
