@@ -29,3 +29,10 @@ export function holdBackground() {
 }
 
 export const backgroundHeld = () => holds > 0 || text !== null
+
+// How long a run has left, from the Discogs requests it still needs and the rate Discogs allows
+export function timeLeft(requests: number, perMinute: number): string | null {
+  if (requests <= 0 || perMinute <= 0) return null
+  const minutes = requests / perMinute
+  return minutes < 1 ? 'Under a minute left' : `About ${Math.round(minutes)} min left`
+}

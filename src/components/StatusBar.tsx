@@ -4,7 +4,7 @@ import type { DiscogsClient } from '../api/discogs/client'
 import { useSession } from '../hooks/session'
 import { useQueue } from '../hooks/queue'
 import { useSync } from '../hooks/sync'
-import { getTask, subscribeTask } from '../lib/task'
+import { getTask, subscribeTask, timeLeft } from '../lib/task'
 
 const idle = { active: 0, waitUntil: null }
 
@@ -59,7 +59,12 @@ export function StatusBar() {
   } else if (sync.running) {
     text = sync.total > 1 ? `${sync.label} (page ${sync.done} of ${sync.total})` : `${sync.label}…`
   }
-  if (waiting) {
+  // While records are being added, the time the whole batch has left, rather than a countdown at
+  // every pause: the pauses are Discogs' rate limit, spread over the batch, not one record stuck
+  const left = run?.kind === 'add' && client && run.left ? timeLeft(run.left, client.requestsPerMinute) : null
+  if (left) {
+    text = text ? `${text} · ${left.charAt(0).toLowerCase()}${left.slice(1)}` : left
+  } else if (waiting) {
     const s = Math.max(1, Math.ceil((status.waitUntil! - now) / 1000))
     text = text ? `${text.replace(/…$/, '')} · waiting on Discogs (${s}s)` : `Waiting on Discogs (${s}s)`
   }

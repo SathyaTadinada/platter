@@ -209,7 +209,8 @@ export async function takeOver(id: number) {
 
 const byAge = (status: QueueItem['status']) => db.queue.where('status').equals(status).sortBy('createdAt')
 
-type Progress = (done: number, total: number) => void
+// left: for adds, how many Discogs requests the records still to go will take
+type Progress = (done: number, total: number, left?: number) => void
 type RunOpts = { onProgress?: Progress; shouldStop?: () => boolean }
 export type RunEnd = 'done' | 'offline' | 'stopped'
 
@@ -278,13 +279,27 @@ export type AddOpts = RunOpts & {
   claim?: (item: QueueItem, startedAt: number) => Promise<boolean>
 }
 
-export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: RunEnd; added: number; failed: number }> {
+// What adding a record costs in Discogs requests: the add itself, one per field (Discogs sets them
+// one at a time), the rating, and taking it off the wantlist. Most of a batch's time goes on these,
+// at the rate Discogs allows.
+export function requestsFor(item: QueueItem, opts: Pick<AddOpts, 'removeFromWantlist' | 'wants'>): number {
+  const wanted = !item.fill && opts.removeFromWantlist && item.release && opts.wants.has(item.release.id)
+  return (item.instanceId ? 0 : 1) + Object.keys(item.fields ?? {}).length + (item.rating ? 1 : 0) + (wanted ? 1 : 0)
+}
+
+// missing: releases added without a search result to build their collection entries from (CSV rows, and
+// records picked on another device or someone's profile), to fetch from Discogs afterwards
+export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: RunEnd; added: number; failed: number; missing: number[] }> {
   const items = await byAge('ready')
+  const costs = items.map((i) => requestsFor(i, opts))
+  let left = costs.reduce((a, b) => a + b, 0)
   let added = 0
   let failed = 0
+  const missing: number[] = []
   for (const [i, item] of items.entries()) {
-    if (opts.shouldStop?.()) return { end: 'stopped', added, failed }
-    opts.onProgress?.(i, items.length)
+    if (opts.shouldStop?.()) return { end: 'stopped', added, failed, missing }
+    opts.onProgress?.(i, items.length, left)
+    left -= costs[i]
     const release = item.release!
     const folderId = item.folderId ?? opts.folderId
     const startedAt = item.addStartedAt ?? Date.now()
@@ -324,6 +339,7 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
       }
 
       if (item.raw) await db.collection.put({ ...itemFromSearch(item.raw, instanceId, folderId), fields: saved })
+      else if (!item.fill && !missing.includes(release.id)) missing.push(release.id)
       if (item.fill) {
         const copy = await db.collection.get(instanceId)
         if (copy) {
@@ -341,14 +357,14 @@ export async function addReady(deps: AddDeps, opts: AddOpts): Promise<{ end: Run
     } catch (e) {
       if (e instanceof OfflineError) {
         await db.queue.update(item.id!, { status: 'ready' })
-        return { end: 'offline', added, failed }
+        return { end: 'offline', added, failed, missing }
       }
       await db.queue.update(item.id!, { status: 'failed', error: (e as Error).message })
       failed++
     }
   }
-  opts.onProgress?.(items.length, items.length)
-  return { end: 'done', added, failed }
+  opts.onProgress?.(items.length, items.length, 0)
+  return { end: 'done', added, failed, missing }
 }
 
 // Turns the batch's shared details plus each record's own into field values.

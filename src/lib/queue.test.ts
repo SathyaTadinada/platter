@@ -15,6 +15,7 @@ import {
   enqueueFromProfile,
   lookupPending,
   planFills,
+  requestsFor,
   resetInterrupted,
   retryFailed,
   waitingInBatch,
@@ -88,12 +89,36 @@ describe('addReady', () => {
     await chooseRelease(id, results[0])
     await db.queue.update(id, { fields: { 3: 'note' }, rating: 4 })
     const d = deps()
-    expect(await addReady(d, addOpts)).toEqual({ end: 'done', added: 1, failed: 0 })
+    expect(await addReady(d, addOpts)).toEqual({ end: 'done', added: 1, failed: 0, missing: [] })
     expect(d.addToFolder).toHaveBeenCalledWith(1, results[0].id)
     expect(d.setField).toHaveBeenCalledWith({ folderId: 1, releaseId: results[0].id, instanceId: 777 }, 3, 'note')
     expect(d.setRating).toHaveBeenCalledWith(expect.anything(), 4)
     expect((await db.queue.get(id))?.status).toBe('added')
     expect(await db.collection.get(777)).toMatchObject({ releaseId: results[0].id })
+  })
+
+  it('counts down the Discogs requests the rest of the batch needs', async () => {
+    const a = await enqueueBarcode('111', 'scan', 1)
+    const b = await enqueueBarcode('222', 'scan', 2)
+    await chooseRelease(a, results[0])
+    await chooseRelease(b, results[1])
+    await db.queue.update(a, { fields: { 3: 'note', 7: 'Shelf 1' }, rating: 4 })
+    const item = (await db.queue.get(a))!
+    expect(requestsFor(item, addOpts)).toBe(4)
+    expect(requestsFor(item, { removeFromWantlist: true, wants: new Set([results[0].id]) })).toBe(5)
+    expect(requestsFor({ ...item, instanceId: 9, fill: true }, addOpts)).toBe(3)
+    const left: (number | undefined)[] = []
+    await addReady(deps(), { ...addOpts, onProgress: (_d, _t, l) => left.push(l) })
+    expect(left).toEqual([5, 1, 0])
+  })
+
+  it('lists records added without a search result, to fetch afterwards', async () => {
+    const id = await enqueueBarcode('111', 'scan')
+    await chooseRelease(id, results[0])
+    await db.queue.update(id, { raw: undefined })
+    const r = await addReady(deps(), addOpts)
+    expect(r.missing).toEqual([results[0].id])
+    expect(await db.collection.count()).toBe(0)
   })
 
   it('keeps the record when a field fails, with a warning', async () => {

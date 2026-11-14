@@ -3,8 +3,8 @@ import page from '../../tests/fixtures/collection-page.json'
 import wants from '../../tests/fixtures/wants.json'
 import { fakeAuth, fakeClock, json, routeFetch } from '../../tests/helpers'
 import { DiscogsClient, RateLimiter } from '../api/discogs/client'
-import { db, getSetting } from '../db/db'
-import { isStale, syncCollection, syncWants } from './sync'
+import { db, getSetting, type LibraryItem } from '../db/db'
+import { isStale, refreshReleases, syncCollection, syncWants } from './sync'
 
 const makeClient = (fn: typeof fetch) => {
   const k = fakeClock(Date.now())
@@ -26,6 +26,17 @@ describe('sync', () => {
     expect(progress).toEqual([1, 2])
     expect(await db.collection.where('releaseId').equals(249504).count()).toBe(2)
     expect(await isStale('collectionSyncedAt')).toBe(false)
+  })
+
+  it('fetches just a few added records, when that beats reloading every page', async () => {
+    await db.collection.clear()
+    const one = { ...page, releases: page.releases.slice(0, 1) }
+    const { fn } = routeFetch([['/collection/releases/', () => json(one)]])
+    const c = makeClient(fn)
+    expect(await refreshReleases(c, 'platter-test', [one.releases[0].id])).toBe(false) // nothing here yet: one page anyway
+    await db.collection.bulkPut(Array.from({ length: 250 }, (_, i) => ({ instanceId: 10_000 + i, releaseId: i }) as unknown as LibraryItem))
+    expect(await refreshReleases(c, 'platter-test', [one.releases[0].id])).toBe(true)
+    expect(await db.collection.get(one.releases[0].instance_id)).toMatchObject({ releaseId: one.releases[0].id })
   })
 
   it('indexes the wantlist', async () => {

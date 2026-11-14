@@ -1,5 +1,5 @@
 import type { DiscogsClient } from '../api/discogs/client'
-import { getCollectionPage, getWantsPage } from '../api/discogs/endpoints'
+import { getCollectionPage, getOwnedInstances, getWantsPage } from '../api/discogs/endpoints'
 import { db, getSetting, setSetting, type LibraryItem, type WantItem } from '../db/db'
 import { applyCoverChoices } from './covers'
 import { toLibraryItem, wantFromApi } from './library'
@@ -33,6 +33,18 @@ export async function syncCollection(client: DiscogsClient, username: string, on
   })
   await setSetting('collectionSyncedAt', Date.now())
   return items.length
+}
+
+// Fetches just these releases' copies, after adding a few records. One request each, so it's only
+// worth it while that's fewer than reloading the whole collection a page at a time.
+export async function refreshReleases(client: DiscogsClient, username: string, releaseIds: number[]) {
+  const pages = Math.max(1, Math.ceil((await db.collection.count()) / 100))
+  if (releaseIds.length >= pages) return false
+  for (const id of releaseIds) {
+    const r = await getOwnedInstances(client, username, id)
+    await db.collection.bulkPut(await applyCoverChoices(r.releases.map(toLibraryItem)))
+  }
+  return true
 }
 
 export async function syncWants(client: DiscogsClient, username: string, onProgress?: Progress) {
