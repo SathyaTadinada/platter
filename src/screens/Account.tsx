@@ -1,4 +1,6 @@
 import {
+  CalendarRange,
+  ChartLine,
   Fingerprint,
   Headphones,
   Heart,
@@ -35,10 +37,12 @@ import { useCloud } from '../hooks/cloud'
 import { addPasskey, CloudError, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo, type WaysIn } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 
-// What a profile can show. Stats and Your year come with their summaries, later in this phase.
+// What a profile can show. Stats leaves out prices, and Your year what was spent.
 const PROFILE_SECTIONS: { id: ProfileSection; label: string; icon: ReactNode }[] = [
   { id: 'collection', label: 'Collection', icon: <LibraryBig size={20} /> },
   { id: 'wantlist', label: 'Wantlist', icon: <Heart size={20} /> },
+  { id: 'stats', label: 'Stats', icon: <ChartLine size={20} /> },
+  { id: 'year', label: 'Your year', icon: <CalendarRange size={20} /> },
 ]
 
 // Album years, record lengths, and the barcode index ('catalog') aren't listed: they're public catalog

@@ -129,7 +129,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [client])
 
   // What the profile shows goes up after a sync, and only when something in it changed
-  const share = useCallback(async () => {
+  const sharing = useRef<Promise<void>>(Promise.resolve())
+  const shareNow = useCallback(async () => {
     if (!api || !Object.values(shared.current).some((v) => v === 'public')) return
     // how many records they have is part of their collection, so it only goes with that section
     const about: ProfileAbout = shared.current.collection === 'public' ? { records: await db.collection.count() } : {}
@@ -147,6 +148,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     await publishProfile(api, shared.current, about)
   }, [api, client, session])
+  // one pass at a time: two switches flipped in a row shouldn't send everything twice at once
+  const share = useCallback(() => {
+    const next = sharing.current.then(shareNow)
+    sharing.current = next.catch(() => {})
+    return next
+  }, [shareNow])
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
   const run = useCallback(

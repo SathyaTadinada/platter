@@ -32,7 +32,7 @@ export type ProfileKind = (typeof KINDS)[Section] | typeof ABOUT
 const SECTION_OF = Object.fromEntries(Object.entries(KINDS).map(([s, k]) => [k, s])) as Record<string, Section>
 
 export const MAX_ROWS = 100 // one page of a profile's records
-const MAX_VALUE = 4000
+const MAX_VALUE = 20_000 // a Stats summary or a year, with a few records' covers in it
 
 export type ProfileRow = { kind: ProfileKind; key: string; value: string; updatedAt: number }
 

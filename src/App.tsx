@@ -15,7 +15,8 @@ import { CloudProvider } from './hooks/cloud'
 import { SessionProvider, useSession } from './hooks/session'
 import { QueueProvider } from './hooks/queue'
 import { SyncProvider } from './hooks/sync'
-import { useTrimPlays } from './hooks/plays'
+import { usePlayFields, useTrimPlays } from './hooks/plays'
+import { setPlayFields } from './lib/profile'
 import { useNewRecordPrices } from './hooks/prices'
 import { rememberScroll, savedScroll, trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
@@ -177,6 +178,9 @@ function DemoBar() {
 function Shell({ children }: { children: ReactNode }) {
   useNewRecordPrices()
   useTrimPlays()
+  // a profile's Stats counts plays the way the Stats page does, which needs the Discogs fields
+  const playIds = usePlayFields()
+  useEffect(() => setPlayFields(playIds), [playIds])
   const { session } = useSession()
   const [path] = useLocation()
   const scroller = useRef<HTMLElement>(null)

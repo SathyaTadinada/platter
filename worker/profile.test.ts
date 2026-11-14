@@ -152,7 +152,7 @@ describe('publishing', () => {
   it('turns away rows it does not know', () => {
     expect(() => parseRows([{ kind: 'secret', key: '1', value: '{}', updatedAt: 1 }])).toThrow()
     expect(() => parseRows([{ kind: 'item', key: '', value: '{}', updatedAt: 1 }])).toThrow()
-    expect(() => parseRows([{ kind: 'item', key: '1', value: 'x'.repeat(5000), updatedAt: 1 }])).toThrow()
+    expect(() => parseRows([{ kind: 'item', key: '1', value: 'x'.repeat(25_000), updatedAt: 1 }])).toThrow()
     expect(parseRows([{ kind: 'item', key: '1', value: '{}', updatedAt: 1 }])).toHaveLength(1)
   })
 })
