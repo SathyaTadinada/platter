@@ -53,7 +53,7 @@ import {
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
 import { parseLoan } from '../lib/loans'
-import { formatMoney, valueOf } from '../lib/value'
+import { formatMoney, parseMoney, valueOf } from '../lib/value'
 import { applyFields, runBulk } from '../lib/bulk'
 import { SYNC_MAX_AGE } from '../lib/sync'
 import { FieldNudge } from './FieldNudge'
@@ -81,7 +81,8 @@ export function Collection() {
   // sortPicked isn't read inside; it's listed so parseQuery runs again after the saved sort changes
   const query = useMemo(() => parseQuery(search), [search, sortPicked])
   const [text, setText] = useState(query.q)
-  const [view, setView] = useState<View>(loadView)
+  // a link can ask for the list, as Stats does for what was paid; otherwise the last one picked
+  const [view, setView] = useState<View>(() => (new URLSearchParams(location.search).get('view') === 'list' ? 'list' : loadView()))
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [limit, setLimit] = useState(PAGE)
   const [selected, setSelected] = useState<Set<number> | null>(null) // null = not selecting
@@ -109,8 +110,8 @@ export function Collection() {
 
   const folders = meta.data?.folders ?? []
   const fields = meta.data?.fields ?? []
-  // prices only matter when sorting by value
-  const byValue = query.sort === 'value'
+  // prices only matter when sorting by value, or by what was paid (to set it beside today's)
+  const byValue = query.sort === 'value' || query.sort === 'paid'
   const currency = useCurrency()
   const prices = useFreshPrices(byValue ? currency : undefined)
   const matches = useFieldMatches()
@@ -119,6 +120,7 @@ export function Collection() {
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const listened = useListening()
   const locationField = matches ? fieldFor(matches, 'location')?.id : undefined
+  const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const sortCtx = useMemo<SortContext>(() => {
     const byInstance = new Map(listened?.rows.map((r) => [r.item.instanceId, r]))
     return {
@@ -127,11 +129,16 @@ export function Collection() {
       plays: (i) => byInstance.get(i.instanceId)?.count ?? 0,
       lastPlayed: (i) => byInstance.get(i.instanceId)?.last,
       location: locationField !== undefined ? (i) => i.fields[locationField] : undefined,
+      paid: paidField !== undefined ? (i) => parseMoney(i.fields[paidField]) : undefined,
     }
-  }, [prices, currency, mediaField, listened, locationField])
+  }, [prices, currency, mediaField, listened, locationField, paidField])
 
   // a short note under each record for sorts where it helps
   const noteOf = (i: LibraryItem) => {
+    if (query.sort === 'paid') {
+      const v = sortCtx.paid?.(i)
+      return v === undefined || !currency ? undefined : formatMoney(v, currency)
+    }
     if (query.sort === 'value') {
       const v = sortCtx.value?.(i)
       return v === undefined || !currency ? undefined : formatMoney(v, currency)
@@ -144,6 +151,26 @@ export function Collection() {
       const t = sortCtx.lastPlayed?.(i)
       return t ? dayAgo(t) : undefined
     }
+  }
+
+  // beside what was paid, what it's worth now
+  const nowOf = (i: LibraryItem) => {
+    if (query.sort !== 'paid' || !currency) return undefined
+    const v = sortCtx.value?.(i)
+    return v === undefined ? undefined : `now ${formatMoney(v, currency)}`
+  }
+  // under a price band's heading, what its records came to and how many there are
+  const groupTotal = (list: LibraryItem[]) => {
+    const pick = query.sort === 'paid' ? sortCtx.paid : query.sort === 'value' ? sortCtx.value : undefined
+    if (!pick || !currency) return undefined
+    const amounts = list.map(pick).filter((n): n is number => n !== undefined)
+    const records = `${list.length} record${list.length === 1 ? '' : 's'}`
+    if (!amounts.length) return records
+    return `${formatMoney(
+      amounts.reduce((a, b) => a + b, 0),
+      currency,
+      { whole: true },
+    )} · ${records}`
   }
 
   const filtered = useMemo(
@@ -239,7 +266,8 @@ export function Collection() {
               </>
             }
             // picking the current sort again turns it around too
-            items={SORTS.map((s) => ({
+            // Paid needs a purchase price field to read from
+            items={SORTS.filter((s) => s.key !== 'paid' || paidField !== undefined).map((s) => ({
               label: s.label,
               checked: s.key === query.sort,
               checkedMark: (
@@ -462,7 +490,12 @@ export function Collection() {
         {byValue && currency && prices && <PriceCoverage items={filtered} prices={prices} currency={currency} />}
         {groups.map((g) => (
           <section key={g.key} className="mb-6">
-            {g.label && <h2 className="mb-2 text-sm font-semibold text-stone-500">{g.label}</h2>}
+            {g.label && (
+              <h2 className="mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold text-stone-500">
+                <span>{g.label}</span>
+                {groupTotal(g.items) && <span className="font-normal tabular-nums">{groupTotal(g.items)}</span>}
+              </h2>
+            )}
             {view === 'grid' ? (
               <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {g.items.map((i) => (
@@ -485,6 +518,7 @@ export function Collection() {
                     key={i.instanceId}
                     item={i}
                     note={noteOf(i)}
+                    noteDetail={nowOf(i)}
                     lentTo={lentTo(i)}
                     onPlay={() => quickPlay(i)}
                     playing={playingId === i.instanceId}

@@ -125,6 +125,15 @@ describe('sortItems', () => {
     expect(sortItems(withUnknown, 'year', {}, true).at(-1)!.year).toBe(0)
   })
 
+  it('sorts by what was paid, highest first, with records that have no price last either way', () => {
+    const [a, b, c] = items
+    const ctx: SortContext = { paid: (i) => ({ [a.instanceId]: 12, [b.instanceId]: 150 })[i.instanceId], money: (n) => `$${n}` }
+    const s = sortItems([a, b, c], 'paid', ctx)
+    expect(s.map((i) => i.instanceId)).toEqual([b.instanceId, a.instanceId, c.instanceId])
+    expect(sortItems([a, b, c], 'paid', ctx, true).map((i) => i.instanceId)).toEqual([a.instanceId, b.instanceId, c.instanceId])
+    expect(groupItems(s, 'paid', ctx).map((g) => g.label)).toEqual(['$100 and up', '$10 to $20', 'No price paid'])
+  })
+
   it('sorts by value, unpriced last', () => {
     const [a, b, c] = items
     const prices: SortContext = { value: (i) => ({ [a.instanceId]: 5, [b.instanceId]: 80 })[i.instanceId], money: (n) => `$${n}` }

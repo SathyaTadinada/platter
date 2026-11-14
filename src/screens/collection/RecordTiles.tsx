@@ -39,7 +39,15 @@ export function Tick({ on }: { on?: boolean }) {
   )
 }
 
-type TileProps = { item: LibraryItem; note?: string; lentTo?: string; onPlay?: () => void; playing?: boolean } & Selectable
+// note: an amount or count for the sort; noteDetail goes under it in the list (what it's worth now)
+type TileProps = {
+  item: LibraryItem
+  note?: string
+  noteDetail?: string
+  lentTo?: string
+  onPlay?: () => void
+  playing?: boolean
+} & Selectable
 
 // On computers, a play can be logged from the collection without opening the record. It shows
 // on hover (or keyboard focus); phones have the record page and the shuffle picker instead.
@@ -97,7 +105,7 @@ export function GridTile({ item, note, lentTo, onPlay, playing, selected, onSele
   )
 }
 
-export function ListRow({ item, note, lentTo, onPlay, playing, selected, onSelect }: TileProps) {
+export function ListRow({ item, note, noteDetail, lentTo, onPlay, playing, selected, onSelect }: TileProps) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
     <li className="group/tile flex items-center">
@@ -116,7 +124,10 @@ export function ListRow({ item, note, lentTo, onPlay, playing, selected, onSelec
           {lentTo && <p className="truncate text-xs font-medium text-accent-700 dark:text-accent-400">Lent to {lentTo}</p>}
         </div>
         {note ? (
-          <span className="shrink-0 text-sm font-semibold tabular-nums">{note}</span>
+          <span className="shrink-0 text-right tabular-nums">
+            <span className="block text-sm font-semibold">{note}</span>
+            {noteDetail && <span className="block text-xs text-stone-500">{noteDetail}</span>}
+          </span>
         ) : (
           item.rating > 0 && (
             <span className="shrink-0">

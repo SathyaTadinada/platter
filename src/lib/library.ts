@@ -131,7 +131,7 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
 
 // ---- query ----
 
-export type SortKey = 'added' | 'artist' | 'title' | 'year' | 'rating' | 'value' | 'plays' | 'played' | 'location'
+export type SortKey = 'added' | 'artist' | 'title' | 'year' | 'rating' | 'value' | 'paid' | 'plays' | 'played' | 'location'
 
 // Each sort starts in the direction people usually want; picking it again reverses it.
 // order: what the first and the reversed direction are called.
@@ -142,6 +142,7 @@ export const SORTS: { key: SortKey; label: string; order: [string, string] }[] =
   { key: 'year', label: 'Release year', order: ['Newest first', 'Oldest first'] },
   { key: 'rating', label: 'Rating', order: ['Highest first', 'Lowest first'] },
   { key: 'value', label: 'Value', order: ['Highest first', 'Lowest first'] },
+  { key: 'paid', label: 'Paid', order: ['Highest first', 'Lowest first'] },
   { key: 'plays', label: 'Plays', order: ['Most first', 'Fewest first'] },
   { key: 'played', label: 'Last played', order: ['Most recent first', 'Least recent first'] },
   { key: 'location', label: 'Location', order: ['A to Z', 'Z to A'] },
@@ -155,6 +156,7 @@ export const DESCENDING: Record<SortKey, boolean> = {
   year: true,
   rating: true,
   value: true,
+  paid: true,
   plays: true,
   played: true,
   location: false,
@@ -308,6 +310,7 @@ const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensiti
 // Some sorts need data that lives outside the library: prices, plays, the location field
 export type SortContext = {
   value?: (i: LibraryItem) => number | undefined
+  paid?: (i: LibraryItem) => number | undefined // what was typed into the purchase price field
   money?: (n: number) => string
   plays?: (i: LibraryItem) => number
   lastPlayed?: (i: LibraryItem) => number | undefined
@@ -326,6 +329,7 @@ export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext 
     year: num(yearOf),
     rating: num((i) => i.rating),
     value: num((i) => ctx.value?.(i)),
+    paid: num((i) => ctx.paid?.(i)),
     plays: num((i) => ctx.plays?.(i)),
     played: num((i) => ctx.lastPlayed?.(i)),
     location: (a, b) => byText(ctx.location?.(a) ?? '', ctx.location?.(b) ?? ''),
@@ -335,6 +339,7 @@ export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext 
     year: (i) => !yearOf(i),
     rating: (i) => !i.rating,
     value: (i) => ctx.value?.(i) === undefined,
+    paid: (i) => ctx.paid?.(i) === undefined,
     played: (i) => !ctx.lastPlayed?.(i),
     location: (i) => !ctx.location?.(i)?.trim(),
   }
@@ -366,6 +371,10 @@ function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
       return i.rating ? `${'★'.repeat(i.rating)}` : 'Not rated'
     case 'value':
       return ctx.value && ctx.money ? valueBracket(ctx.value(i), ctx.money) : ''
+    case 'paid': {
+      const n = ctx.paid?.(i)
+      return n === undefined ? 'No price paid' : ctx.money ? valueBracket(n, ctx.money) : ''
+    }
     case 'plays': {
       const n = ctx.plays?.(i) ?? 0
       return n >= 10

@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'wouter'
 import { Card, Section } from '../../components/ui'
@@ -6,6 +7,9 @@ import { change, paidTotal, parseMoney } from '../../lib/value'
 import { RecordRow } from '../../components/stats'
 import { card, down, up, type Money, type Valued } from './shared'
 import { Delta } from './ValueChart'
+
+// Collection, by what was paid, as a list with the amounts
+const EACH = '/?sort=paid&view=list'
 
 export function PaidVsNow({
   items,
@@ -76,7 +80,14 @@ export function PaidVsNow({
         {rows.length ? (
           <>
             <Delta {...change(spent, worth)} money={money} />
-            <PaidBar paid={spent} now={worth} money={money} />
+            {/* the bar opens the collection by what each record cost */}
+            <Link
+              href={EACH}
+              aria-label="What you paid for each record"
+              className="-mx-2 mt-2 block rounded-xl px-2 pt-0.5 pb-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+            >
+              <PaidBar paid={spent} now={worth} money={money} />
+            </Link>
             {details?.open && (
               <div className="-mx-4 mt-4 -mb-4 border-t border-stone-200 dark:border-stone-800">
                 <p className="px-4 pt-3 pb-1 text-xs font-semibold text-stone-500">No current price</p>
@@ -94,10 +105,12 @@ export function PaidVsNow({
           </>
         ) : (
           <>
-            <p className="text-2xl font-bold tabular-nums">{money(paid.total)}</p>
-            <p className="text-sm text-stone-500">
-              paid for {paid.count} record{paid.count === 1 ? '' : 's'}
-            </p>
+            <Link href={EACH} className="-m-2 block rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50">
+              <p className="text-2xl font-bold tabular-nums">{money(paid.total)}</p>
+              <p className="text-sm text-stone-500">
+                paid for {paid.count} record{paid.count === 1 ? '' : 's'}
+              </p>
+            </Link>
           </>
         )}
       </Card>
@@ -113,7 +126,7 @@ function PaidBar({ paid, now, money }: { paid: number; now: number; money: Money
   const most = Math.max(paid, now)
   const share = (n: number) => `${most > 0 ? (n / most) * 100 : 0}%`
   return (
-    <div className="mt-4">
+    <div>
       <div
         role="img"
         aria-label={`Paid ${money(paid)}, now ${money(now)}`}
@@ -131,8 +144,9 @@ function PaidBar({ paid, now, money }: { paid: number; now: number; money: Money
         <span className="text-stone-500">
           Paid <span className="font-medium text-stone-900 tabular-nums dark:text-stone-100">{money(paid)}</span>
         </span>
-        <span className="text-stone-500">
+        <span className="flex items-center gap-1 text-stone-500">
           Now <span className="font-medium text-stone-900 tabular-nums dark:text-stone-100">{money(now)}</span>
+          <ChevronRight size={16} aria-hidden className="text-stone-400" />
         </span>
       </div>
     </div>
