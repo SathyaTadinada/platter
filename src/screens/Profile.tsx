@@ -1,7 +1,6 @@
 import { CalendarRange, ChartLine, Heart, LibraryBig, SquareCheckBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
-import { BADGES } from '../../worker/badges'
 import { Cover } from '../components/Cover'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Button, ExternalLink, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
@@ -26,7 +25,6 @@ const ICONS: Record<ProfileSection, React.ReactNode> = {
   stats: icon(ChartLine),
   year: icon(CalendarRange),
 }
-const badgeLabel = (id: string) => BADGES.find((b) => b.id === id)?.label
 
 const discogsUser = (name: string) => `https://www.discogs.com/user/${encodeURIComponent(name)}`
 const memberSince = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
@@ -168,10 +166,7 @@ export function Profile({ username }: { username: string }) {
           <div className="min-w-0">
             <p className="text-sm text-stone-500">
               Member since {memberSince(head.memberSince)}
-              {head.badges
-                .map(badgeLabel)
-                .filter(Boolean)
-                .map((b) => ` · ${b}`)}
+              {head.badges.map((b) => ` · ${b}`)}
               {head.publishedAt && ` · Updated ${timeAgo(head.publishedAt)}`}
             </p>
             <p className="mt-0.5 text-sm">

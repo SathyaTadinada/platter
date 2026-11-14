@@ -1,17 +1,16 @@
-import { ChevronDown, Eye, EyeOff, KeyRound, Trash2 } from 'lucide-react'
+import { Award, Eye, EyeOff, KeyRound, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, Redirect } from 'wouter'
-import { BADGES } from '../../worker/badges'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Menu } from '../components/Menu'
 import { Notice, Screen, Section, Spinner } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
-import type { Member } from '../lib/cloud'
+import type { Badge, Member } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
+import { BadgeCell, BadgesSheet } from './admin/Badges'
 
 const joined = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
-const badgeLabel = (id: string) => BADGES.find((b) => b.id === id)?.label ?? id
 
 function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'warn' }) {
   const tones = {
@@ -33,39 +32,6 @@ function SignIn({ m, wrap = true }: { m: Member; wrap?: boolean }) {
       {m.password && <Chip>Password</Chip>}
       {m.passkeys > 0 && <Chip>{plural(m.passkeys, 'passkey')}</Chip>}
     </span>
-  )
-}
-
-const pickerClass =
-  'flex min-h-8 items-center gap-1 rounded-lg px-1.5 py-1 text-left hover:bg-stone-100 active:bg-stone-100 dark:hover:bg-stone-800 dark:active:bg-stone-800'
-
-// Each badge is ticked or not; picking one switches it
-function Badges({ m, onToggle }: { m: Member; onToggle: (badge: string, on: boolean) => void }) {
-  return (
-    <Menu
-      label={`Badges for ${m.name}`}
-      align="left"
-      buttonClassName={pickerClass}
-      button={
-        <>
-          {m.badges.length ? (
-            <span className="flex flex-wrap gap-1">
-              {m.badges.map((b) => (
-                <Chip key={b}>{badgeLabel(b)}</Chip>
-              ))}
-            </span>
-          ) : (
-            <span className="text-sm text-stone-500">None</span>
-          )}
-          <ChevronDown size={16} className="shrink-0 text-stone-400" aria-hidden />
-        </>
-      }
-      items={BADGES.map((b) => ({
-        label: b.label,
-        checked: m.badges.includes(b.id),
-        onSelect: () => onToggle(b.id, !m.badges.includes(b.id)),
-      }))}
-    />
   )
 }
 
@@ -99,6 +65,9 @@ function Name({ m }: { m: Member }) {
 export function Admin() {
   const { api } = useCloud()
   const [members, setMembers] = useState<Member[] | null>(null)
+  const [badges, setBadges] = useState<Badge[]>([])
+  // the badge list, and whether it opened to make a new one
+  const [managing, setManaging] = useState<{ startNew: boolean } | null>(null)
   const [refused, setRefused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<{ member: Member; what: 'clear' | 'delete' } | null>(null)
@@ -106,7 +75,9 @@ export function Admin() {
   const reload = useCallback(async () => {
     if (!api) return
     try {
-      setMembers((await api.members()).members)
+      const [m, b] = await Promise.all([api.members(), api.badges()])
+      setMembers(m.members)
+      setBadges(b.badges)
     } catch {
       setRefused(true)
     }
@@ -158,7 +129,42 @@ export function Admin() {
   }
 
   return (
-    <Screen title="Members" back="/account" width={members ? 'wide' : 'full'}>
+    <Screen
+      title="Members"
+      back="/account"
+      width={members ? 'wide' : 'full'}
+      actions={
+        members && (
+          <button
+            type="button"
+            onClick={() => setManaging({ startNew: false })}
+            className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800"
+          >
+            <Award size={20} aria-hidden />
+            Badges
+          </button>
+        )
+      }
+    >
+      {managing && (
+        <BadgesSheet
+          badges={badges}
+          startNew={managing.startNew}
+          onCreate={async (label) => {
+            await api.createBadge(label)
+            await reload()
+          }}
+          onRename={async (id, label) => {
+            await api.renameBadge(id, label)
+            await reload()
+          }}
+          onDelete={async (id) => {
+            await api.deleteBadge(id)
+            await reload()
+          }}
+          onClose={() => setManaging(null)}
+        />
+      )}
       {confirming && (
         <ConfirmDialog
           title={confirming.what === 'clear' ? `Clear ${confirming.member.name}’s ways in?` : `Delete ${confirming.member.name}’s account?`}
@@ -213,8 +219,8 @@ export function Admin() {
                     <td className="px-3 py-2.5">
                       <ProfileState m={m} />
                     </td>
-                    <td className="px-1.5 py-1.5">
-                      <Badges m={m} onToggle={toggle(m)} />
+                    <td className="px-3 py-1.5">
+                      <BadgeCell m={m} badges={badges} onToggle={toggle(m)} onNew={() => setManaging({ startNew: true })} />
                     </td>
                     <td className="w-0 py-1.5 pr-2 pl-1">{actions(m)}</td>
                   </tr>
@@ -249,8 +255,8 @@ export function Admin() {
                     <ProfileState m={m} />
                   </dd>
                   <dt className="text-stone-500">Badges</dt>
-                  <dd className="-ml-1.5">
-                    <Badges m={m} onToggle={toggle(m)} />
+                  <dd>
+                    <BadgeCell m={m} badges={badges} onToggle={toggle(m)} onNew={() => setManaging({ startNew: true })} />
                   </dd>
                 </dl>
               </li>

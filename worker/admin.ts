@@ -95,7 +95,7 @@ const parseMember = (x: unknown) => {
 }
 
 export async function setBadge(db: DB, member: unknown, badge: unknown, on: boolean) {
-  if (!isBadge(badge)) throw new SyncError(400, 'Bad badge')
+  if (!(await isBadge(db, badge))) throw new SyncError(400, 'Bad badge')
   const acc = await accountById(db, parseMember(member))
   if (!acc) throw new SyncError(404, 'No such member')
   const badges = on ? [...new Set([...acc.badges, badge])] : acc.badges.filter((b) => b !== badge)

@@ -6,6 +6,7 @@
 // is only ever what its owner published.
 
 import { accountById, type Account } from './account'
+import { labelsOf } from './badges'
 import { MAX_PUSH, SyncError, type DB } from './sync'
 
 export const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
@@ -39,7 +40,7 @@ export type ProfileRow = { kind: ProfileKind; key: string; value: string; update
 // What a visitor sees before any rows: who it belongs to, and which sections they can look at
 export type ProfileHead = {
   username: string
-  badges: string[]
+  badges: string[] // their names, as the profile shows them
   memberSince: number
   publishedAt: number | null
   sections: Section[]
@@ -249,7 +250,7 @@ export async function head(db: DB, username: unknown): Promise<ProfileHead | nul
     .first<{ value: string }>()
   return {
     username: found.name,
-    badges: found.badges,
+    badges: await labelsOf(db, found.badges),
     memberSince: found.createdAt,
     publishedAt: found.publishedAt,
     sections,
