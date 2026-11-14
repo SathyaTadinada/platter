@@ -100,8 +100,8 @@ export function demoCloudApi(): CloudApi {
     clearWaysIn: nothing,
     hideProfile: async (_member, on) => ({ hidden: on }),
     badges: async () => ({ badges: [] }),
-    createBadge: async (label) => ({ id: label, label, members: 0 }),
-    renameBadge: nothing,
+    createBadge: async (label, color, icon) => ({ id: label, label, color, icon, members: 0 }),
+    editBadge: nothing,
     deleteBadge: nothing,
     deleteMember: nothing,
   }

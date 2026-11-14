@@ -3,7 +3,22 @@
 
 import { newId, SyncError, type DB } from './sync'
 
-export type Badge = { id: string; label: string; members: number }
+// How a badge looks, from a short list the app knows how to draw
+export const BADGE_COLORS = ['gray', 'amber', 'blue', 'green', 'purple', 'red'] as const
+export const BADGE_ICONS = ['award', 'star', 'flame', 'heart', 'disc', 'crown', 'sparkles', 'flask', 'gem', 'music'] as const
+export type BadgeColor = (typeof BADGE_COLORS)[number]
+export type BadgeIcon = (typeof BADGE_ICONS)[number]
+export type BadgeLook = { label: string; color: BadgeColor; icon: BadgeIcon }
+export type Badge = BadgeLook & { id: string; members: number }
+
+const parseColor = (x: unknown): BadgeColor => {
+  if (!(BADGE_COLORS as readonly unknown[]).includes(x)) throw new SyncError(400, 'Bad color')
+  return x as BadgeColor
+}
+const parseIcon = (x: unknown): BadgeIcon => {
+  if (!(BADGE_ICONS as readonly unknown[]).includes(x)) throw new SyncError(400, 'Bad icon')
+  return x as BadgeIcon
+}
 
 const parseLabel = (x: unknown) => {
   if (typeof x !== 'string' || !x.trim() || x.trim().length > 30) throw new SyncError(400, 'Bad name')
@@ -26,7 +41,7 @@ async function holders(db: DB, id: string): Promise<{ id: string; badges: string
 
 export async function listBadges(db: DB): Promise<Badge[]> {
   const [{ results: badges }, { results: accounts }] = await Promise.all([
-    db.prepare('SELECT id, label FROM badges ORDER BY created_at').all<{ id: string; label: string }>(),
+    db.prepare('SELECT id, label, color, icon FROM badges ORDER BY created_at').all<BadgeLook & { id: string }>(),
     db.prepare("SELECT badges FROM accounts WHERE badges <> '[]'").all<{ badges: string }>(),
   ])
   const counts = new Map<string, number>()
@@ -38,14 +53,14 @@ export async function isBadge(db: DB, id: unknown): Promise<boolean> {
   return typeof id === 'string' && Boolean(await db.prepare('SELECT 1 AS x FROM badges WHERE id = ?1').bind(id).first())
 }
 
-// What a profile shows: each badge's name, in the order the badges were made
-export async function labelsOf(db: DB, ids: string[]): Promise<string[]> {
+// What a profile shows: each badge's name and look, in the order the badges were made
+export async function looksOf(db: DB, ids: string[]): Promise<BadgeLook[]> {
   if (!ids.length) return []
   const { results } = await db
-    .prepare(`SELECT label FROM badges WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(', ')}) ORDER BY created_at`)
+    .prepare(`SELECT label, color, icon FROM badges WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(', ')}) ORDER BY created_at`)
     .bind(...ids)
-    .all<{ label: string }>()
-  return results.map((r) => r.label)
+    .all<BadgeLook>()
+  return results
 }
 
 const taken = async (db: DB, label: string, except?: string) =>
@@ -56,19 +71,35 @@ const taken = async (db: DB, label: string, except?: string) =>
       .first(),
   )
 
-export async function createBadge(db: DB, label: unknown, now = Date.now()): Promise<Badge> {
+export async function createBadge(
+  db: DB,
+  label: unknown,
+  color: unknown = 'gray',
+  icon: unknown = 'award',
+  now = Date.now(),
+): Promise<Badge> {
   const name = parseLabel(label)
+  const look = { color: parseColor(color ?? 'gray'), icon: parseIcon(icon ?? 'award') }
   if (await taken(db, name)) throw new SyncError(409, 'There’s already a badge with that name')
   const id = newId()
-  await db.prepare('INSERT INTO badges (id, label, created_at) VALUES (?1, ?2, ?3)').bind(id, name, now).run()
-  return { id, label: name, members: 0 }
+  await db
+    .prepare('INSERT INTO badges (id, label, color, icon, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
+    .bind(id, name, look.color, look.icon, now)
+    .run()
+  return { id, label: name, ...look, members: 0 }
 }
 
-export async function renameBadge(db: DB, id: unknown, label: unknown) {
+// Renames a badge, or changes how it looks; whatever isn't given stays as it was
+export async function editBadge(db: DB, id: unknown, changes: { label?: unknown; color?: unknown; icon?: unknown }) {
   const badge = parseId(id)
-  const name = parseLabel(label)
-  if (await taken(db, name, badge)) throw new SyncError(409, 'There’s already a badge with that name')
-  const r = await db.prepare('UPDATE badges SET label = ?2 WHERE id = ?1').bind(badge, name).run()
+  const name = changes.label === undefined ? null : parseLabel(changes.label)
+  const color = changes.color === undefined ? null : parseColor(changes.color)
+  const icon = changes.icon === undefined ? null : parseIcon(changes.icon)
+  if (name && (await taken(db, name, badge))) throw new SyncError(409, 'There’s already a badge with that name')
+  const r = await db
+    .prepare('UPDATE badges SET label = COALESCE(?2, label), color = COALESCE(?3, color), icon = COALESCE(?4, icon) WHERE id = ?1')
+    .bind(badge, name, color, icon)
+    .run()
   if (!r.meta.changes) throw new SyncError(404, 'No such badge')
 }
 

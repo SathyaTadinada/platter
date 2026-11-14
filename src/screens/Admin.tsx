@@ -160,12 +160,12 @@ export function Admin() {
         <BadgesSheet
           badges={badges}
           startNew={managing.startNew}
-          onCreate={async (label) => {
-            await api.createBadge(label)
+          onCreate={async (look) => {
+            await api.createBadge(look.label, look.color, look.icon)
             await reload()
           }}
-          onRename={async (id, label) => {
-            await api.renameBadge(id, label)
+          onEdit={async (id, look) => {
+            await api.editBadge(id, look)
             await reload()
           }}
           onDelete={async (id) => {

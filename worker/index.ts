@@ -16,7 +16,7 @@ import {
   waysIn,
 } from './account'
 import { clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
-import { createBadge, deleteBadge, listBadges, renameBadge } from './badges'
+import { createBadge, deleteBadge, editBadge, listBadges } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow, waiting as waitingFollows } from './follow'
 import { header, signParams } from './oauth'
@@ -405,9 +405,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'admin-badges':
         return ok({ badges: await listBadges(db) })
       case 'admin-badge-create':
-        return ok(await createBadge(db, input.label))
+        return ok(await createBadge(db, input.label, input.color, input.icon))
       case 'admin-badge-rename':
-        await renameBadge(db, input.id, input.label)
+        await editBadge(db, input.id, { label: input.label, color: input.color, icon: input.icon })
         return ok({ ok: true })
       case 'admin-badge-delete':
         await deleteBadge(db, input.id)

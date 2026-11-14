@@ -6,7 +6,7 @@
 // is only ever what its owner published.
 
 import { accountById, type Account } from './account'
-import { labelsOf } from './badges'
+import { looksOf, type BadgeLook } from './badges'
 import { approveWaiting, blockedEither, relation, statusOf, type Relation } from './follow'
 import { MAX_PUSH, SyncError, type DB } from './sync'
 
@@ -44,7 +44,7 @@ export type ProfileHead = {
   locked: boolean
   relation?: Relation // to the signed-in viewer, when there is one and it isn't them
   username: string
-  badges: string[] // their names, as the profile shows them
+  badges: BadgeLook[] // as the profile shows them, names and all
   memberSince: number
   publishedAt: number | null
   sections: Section[]
@@ -329,7 +329,7 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
     locked,
     relation: viewer && viewer !== found.id ? await relation(db, viewer, found.id) : undefined,
     username: found.name,
-    badges: await labelsOf(db, found.badges),
+    badges: await looksOf(db, found.badges),
     memberSince: found.createdAt,
     publishedAt: locked ? null : found.publishedAt,
     sections: locked ? [] : sections,

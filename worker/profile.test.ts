@@ -59,7 +59,10 @@ describe('what a profile shows', () => {
     const db = testDB()
     const { id } = await shared(db)
     await db.prepare('UPDATE accounts SET badges = \'["early"]\' WHERE id = ?1').bind(id).run()
-    expect(await head(db, 'tadinada')).toMatchObject({ badges: ['Early supporter'], memberSince: 1000 })
+    expect(await head(db, 'tadinada')).toMatchObject({
+      badges: [{ label: 'Early supporter', color: 'amber', icon: 'award' }],
+      memberSince: 1000,
+    })
   })
 })
 

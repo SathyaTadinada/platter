@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { accountById, discogsSignIn } from './account'
 import { members, setBadge } from './admin'
-import { createBadge, deleteBadge, isBadge, listBadges, renameBadge } from './badges'
+import { createBadge, deleteBadge, editBadge, isBadge, listBadges } from './badges'
 import { head, setSections } from './profile'
 import { deviceAccount } from './sync'
 
@@ -15,12 +15,15 @@ async function account(db: ReturnType<typeof testDB>, username = 'tadinada', id 
 describe('badges', () => {
   it('starts with Early supporter', async () => {
     const db = testDB()
-    expect(await listBadges(db)).toEqual([{ id: 'early', label: 'Early supporter', members: 0 }])
+    expect(await listBadges(db)).toEqual([{ id: 'early', label: 'Early supporter', color: 'amber', icon: 'award', members: 0 }])
   })
 
   it('makes new ones, with a name nobody else has', async () => {
     const db = testDB()
     const tester = await createBadge(db, '  Tester ')
+    expect(tester).toMatchObject({ label: 'Tester', color: 'gray', icon: 'award' })
+    expect(await createBadge(db, 'Beta', 'blue', 'flask')).toMatchObject({ color: 'blue', icon: 'flask' })
+    await expect(createBadge(db, 'Odd', 'neon')).rejects.toMatchObject({ status: 400 })
     expect(tester.label).toBe('Tester')
     expect(await isBadge(db, tester.id)).toBe(true)
     await expect(createBadge(db, 'early SUPPORTER')).rejects.toMatchObject({ status: 409 })
@@ -41,12 +44,15 @@ describe('badges', () => {
     const id = await account(db)
     await setSections(db, id, { collection: 'public' })
     await setBadge(db, id, 'early', true)
-    expect((await head(db, 'tadinada'))?.badges).toEqual(['Early supporter'])
-    await renameBadge(db, 'early', 'Founding member')
-    expect((await head(db, 'tadinada'))?.badges).toEqual(['Founding member'])
+    expect((await head(db, 'tadinada'))?.badges).toEqual([{ label: 'Early supporter', color: 'amber', icon: 'award' }])
+    await editBadge(db, 'early', { label: 'Founding member' })
+    await editBadge(db, 'early', { color: 'purple', icon: 'crown' })
+    expect((await head(db, 'tadinada'))?.badges).toEqual([{ label: 'Founding member', color: 'purple', icon: 'crown' }])
+    await expect(editBadge(db, 'early', { color: 'chartreuse' })).rejects.toMatchObject({ status: 400 })
+    await expect(editBadge(db, 'early', { icon: '<svg>' })).rejects.toMatchObject({ status: 400 })
     await createBadge(db, 'Tester')
-    await expect(renameBadge(db, 'early', 'tester')).rejects.toMatchObject({ status: 409 })
-    await expect(renameBadge(db, 'nope', 'Whatever')).rejects.toMatchObject({ status: 404 })
+    await expect(editBadge(db, 'early', { label: 'tester' })).rejects.toMatchObject({ status: 409 })
+    await expect(editBadge(db, 'nope', { label: 'Whatever' })).rejects.toMatchObject({ status: 404 })
   })
 
   it('takes a deleted badge off everyone who had it, and only that one', async () => {

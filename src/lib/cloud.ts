@@ -1,3 +1,4 @@
+import type { Badge, BadgeColor, BadgeIcon, BadgeLook } from '../../worker/badges'
 import { categoryOf, type Category } from '../../worker/categories'
 import type { Sections, Section, Who } from '../../worker/profile'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
@@ -135,7 +136,7 @@ export type Member = {
   hidden: boolean
 }
 type Challenge<T> = { id: string; options: T }
-export type Badge = { id: string; label: string; members: number }
+export type { Badge, BadgeLook } from '../../worker/badges'
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
 export type Found = { username: string; about: string | null; publishedAt: number | null }
@@ -144,7 +145,7 @@ export type ProfileHead = {
   locked: boolean // a Followers profile the viewer isn't approved for
   relation?: Relation
   username: string
-  badges: string[]
+  badges: BadgeLook[]
   memberSince: number
   publishedAt: number | null
   sections: Section[]
@@ -238,8 +239,8 @@ export type CloudApi = ProfileReader & {
   clearWaysIn(member: string): Promise<unknown>
   hideProfile(member: string, on: boolean): Promise<{ hidden: boolean }>
   badges(): Promise<{ badges: Badge[] }>
-  createBadge(label: string): Promise<Badge>
-  renameBadge(id: string, label: string): Promise<unknown>
+  createBadge(label: string, color: BadgeColor, icon: BadgeIcon): Promise<Badge>
+  editBadge(id: string, changes: Partial<BadgeLook>): Promise<unknown>
   deleteBadge(id: string): Promise<unknown>
   deleteMember(member: string): Promise<unknown>
 }
@@ -286,8 +287,8 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     clearWaysIn: (member) => c('admin-clear', { member }),
     hideProfile: (member, on) => c('admin-hide', { member, on }),
     badges: () => c('admin-badges'),
-    createBadge: (label) => c('admin-badge-create', { label }),
-    renameBadge: (id, label) => c('admin-badge-rename', { id, label }),
+    createBadge: (label, color, icon) => c('admin-badge-create', { label, color, icon }),
+    editBadge: (id, changes) => c('admin-badge-rename', { id, ...changes }),
     deleteBadge: (id) => c('admin-badge-delete', { id }),
     deleteMember: (member) => c('admin-delete', { member }),
   }
