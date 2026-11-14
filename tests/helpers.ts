@@ -3,7 +3,7 @@ import type { Auth } from '../src/auth/types'
 export const fakeAuth: Auth = {
   kind: 'token',
   getAuthHeaders: async () => ({ Authorization: 'Discogs token=test' }),
-  getAuthHeadersBatch: async (r) => r.map(() => ({ Authorization: 'Discogs token=test' })),
+  prepare: async () => {},
   getIdentity: () => ({ username: 'platter-test', id: 1 }),
   signOut: async () => {},
 }

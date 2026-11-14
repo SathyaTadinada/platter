@@ -5,7 +5,9 @@ export type SignableRequest = { method: string; url: string }
 export interface Auth {
   readonly kind: 'token' | 'oauth' | 'demo'
   getAuthHeaders(req: SignableRequest): Promise<Record<string, string>>
-  getAuthHeadersBatch(reqs: SignableRequest[]): Promise<Record<string, string>[]>
+  // Signs requests that are about to be made, in one go, so each doesn't need its own trip to the
+  // Worker. Only does anything for a Discogs login.
+  prepare(reqs: SignableRequest[]): Promise<void>
   getIdentity(): Identity
   signOut(opts?: { everything?: boolean }): Promise<void>
 }

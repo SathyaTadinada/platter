@@ -24,7 +24,7 @@ export function tokenAuth(token: string, identity: Identity): Auth {
   return {
     kind: 'token',
     getAuthHeaders: async () => headers(),
-    getAuthHeadersBatch: async (reqs) => reqs.map(headers),
+    prepare: async () => {},
     getIdentity: () => identity,
     signOut: wipeLocalData,
   }
@@ -32,7 +32,14 @@ export function tokenAuth(token: string, identity: Identity): Auth {
 
 // OAuth requests are signed by the Worker (it holds the app secret),
 // then sent straight to Discogs from the browser.
-export function oauthAuth(token: string, secret: string, identity: Identity, fetchFn: typeof fetch = fetch): Auth {
+//
+// Every signature is a request to the Worker, and the free plan allows only so many a day, so work
+// that knows what it'll ask for next (the background checks) signs it ahead, up to 60 per request.
+// Discogs turns a signature down after a few minutes (one from 70 seconds before was fine, five and a
+// half minutes wasn't), so one that's waited longer than this is signed again.
+export const SIGNED_FOR = 2 * 60_000
+
+export function oauthAuth(token: string, secret: string, identity: Identity, fetchFn: typeof fetch = fetch, now = () => Date.now()): Auth {
   async function signBatch(reqs: SignableRequest[]) {
     const res = await fetchFn('/api/sign', {
       method: 'POST',
@@ -44,14 +51,27 @@ export function oauthAuth(token: string, secret: string, identity: Identity, fet
     const { headers } = (await res.json()) as { headers: string[] }
     return headers.map((h) => ({ Authorization: h }))
   }
+  // signed ahead, by method and URL. Each is used once, since every signature has its own nonce.
+  const ready = new Map<string, { headers: Record<string, string>; at: number }>()
+  const keyOf = (r: SignableRequest) => `${r.method} ${r.url}`
   return {
     kind: 'oauth',
-    getAuthHeaders: async (req) => (await signBatch([req]))[0],
-    getAuthHeadersBatch: async (reqs) => {
-      const out: Record<string, string>[] = []
+    getAuthHeaders: async (req) => {
+      const hit = ready.get(keyOf(req))
+      ready.delete(keyOf(req))
+      if (hit && now() - hit.at < SIGNED_FOR) return hit.headers
+      return (await signBatch([req]))[0]
+    },
+    prepare: async (reqs) => {
+      const t = now()
+      for (const [k, v] of ready) if (t - v.at >= SIGNED_FOR) ready.delete(k)
+      const todo = reqs.filter((r) => !ready.has(keyOf(r)))
       // the Worker signs at most 60 per call
-      for (let i = 0; i < reqs.length; i += 60) out.push(...(await signBatch(reqs.slice(i, i + 60))))
-      return out
+      for (let i = 0; i < todo.length; i += 60) {
+        const batch = todo.slice(i, i + 60)
+        const signed = await signBatch(batch)
+        batch.forEach((r, j) => ready.set(keyOf(r), { headers: signed[j], at: t }))
+      }
     },
     getIdentity: () => identity,
     signOut: wipeLocalData,
@@ -63,7 +83,7 @@ function demoAuth(identity: Identity): Auth {
   return {
     kind: 'demo',
     getAuthHeaders: async () => ({}),
-    getAuthHeadersBatch: async (reqs) => reqs.map(() => ({})),
+    prepare: async () => {},
     getIdentity: () => identity,
     signOut: wipeLocalData,
   }

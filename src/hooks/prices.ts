@@ -41,13 +41,18 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
       return !stopRequested
     }
     const bg = client.background
+    // signs the next few requests together, a little before they're made
+    const AHEAD = 20
+    const ahead = (i: number, gets: (id: number) => { path: string; query?: Record<string, string> }[], ids: number[]) =>
+      i % AHEAD === 0 ? bg.prepare(ids.slice(i, i + AHEAD).flatMap(gets)) : Promise.resolve()
     // original years first: there's one per album, and the collection's decades depend on them
     const masters = await staleMasters()
     if (masters.length) {
       set({ running: true, stage: 'years', done: 0, total: masters.length, error: null })
       try {
-        for (const id of masters) {
+        for (const [i, id] of masters.entries()) {
           if (!(await wait())) break
+          await ahead(i, (m) => [{ path: `/masters/${m}` }], masters)
           await fetchMasterYear(bg, id)
           set({ done: state.done + 1 })
           await sleep(backgroundGapMs(client))
@@ -62,8 +67,9 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     if (lengths.length) {
       set({ running: true, stage: 'lengths', done: 0, total: lengths.length, error: null })
       try {
-        for (const id of lengths) {
+        for (const [i, id] of lengths.entries()) {
           if (!(await wait())) break
+          await ahead(i, (r) => [{ path: `/releases/${r}` }], lengths)
           await fetchLength(bg, id)
           set({ done: state.done + 1 })
           await sleep(backgroundGapMs(client))
@@ -75,8 +81,13 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     }
     if (todo.length && !stopRequested) {
       set({ running: true, stage: 'prices', done: 0, total: todo.length, error: null })
-      for (const id of todo) {
+      for (const [i, id] of todo.entries()) {
         if (!(await wait())) break
+        await ahead(
+          i,
+          (r) => [{ path: `/marketplace/stats/${r}`, query: { curr_abbr: currency } }, { path: `/marketplace/price_suggestions/${r}` }],
+          todo,
+        )
         const { requests } = await fetchPrice(bg, id, currency)
         set({ done: state.done + 1 })
         await sleep(backgroundGapMs(client) * requests)

@@ -428,16 +428,26 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
   }
 }
 
+// Anything that isn't a file comes here (see wrangler.jsonc): app routes get the app's page, and a
+// missing file, such as an old build's chunk, a plain 404 rather than the page. Files themselves are
+// served without running the Worker, so they don't count against its daily requests.
+async function page(req: Request, env: Env, pathname: string): Promise<Response> {
+  // (a Discogs username can have a dot in it, so /u/ never counts as a file)
+  const file = pathname.startsWith('/assets/') || (!pathname.startsWith('/u/') && /\.[a-z0-9]+$/i.test(pathname))
+  if (file || (req.method !== 'GET' && req.method !== 'HEAD')) {
+    return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
+  }
+  const res = await env.ASSETS.fetch(new Request(new URL('/', req.url), req))
+  // profiles are there for anyone with the link, not for search engines
+  if (!pathname.startsWith('/u/')) return res
+  const out = new Response(res.body, res)
+  out.headers.set('X-Robots-Tag', 'noindex')
+  return out
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(req.url)
-    if (pathname.startsWith('/assets/')) {
-      // A missing file (an old build's chunk) would otherwise get index.html with the
-      // assets' year-long cache header, and the browser would keep it as the script
-      const res = await env.ASSETS.fetch(req)
-      if (!res.headers.get('Content-Type')?.startsWith('text/html')) return res
-      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
-    }
     const syncAction = pathname.startsWith('/api/sync/') ? (pathname.slice(10) as SyncAction) : null
     if (syncAction && SYNC_ACTIONS.includes(syncAction)) return sync(req, env, syncAction)
     switch (pathname) {
@@ -450,7 +460,7 @@ export default {
           consumerSecret: Boolean(env.DISCOGS_CONSUMER_SECRET),
         })
       default:
-        return new Response('Not found', { status: 404 })
+        return pathname.startsWith('/api/') ? new Response('Not found', { status: 404 }) : page(req, env, pathname)
     }
   },
 }

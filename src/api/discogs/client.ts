@@ -118,6 +118,13 @@ export class DiscogsClient {
     this.listeners.forEach((fn) => fn())
   }
 
+  // Requests about to be made, signed ahead in one go (see oauthAuth). Best effort: anything not
+  // signed here is signed when it's sent.
+  async prepare(gets: { path: string; query?: Query }[]): Promise<void> {
+    const reqs = gets.map((g) => ({ method: 'GET', url: buildUrl(g.path, g.query) })).filter((r) => !this.local(r.url))
+    if (reqs.length) await this.auth.prepare(reqs).catch(() => {})
+  }
+
   get<T>(path: string, query?: Query, cacheMaxAge?: number): Promise<T> {
     return this.request<T>('GET', path, { query, cacheMaxAge })
   }

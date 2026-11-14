@@ -5,9 +5,9 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
+    "not_found_handling": "none",
     // assets too, so a missing file 404s instead of getting index.html (see worker)
-    "run_worker_first": ["/api/*", "/assets/*"],
+    "run_worker_first": ["/api/*"],
   },
   "routes": [{ "pattern": "platter.tadinada.com", "custom_domain": true }],
   // per-IP limits; one sign call covers up to 60 Discogs requests
