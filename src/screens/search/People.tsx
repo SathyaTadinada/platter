@@ -1,7 +1,9 @@
+import { History } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { DiscogsCredit } from '../../components/ReleaseCardView'
-import { List, Notice, Row, Spinner } from '../../components/ui'
-import { cloudEntry, type Found } from '../../lib/cloud'
+import { List, Notice, Row, Section, Spinner } from '../../components/ui'
+import { useCloud } from '../../hooks/cloud'
+import { type Found, type Person as PersonRow } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
 import { timeAgo } from '../../lib/time'
 
@@ -9,7 +11,7 @@ const input = 'min-h-12 w-full rounded-xl border border-stone-300 bg-white px-3 
 const TYPING = 300
 const MIN_SEARCH = 2 // the server waits for this much too
 
-function Avatar({ src, name }: { src?: string; name: string }) {
+export function Avatar({ src, name }: { src?: string; name: string }) {
   const [broken, setBroken] = useState(false)
   return src && !broken ? (
     <img
@@ -48,7 +50,17 @@ function Person({ person }: { person: Found }) {
 // Finding someone by their Discogs username. Part of a name is enough; nobody is listed until
 // something is typed, so a profile is only ever found by someone looking for it.
 export function People() {
+  const { api, reader } = useCloud()
   const [q, setQ] = useState('')
+  // the people you follow, for when nothing is typed
+  const [following, setFollowing] = useState<PersonRow[] | null>(null)
+  useEffect(() => {
+    if (!api) return
+    api
+      .follows()
+      .then((f) => setFollowing(f.following))
+      .catch(() => {})
+  }, [api])
   const [found, setFound] = useState<Found[] | null>(null)
   const [error, setError] = useState(false)
   const asked = q.trim()
@@ -63,7 +75,7 @@ export function People() {
     let dropped = false
     setError(false)
     const t = setTimeout(() => {
-      cloudEntry()
+      reader
         .searchProfiles(asked)
         .then((r) => !dropped && setFound(r.found))
         .catch(() => !dropped && setError(true))
@@ -72,7 +84,7 @@ export function People() {
       dropped = true
       clearTimeout(t)
     }
-  }, [asked, enough])
+  }, [reader, asked, enough])
 
   return (
     <div className="space-y-4">
@@ -92,7 +104,18 @@ export function People() {
         />
       </div>
 
-      {!enough ? null : error ? (
+      {!enough ? (
+        following?.length ? (
+          <Section title="Following">
+            <List>
+              <Row icon={<History size={20} />} label="Recently added" href="/following" />
+              {following.map((p) => (
+                <Person key={p.username} person={{ username: p.username, about: p.about, publishedAt: null }} />
+              ))}
+            </List>
+          </Section>
+        ) : null
+      ) : error ? (
         <Notice tone="error">Couldn’t search just now. Try again in a minute.</Notice>
       ) : !found ? (
         <Spinner />

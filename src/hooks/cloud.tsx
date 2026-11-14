@@ -30,6 +30,7 @@ import {
   takeNeedCandidates,
   type CloudApi,
   type Login,
+  type ProfileReader,
   type WaysIn,
 } from '../lib/cloud'
 import { demoCloudApi } from '../lib/demoCloud'
@@ -48,6 +49,8 @@ type Ctx = {
   syncedAt: number | null
   off: Category[]
   api: CloudApi | null // while this device is in: the account's devices, passkeys, and so on
+  // reads profiles as this account when signed in to one, otherwise anonymously
+  reader: ProfileReader
   // the profile's sections, once they've been read from the server. null while that's happening.
   sections: Sections | null
   setSections: (next: Sections) => Promise<void>
@@ -282,9 +285,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [api])
 
+  const anonymous = useMemo(() => cloudEntry(), [])
   const demoValue = useDemoCloud()
   const value: Ctx = {
     api,
+    reader: api ?? anonymous,
     waysIn: async () => {
       const entry = cloudEntry()
       const ways = await entry.waysIn(session!.userId)
@@ -361,6 +366,7 @@ function useDemoCloud(): Ctx {
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
+  const anonymous = useMemo(() => cloudEntry(), [])
   const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
   const signIn = async () => {
     await pause(600)
@@ -377,6 +383,8 @@ function useDemoCloud(): Ctx {
     syncedAt,
     off,
     api: enabled ? api : null,
+    // the demo has no account to read as, so profiles come from the real server like anyone's
+    reader: anonymous,
     sections: demoSections,
     setSections: async (next) => {
       await pause(300)

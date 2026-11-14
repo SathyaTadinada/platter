@@ -18,7 +18,7 @@ export const ROOTS: Record<Section, string> = {
 export function sectionOf(path: string): Section {
   if (/^\/(scan|batch|play)(\/|$)/.test(path)) return 'scan'
   // profiles are found in Search, so one opened from a link lands there too
-  if (/^\/(search|results|release|u)(\/|$)/.test(path)) return 'search'
+  if (/^\/(search|results|release|u|following)(\/|$)/.test(path)) return 'search'
   if (/^\/(stats|value)(\/|$)/.test(path)) return 'stats'
   if (/^\/(settings|import|setup|crates|listenbrainz|sync|account|admin|about)(\/|$)/.test(path)) return 'settings'
   return 'collection'

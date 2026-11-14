@@ -96,6 +96,9 @@ const want = (w: WantItem): ProfileItem => ({
 // counts down from a date far in the future. It depends only on the record, so adding one doesn't
 // move any of the others.
 const UNTIL = 4_000_000_000_000 // some time in 2096
+// When a record was added, read back from its key
+export const addedAt = (key: string) => UNTIL - Number(key.split(':')[0])
+
 const keyOf = (added: string | undefined, id: number) =>
   `${String(UNTIL - (added ? Date.parse(added) || 0 : 0)).padStart(13, '0')}:${String(id).padStart(10, '0')}`
 

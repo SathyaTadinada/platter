@@ -22,7 +22,10 @@ import {
   Trash2,
   UserRound,
   TrendingUp,
+  UserCheck,
+  UserPlus,
   Users,
+  UserX,
 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import type { Category } from '../../worker/categories'
@@ -34,8 +37,18 @@ import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
 import { Button, Card, IconButton, List, Notice, Row, Screen, Section, Segmented, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
-import { addPasskey, CloudError, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo, type WaysIn } from '../lib/cloud'
+import {
+  addPasskey,
+  CloudError,
+  passkeysHere,
+  type Follows,
+  type AccountInfo,
+  type DeviceInfo,
+  type PasskeyInfo,
+  type WaysIn,
+} from '../lib/cloud'
 import { timeAgo } from '../lib/time'
+import { FollowSheet, type FollowList } from './account/FollowSheet'
 
 // What a profile can show. Stats leaves out prices, and Your year what was spent.
 const PROFILE_SECTIONS: { id: ProfileSection; label: string; icon: ReactNode }[] = [
@@ -254,22 +267,25 @@ function useAccountData() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [devices, setDevices] = useState<DeviceInfo[] | null>(null)
   const [passkeys, setPasskeys] = useState<PasskeyInfo[] | null>(null)
+  const [follows, setFollows] = useState<Follows | null>(null)
   const reload = useCallback(async () => {
     if (!api) return
-    const [a, d, p] = await Promise.all([api.account(), api.devices(), api.passkeys()])
+    const [a, d, p, f] = await Promise.all([api.account(), api.devices(), api.passkeys(), api.follows()])
     setAccount(a)
     setDevices(d.devices)
     setPasskeys(p.passkeys)
+    setFollows(f)
   }, [api])
   useEffect(() => {
     reload().catch(() => {})
   }, [reload])
-  return { account, devices, passkeys, reload }
+  return { account, devices, passkeys, follows, reload }
 }
 
 function SignedIn() {
   const cloud = useCloud()
-  const { account, devices, passkeys, reload } = useAccountData()
+  const { account, devices, passkeys, follows, reload } = useAccountData()
+  const [people, setPeople] = useState<FollowList | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [stopping, setStopping] = useState<(typeof CATEGORIES)[number] | null>(null)
   const [pairing, setPairing] = useState<{ code: string; expiresAt: number } | null>(null)
@@ -463,6 +479,7 @@ function SignedIn() {
               onChange={(w) => attempt(() => cloud.setWho(w))}
               options={[
                 { value: 'private', label: 'Private' },
+                { value: 'followers', label: 'Followers' },
                 { value: 'unlisted', label: 'Link only' },
                 { value: 'public', label: 'Public' },
               ]}
@@ -498,6 +515,57 @@ function SignedIn() {
               </List>
             )}
           </Section>
+        )}
+        {follows && (
+          <Section title="People">
+            <List>
+              <Row
+                icon={<Users size={20} />}
+                label="Followers"
+                value={String(follows.followers.length)}
+                onClick={() => setPeople('followers')}
+              />
+              <Row
+                icon={<UserCheck size={20} />}
+                label="Following"
+                value={String(follows.following.length)}
+                onClick={() => setPeople('following')}
+              />
+              {follows.requests.length > 0 && (
+                <Row
+                  icon={<UserPlus size={20} />}
+                  label="Requests"
+                  value={String(follows.requests.length)}
+                  onClick={() => setPeople('requests')}
+                />
+              )}
+              {follows.blocked.length > 0 && (
+                <Row
+                  icon={<UserX size={20} />}
+                  label="Blocked"
+                  value={String(follows.blocked.length)}
+                  onClick={() => setPeople('blocked')}
+                />
+              )}
+            </List>
+          </Section>
+        )}
+        {people && follows && (
+          <FollowSheet
+            list={people}
+            people={follows[people]}
+            onAct={(what, username) =>
+              attempt(async () => {
+                const a = cloud.api!
+                if (what === 'remove') await a.removeFollower(username)
+                else if (what === 'unfollow') await a.unfollow(username)
+                else if (what === 'approve' || what === 'decline') await a.respondFollow(username, what === 'approve')
+                else await a.unblock(username)
+                await reload()
+              })
+            }
+            onClose={() => setPeople(null)}
+          />
         )}
         {account?.admin && (
           <Section>

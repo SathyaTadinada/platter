@@ -80,6 +80,20 @@ export function demoCloudApi(): CloudApi {
     },
     publishProfile: async (rows) => ({ saved: rows.length }),
     sweepProfile: async () => ({ gone: 0 }),
+    // the demo has nobody to follow, and its profile reads go nowhere
+    profile: async () => {
+      throw new Error('Not in the demo')
+    },
+    profileRows: async () => ({ rows: [], more: false }),
+    searchProfiles: async () => ({ found: [] }),
+    follow: async () => ({ status: 'accepted' }),
+    unfollow: nothing,
+    respondFollow: nothing,
+    removeFollower: nothing,
+    block: nothing,
+    unblock: nothing,
+    follows: async () => ({ followers: [], following: [], requests: [], blocked: [] }),
+    feed: async () => ({ items: [], more: false }),
     members: async () => ({ members: [] }),
     setBadge: async () => ({ badges: [] }),
     clearWaysIn: nothing,

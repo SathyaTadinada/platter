@@ -1,14 +1,17 @@
-import { CalendarRange, ChartLine, Heart, LibraryBig, SquareCheckBig } from 'lucide-react'
+import { Ban, CalendarRange, ChartLine, Heart, LibraryBig, SquareCheckBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Cover } from '../components/Cover'
+import { Menu } from '../components/Menu'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Button, ExternalLink, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSession } from '../hooks/session'
 import { rememberTitle } from '../lib/nav'
 import { enqueueFromProfile, waitingInBatch } from '../lib/queue'
-import { CloudError, cloudEntry, type ProfileHead } from '../lib/cloud'
+import { CloudError, type ProfileHead } from '../lib/cloud'
+import { useCloud } from '../hooks/cloud'
 import type { ProfileAbout, ProfileItem, ProfileStats, ProfileYear } from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
 import { timeAgo } from '../lib/time'
@@ -43,23 +46,31 @@ export function Profile({ username }: { username: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { session } = useSession()
+  const { api, reader } = useCloud()
+  const [unfollowing, setUnfollowing] = useState(false)
+  const [blocking, setBlocking] = useState(false)
   const [, navigate] = useLocation()
   // records picked to add to your own collection, by their row; null when not picking
   const [picked, setPicked] = useState<Set<string> | null>(null)
   const [adding, setAdding] = useState<{ items: ProfileItem[]; owned: number; waiting: number } | null>(null)
 
+  const fetchHead = useCallback(
+    () =>
+      reader
+        .profile(username)
+        .then((h) => {
+          setHead(h)
+          setSection((now) => (now && h.sections.includes(now) ? now : (h.sections[0] ?? null)))
+        })
+        .catch((e) => (e instanceof CloudError && e.status === 404 ? setMissing(true) : setError('Couldn’t load this profile.'))),
+    [reader, username],
+  )
   useEffect(() => {
     setHead(null)
     setPicked(null)
     setMissing(false)
-    cloudEntry()
-      .profile(username)
-      .then((h) => {
-        setHead(h)
-        setSection(h.sections[0] ?? null)
-      })
-      .catch((e) => (e instanceof CloudError && e.status === 404 ? setMissing(true) : setError('Couldn’t load this profile.')))
-  }, [username])
+    fetchHead()
+  }, [fetchHead])
 
   const load = useCallback(
     async (after?: string) => {
@@ -67,7 +78,7 @@ export function Profile({ username }: { username: string }) {
       setLoading(true)
       setError(null)
       try {
-        const page = await cloudEntry().profileRows(username, section, after)
+        const page = await reader.profileRows(username, section, after)
         setLoaded((old) => ({ section, rows: after && old?.section === section ? [...old.rows, ...page.rows] : page.rows }))
         setMore(page.more ? page.rows.at(-1)!.key : null)
       } catch {
@@ -76,7 +87,7 @@ export function Profile({ username }: { username: string }) {
         setLoading(false)
       }
     },
-    [username, section],
+    [reader, username, section],
   )
 
   useEffect(() => {
@@ -128,6 +139,23 @@ export function Profile({ username }: { username: string }) {
     setAdding({ items, owned, waiting })
   }
 
+  const canFollow = Boolean(api) && session?.kind !== 'demo' && !mine && head.relation !== undefined
+  const following = head.relation?.following ?? 'none'
+  async function toggleFollow() {
+    if (!api) return
+    if (following === 'accepted') return setUnfollowing(true)
+    if (following === 'pending') await api.unfollow(head!.username)
+    else await api.follow(head!.username)
+    await fetchHead()
+  }
+
+  const menu = canFollow && (
+    <Menu
+      label="More"
+      items={[{ label: `Block ${head.username}`, icon: <Ban size={18} />, danger: true, onSelect: () => setBlocking(true) }]}
+    />
+  )
+
   const actions = picking ? (
     <>
       <button
@@ -142,11 +170,14 @@ export function Profile({ username }: { username: string }) {
       </button>
     </>
   ) : (
-    pickable && (
-      <IconButton label="Select records" onClick={() => setPicked(new Set())}>
-        <SquareCheckBig size={20} />
-      </IconButton>
-    )
+    <>
+      {pickable && (
+        <IconButton label="Select records" onClick={() => setPicked(new Set())}>
+          <SquareCheckBig size={20} />
+        </IconButton>
+      )}
+      {menu}
+    </>
   )
 
   return (
@@ -167,6 +198,7 @@ export function Profile({ username }: { username: string }) {
             <p className="text-sm text-stone-500">
               Member since {memberSince(head.memberSince)}
               {head.badges.map((b) => ` · ${b}`)}
+              {head.relation?.followsYou && ' · Follows you'}
               {head.publishedAt && ` · Updated ${timeAgo(head.publishedAt)}`}
             </p>
             <p className="mt-0.5 text-sm">
@@ -174,7 +206,47 @@ export function Profile({ username }: { username: string }) {
             </p>
           </div>
         </div>
+        {canFollow && (
+          <Button
+            variant={following === 'none' ? 'primary' : 'secondary'}
+            className="mt-4 min-h-10 w-full sm:w-auto sm:px-6"
+            onClick={toggleFollow}
+          >
+            {following === 'accepted' ? 'Following' : following === 'pending' ? 'Requested' : 'Follow'}
+          </Button>
+        )}
       </Section>
+      {head.locked && (
+        <Section>
+          <Notice>Only followers can see this profile.</Notice>
+        </Section>
+      )}
+      {unfollowing && (
+        <ConfirmDialog
+          title={`Unfollow ${head.username}?`}
+          action="Unfollow"
+          onConfirm={async () => {
+            setUnfollowing(false)
+            await api!.unfollow(head.username)
+            await fetchHead()
+          }}
+          onCancel={() => setUnfollowing(false)}
+        />
+      )}
+      {blocking && (
+        <ConfirmDialog
+          title={`Block ${head.username}?`}
+          action="Block"
+          onConfirm={async () => {
+            setBlocking(false)
+            await api!.block(head.username)
+            back()
+          }}
+          onCancel={() => setBlocking(false)}
+        >
+          They’ll stop following you, and won’t be able to again.
+        </ConfirmDialog>
+      )}
 
       {head.sections.length > 1 && section && (
         <Section>
@@ -188,79 +260,83 @@ export function Profile({ username }: { username: string }) {
         </Section>
       )}
 
-      {/* with tabs above, they already say which section this is */}
-      <Section title={section && head.sections.length === 1 ? LABELS[section] : undefined}>
-        {error && <Notice tone="error">{error}</Notice>}
-        {!rows ? (
-          loading && <Spinner />
-        ) : !rows.length ? (
-          <Notice>Nothing here yet.</Notice>
-        ) : section === 'stats' ? (
-          <StatsView stats={JSON.parse(rows[0].value) as ProfileStats} />
-        ) : section === 'year' ? (
-          <YearView years={rows.map((r) => JSON.parse(r.value) as ProfileYear)} />
-        ) : (
-          <>
-            {/* the same tiles as the collection grid; each opens the release, which says if you have it */}
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {rows.map((row) => {
-                const r = JSON.parse(row.value) as ProfileItem
-                const on = Boolean(picking && picked.has(row.key))
-                const tile = (
-                  <>
-                    <div className="relative">
-                      <Cover
-                        item={r}
-                        className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${on ? 'opacity-70 ring-4 ring-accent' : ''}`}
-                      />
-                      {picking && (
-                        <span className="absolute top-2 right-2">
-                          <Tick on={on} />
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 truncate text-sm font-semibold">{r.title}</p>
-                    <p className="truncate text-sm text-stone-500">{r.artist}</p>
-                  </>
-                )
-                return (
-                  <li key={row.key} className="min-w-0">
-                    {picking ? (
-                      <button
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() =>
-                          setPicked((old) => {
-                            const next = new Set(old)
-                            if (next.has(row.key)) next.delete(row.key)
-                            else next.add(row.key)
-                            return next
-                          })
-                        }
-                        className="group block w-full text-left"
-                      >
-                        {tile}
-                      </button>
-                    ) : (
-                      <Link href={`/release/${r.id}`} className="group block">
-                        {tile}
-                      </Link>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-            {more && (
-              <Button variant="secondary" className="mt-4 w-full" disabled={loading} onClick={() => load(more)}>
-                {loading ? 'Loading…' : 'Show more'}
-              </Button>
+      {!head.locked && (
+        <>
+          {/* with tabs above, they already say which section this is */}
+          <Section title={section && head.sections.length === 1 ? LABELS[section] : undefined}>
+            {error && <Notice tone="error">{error}</Notice>}
+            {!rows ? (
+              loading && <Spinner />
+            ) : !rows.length ? (
+              <Notice>Nothing here yet.</Notice>
+            ) : section === 'stats' ? (
+              <StatsView stats={JSON.parse(rows[0].value) as ProfileStats} />
+            ) : section === 'year' ? (
+              <YearView years={rows.map((r) => JSON.parse(r.value) as ProfileYear)} />
+            ) : (
+              <>
+                {/* the same tiles as the collection grid; each opens the release, which says if you have it */}
+                <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  {rows.map((row) => {
+                    const r = JSON.parse(row.value) as ProfileItem
+                    const on = Boolean(picking && picked.has(row.key))
+                    const tile = (
+                      <>
+                        <div className="relative">
+                          <Cover
+                            item={r}
+                            className={`aspect-square w-full rounded-xl shadow-sm ring-1 ring-black/5 transition group-active:scale-[0.98] ${on ? 'opacity-70 ring-4 ring-accent' : ''}`}
+                          />
+                          {picking && (
+                            <span className="absolute top-2 right-2">
+                              <Tick on={on} />
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-2 truncate text-sm font-semibold">{r.title}</p>
+                        <p className="truncate text-sm text-stone-500">{r.artist}</p>
+                      </>
+                    )
+                    return (
+                      <li key={row.key} className="min-w-0">
+                        {picking ? (
+                          <button
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() =>
+                              setPicked((old) => {
+                                const next = new Set(old)
+                                if (next.has(row.key)) next.delete(row.key)
+                                else next.add(row.key)
+                                return next
+                              })
+                            }
+                            className="group block w-full text-left"
+                          >
+                            {tile}
+                          </button>
+                        ) : (
+                          <Link href={`/release/${r.id}`} className="group block">
+                            {tile}
+                          </Link>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+                {more && (
+                  <Button variant="secondary" className="mt-4 w-full" disabled={loading} onClick={() => load(more)}>
+                    {loading ? 'Loading…' : 'Show more'}
+                  </Button>
+                )}
+              </>
             )}
-          </>
-        )}
-        <p className="mt-4">
-          <DiscogsCredit url={`${discogsUser(head.username)}/collection`} />
-        </p>
-      </Section>
+            <p className="mt-4">
+              <DiscogsCredit url={`${discogsUser(head.username)}/collection`} />
+            </p>
+          </Section>
+        </>
+      )}
       {chosen > 0 && (
         <div className="sticky bottom-3 z-10 mt-4">
           <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">

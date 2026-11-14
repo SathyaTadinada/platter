@@ -131,13 +131,27 @@ export type Badge = { id: string; label: string; members: number }
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
 export type Found = { username: string; about: string | null; publishedAt: number | null }
+export type Relation = { following: 'none' | 'pending' | 'accepted'; followsYou: boolean; blocked: boolean }
 export type ProfileHead = {
+  locked: boolean // a Followers profile the viewer isn't approved for
+  relation?: Relation
   username: string
   badges: string[]
   memberSince: number
   publishedAt: number | null
   sections: Section[]
   about: string | null
+}
+export type Person = { username: string; about: string | null; since: number }
+export type Follows = { followers: Person[]; following: Person[]; requests: Person[]; blocked: Person[] }
+type Page = { rows: { key: string; value: string; updatedAt: number }[]; more: boolean }
+
+// Reading profiles: anyone can, and someone signed in also says who they are, which a Followers
+// profile and blocks need. cloudEntry() reads anonymously; cloudApi() as this device's account.
+export type ProfileReader = {
+  profile(username: string): Promise<ProfileHead>
+  profileRows(username: string, section: Section, after?: string): Promise<Page>
+  searchProfiles(q: string): Promise<{ found: Found[] }>
 }
 
 // Getting in, before there's a device key
@@ -177,7 +191,7 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
     }),
 })
 
-export type CloudApi = {
+export type CloudApi = ProfileReader & {
   pull(since: number): Promise<PullResult>
   push(rows: Row[]): Promise<{ seq: number; seqs: number[] }>
   pair(): Promise<{ code: string; expiresAt: number }>
@@ -200,6 +214,14 @@ export type CloudApi = {
   setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
   sweepProfile(section: Section, before: number): Promise<{ gone: number }>
+  follow(username: string): Promise<{ status: 'pending' | 'accepted' }>
+  unfollow(username: string): Promise<unknown>
+  respondFollow(username: string, approve: boolean): Promise<unknown>
+  removeFollower(username: string): Promise<unknown>
+  block(username: string): Promise<unknown>
+  unblock(username: string): Promise<unknown>
+  follows(): Promise<Follows>
+  feed(after?: string): Promise<{ items: { username: string; key: string; value: string }[]; more: boolean }>
   members(): Promise<{ members: Member[] }>
   setBadge(member: string, badge: string, on: boolean): Promise<{ badges: string[] }>
   clearWaysIn(member: string): Promise<unknown>
@@ -236,6 +258,17 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setWho: (who) => c('profile-who', { who }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
+    profile: (username) => c('profile', { username }),
+    profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
+    searchProfiles: (q) => c('profile-search', { q }),
+    follow: (username) => c('follow', { username }),
+    unfollow: (username) => c('unfollow', { username }),
+    respondFollow: (username, approve) => c('follow-respond', { username, approve }),
+    removeFollower: (username) => c('follower-remove', { username }),
+    block: (username) => c('block', { username }),
+    unblock: (username) => c('unblock', { username }),
+    follows: () => c('follows'),
+    feed: (after) => c('feed', { after }),
     members: () => c('admin-members'),
     setBadge: (member, badge, on) => c('admin-badge', { member, badge, on }),
     clearWaysIn: (member) => c('admin-clear', { member }),
