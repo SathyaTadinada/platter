@@ -183,6 +183,19 @@ describe('home tabs', () => {
     expect(here()).toBe('/stats')
   })
 
+  it('lets a page that replaces another take its place, as a redirect does', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/settings')
+    go(nav, '/account')
+    go(nav, '/account/profile')
+    history.replaceState(null, '', '/account')
+    track(nav)
+    expect(await back(nav)).toBe('history')
+    expect(here()).toBe('/account')
+    // (the browser's own entry for the old address is now this page again, so one more Back)
+  })
+
   it('forgets stacks from the version that could put a page in two tabs', async () => {
     sessionStorage.setItem('platter.stacks', JSON.stringify({ stats: [{ url: '/account', key: 'x', index: 0 }] }))
     const nav = await fresh()

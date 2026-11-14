@@ -89,11 +89,20 @@ export function People() {
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="people" className="mb-1 block text-sm font-medium">
-          Discogs username
+        <label htmlFor="find-people" className="mb-1 block text-sm font-medium">
+          Find people
         </label>
+        {/* a search, not a sign-in: "username" anywhere near a field makes Safari and password
+            managers offer saved logins */}
         <input
-          id="people"
+          id="find-people"
+          type="search"
+          enterKeyHint="search"
+          placeholder="Name on Discogs"
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
           className={input}
           value={q}
           onChange={(e) => setQ(e.target.value)}

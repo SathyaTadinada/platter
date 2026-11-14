@@ -117,9 +117,9 @@ export function SideNav() {
       </ul>
       {session && (
         <ProfileLink
-          // your profile when you share one, its settings when you could, and without a Platter
+          // your profile when you share one, the account (where it's switched on) when you could, and without a Platter
           // account (it's opt-in) your Discogs profile
-          to={!cloud.enabled ? undefined : sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account/profile'}
+          to={!cloud.enabled ? undefined : sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account'}
           compact={collapsed}
           className={`mt-auto rounded-lg py-2 hover:bg-stone-100 dark:hover:bg-stone-900 ${collapsed ? 'justify-center px-1.5' : 'px-3'}`}
         />

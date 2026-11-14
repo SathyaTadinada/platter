@@ -22,7 +22,7 @@ export function Avatar({ src, name, size = 'size-9' }: { src?: string; name: str
     />
   ) : (
     <span
-      className={`${size} flex shrink-0 items-center justify-center rounded-full bg-stone-200 text-sm font-semibold uppercase dark:bg-stone-800`}
+      className={`${size} flex shrink-0 items-center justify-center rounded-full bg-stone-200 font-semibold uppercase dark:bg-stone-800 ${/\btext-/.test(size) ? '' : 'text-sm'}`}
       aria-hidden
     >
       {name.charAt(0)}

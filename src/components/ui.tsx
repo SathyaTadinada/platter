@@ -229,7 +229,8 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
   return (
     <li>
       {href ? (
-        <Link href={href} className={`${cls} ${interactive}`}>
+        // a row is a place to go, not something to drag out
+        <Link href={href} draggable={false} className={`${cls} ${interactive}`}>
           {body}
         </Link>
       ) : onClick ? (
@@ -321,6 +322,22 @@ export function Switch({
 
 // The ::after pads the hit area out to 44px for fingers without changing the look
 // danger: turns red on hover, for buttons that delete, remove, or sign something out
+const iconClass =
+  'relative rounded-full p-2 text-stone-700 after:absolute after:-inset-1 hover:bg-stone-200 active:bg-stone-200 disabled:opacity-40 max-[359px]:p-1.5 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800'
+
+// An icon in a toolbar that goes somewhere: in the app, or (external) out to another site
+export function IconLink({ label, href, external, children }: { label: string; href: string; external?: boolean; children: ReactNode }) {
+  return external ? (
+    <a href={href} target="_blank" rel="noopener" aria-label={label} title={label} className={iconClass}>
+      {children}
+    </a>
+  ) : (
+    <Link href={href} aria-label={label} title={label} className={iconClass}>
+      {children}
+    </Link>
+  )
+}
+
 export function IconButton({
   label,
   children,
@@ -333,7 +350,7 @@ export function IconButton({
       type="button"
       aria-label={label}
       title={label}
-      className={`relative rounded-full p-2 text-stone-700 after:absolute after:-inset-1 hover:bg-stone-200 active:bg-stone-200 disabled:opacity-40 max-[359px]:p-1.5 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${danger ? 'hover:text-red-600 dark:hover:text-red-400' : ''} ${className}`}
+      className={`${iconClass} ${danger ? 'hover:text-red-600 dark:hover:text-red-400' : ''} ${className}`}
       {...props}
     >
       {children}

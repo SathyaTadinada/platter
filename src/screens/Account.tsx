@@ -11,7 +11,6 @@ import {
   SlidersHorizontal,
   Trash2,
   TrendingUp,
-  UserRound,
   Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
@@ -29,7 +28,7 @@ import { Device } from './account/Device'
 import { EditPasskey } from './account/EditPasskey'
 import { GetIn } from './account/GetIn'
 import { created, explain } from './account/shared'
-import { WHO_LABELS } from './ProfileSettings'
+import { ProfileActions, ProfileArea } from './account/ProfileArea'
 
 // Album years, record lengths, and the barcode index ('catalog') aren't listed: they're public catalog
 // data that only makes a new device quicker to set up, so they always sync
@@ -45,7 +44,7 @@ const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
 export function Account() {
   const cloud = useCloud()
   return (
-    <Screen title="Platter account" back="/settings" width="wide">
+    <Screen title="Platter account" back="/settings" width="wide" actions={<ProfileActions />}>
       {!cloud.available ? null : cloud.enabled ? <SignedIn /> : <GetIn />}
     </Screen>
   )
@@ -85,16 +84,6 @@ function SignedIn() {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [editing, setEditing] = useState<PasskeyInfo | null>(null)
   const [offer, setOffer] = useState(() => created.now && passkeysHere())
-  // off until a section is on, then who it's for
-  // (nothing until its settings have loaded, rather than Off by mistake)
-  const profileValue = !cloud.sections
-    ? undefined
-    : cloud.hidden
-      ? 'Hidden'
-      : Object.values(cloud.sections).some((v) => v === 'public')
-        ? WHO_LABELS[cloud.who]
-        : 'Off'
-
   const attempt = async (task: () => Promise<unknown>) => {
     setError(null)
     try {
@@ -119,221 +108,213 @@ function SignedIn() {
   const canAddPasskey = passkeysHere()
 
   return (
-    <div className={columns}>
-      {stopping && (
-        <ConfirmDialog
-          title={`Stop syncing ${stopping.label.toLowerCase()}?`}
-          action="Stop syncing"
-          onConfirm={() => {
-            setCategory(stopping.id, false)
-            setStopping(null)
-          }}
-          onCancel={() => setStopping(null)}
-        >
-          They’ll be removed from Platter’s server. Your devices keep their own copies.
-        </ConfirmDialog>
-      )}
-      {deleting && (
-        <ConfirmDialog
-          title="Delete your Platter account?"
-          action="Delete"
-          onConfirm={() => {
-            setDeleting(false)
-            attempt(cloud.forget)
-          }}
-          onCancel={() => setDeleting(false)}
-        >
-          This deletes your account and everything on Platter’s server, and turns off sync on all your devices. Your devices keep their own
-          copies.
-        </ConfirmDialog>
-      )}
-      {signingOut && (
-        <ConfirmDialog
-          title={`Sign out ${signingOut.name ?? 'that device'}?`}
-          action="Sign out"
-          onConfirm={() => {
-            const id = signingOut.id
-            setSigningOut(null)
-            attempt(async () => {
-              await cloud.api!.removeDevice(id)
-              await reload()
-            })
-          }}
-          onCancel={() => setSigningOut(null)}
-        >
-          It won’t sync until it’s signed in again.
-        </ConfirmDialog>
-      )}
-      {pairing && (
-        <Sheet
-          title="Add a device"
-          bodyClassName="p-4"
-          width="md"
-          onClose={() => setPairing(null)}
-          footer={
-            <Button variant="secondary" className="w-full" onClick={() => setPairing(null)}>
-              Done
-            </Button>
-          }
-        >
-          <div className="space-y-6 py-2">
-            <p className="text-sm text-stone-600 dark:text-stone-300">
-              Enter this code on your other device, in Settings › Platter account.
-            </p>
-            <PairingCodeDisplay key={pairing.code} code={pairing.code} expiresAt={pairing.expiresAt} onRenew={newCode} />
-          </div>
-        </Sheet>
-      )}
-      {changing && <ChangePassword first={account?.password === false} onClose={() => setChanging(false)} onSaved={reload} />}
-      {editing && (
-        <EditPasskey
-          passkey={editing}
-          onClose={() => setEditing(null)}
-          onChange={async (task) => {
-            setEditing(null)
-            await attempt(async () => {
-              await task()
-              await reload()
-            })
-          }}
-        />
-      )}
+    <>
+      <ProfileArea onError={(e) => setError(explain(e, "This device isn't signed in anymore."))} />
+      <div className={columns}>
+        {stopping && (
+          <ConfirmDialog
+            title={`Stop syncing ${stopping.label.toLowerCase()}?`}
+            action="Stop syncing"
+            onConfirm={() => {
+              setCategory(stopping.id, false)
+              setStopping(null)
+            }}
+            onCancel={() => setStopping(null)}
+          >
+            They’ll be removed from Platter’s server. Your devices keep their own copies.
+          </ConfirmDialog>
+        )}
+        {deleting && (
+          <ConfirmDialog
+            title="Delete your Platter account?"
+            action="Delete"
+            onConfirm={() => {
+              setDeleting(false)
+              attempt(cloud.forget)
+            }}
+            onCancel={() => setDeleting(false)}
+          >
+            This deletes your account and everything on Platter’s server, and turns off sync on all your devices. Your devices keep their
+            own copies.
+          </ConfirmDialog>
+        )}
+        {signingOut && (
+          <ConfirmDialog
+            title={`Sign out ${signingOut.name ?? 'that device'}?`}
+            action="Sign out"
+            onConfirm={() => {
+              const id = signingOut.id
+              setSigningOut(null)
+              attempt(async () => {
+                await cloud.api!.removeDevice(id)
+                await reload()
+              })
+            }}
+            onCancel={() => setSigningOut(null)}
+          >
+            It won’t sync until it’s signed in again.
+          </ConfirmDialog>
+        )}
+        {pairing && (
+          <Sheet
+            title="Add a device"
+            bodyClassName="p-4"
+            width="md"
+            onClose={() => setPairing(null)}
+            footer={
+              <Button variant="secondary" className="w-full" onClick={() => setPairing(null)}>
+                Done
+              </Button>
+            }
+          >
+            <div className="space-y-6 py-2">
+              <p className="text-sm text-stone-600 dark:text-stone-300">
+                Enter this code on your other device, in Settings › Platter account.
+              </p>
+              <PairingCodeDisplay key={pairing.code} code={pairing.code} expiresAt={pairing.expiresAt} onRenew={newCode} />
+            </div>
+          </Sheet>
+        )}
+        {changing && <ChangePassword first={account?.password === false} onClose={() => setChanging(false)} onSaved={reload} />}
+        {editing && (
+          <EditPasskey
+            passkey={editing}
+            onClose={() => setEditing(null)}
+            onChange={async (task) => {
+              setEditing(null)
+              await attempt(async () => {
+                await task()
+                await reload()
+              })
+            }}
+          />
+        )}
 
-      <div>
-        {offer && (
-          <Section>
-            <Card>
-              <div className="space-y-3">
-                <p>Add a passkey as a way in when Discogs can’t be reached.</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      created.now = false
-                      setOffer(false)
-                    }}
-                  >
-                    Not now
-                  </Button>
-                  <Button onClick={newPasskey}>Add a passkey</Button>
+        <div>
+          {offer && (
+            <Section>
+              <Card>
+                <div className="space-y-3">
+                  <p>Add a passkey as a way in when Discogs can’t be reached.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        created.now = false
+                        setOffer(false)
+                      }}
+                    >
+                      Not now
+                    </Button>
+                    <Button onClick={newPasskey}>Add a passkey</Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          </Section>
-        )}
-        <Section>
-          <List>
-            <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
-              <div className="min-w-0 flex-1">
-                <span className="block">Sync this device</span>
-                {status && <span className="block text-sm text-stone-500">{status}</span>}
-              </div>
-              <button
-                type="button"
-                aria-label="Sync now"
-                title="Sync now"
-                disabled={cloud.running}
-                onClick={() => cloud.syncNow()}
-                className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
-                <RefreshCw size={20} className={cloud.running ? 'animate-spin' : ''} />
-              </button>
-              <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
-            </li>
-          </List>
-          {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
-        </Section>
-        <Section title="Sign-in">
-          <List>
-            <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
-            <Row
-              icon={<KeyRound size={20} />}
-              label={account?.password === false ? 'Set a password' : 'Change password'}
-              onClick={() => setChanging(true)}
-            />
-          </List>
-          {(canAddPasskey || !!passkeys?.length) && (
-            <List>
-              {passkeys?.map((p) => (
-                <Row
-                  key={p.id}
-                  icon={<Fingerprint size={20} />}
-                  label={p.name}
-                  detail={p.lastUsedAt ? `Last used ${timeAgo(p.lastUsedAt)}` : `Added ${timeAgo(p.createdAt)}`}
-                  onClick={() => setEditing(p)}
-                />
-              ))}
-              {canAddPasskey && <Row icon={<Plus size={20} />} label="Add a passkey" onClick={newPasskey} />}
-            </List>
+              </Card>
+            </Section>
           )}
-        </Section>
-        <Section>
-          <List>
-            <Row
-              icon={<UserRound size={20} />}
-              label="Profile"
-              detail={account?.requests ? `${account.requests} ${account.requests === 1 ? 'request' : 'requests'}` : undefined}
-              value={profileValue}
-              href="/account/profile"
-            />
-          </List>
-        </Section>
-        {account?.admin && (
           <Section>
             <List>
-              <Row icon={<Users size={20} />} label="Members" href="/admin" />
+              <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <span className="block">Sync this device</span>
+                  {status && <span className="block text-sm text-stone-500">{status}</span>}
+                </div>
+                <button
+                  type="button"
+                  aria-label="Sync now"
+                  title="Sync now"
+                  disabled={cloud.running}
+                  onClick={() => cloud.syncNow()}
+                  className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
+                >
+                  <RefreshCw size={20} className={cloud.running ? 'animate-spin' : ''} />
+                </button>
+                <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
+              </li>
+            </List>
+            {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
+          </Section>
+          <Section title="Sign-in">
+            <List>
+              <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
+              <Row
+                icon={<KeyRound size={20} />}
+                label={account?.password === false ? 'Set a password' : 'Change password'}
+                onClick={() => setChanging(true)}
+              />
+            </List>
+            {(canAddPasskey || !!passkeys?.length) && (
+              <List>
+                {passkeys?.map((p) => (
+                  <Row
+                    key={p.id}
+                    icon={<Fingerprint size={20} />}
+                    label={p.name}
+                    detail={p.lastUsedAt ? `Last used ${timeAgo(p.lastUsedAt)}` : `Added ${timeAgo(p.createdAt)}`}
+                    onClick={() => setEditing(p)}
+                  />
+                ))}
+                {canAddPasskey && <Row icon={<Plus size={20} />} label="Add a passkey" onClick={newPasskey} />}
+              </List>
+            )}
+          </Section>
+          {account?.admin && (
+            <Section>
+              <List>
+                <Row icon={<Users size={20} />} label="Members" href="/admin" />
+              </List>
+            </Section>
+          )}
+          <Section>
+            <List>
+              <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
             </List>
           </Section>
-        )}
-        <Section>
-          <List>
-            <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
-          </List>
-        </Section>
-      </div>
+        </div>
 
-      <div>
-        <Section title="Synced data">
-          <List>
-            {CATEGORIES.map((c) => (
-              <Row
-                key={c.id}
-                icon={c.icon}
-                label={c.label}
-                trailing={
-                  <Switch
-                    label={c.label}
-                    checked={!cloud.off.includes(c.id)}
-                    onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
-                  />
-                }
-              />
-            ))}
-          </List>
-        </Section>
-        {devices && (
-          <Section title="Devices">
+        <div>
+          <Section title="Synced data">
             <List>
-              {devices.map((d) => (
-                <Device
-                  key={d.id}
-                  device={d}
-                  editing={renaming === d.id}
-                  onEdit={() => setRenaming(d.id)}
-                  onDone={() => setRenaming(null)}
-                  onRename={(name) =>
-                    attempt(async () => {
-                      await cloud.api!.renameDevice(d.id, name)
-                      await reload()
-                    })
+              {CATEGORIES.map((c) => (
+                <Row
+                  key={c.id}
+                  icon={c.icon}
+                  label={c.label}
+                  trailing={
+                    <Switch
+                      label={c.label}
+                      checked={!cloud.off.includes(c.id)}
+                      onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
+                    />
                   }
-                  onSignOut={() => setSigningOut(d)}
                 />
               ))}
             </List>
           </Section>
-        )}
+          {devices && (
+            <Section title="Devices">
+              <List>
+                {devices.map((d) => (
+                  <Device
+                    key={d.id}
+                    device={d}
+                    editing={renaming === d.id}
+                    onEdit={() => setRenaming(d.id)}
+                    onDone={() => setRenaming(null)}
+                    onRename={(name) =>
+                      attempt(async () => {
+                        await cloud.api!.renameDevice(d.id, name)
+                        await reload()
+                      })
+                    }
+                    onSignOut={() => setSigningOut(d)}
+                  />
+                ))}
+              </List>
+            </Section>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

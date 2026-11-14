@@ -151,8 +151,15 @@ export function trackLocation(path: string, search: string) {
       // opened from another tab: it starts this tab's stack, and Back returns to where it came from
       stack = []
       from = { ...opener, from: undefined, section: openerSection }
+    } else if (!added && here?.section === section) {
+      // in place of the page that was showing (a redirect, say), so that one goes from the stack
+      const i = stack.findIndex((e) => e.key === here!.key)
+      if (i >= 0) {
+        from = stack[i].from
+        stack = stack.slice(0, i)
+      }
     } else if (stack.at(-1)?.url === url) {
-      stack = stack.slice(0, -1) // the same page again, like after a replace
+      stack = stack.slice(0, -1) // the same page again
     }
     stacks[section] = [...stack, { url, key, index, title, from }]
     replace({ ...s, [KEY]: key, [SECTION]: section, [INDEX]: index }, '')

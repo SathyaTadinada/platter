@@ -1,5 +1,7 @@
+import { Disc3 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Redirect, Route, Switch, useLocation, useSearch } from 'wouter'
+import { buttonClass } from './components/ui'
+import { Link, Redirect, Route, Switch, useLocation, useSearch } from 'wouter'
 import { loadSession } from './auth/auth'
 import { finishOAuth } from './auth/oauthFlow'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -29,7 +31,6 @@ import { Account } from './screens/Account'
 import { Admin } from './screens/Admin'
 import { Following } from './screens/Following'
 import { Profile } from './screens/Profile'
-import { ProfileSettings } from './screens/ProfileSettings'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -108,6 +109,16 @@ function Routes({ error }: { error?: string }) {
     return (
       <Switch>
         <Route path="/about" component={About} />
+        {/* a profile is for anyone with the link, signed in or not */}
+        <Route path="/u/:username">
+          {(p) => (
+            <CloudProvider>
+              <Visitor>
+                <Profile username={p.username!} />
+              </Visitor>
+            </CloudProvider>
+          )}
+        </Route>
         <Route>
           <Welcome error={error} />
         </Route>
@@ -139,7 +150,9 @@ function Routes({ error }: { error?: string }) {
               <Route path="/play" component={NowPlaying} />
               <Route path="/listenbrainz" component={ListenBrainz} />
               <Route path="/account" component={Account} />
-              <Route path="/account/profile" component={ProfileSettings} />
+              <Route path="/account/profile">
+                <Redirect to="/account" replace />
+              </Route>
               <Route path="/sync">
                 <Redirect to="/account" replace />
               </Route>
@@ -154,6 +167,25 @@ function Routes({ error }: { error?: string }) {
         </QueueProvider>
       </CloudProvider>
     </SyncProvider>
+  )
+}
+
+// Around a profile opened from a shared link by someone without Platter: the app's name, and a
+// way in, where the tabs would be
+function Visitor({ children }: { children: ReactNode }) {
+  return (
+    <div className="fixed inset-0 flex flex-col">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200 bg-white px-4 pt-[env(safe-area-inset-top)] dark:border-stone-800 dark:bg-stone-950">
+        <Link href="/" className="flex min-h-14 items-center gap-2 text-xl font-bold tracking-tight">
+          <Disc3 size={26} className="text-accent" aria-hidden />
+          Platter
+        </Link>
+        <Link href="/" className={buttonClass('primary', 'min-h-9 px-4 text-sm')}>
+          Try Platter
+        </Link>
+      </header>
+      <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none [container-type:size]">{children}</main>
+    </div>
   )
 }
 

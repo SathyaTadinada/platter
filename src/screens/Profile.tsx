@@ -1,11 +1,12 @@
-import { Ban, CalendarRange, ChartLine, Heart, LibraryBig, SquareCheckBig } from 'lucide-react'
+import { Ban, CalendarRange, ChartLine, ExternalLink, Heart, LibraryBig, Link as LinkIcon, Pencil, SquareCheckBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Cover } from '../components/Cover'
 import { Menu } from '../components/Menu'
+import { toast } from '../components/Toaster'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { Button, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
+import { Button, IconButton, IconLink, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSession } from '../hooks/session'
 import { rememberTitle } from '../lib/nav'
@@ -123,7 +124,7 @@ export function Profile({ username }: { username: string }) {
   const rows = loaded && loaded.section === section ? loaded.rows : null
   const mine = session?.kind !== 'demo' && head.username === session?.username.toLowerCase()
   // someone else's records can be picked out and added to yours
-  const pickable = !mine && section === 'collection' && !!rows?.length
+  const pickable = !!session && !mine && section === 'collection' && !!rows?.length
   const picking = pickable && picked
   const chosen = picking ? picked.size : 0
 
@@ -182,16 +183,41 @@ export function Profile({ username }: { username: string }) {
           <SquareCheckBig size={20} />
         </IconButton>
       )}
+      {mine ? (
+        <>
+          <IconLink label="Edit profile" href="/account">
+            <Pencil size={20} />
+          </IconLink>
+          <IconButton
+            label="Copy link"
+            onClick={async () => {
+              await navigator.clipboard.writeText(location.href)
+              toast('Link copied', { tone: 'success' })
+            }}
+          >
+            <LinkIcon size={20} />
+          </IconButton>
+        </>
+      ) : (
+        <IconLink label="Discogs profile" href={discogsUser(head.username)} external>
+          <ExternalLink size={20} />
+        </IconLink>
+      )}
       {menu}
     </>
   )
 
   return (
-    <Screen title={picking ? (chosen ? `${chosen} selected` : 'Select records') : head.username} back={back} width="wide" actions={actions}>
+    <Screen
+      title={picking ? (chosen ? `${chosen} selected` : 'Select records') : 'Profile'}
+      // someone opening a shared link without Platter has nowhere to go back to
+      back={session ? back : undefined}
+      width="wide"
+      actions={actions}
+    >
       <ProfileHeader
         head={head}
         about={about}
-        mine={mine}
         who={mine ? who : undefined}
         follow={canFollow ? { state: following, onClick: toggleFollow } : undefined}
       />

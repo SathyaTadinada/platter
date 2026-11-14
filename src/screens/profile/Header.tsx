@@ -1,47 +1,24 @@
-import { Award, CalendarDays, ExternalLink as ExternalIcon, Globe, Link as LinkIcon, Lock, UserCheck, Users } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { Link } from 'wouter'
+import { Award } from 'lucide-react'
 import type { Who } from '../../../worker/profile'
-import { toast } from '../../components/Toaster'
-import { Button, buttonClass, Section } from '../../components/ui'
+import { Avatar } from '../../components/Profile'
+import { Button, Section } from '../../components/ui'
 import type { ProfileHead } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
+import { WHO_LABELS } from '../account/ProfileArea'
 
 export const discogsUser = (name: string) => `https://www.discogs.com/user/${encodeURIComponent(name)}`
 const joined = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 
-const WHO: Record<Who, { label: string; icon: ReactNode }> = {
-  private: { label: 'Private', icon: <Lock size={14} /> },
-  followers: { label: 'Followers', icon: <Users size={14} /> },
-  unlisted: { label: 'Link only', icon: <LinkIcon size={14} /> },
-  public: { label: 'Public', icon: <Globe size={14} /> },
-}
-
-function Chip({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300">
-      <span aria-hidden className="text-stone-500 dark:text-stone-400">
-        {icon}
-      </span>
-      {children}
-    </span>
-  )
-}
-
-const small = 'min-h-10 text-sm'
-
-// The top of a profile: picture and counts side by side, then badges, then what can be done
-// about it. Your own has your settings where someone else's has Follow.
+// The top of a profile: picture and name, with any badges beside the name, then the counts and,
+// for someone else's, Follow. What else can be done (edit, copy the link, Discogs) is in the toolbar.
 export function ProfileHeader({
   head,
   about,
-  mine,
   who,
   follow,
 }: {
   head: ProfileHead
   about: ProfileAbout
-  mine: boolean
   who?: Who // yours, on your own profile
   follow?: { state: 'none' | 'pending' | 'accepted'; onClick: () => void }
 }) {
@@ -51,89 +28,50 @@ export function ProfileHeader({
     { n: head.followers, one: 'follower', many: 'followers' },
     { n: head.following, one: 'following', many: 'following' },
   ]
-
-  const buttons: ReactNode[] = mine
-    ? [
-        <Link key="edit" href="/account/profile" className={buttonClass('secondary', small)}>
-          Edit profile
-        </Link>,
-        <Button
-          key="copy"
-          variant="secondary"
-          className={small}
-          onClick={async () => {
-            await navigator.clipboard.writeText(`${location.origin}/u/${head.username}`)
-            toast('Link copied', { tone: 'success' })
-          }}
-        >
-          <LinkIcon size={16} aria-hidden />
-          Copy link
-        </Button>,
-      ]
-    : [
-        ...(follow
-          ? [
-              <Button key="follow" variant={follow.state === 'none' ? 'primary' : 'secondary'} className={small} onClick={follow.onClick}>
-                {follow.state === 'accepted' ? 'Following' : follow.state === 'pending' ? 'Requested' : 'Follow'}
-              </Button>,
-            ]
-          : []),
-        <a key="discogs" href={discogsUser(head.username)} target="_blank" rel="noopener" className={buttonClass('secondary', small)}>
-          Discogs
-          <ExternalIcon size={16} aria-hidden />
-        </a>,
-      ]
+  const details = [`Joined ${joined(head.memberSince)}`, who && WHO_LABELS[who], head.relation?.followsYou && 'Follows you'].filter(Boolean)
 
   return (
     <Section>
-      <div className="flex items-center gap-5 sm:gap-8">
-        {about.avatar ? (
-          <img src={about.avatar} alt="" className="size-20 shrink-0 rounded-full bg-stone-200 object-cover dark:bg-stone-800" />
-        ) : (
-          <span
-            className="flex size-20 shrink-0 items-center justify-center rounded-full bg-stone-200 text-2xl font-semibold uppercase dark:bg-stone-800"
-            aria-hidden
-          >
-            {head.username.charAt(0)}
-          </span>
-        )}
-        <dl className={`grid flex-1 text-center sm:max-w-sm ${counts.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          {counts.map((c) => {
-            const text = (
-              <>
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <Avatar src={about.avatar} name={head.username} size="size-20 text-2xl" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className="truncate text-2xl font-bold tracking-tight">{head.username}</p>
+              {head.badges.map((b) => (
+                <span
+                  key={b}
+                  className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/70 dark:text-amber-200"
+                >
+                  <Award size={12} aria-hidden />
+                  {b}
+                </span>
+              ))}
+            </div>
+            <p className="mt-1 text-sm text-stone-500">{details.join(' · ')}</p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+          <dl className={`grid text-center md:w-64 ${counts.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {counts.map((c) => (
+              <div key={c.one} className="flex flex-col-reverse">
                 {/* label first for the list's sake, shown under the number */}
                 <dt className="text-sm text-stone-500">{c.n === 1 ? c.one : c.many}</dt>
                 <dd className="text-xl font-semibold tabular-nums">{c.n.toLocaleString()}</dd>
-              </>
-            )
-            // your own followers and following open the lists, which are only yours to see
-            return mine && c.one !== 'record' ? (
-              <Link
-                key={c.one}
-                href="/account/profile"
-                className="flex flex-col-reverse rounded-lg py-1 hover:bg-stone-100 dark:hover:bg-stone-800"
-              >
-                {text}
-              </Link>
-            ) : (
-              <div key={c.one} className="flex flex-col-reverse py-1">
-                {text}
               </div>
-            )
-          })}
-        </dl>
+            ))}
+          </dl>
+          {follow && (
+            <Button
+              variant={follow.state === 'none' ? 'primary' : 'secondary'}
+              className="min-h-10 text-sm md:min-w-32"
+              onClick={follow.onClick}
+            >
+              {follow.state === 'accepted' ? 'Following' : follow.state === 'pending' ? 'Requested' : 'Follow'}
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {head.badges.map((b) => (
-          <Chip key={b} icon={<Award size={14} />}>
-            {b}
-          </Chip>
-        ))}
-        {head.relation?.followsYou && <Chip icon={<UserCheck size={14} />}>Follows you</Chip>}
-        {mine && who && <Chip icon={WHO[who].icon}>{WHO[who].label}</Chip>}
-        <Chip icon={<CalendarDays size={14} />}>Joined {joined(head.memberSince)}</Chip>
-      </div>
-      <div className={`mt-4 grid gap-2 sm:flex ${buttons.length > 1 ? 'grid-cols-2' : 'grid-cols-1'} [&>*]:sm:min-w-40`}>{buttons}</div>
     </Section>
   )
 }
