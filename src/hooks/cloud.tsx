@@ -458,3 +458,15 @@ export function useCloud() {
   if (!ctx) throw new Error('useCloud outside CloudProvider')
   return ctx
 }
+
+// Where "you" goes, from the sidebar's picture or the top of Settings: your profile when you share
+// one, the Platter account (where it's switched on) when you could, and without a Platter account
+// (it's opt-in) undefined, for your Discogs profile
+export function useYourPage(): string | undefined {
+  const cloud = useCloud()
+  const { session } = useSession()
+  if (!cloud.enabled) return undefined
+  const sharing =
+    session?.kind !== 'demo' && !cloud.hidden && cloud.who !== 'private' && Object.values(cloud.sections ?? {}).some((v) => v === 'public')
+  return sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account'
+}

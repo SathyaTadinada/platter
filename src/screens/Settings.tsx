@@ -25,7 +25,7 @@ import { useInstallPrompt } from '../components/InstallHint'
 import { ProfileLink } from '../components/Profile'
 import { Button, List, Notice, Row, Screen, Section, Segmented } from '../components/ui'
 import { db, getSetting, setSetting } from '../db/db'
-import { useCloud } from '../hooks/cloud'
+import { useCloud, useYourPage } from '../hooks/cloud'
 import { useSignedIn } from '../hooks/session'
 import { useSignOut } from '../hooks/signOut'
 import { useSync } from '../hooks/sync'
@@ -54,6 +54,7 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const install = useInstallPrompt()
   const demo = session.kind === 'demo'
+  const yours = useYourPage()
   const cloud = useCloud()
   const meta = useCollectionMeta().data
   const crates = meta?.folders.length
@@ -171,6 +172,9 @@ export function Settings() {
             <List>
               <li>
                 <ProfileLink
+                  // the same place as the picture in the sidebar, which phones don't have
+                  to={yours}
+                  chevron={Boolean(yours)}
                   detail={
                     session.expired
                       ? 'Needs logging in again'

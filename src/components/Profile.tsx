@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'wouter'
 import { getProfile } from '../api/discogs/endpoints'
@@ -36,11 +37,13 @@ export function ProfileLink({
   className = '',
   compact,
   to,
+  chevron,
 }: {
   detail?: string
   className?: string
   compact?: boolean
   to?: string
+  chevron?: boolean // a row in a list that opens a page, so it ends like the others
 }) {
   const { username, session } = useSignedIn()
   const profile = useProfile()
@@ -62,6 +65,7 @@ export function ProfileLink({
     return (
       <Link href={to} title={title} className={classes}>
         {inner}
+        {chevron && <ChevronRight size={18} className="ml-auto shrink-0 text-stone-400" aria-hidden />}
       </Link>
     )
   }
