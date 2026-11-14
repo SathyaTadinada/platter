@@ -11,7 +11,7 @@ export function useProfile() {
   return useAsync(() => getProfile(client, username), [client, username]).data
 }
 
-function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; size?: string }) {
+export function Avatar({ src, name, size = 'size-9' }: { src?: string; name: string; size?: string }) {
   const [broken, setBroken] = useState(false)
   return src && !broken ? (
     <img
