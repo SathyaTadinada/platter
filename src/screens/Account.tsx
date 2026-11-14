@@ -86,11 +86,14 @@ function SignedIn() {
   const [editing, setEditing] = useState<PasskeyInfo | null>(null)
   const [offer, setOffer] = useState(() => created.now && passkeysHere())
   // off until a section is on, then who it's for
-  const profileValue = cloud.hidden
-    ? 'Hidden'
-    : Object.values(cloud.sections ?? {}).some((v) => v === 'public')
-      ? WHO_LABELS[cloud.who]
-      : 'Off'
+  // (nothing until its settings have loaded, rather than Off by mistake)
+  const profileValue = !cloud.sections
+    ? undefined
+    : cloud.hidden
+      ? 'Hidden'
+      : Object.values(cloud.sections).some((v) => v === 'public')
+        ? WHO_LABELS[cloud.who]
+        : 'Off'
 
   const attempt = async (task: () => Promise<unknown>) => {
     setError(null)

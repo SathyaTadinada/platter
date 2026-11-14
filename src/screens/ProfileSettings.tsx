@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Redirect } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../worker/profile'
 import { toast } from '../components/Toaster'
-import { List, Notice, Row, Screen, Section, Segmented, Switch } from '../components/ui'
+import { List, Notice, Row, Screen, Section, Segmented, Spinner, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import type { Follows } from '../lib/cloud'
 import { FollowSheet, type FollowList } from './account/FollowSheet'
@@ -49,9 +49,10 @@ export function ProfileSettings() {
   const reachable = shared && cloud.who !== 'private' && !cloud.hidden
 
   return (
-    <Screen title="Profile" back="/account" width="narrow">
+    <Screen title="Profile" back="/account" width={cloud.sections ? 'narrow' : 'full'}>
       {error && <Notice tone="error">{error}</Notice>}
       {/* drawn once its settings have come back, so it never shows Public or off by mistake */}
+      {!cloud.sections && <Spinner />}
       {cloud.sections && (
         <>
           <Section title="Who it’s for">

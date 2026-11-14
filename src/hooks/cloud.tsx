@@ -283,15 +283,32 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       shared.current = {}
       return
     }
-    api
-      .profileSettings()
-      .then(({ sections: saved, who: found, hidden: down }) => {
-        shared.current = saved
-        setSections(saved)
-        setWho(found)
-        setHidden(down)
-      })
-      .catch(() => {})
+    // tried again until it loads (it may start offline), since the profile screens wait on it
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let stopped = false
+    const load = () => {
+      clearTimeout(timer)
+      api
+        .profileSettings()
+        .then(({ sections: saved, who: found, hidden: down }) => {
+          if (stopped) return
+          shared.current = saved
+          setSections(saved)
+          setWho(found)
+          setHidden(down)
+          window.removeEventListener('online', load)
+        })
+        .catch(() => {
+          if (!stopped) timer = setTimeout(load, 30_000)
+        })
+    }
+    load()
+    window.addEventListener('online', load)
+    return () => {
+      stopped = true
+      clearTimeout(timer)
+      window.removeEventListener('online', load)
+    }
   }, [api])
 
   const anonymous = useMemo(() => cloudEntry(), [])

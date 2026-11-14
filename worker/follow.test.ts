@@ -55,8 +55,10 @@ describe('following', () => {
     await follow(db, me, 'closed')
     expect((await lists(db, them)).requests.map((p) => p.username)).toEqual(['me'])
     expect((await head(db, 'closed', me))?.relation).toEqual({ following: 'pending', followsYou: false, blocked: false })
+    // a request isn't a follower yet
+    expect(await head(db, 'closed', me)).toMatchObject({ followers: 0, following: 0 })
     await respond(db, them, 'me', true)
-    expect(await head(db, 'closed', me)).toMatchObject({ locked: false, sections: ['collection'] })
+    expect(await head(db, 'closed', me)).toMatchObject({ locked: false, sections: ['collection'], followers: 1, following: 0 })
     expect((await rows(db, 'closed', 'collection', undefined, me)).rows).toHaveLength(1)
     // still locked to anyone else
     expect((await head(db, 'closed', null))?.locked).toBe(true)

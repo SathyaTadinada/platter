@@ -5,7 +5,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Cover } from '../components/Cover'
 import { Menu } from '../components/Menu'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { Button, ExternalLink, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
+import { Button, IconButton, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSession } from '../hooks/session'
 import { rememberTitle } from '../lib/nav'
@@ -14,9 +14,9 @@ import { CloudError, type ProfileHead } from '../lib/cloud'
 import { useCloud } from '../hooks/cloud'
 import type { ProfileAbout, ProfileItem, ProfileStats, ProfileYear } from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
-import { timeAgo } from '../lib/time'
 import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
+import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
 
 const LABELS: Record<ProfileSection, string> = { collection: 'Collection', wantlist: 'Wantlist', stats: 'Stats', year: 'Your year' }
@@ -28,9 +28,6 @@ const ICONS: Record<ProfileSection, React.ReactNode> = {
   stats: icon(ChartLine),
   year: icon(CalendarRange),
 }
-
-const discogsUser = (name: string) => `https://www.discogs.com/user/${encodeURIComponent(name)}`
-const memberSince = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
 // Someone's profile, as anyone with the link sees it: only the sections they switched on, and only
 // what their devices published.
@@ -46,7 +43,7 @@ export function Profile({ username }: { username: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { session } = useSession()
-  const { api, reader } = useCloud()
+  const { api, reader, who } = useCloud()
   const [unfollowing, setUnfollowing] = useState(false)
   const [blocking, setBlocking] = useState(false)
   const [, navigate] = useLocation()
@@ -107,8 +104,17 @@ export function Profile({ username }: { username: string }) {
   }
   if (!head) {
     return (
-      <Screen title="Profile" back={back} width="full">
-        <Spinner />
+      <Screen title="Profile" back={back} width={error ? 'narrow' : 'full'}>
+        {error ? (
+          <Section>
+            <Notice tone="error">{error}</Notice>
+            <Button variant="secondary" onClick={() => (setError(null), fetchHead())}>
+              Try again
+            </Button>
+          </Section>
+        ) : (
+          <Spinner />
+        )}
       </Screen>
     )
   }
@@ -182,40 +188,13 @@ export function Profile({ username }: { username: string }) {
 
   return (
     <Screen title={picking ? (chosen ? `${chosen} selected` : 'Select records') : head.username} back={back} width="wide" actions={actions}>
-      <Section>
-        <div className="flex items-center gap-4">
-          {about.avatar ? (
-            <img src={about.avatar} alt="" className="size-16 shrink-0 rounded-full bg-stone-200 object-cover dark:bg-stone-800" />
-          ) : (
-            <span
-              className="flex size-16 shrink-0 items-center justify-center rounded-full bg-stone-200 text-xl font-semibold uppercase dark:bg-stone-800"
-              aria-hidden
-            >
-              {head.username.charAt(0)}
-            </span>
-          )}
-          <div className="min-w-0">
-            <p className="text-sm text-stone-500">
-              Member since {memberSince(head.memberSince)}
-              {head.badges.map((b) => ` · ${b}`)}
-              {head.relation?.followsYou && ' · Follows you'}
-              {head.publishedAt && ` · Updated ${timeAgo(head.publishedAt)}`}
-            </p>
-            <p className="mt-0.5 text-sm">
-              <ExternalLink href={discogsUser(head.username)}>Discogs profile</ExternalLink>
-            </p>
-          </div>
-        </div>
-        {canFollow && (
-          <Button
-            variant={following === 'none' ? 'primary' : 'secondary'}
-            className="mt-4 min-h-10 w-full sm:w-auto sm:px-6"
-            onClick={toggleFollow}
-          >
-            {following === 'accepted' ? 'Following' : following === 'pending' ? 'Requested' : 'Follow'}
-          </Button>
-        )}
-      </Section>
+      <ProfileHeader
+        head={head}
+        about={about}
+        mine={mine}
+        who={mine ? who : undefined}
+        follow={canFollow ? { state: following, onClick: toggleFollow } : undefined}
+      />
       {head.locked && (
         <Section>
           <Notice>Only followers can see this profile.</Notice>
