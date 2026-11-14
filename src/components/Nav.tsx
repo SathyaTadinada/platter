@@ -15,13 +15,13 @@ const tabs: { section: Section; label: string; Icon: LucideIcon }[] = [
   { section: 'settings', label: 'Settings', Icon: Settings2 },
 ]
 
-// a page counts as part of the tab it was opened from
+// the tab the page being shown lives in (see lib/nav)
 function useCurrent() {
   const [path] = useLocation()
   return (section: Section) => sectionFor(path) === section
 }
 
-// each tab goes back to where it was left; tapping it again from there goes to its first page
+// each tab opens its first page, as it was left
 function useTarget() {
   const [path] = useLocation()
   return (section: Section) => tabTarget(section, path)
@@ -65,6 +65,8 @@ export function SideNav() {
   const { session } = useSession()
   const cloud = useCloud()
   const [collapsed, setCollapsed] = useState(loadCollapsed)
+  const sharing =
+    session?.kind !== 'demo' && !cloud.hidden && cloud.who !== 'private' && Object.values(cloud.sections ?? {}).some((v) => v === 'public')
 
   function toggle() {
     setCollapsed(!collapsed)
@@ -115,8 +117,9 @@ export function SideNav() {
       </ul>
       {session && (
         <ProfileLink
-          // the account is opt-in, so without one this stays the Discogs profile
-          to={cloud.enabled ? '/account' : undefined}
+          // your profile when you share one, its settings when you could, and without a Platter
+          // account (it's opt-in) your Discogs profile
+          to={!cloud.enabled ? undefined : sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account/profile'}
           compact={collapsed}
           className={`mt-auto rounded-lg py-2 hover:bg-stone-100 dark:hover:bg-stone-900 ${collapsed ? 'justify-center px-1.5' : 'px-3'}`}
         />

@@ -55,32 +55,18 @@ describe('back navigation', () => {
     expect(here()).toBe('/search')
   })
 
-  it('goes back through the Search tab after leaving it for Collection', async () => {
-    const nav = await fresh()
-    track(nav)
-    go(nav, '/search')
-    go(nav, '/results?q=currents')
-    go(nav, '/release/1')
-    tab(nav, 'collection')
-    expect(here()).toBe('/')
-    tab(nav, 'search')
-    expect(here()).toBe('/release/1')
-    await back(nav)
-    expect(here()).toBe('/results?q=currents')
-    await back(nav)
-    expect(here()).toBe('/search')
-  })
-
-  it("brings back a page's own address change when going back to it the long way", async () => {
+  it("opens a tab's first page as it was left, wherever that tab was left", async () => {
     const nav = await fresh()
     track(nav)
     go(nav, '/search')
     nav.replaceAddress('/search?mode=barcode&barcode=123')
     go(nav, '/results?barcode=123')
+    go(nav, '/release/1')
     tab(nav, 'collection')
+    expect(here()).toBe('/')
     tab(nav, 'search')
-    expect(await back(nav)).toBe('jump')
     expect(here()).toBe('/search?mode=barcode&barcode=123')
+    expect(nav.backTarget()).toMatchObject({ to: '/search' })
   })
 
   it('keeps a page in the tab it was opened from', async () => {
@@ -144,6 +130,85 @@ describe('back navigation', () => {
   })
 })
 
+describe('home tabs', () => {
+  it('keeps Platter account in Settings whatever it was opened from, and Back returns there', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/stats')
+    go(nav, '/account')
+    expect(nav.sectionFor('/account')).toBe('settings')
+    expect(await back(nav)).toBe('history')
+    expect(here()).toBe('/stats')
+  })
+
+  it('opens Settings itself from Platter account, and each tab its own first page', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/stats')
+    go(nav, '/account')
+    tab(nav, 'settings')
+    expect(here()).toBe('/settings')
+    go(nav, '/account')
+    go(nav, '/account/profile')
+    tab(nav, 'stats')
+    expect(here()).toBe('/stats')
+    tab(nav, 'settings')
+    expect(here()).toBe('/settings')
+    expect(nav.sectionFor('/settings')).toBe('settings')
+  })
+
+  it('never puts one page in two tabs, so tapping a tab twice stays put', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/settings')
+    go(nav, '/account')
+    tab(nav, 'settings')
+    tab(nav, 'settings')
+    expect(here()).toBe('/settings')
+    go(nav, '/account')
+    expect(nav.backLabel()).toBe(undefined) // Settings hasn't named itself in this test
+    expect(nav.backTarget()).toMatchObject({ history: true })
+  })
+
+  it('keeps a record or profile in the tab it was opened from', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/stats')
+    go(nav, '/collection/3')
+    expect(nav.sectionFor('/collection/3')).toBe('stats')
+    go(nav, '/u/someone')
+    expect(nav.sectionFor('/u/someone')).toBe('stats')
+    await back(nav)
+    await back(nav)
+    expect(here()).toBe('/stats')
+  })
+
+  it('forgets stacks from the version that could put a page in two tabs', async () => {
+    sessionStorage.setItem('platter.stacks', JSON.stringify({ stats: [{ url: '/account', key: 'x', index: 0 }] }))
+    const nav = await fresh()
+    history.replaceState(null, '', '/stats')
+    track(nav)
+    expect(nav.tabTarget('stats', '/settings').href).toBe('/stats')
+  })
+})
+
+describe('history places', () => {
+  it('knows where a page opened after going back sits, so Back takes the right step', async () => {
+    const nav = await fresh()
+    track(nav)
+    go(nav, '/stats')
+    go(nav, '/u/someone')
+    go(nav, '/collection/1')
+    await back(nav)
+    await back(nav)
+    expect(here()).toBe('/stats')
+    tab(nav, 'settings')
+    go(nav, '/account')
+    expect(await back(nav)).toBe('history')
+    expect(here()).toBe('/settings')
+  })
+})
+
 describe('page memory', () => {
   it('remembers scroll per page', async () => {
     const nav = await fresh()
@@ -168,13 +233,17 @@ describe('page memory', () => {
     await back(nav)
     expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
 
+    // the search page itself comes back as it was left
+    await back(nav)
+    expect(here()).toBe('/search')
+    nav.rememberPage('search page')
     tab(nav, 'collection')
     tab(nav, 'search')
-    expect(here()).toBe('/results?q=dummy')
-    expect(nav.savedPage()).toEqual({ filters: { format: 'Vinyl' } })
+    expect(here()).toBe('/search')
+    expect(nav.savedPage()).toBe('search page')
+    go(nav, '/results?q=dummy')
 
     // the same search run fresh starts clean
-    go(nav, '/results?q=dummy')
     expect(nav.savedPage()).toBeUndefined()
   })
 })
