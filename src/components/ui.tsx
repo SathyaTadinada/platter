@@ -114,22 +114,25 @@ export function Screen({
           backdrop ? 'bg-stone-50/70 dark:bg-stone-950/70' : 'bg-stone-50/95 dark:bg-stone-950/95'
         }`}
       >
-        <div className={`${container} flex min-h-14 items-center gap-1 lg:min-h-16`}>
-          {back && (
-            <button
-              type="button"
-              aria-label={backName ? `Back to ${backName}` : 'Back'}
-              className={`-ml-2 flex min-w-0 shrink-0 items-center rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${
-                backName ? 'sm:mr-1 sm:pr-3' : ''
-              }`}
-              onClick={() => (typeof back === 'function' ? back() : goBack())}
-            >
-              <ChevronLeft className="shrink-0" />
-              {backName && <span className="hidden max-w-40 truncate text-sm font-medium text-stone-500 sm:inline">{backName}</span>}
-            </button>
-          )}
-          <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>
-          {actions}
+        {/* as wide as the content below, so the actions end where it does */}
+        <div className={container}>
+          <div className={`${widths[width]} flex min-h-14 items-center gap-1 lg:min-h-16`}>
+            {back && (
+              <button
+                type="button"
+                aria-label={backName ? `Back to ${backName}` : 'Back'}
+                className={`-ml-2 flex min-w-0 shrink-0 items-center rounded-full p-2 hover:bg-stone-200 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-800 ${
+                  backName ? 'sm:mr-1 sm:pr-3' : ''
+                }`}
+                onClick={() => (typeof back === 'function' ? back() : goBack())}
+              >
+                <ChevronLeft className="shrink-0" />
+                {backName && <span className="hidden max-w-40 truncate text-sm font-medium text-stone-500 sm:inline">{backName}</span>}
+              </button>
+            )}
+            <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>
+            {actions}
+          </div>
         </div>
         {toolbar && (
           <div className={`${container} pb-3`}>
