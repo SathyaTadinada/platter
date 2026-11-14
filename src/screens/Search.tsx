@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Disc3, History, Music2, ScanBarcode, Tag, Users, type LucideIcon } from 'lucide-react'
+import { ChevronDown, Disc3, History, Music2, ScanBarcode, Tag, Users, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearch } from 'wouter'
 import { ReadPhotoButton } from '../components/ReadPhotoButton'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { useSignedIn } from '../hooks/session'
+import { Menu } from '../components/Menu'
 import { Button, buttonClass, List, Screen, Section, Segmented } from '../components/ui'
 import { db } from '../db/db'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
@@ -16,19 +17,19 @@ import { readChoice, writePref } from '../lib/prefs'
 import { People } from './search/People'
 import { useCloud } from '../hooks/cloud'
 
-// Records or the people sharing them, each with its own way of searching
-type Kind = 'records' | 'people'
+// Music (anything on Discogs: records, CDs, tapes, files) or the people sharing it
+type Kind = 'music' | 'people'
 const KIND_KEY = 'platter.searchKind'
-const savedKind = () => readChoice<Kind>(KIND_KEY, ['records', 'people'], 'records')
+const savedKind = () => readChoice<Kind>(KIND_KEY, ['music', 'people'], 'music')
 
 type Mode = 'barcode' | 'catno' | 'title'
 
 const modes: { id: Mode; label: string; Icon: LucideIcon }[] = [
   { id: 'barcode', label: 'Barcode', Icon: ScanBarcode },
-  { id: 'catno', label: 'Catalog', Icon: Tag },
+  { id: 'catno', label: 'Catalog number', Icon: Tag },
   { id: 'title', label: 'Artist & title', Icon: Music2 },
 ]
-// the last tab picked comes back next time, like the scanner's mode
+// the last way picked comes back next time, like the scanner's mode
 const MODE_KEY = 'platter.searchMode'
 const savedMode = () => readChoice<Mode>(MODE_KEY, ['barcode', 'catno', 'title'], 'barcode')
 
@@ -50,7 +51,7 @@ export function Search() {
   // People is part of the Platter account, so it's only there for someone signed in to one
   const social = useCloud().enabled
   const [chosen, setKindState] = useState<Kind>(() => (params.get('who') ? 'people' : savedKind()))
-  const kind: Kind = social ? chosen : 'records'
+  const kind: Kind = social ? chosen : 'music'
   function setKind(k: Kind) {
     setKindState(k)
     writePref(KIND_KEY, k)
@@ -96,35 +97,23 @@ export function Search() {
               value={kind}
               onChange={setKind}
               options={[
-                { value: 'records', label: 'Records', icon: <Disc3 size={16} aria-hidden className="hidden sm:block" /> },
+                { value: 'music', label: 'Music', icon: <Disc3 size={16} aria-hidden className="hidden sm:block" /> },
                 { value: 'people', label: 'People', icon: <Users size={16} aria-hidden className="hidden sm:block" /> },
               ]}
             />
           )}
           {kind === 'people' && <People />}
-          {kind === 'records' && (
+          {kind === 'music' && (
             <>
-              <Segmented
-                label="Search by"
-                className="mb-4"
-                value={mode}
-                onChange={setMode}
-                options={modes.map(({ id, label, Icon }) => ({
-                  value: id,
-                  label,
-                  icon: <Icon size={16} aria-hidden className="hidden sm:block" />,
-                }))}
-              />
+              <SearchBy mode={mode} onChange={setMode} />
 
               <form onSubmit={submit} className="space-y-3">
                 {mode === 'barcode' && (
                   <>
-                    <label htmlFor="barcode" className="mb-1 block text-sm font-medium">
-                      Barcode number
-                    </label>
                     <div className="flex gap-2">
                       <input
                         id="barcode"
+                        aria-label="Barcode number"
                         className={`${input} min-w-0 flex-1`}
                         inputMode="numeric"
                         autoComplete="off"
@@ -146,12 +135,10 @@ export function Search() {
                 )}
                 {mode === 'catno' && (
                   <>
-                    <label htmlFor="catno" className="mb-1 block text-sm font-medium">
-                      Catalog number
-                    </label>
                     <div className="flex gap-2">
                       <input
                         id="catno"
+                        aria-label="Catalog number"
                         className={`${input} min-w-0 flex-1`}
                         autoCapitalize="characters"
                         autoComplete="off"
@@ -209,7 +196,7 @@ export function Search() {
         </div>
 
         {/* a line between the two lists when both are there */}
-        {kind === 'records' && (
+        {kind === 'music' && (
           <div className="mt-8 lg:mt-0 [&>*+*]:border-t [&>*+*]:border-stone-200 [&>*+*]:pt-6 dark:[&>*+*]:border-stone-800">
             <RecentSearches />
             <RecentlyAdded />
@@ -217,6 +204,34 @@ export function Search() {
         )}
       </div>
     </Screen>
+  )
+}
+
+// How to search for music, as a menu rather than a second row of tabs. The field below changes
+// with it, along with what's beside it: the scanner for a barcode, a photo of the spine for a
+// catalog number.
+function SearchBy({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+  const { Icon, label } = modes.find((m) => m.id === mode)!
+  return (
+    <Menu
+      label="Search by"
+      align="left"
+      className="mb-3"
+      buttonClassName="inline-flex min-h-9 items-center gap-2 rounded-full bg-stone-200 py-1 pr-3 pl-3.5 text-sm font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
+      button={
+        <>
+          <Icon size={16} aria-hidden />
+          {label}
+          <ChevronDown size={16} aria-hidden className="text-stone-500" />
+        </>
+      }
+      items={modes.map((m) => ({
+        label: m.label,
+        icon: <m.Icon size={18} />,
+        checked: m.id === mode,
+        onSelect: () => onChange(m.id),
+      }))}
+    />
   )
 }
 
