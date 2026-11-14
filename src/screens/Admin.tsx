@@ -1,9 +1,10 @@
-import { Award, Eye, EyeOff, KeyRound, Trash2 } from 'lucide-react'
+import { Award, Eye, EyeOff, KeyRound, Search, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, Redirect } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Menu } from '../components/Menu'
-import { Notice, Screen, Section, Spinner } from '../components/ui'
+import { List, Notice, Row, Screen, Section, Spinner } from '../components/ui'
+import { Sheet } from '../components/Sheet'
 import { useCloud } from '../hooks/cloud'
 import type { Badge, Member } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
@@ -68,6 +69,9 @@ export function Admin() {
   const [badges, setBadges] = useState<Badge[]>([])
   // the badge list, and whether it opened to make a new one
   const [managing, setManaging] = useState<{ startNew: boolean } | null>(null)
+  const [query, setQuery] = useState('')
+  // the member whose details are open, on screens too narrow for the table
+  const [open, setOpen] = useState<string | null>(null)
   const [refused, setRefused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<{ member: Member; what: 'clear' | 'delete' } | null>(null)
@@ -105,28 +109,28 @@ export function Admin() {
     )
     attempt(() => api.setBadge(m.id, badge, on))
   }
-  const actions = (m: Member) => (
-    <Menu
-      label={`More for ${m.name}`}
-      items={[
-        ...(m.profile === 'none' && !m.hidden
-          ? []
-          : [
-              {
-                label: m.hidden ? 'Put profile back' : 'Take profile down',
-                icon: m.hidden ? <Eye size={18} /> : <EyeOff size={18} />,
-                onSelect: () => attempt(() => api.hideProfile(m.id, !m.hidden)),
-              },
-            ]),
-        { label: 'Clear ways in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
-        { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
-      ]}
-    />
-  )
+  const choices = (m: Member) => [
+    ...(m.profile === 'none' && !m.hidden
+      ? []
+      : [
+          {
+            label: m.hidden ? 'Put profile back' : 'Take profile down',
+            icon: m.hidden ? <Eye size={18} /> : <EyeOff size={18} />,
+            onSelect: () => attempt(() => api.hideProfile(m.id, !m.hidden)),
+          },
+        ]),
+    { label: 'Clear ways in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
+    { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
+  ]
+  const actions = (m: Member) => <Menu label={`More for ${m.name}`} items={choices(m)} />
   const lastSeen = (m: Member) => {
     const t = m.lastSeenAt ? timeAgo(m.lastSeenAt) : 'Never'
     return t.charAt(0).toUpperCase() + t.slice(1)
   }
+
+  const q = query.trim().toLowerCase()
+  const shown = members?.filter((m) => !q || m.name.includes(q)) ?? []
+  const opened = members?.find((m) => m.id === open)
 
   return (
     <Screen
@@ -181,14 +185,72 @@ export function Admin() {
             : 'Deletes everything they have on Platter’s server, right away.'}
         </ConfirmDialog>
       )}
+      {opened && (
+        <Sheet title={opened.name} bodyClassName="p-4" width="md" onClose={() => setOpen(null)}>
+          <div className="space-y-4 py-2">
+            <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2.5 text-sm">
+              <dt className="text-stone-500">Joined</dt>
+              <dd>{joined(opened.createdAt)}</dd>
+              <dt className="text-stone-500">Last seen</dt>
+              <dd>
+                {lastSeen(opened)} · {plural(opened.devices, 'device')}
+              </dd>
+              <dt className="text-stone-500">Sign-in</dt>
+              <dd>
+                <SignIn m={opened} />
+              </dd>
+              <dt className="text-stone-500">Profile</dt>
+              <dd>
+                <ProfileState m={opened} />
+              </dd>
+              <dt className="text-stone-500">Badges</dt>
+              <dd>
+                <BadgeCell m={opened} badges={badges} onToggle={toggle(opened)} onNew={() => setManaging({ startNew: true })} />
+              </dd>
+            </dl>
+            <List>
+              {choices(opened).map((c) => (
+                <Row key={c.label} icon={c.icon} label={c.label} danger={c.danger} onClick={c.onSelect} />
+              ))}
+            </List>
+          </div>
+        </Sheet>
+      )}
       {!members ? (
         <Spinner />
       ) : (
-        <Section title={plural(members.length, 'member')}>
+        <Section title={q ? `${shown.length} of ${plural(members.length, 'member')}` : plural(members.length, 'member')}>
           {error && <Notice tone="error">{error}</Notice>}
+          <label className="relative block">
+            <span className="sr-only">Find a member</span>
+            <Search size={18} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-500" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Find a member"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              className="min-h-11 w-full rounded-xl border border-stone-300 bg-white pr-9 pl-10 text-base dark:border-stone-700 dark:bg-stone-900 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery('')}
+                className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-500"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </label>
+          {q && !shown.length && <Notice>Nobody by that name.</Notice>}
 
           {/* wide screens: one row per member. No overflow clipping, so the menus can open past the edge. */}
-          <div className="hidden rounded-2xl bg-white ring-1 ring-stone-200 xl:block dark:bg-stone-900 dark:ring-stone-800">
+          <div
+            className={`hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800 ${shown.length ? 'xl:block' : ''}`}
+          >
             <table className="w-full text-left text-sm">
               <thead className="text-xs tracking-wide whitespace-nowrap text-stone-500 uppercase">
                 <tr className="border-b border-stone-200 dark:border-stone-800">
@@ -205,7 +267,7 @@ export function Admin() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
-                {members.map((m) => (
+                {shown.map((m) => (
                   <tr key={m.id}>
                     <td className="max-w-56 py-2.5 pr-3 pl-4">
                       <Name m={m} />
@@ -229,39 +291,22 @@ export function Admin() {
             </table>
           </div>
 
-          {/* narrower screens: a card per member with the same details */}
-          <ul className="grid gap-3 md:grid-cols-2 xl:hidden">
-            {members.map((m) => (
-              <li key={m.id} className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-                <div className="-mt-1.5 -mr-2 flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Name m={m} />
-                  </div>
-                  {actions(m)}
-                </div>
-                <dl className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-stone-500">Joined</dt>
-                  <dd>{joined(m.createdAt)}</dd>
-                  <dt className="text-stone-500">Last seen</dt>
-                  <dd>
-                    {lastSeen(m)} · {plural(m.devices, 'device')}
-                  </dd>
-                  <dt className="text-stone-500">Sign-in</dt>
-                  <dd>
-                    <SignIn m={m} />
-                  </dd>
-                  <dt className="text-stone-500">Profile</dt>
-                  <dd>
-                    <ProfileState m={m} />
-                  </dd>
-                  <dt className="text-stone-500">Badges</dt>
-                  <dd>
-                    <BadgeCell m={m} badges={badges} onToggle={toggle(m)} onNew={() => setManaging({ startNew: true })} />
-                  </dd>
-                </dl>
-              </li>
-            ))}
-          </ul>
+          {/* narrower screens: a row per member, opening their details */}
+          {shown.length > 0 && (
+            <div className="xl:hidden">
+              <List>
+                {shown.map((m) => (
+                  <Row
+                    key={m.id}
+                    label={<Name m={m} />}
+                    detail={`Last seen ${lastSeen(m).toLowerCase()} · ${plural(m.devices, 'device')}`}
+                    value={m.hidden ? 'Taken down' : m.profile === 'none' ? undefined : WHO[m.profile]}
+                    onClick={() => setOpen(m.id)}
+                  />
+                ))}
+              </List>
+            </div>
+          )}
         </Section>
       )}
     </Screen>
