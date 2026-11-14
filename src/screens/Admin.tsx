@@ -43,7 +43,7 @@ function ProfileState({ m }: { m: Member }) {
   return (
     <span className="flex flex-wrap gap-1">
       {m.hidden ? (
-        <Chip tone="warn">Taken down</Chip>
+        <Chip tone="warn">Hidden</Chip>
       ) : (
         <Link href={`/u/${encodeURIComponent(m.name)}`} className="rounded-md hover:opacity-80">
           <Chip>{WHO[m.profile]}</Chip>
@@ -114,12 +114,12 @@ export function Admin() {
       ? []
       : [
           {
-            label: m.hidden ? 'Put profile back' : 'Take profile down',
+            label: m.hidden ? 'Show profile' : 'Hide profile',
             icon: m.hidden ? <Eye size={18} /> : <EyeOff size={18} />,
             onSelect: () => attempt(() => api.hideProfile(m.id, !m.hidden)),
           },
         ]),
-    { label: 'Clear ways in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
+    { label: 'Reset sign-in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
     { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
   ]
   const actions = (m: Member) => <Menu label={`More for ${m.name}`} items={choices(m)} />
@@ -171,8 +171,8 @@ export function Admin() {
       )}
       {confirming && (
         <ConfirmDialog
-          title={confirming.what === 'clear' ? `Clear ${confirming.member.name}’s ways in?` : `Delete ${confirming.member.name}’s account?`}
-          action={confirming.what === 'clear' ? 'Clear' : 'Delete'}
+          title={confirming.what === 'clear' ? `Reset ${confirming.member.name}’s sign-in?` : `Delete ${confirming.member.name}’s account?`}
+          action={confirming.what === 'clear' ? 'Reset' : 'Delete'}
           onConfirm={() => {
             const { member, what } = confirming
             setConfirming(null)
@@ -300,7 +300,7 @@ export function Admin() {
                     key={m.id}
                     label={<Name m={m} />}
                     detail={`Last seen ${lastSeen(m).toLowerCase()} · ${plural(m.devices, 'device')}`}
-                    value={m.hidden ? 'Taken down' : m.profile === 'none' ? undefined : WHO[m.profile]}
+                    value={m.hidden ? 'Hidden' : m.profile === 'none' ? undefined : WHO[m.profile]}
                     onClick={() => setOpen(m.id)}
                   />
                 ))}

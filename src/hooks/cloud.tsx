@@ -53,7 +53,7 @@ type Ctx = {
   setSections: (next: Sections) => Promise<void>
   who: Who
   setWho: (who: Who) => Promise<void>
-  hidden: boolean // taken down by an admin
+  hidden: boolean // hidden by an admin
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
   waysIn: () => Promise<WaysIn & { legacy: boolean }>

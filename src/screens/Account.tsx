@@ -456,7 +456,7 @@ function SignedIn() {
         {/* drawn once its settings have come back, so it never shows Public or off by mistake */}
         {cloud.sections && (
           <Section title="Profile">
-            {cloud.hidden && <Notice tone="warn">Your profile has been taken down.</Notice>}
+            {cloud.hidden && <Notice tone="warn">Your profile has been hidden.</Notice>}
             <Segmented
               label="Who your profile is for"
               value={cloud.who}
