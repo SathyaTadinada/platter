@@ -22,6 +22,7 @@ import { block, feed, follow, lists as followLists, removeFollower, respond, unb
 import { header, signParams } from './oauth'
 import {
   head as profileHead,
+  item as profileItem,
   parseRows as parseProfileRows,
   publish as publishProfile,
   rows as profileRows,
@@ -197,6 +198,7 @@ const SYNC_ACTIONS = [
   'profile',
   'profile-rows',
   'profile-search',
+  'profile-item',
   'devices',
   'device-rename',
   'device-remove',
@@ -234,7 +236,7 @@ const SYNC_ACTIONS = [
 type SyncAction = (typeof SYNC_ACTIONS)[number]
 const ENTRY = new Set<SyncAction>(['exists', 'signin', 'join', 'discogs', 'passkey-signin-options', 'passkey-signin'])
 // read by anyone who has the link, so they take the per-IP limit rather than a device key
-const PUBLIC = new Set<SyncAction>(['profile', 'profile-rows', 'profile-search'])
+const PUBLIC = new Set<SyncAction>(['profile', 'profile-rows', 'profile-search', 'profile-item'])
 
 async function sync(req: Request, env: Env, action: SyncAction): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
@@ -268,6 +270,11 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       // signed in, the viewer is known: enough for a Followers profile, and for blocks
       const viewer = typeof input.device === 'string' ? await deviceAccount(db, input.device).catch(() => null) : null
       if (action === 'profile-search') return ok(await searchProfiles(db, input.q, viewer))
+      if (action === 'profile-item') {
+        const found = await profileItem(db, input.username, input.key, viewer)
+        if (!found) throw new SyncError(404, 'Nothing to show')
+        return ok(found)
+      }
       if (action === 'profile') {
         const found = await profileHead(db, input.username, viewer)
         if (!found) throw new SyncError(404, 'No profile here')

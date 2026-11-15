@@ -4,9 +4,8 @@ import { DiscogsCredit } from '../components/ReleaseCardView'
 import { RecordRow, statCard } from '../components/stats'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
-import { addedAt, type ProfileItem } from '../lib/profile'
+import { addedAt, recordFrom, type ProfileItem } from '../lib/profile'
 import { dayAgo } from '../lib/time'
-import { CopySheet } from './profile/CopySheet'
 
 type Added = { username: string; key: string; item: ProfileItem }
 
@@ -18,7 +17,6 @@ export function Following() {
   const [more, setMore] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
-  const [open, setOpen] = useState<{ username: string; item: ProfileItem } | null>(null)
 
   const load = useCallback(
     async (after?: string) => {
@@ -58,9 +56,7 @@ export function Following() {
               <li key={`${username}:${key}`}>
                 <RecordRow
                   item={{ instanceId: item.id, title: item.title, artist: item.artist, thumb: item.thumb, cover: item.cover }}
-                  // their copy first when they show details about it
-                  href={item.copy ? undefined : `/release/${item.id}`}
-                  onClick={item.copy ? () => setOpen({ username, item }) : undefined}
+                  href={recordFrom(item, username, key)}
                   detail={`${item.artist} · ${username}`}
                 >
                   <span className="text-sm text-stone-500 tabular-nums">{dayAgo(addedAt(key))}</span>
@@ -78,7 +74,6 @@ export function Following() {
           </p>
         </Section>
       )}
-      {open && <CopySheet item={open.item} owner={open.username} onClose={() => setOpen(null)} />}
     </Screen>
   )
 }

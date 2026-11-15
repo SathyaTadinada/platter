@@ -1,5 +1,7 @@
 import type { Section, Sections } from '../../worker/profile'
 import { db, type LibraryItem, type WantItem } from '../db/db'
+import type { CollectionField } from '../api/discogs/types'
+import { fieldFor, type FieldKey, type FieldMatch } from './fields'
 import type { CloudApi, ProfileRow } from './cloud'
 import { decadeOf, yearOf } from './library'
 import { libraryItems } from './masters'
@@ -38,10 +40,13 @@ export type ProfileItem = {
 
 // Details about the owner's own copy, when they chose to show some: their rating, and fields from
 // their Discogs collection by name, in their field order
-export type CopyDetails = { rating?: number; fields?: [string, string][] }
+// Each field goes with its name and, where Platter knows what it's for (condition, price, notes…),
+// that role, so someone else's fields can be matched to theirs whatever they're called
+export type CopyDetails = { rating?: number; fields?: CopyField[] }
+export type CopyField = [name: string, value: string, role?: FieldKey]
 
-// Which details go up: 'rating' and field ids, with each field's name
-export type CopyChoice = { details: string[]; names: Record<number, string> }
+// Which details go up: 'rating' and field ids, with each field's name and any role
+export type CopyChoice = { details: string[]; names: Record<number, string>; roles?: Record<number, FieldKey> }
 
 function copyOf(r: LibraryItem, choice?: CopyChoice): CopyDetails | undefined {
   if (!choice?.details.length) return undefined
@@ -50,7 +55,9 @@ function copyOf(r: LibraryItem, choice?: CopyChoice): CopyDetails | undefined {
   const fields = Object.keys(choice.names)
     .map(Number)
     .filter((id) => choice.details.includes(String(id)) && r.fields[id]?.trim())
-    .map((id): [string, string] => [choice.names[id], r.fields[id].trim()])
+    .map((id): CopyField =>
+      choice.roles?.[id] ? [choice.names[id], r.fields[id].trim(), choice.roles[id]] : [choice.names[id], r.fields[id].trim()],
+    )
   if (fields.length) copy.fields = fields
   return copy.rating || copy.fields ? copy : undefined
 }
@@ -321,3 +328,36 @@ export async function forgetSent(sections: Sections) {
   const next = Object.fromEntries(Object.entries(sent).filter(([k]) => k === 'about' || sections[k as Section] === 'public'))
   await db.settings.put({ key: SENT, value: next })
 }
+
+// ---- copying someone's details into yours ----
+
+// plays come from logging them, and a loan is the owner's own business
+const NOT_COPIED: FieldKey[] = ['playCount', 'lastPlayed', 'lentTo']
+const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+export type Copyable = { key: string; label: string; value: string; to: number | 'rating' }
+
+// Which of someone's copy details can go into yours, and into which of your fields: by what the field
+// is for when both sides know, otherwise by name. A dropdown only takes one of its own options.
+export function copyable(copy: CopyDetails | undefined, mine: CollectionField[], matches: FieldMatch[]): Copyable[] {
+  if (!copy) return []
+  const out: Copyable[] = []
+  if (copy.rating) out.push({ key: 'rating', label: 'Rating', value: '★'.repeat(copy.rating), to: 'rating' })
+  const used = new Set<number>()
+  for (const [name, value, role] of copy.fields ?? []) {
+    if (role && NOT_COPIED.includes(role)) continue
+    const field = (role ? fieldFor(matches, role) : null) ?? mine.find((f) => norm(f.name) === norm(name)) ?? null
+    if (!field || used.has(field.id)) continue
+    const mineFor = matches.find((m) => m.field?.id === field.id)?.spec.key
+    if (mineFor && NOT_COPIED.includes(mineFor)) continue
+    const fits = field.type === 'dropdown' ? field.options.find((o) => norm(o) === norm(value)) : value
+    if (!fits) continue
+    used.add(field.id)
+    out.push({ key: `f${field.id}`, label: name, value: fits, to: field.id })
+  }
+  return out
+}
+
+// Where a record from someone's profile opens: the record page, with their copy on it when they show one
+export const recordFrom = (item: ProfileItem, owner: string, key: string) =>
+  item.copy ? `/release/${item.id}?from=${encodeURIComponent(owner)}&copy=${encodeURIComponent(key)}` : `/release/${item.id}`

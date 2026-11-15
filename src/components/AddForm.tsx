@@ -1,5 +1,6 @@
+import { Check } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { addToFolder, getFolders, setFieldValue } from '../api/discogs/endpoints'
+import { addToFolder, editInstance, getFolders, setFieldValue } from '../api/discogs/endpoints'
 import type { Folder, Release } from '../api/discogs/types'
 import { db, getSetting, setSetting } from '../db/db'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -8,9 +9,11 @@ import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches, useFieldSuggestions } from '../hooks/useFields'
 import type { FieldKey } from '../lib/fields'
 import { itemFromRelease } from '../lib/library'
+import { copyable, type CopyDetails } from '../lib/profile'
 import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
+import { Stars } from './Stars'
 import { Button, List, Notice } from './ui'
 
 export type Added = { folder: string; instanceId: number; problems: string[] }
@@ -29,7 +32,16 @@ export function pickDefaultFolder(folders: Folder[], last?: number): number | un
 }
 
 // The same rows as "Your copy" on a record page, filled in before adding
-export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: Added) => void }) {
+// their: someone's copy of this release, from their profile, whose details can fill in the form
+export function AddForm({
+  release,
+  onAdded,
+  their,
+}: {
+  release: Release
+  onAdded: (a: Added) => void
+  their?: { owner: string; copy: CopyDetails }
+}) {
   const { client, username } = useSignedIn()
   const meta = useCollectionMeta()
   const matches = useFieldMatches()
@@ -48,6 +60,30 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
   const [error, setError] = useState<string | null>(null)
 
   const keyOf = (id: number) => matches?.find((m) => m.field?.id === id)?.spec.key
+
+  // what of theirs can go into this form, and which of it is picked. None to start with.
+  const options = their && meta.data && matches ? copyable(their.copy, meta.data.fields, matches) : []
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [rating, setRating] = useState(0)
+  function pick(keys: string[], on: boolean) {
+    const next = new Set(picked)
+    for (const o of options.filter((o) => keys.includes(o.key))) {
+      if (on) next.add(o.key)
+      else next.delete(o.key)
+      if (o.to === 'rating') setRating(on ? their!.copy.rating! : 0)
+      // taking one back out only clears what it put in, not something typed over it since
+      else
+        setValues((old) => {
+          const id = o.to as number
+          if (on) return { ...old, [id]: o.value }
+          if (old[id] !== o.value) return old
+          const { [id]: _, ...rest } = old
+          return rest
+        })
+    }
+    setPicked(next)
+  }
+  const all = options.length > 1 && options.every((o) => picked.has(o.key))
   const fields = (meta.data?.fields ?? []).filter((f) => !SKIP.includes(keyOf(f.id)!))
 
   useEffect(() => {
@@ -83,7 +119,16 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
           problems.push((e as Error).message)
         }
       }
-      await db.collection.put({ ...itemFromRelease(release, instance_id, folderId), fields: saved })
+      let rated = 0
+      if (rating) {
+        try {
+          await editInstance(client, username, target, { rating })
+          rated = rating
+        } catch (e) {
+          problems.push((e as Error).message)
+        }
+      }
+      await db.collection.put({ ...itemFromRelease(release, instance_id, folderId), fields: saved, rating: rated })
       await setSetting('lastFolderId', folderId)
       const carried = Object.fromEntries(Object.entries(saved).filter(([id]) => CARRY.includes(keyOf(Number(id))!)))
       if (Object.keys(carried).length) await setSetting(RECENT, { values: carried, at: Date.now() })
@@ -95,8 +140,47 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
     }
   }
 
+  const chip = (on: boolean) =>
+    `inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
+      on
+        ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+        : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+    }`
+
   return (
     <div className="space-y-3">
+      {options.length > 0 && (
+        <div>
+          <p className="mb-2 px-1 text-sm text-stone-500">Fill in from {their!.owner}’s copy</p>
+          <div className="flex flex-wrap gap-2">
+            {options.length > 1 && (
+              <button
+                type="button"
+                aria-pressed={all}
+                onClick={() =>
+                  pick(
+                    options.map((o) => o.key),
+                    !all,
+                  )
+                }
+                className={chip(all)}
+              >
+                {all && <Check size={14} aria-hidden />}
+                All
+              </button>
+            )}
+            {options.map((o) => {
+              const on = picked.has(o.key)
+              return (
+                <button key={o.key} type="button" aria-pressed={on} onClick={() => pick([o.key], !on)} className={chip(on)}>
+                  {on && <Check size={14} aria-hidden />}
+                  {o.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
       <List>
         <Row label="Crate">
           <CrateSelect
@@ -108,6 +192,11 @@ export function AddForm({ release, onAdded }: { release: Release; onAdded: (a: A
             className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
           />
         </Row>
+        {rating > 0 && (
+          <Row label="Rating">
+            <Stars value={rating} onChange={setRating} size={20} />
+          </Row>
+        )}
         {fields.map((f) => {
           const key = keyOf(f.id)
           return (

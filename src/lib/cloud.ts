@@ -162,6 +162,7 @@ type Page = { rows: { key: string; value: string; updatedAt: number }[]; more: b
 export type ProfileReader = {
   profile(username: string): Promise<ProfileHead>
   profileRows(username: string, section: Section, after?: string): Promise<Page>
+  profileItem(username: string, key: string): Promise<{ key: string; value: string }>
   searchProfiles(q: string): Promise<{ found: Found[] }>
 }
 
@@ -192,6 +193,7 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
       section,
       after,
     }),
+  profileItem: (username: string, key: string) => call<{ key: string; value: string }>(fetchFn, 'profile-item', { username, key }),
   passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
     call<{ device: string; name: string }>(fetchFn, 'passkey-signin', {
       discogsId,
@@ -275,6 +277,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     unpublishProfile: (section, keys) => c('profile-unpublish', { section, keys }),
     profile: (username) => c('profile', { username }),
     profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
+    profileItem: (username, key) => c('profile-item', { username, key }),
     searchProfiles: (q) => c('profile-search', { q }),
     follow: (username) => c('follow', { username }),
     unfollow: (username) => c('unfollow', { username }),

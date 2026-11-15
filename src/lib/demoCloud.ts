@@ -92,6 +92,9 @@ export function demoCloudApi(): CloudApi {
       throw new Error('Not in the demo')
     },
     profileRows: async () => ({ rows: [], more: false }),
+    profileItem: async () => {
+      throw new Error('Not in the demo')
+    },
     searchProfiles: async () => ({ found: [] }),
     follow: async () => ({ status: 'accepted' }),
     unfollow: nothing,

@@ -20,6 +20,7 @@ import { cleanLabel, discogsUrl, sentences } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
 import { Cover } from '../components/Cover'
 import { Tracklist } from './Record'
+import { TheirCopy, useTheirCopy } from './release/TheirCopy'
 
 // A Discogs release you looked up: everything the record page shows, plus adding it
 export function Release({ id }: { id: string }) {
@@ -31,6 +32,7 @@ export function Release({ id }: { id: string }) {
   const [wantBusy, setWantBusy] = useState(false)
   const [viewingPhotos, setViewingPhotos] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const their = useTheirCopy(Number(id))
 
   const r = release.data
   const own = useLiveQuery(async () => {
@@ -176,6 +178,8 @@ export function Release({ id }: { id: string }) {
           )}
 
           <div className="mt-6">
+            {/* opened from someone's profile, their copy first */}
+            {their && <TheirCopy owner={their.owner} copy={their.copy} />}
             {own?.copies.length || own?.pressings.length ? (
               <Section title="In your collection">
                 <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
@@ -219,7 +223,7 @@ export function Release({ id }: { id: string }) {
                   </div>
                 </div>
               ) : (
-                <AddForm release={r} onAdded={setAdded} />
+                <AddForm release={r} onAdded={setAdded} their={their ?? undefined} />
               )}
             </Section>
 

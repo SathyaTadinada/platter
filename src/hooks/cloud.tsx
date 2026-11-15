@@ -37,6 +37,7 @@ import { demoCloudApi } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
 import { forgetSent, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
 import { getFields, getProfile } from '../api/discogs/endpoints'
+import { matchFields, type FieldKey, type FieldMap } from '../lib/fields'
 import { lookupBarcode } from '../lib/lookup'
 import { useSession } from './session'
 
@@ -161,6 +162,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (chosen.current.length && shared.current.collection === 'public') {
       const fieldIds = chosen.current.filter((d) => d !== 'rating')
       let names: Record<number, string> = {}
+      let roles: Record<number, FieldKey> = {}
       if (fieldIds.length) {
         if (!client || !session || session.kind === 'demo') return
         const fields = await Promise.race([
@@ -171,8 +173,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         ])
         if (!fields) return
         names = Object.fromEntries([...fields].sort((a, b) => a.position - b.position).map((f) => [f.id, f.name]))
+        // what each field is for, as Collection fields matched them, so others can match it to theirs
+        const matches = matchFields(fields, (await getSetting<FieldMap>('fieldMap')) ?? {})
+        roles = Object.fromEntries(matches.filter((m) => m.field).map((m) => [m.field!.id, m.spec.key]))
       }
-      choice = { details: chosen.current, names }
+      choice = { details: chosen.current, names, roles }
     }
     await publishProfile(api, shared.current, about, Date.now(), choice)
   }, [api, client, session])

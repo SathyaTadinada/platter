@@ -4,6 +4,7 @@ import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
 import {
   head,
+  item,
   parseRows,
   publish,
   rows,
@@ -147,6 +148,15 @@ describe('publishing', () => {
     await publish(db, id, [record(1, 'Rumours (2011 reissue)', 3000)])
     expect(await sweep(db, id, 'collection', 3000)).toEqual({ gone: 1 })
     expect((await rows(db, 'tadinada', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['1'])
+  })
+
+  it('gives one record by its key, only while the collection is shown', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    expect(await item(db, 'tadinada', '1')).toMatchObject({ key: '1' })
+    expect(await item(db, 'tadinada', 'nope')).toBeNull()
+    await setSections(db, id, { collection: 'off' })
+    expect(await item(db, 'tadinada', '1')).toBeNull()
   })
 
   it('takes down rows by key, in that section only, many at a time', async () => {

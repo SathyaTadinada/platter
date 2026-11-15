@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Sections } from '../../worker/profile'
 import { db } from '../db/db'
 import type { ProfileRow } from './cloud'
+import type { CollectionField } from '../api/discogs/types'
+import { matchFields } from './fields'
 import {
+  copyable,
   forgetSent,
   publishProfile,
   SENT,
   setPlayFields,
+  type CopyDetails,
   type ProfileItem,
   type ProfileStats,
   type ProfileYear,
@@ -292,5 +296,45 @@ describe('the Stats and Your year sections', () => {
     expect(await publishProfile(server.api, SHOWN, {}, 2000)).toEqual([])
     await db.plays.add({ instanceId: 3, releaseId: 30, at: Date.parse('2026-06-01T20:00:00Z'), before: {} })
     expect(await publishProfile(server.api, SHOWN, {}, 3000)).toEqual(['stats', 'year'])
+  })
+})
+
+describe('copying someone else’s details', () => {
+  const mine = [
+    { id: 1, name: 'Media Condition', type: 'dropdown', position: 1, public: false, options: ['Mint (M)', 'Very Good Plus (VG+)'] },
+    { id: 4, name: 'Price paid', type: 'textarea', position: 2, public: false },
+    { id: 5, name: 'Shop', type: 'textarea', position: 3, public: false },
+    { id: 9, name: 'Last Played', type: 'textarea', position: 4, public: false },
+  ] as CollectionField[]
+  const matches = matchFields(mine)
+
+  it('matches by what each field is for, whatever it is called, then by name', () => {
+    const copy: CopyDetails = {
+      rating: 4,
+      fields: [
+        ['Purchase Price', '$32', 'purchasePrice'],
+        ['Shop', 'Amoeba'],
+        ['Media Condition', 'very good plus (vg+)', 'mediaCondition'],
+      ],
+    }
+    expect(copyable(copy, mine, matches)).toEqual([
+      { key: 'rating', label: 'Rating', value: '★★★★', to: 'rating' },
+      { key: 'f4', label: 'Purchase Price', value: '$32', to: 4 },
+      { key: 'f5', label: 'Shop', value: 'Amoeba', to: 5 },
+      // a dropdown takes its own spelling of the option
+      { key: 'f1', label: 'Media Condition', value: 'Very Good Plus (VG+)', to: 1 },
+    ])
+  })
+
+  it('leaves out what has nowhere to go, what a dropdown doesn’t offer, and plays', () => {
+    const copy: CopyDetails = {
+      fields: [
+        ['Media Condition', 'Fair (F)', 'mediaCondition'],
+        ['Notes', 'Signed', 'notes'],
+        ['Last Played', '2026-11-01', 'lastPlayed'],
+        ['Last Played', '2026-11-01'],
+      ],
+    }
+    expect(copyable(copy, mine, matches)).toEqual([])
   })
 })

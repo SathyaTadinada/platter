@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../../components/Cover'
 import { useCloud } from '../../hooks/cloud'
-import type { ProfileItem } from '../../lib/profile'
-import { CopySheet } from '../profile/CopySheet'
+import { recordFrom, type ProfileItem } from '../../lib/profile'
 
 type Added = { username: string; key: string; item: ProfileItem }
 const SHOWN = 12
@@ -14,7 +13,6 @@ export function NewFromFollowing() {
   const { api } = useCloud()
   const [added, setAdded] = useState<Added[] | null>(null)
   const [more, setMore] = useState(false)
-  const [open, setOpen] = useState<Added | null>(null)
 
   useEffect(() => {
     if (!api) return
@@ -49,21 +47,13 @@ export function NewFromFollowing() {
           )
           return (
             <li key={`${a.username}:${a.key}`} className="w-28 shrink-0">
-              {/* their copy first when they show details about it, as on their profile */}
-              {a.item.copy ? (
-                <button type="button" onClick={() => setOpen(a)} className="block w-full text-left">
-                  {tile}
-                </button>
-              ) : (
-                <Link href={`/release/${a.item.id}`} className="block">
-                  {tile}
-                </Link>
-              )}
+              <Link href={recordFrom(a.item, a.username, a.key)} className="block">
+                {tile}
+              </Link>
             </li>
           )
         })}
       </ul>
-      {open && <CopySheet item={open.item} owner={open.username} onClose={() => setOpen(null)} />}
     </section>
   )
 }

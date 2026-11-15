@@ -391,3 +391,21 @@ export async function rows(
     .all<{ key: string; value: string; updated_at: number }>()
   return { rows: results.map((r) => ({ key: r.key, value: r.value, updatedAt: r.updated_at })), more: results.length === MAX_ROWS }
 }
+
+// One record from someone's collection, for the record page opened from their profile. The same
+// checks as a page of them: the collection is on and the viewer may see it.
+export async function item(
+  db: DB,
+  username: unknown,
+  key: unknown,
+  viewer: string | null = null,
+): Promise<{ key: string; value: string } | null> {
+  if (typeof key !== 'string' || !key || key.length > 200) throw new SyncError(400, 'Bad record')
+  const found = await owner(db, username)
+  if (!found || found.sections.collection !== 'public' || (await access(db, found, viewer)) !== 'full') return null
+  const row = await db
+    .prepare("SELECT key, value FROM profile_rows WHERE account = ?1 AND kind = 'item' AND key = ?2")
+    .bind(found.id, key)
+    .first<{ key: string; value: string }>()
+  return row ?? null
+}
