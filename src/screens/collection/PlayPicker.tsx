@@ -1,9 +1,9 @@
-import { Dices, Disc3 } from 'lucide-react'
+import { ArrowUpRight, Clock, Dices, Disc3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../../components/Cover'
 import { Sheet } from '../../components/Sheet'
-import { Button, buttonClass } from '../../components/ui'
+import { Button } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
 import { yearOf } from '../../lib/library'
@@ -72,19 +72,28 @@ export function PlayPicker({ items, scope, onClose }: { items: LibraryItem[]; sc
     >
       {pick && (
         <div className="text-center">
-          <Cover item={pick.item} className="mx-auto aspect-square w-full max-w-64 rounded-2xl shadow-xl ring-1 ring-black/10" />
-          <p className="mt-4 text-xl font-bold tracking-tight">{pick.item.title}</p>
-          <p className="text-stone-600 dark:text-stone-300">{pick.item.artist}</p>
-          <p className="mt-2 text-sm text-stone-500">{about?.filter(Boolean).join(' · ')}</p>
-          <p className="text-sm text-stone-500">{when}</p>
-          {scope && <p className="mt-2 text-xs text-stone-500">From {scope}</p>}
+          {/* the cover opens the record */}
           <Link
             href={`/collection/${pick.item.instanceId}`}
             onClick={onClose}
-            className={buttonClass('ghost', 'mt-3 min-h-9 px-3 text-sm')}
+            aria-label={`Open ${pick.item.title}`}
+            className="relative mx-auto block w-full max-w-64"
           >
-            Open record
+            <Cover item={pick.item} className="aspect-square w-full rounded-2xl shadow-xl ring-1 ring-black/10" />
+            <span className="absolute right-2 bottom-2 rounded-full bg-black/50 p-1.5 text-white" aria-hidden>
+              <ArrowUpRight size={16} />
+            </span>
           </Link>
+          <p className="mt-4 text-xl font-bold tracking-tight">{pick.item.title}</p>
+          <p className="text-stone-600 dark:text-stone-300">{pick.item.artist}</p>
+          <p className="mt-1 text-sm text-stone-500">{about?.filter(Boolean).join(' · ')}</p>
+          {when && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+              <Clock size={14} aria-hidden />
+              {when}
+            </p>
+          )}
+          {scope && <p className="mt-3 text-xs text-stone-500">From {scope}</p>}
         </div>
       )}
     </Sheet>
