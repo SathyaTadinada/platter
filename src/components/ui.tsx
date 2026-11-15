@@ -227,7 +227,8 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
       {href && <ChevronRight size={18} className="shrink-0 text-stone-400" aria-hidden />}
     </>
   )
-  const cls = 'flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left'
+  // a setting, not text to copy, so dragging across a list doesn't sweep the rows up
+  const cls = 'flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left select-none'
   const interactive = 'hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800'
   return (
     <li>

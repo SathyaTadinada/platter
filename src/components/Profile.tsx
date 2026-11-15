@@ -59,7 +59,7 @@ export function ProfileLink({
       </span>
     </>
   )
-  const classes = `flex min-w-0 items-center gap-3 ${className}`
+  const classes = `flex min-w-0 items-center gap-3 select-none ${className}`
   const title = compact ? name : undefined
   if (to) {
     return (

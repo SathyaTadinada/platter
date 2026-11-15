@@ -262,3 +262,25 @@ input[type='checkbox']:disabled {
   opacity: 0.5;
   cursor: default;
 }
+
+/* The app's own chrome (page headers, the tab bar and sidebar, buttons, switches, section labels) isn't
+   text anyone copies, and selecting across it swept it up in a band. What's on a page (titles,
+   tracklists, notes) stays selectable, and so do text fields: no label is in this list, since iOS
+   won't let you type into a field inside an unselectable one. */
+@layer base {
+  header,
+  nav,
+  button,
+  h2,
+  [role='radio'],
+  [role='switch'] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* fields stay typeable and selectable wherever they are, like Collection's search in its header */
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
