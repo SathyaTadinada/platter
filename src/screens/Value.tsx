@@ -160,7 +160,7 @@ export function ValueStats() {
           </div>
         ))}
       </div>
-      <footer className="mt-2 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
+      <footer className="mt-2 text-sm">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </footer>
     </>

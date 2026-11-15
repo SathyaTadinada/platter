@@ -531,7 +531,7 @@ export function Collection() {
           </section>
         ))}
         {filtered.length > limit && <LoadMore onVisible={() => setLimit((n) => n + PAGE)} />}
-        <footer className="mt-4 border-t border-stone-200 pt-4 text-sm dark:border-stone-800">
+        <footer className="mt-4 text-sm">
           <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
         </footer>
       </>
