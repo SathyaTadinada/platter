@@ -1,14 +1,23 @@
+import { Check } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation } from 'wouter'
 import { Sheet } from '../../components/Sheet'
 import { Button } from '../../components/ui'
-import type { ProfileItem } from '../../lib/profile'
+import { useCollectionMeta } from '../../hooks/useCollectionMeta'
+import { useFieldMatches } from '../../hooks/useFields'
+import { copyable, type ProfileItem } from '../../lib/profile'
 import { enqueueFromProfile } from '../../lib/queue'
 
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+const chip = (on: boolean) =>
+  `inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
+    on
+      ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+      : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+  }`
 
-// Records picked from someone's profile, on their way to Batch. Asks only when some are already in
-// the collection, with the same choice an import gives, minus adding details: a profile has none.
+// Records picked from someone's profile, on their way to Batch: which of their details come too, when
+// they show some, and what to do about ones already in the collection, as an import asks.
 export function AddSheet({
   picked,
   owned,
@@ -29,9 +38,38 @@ export function AddSheet({
   const [busy, setBusy] = useState(false)
   const count = picked.length - waiting - (copies ? 0 : owned)
 
+  // what of theirs can come over, matched to this account's fields, record by record; the chips are
+  // every kind there is across them. None picked to start with.
+  const meta = useCollectionMeta()
+  const matches = useFieldMatches()
+  const each = new Map(picked.map((p) => [p.id, meta.data && matches ? copyable(p.copy, meta.data.fields, matches) : []]))
+  const kinds = [...new Map([...each.values()].flat().map((o) => [o.key, o.label])).entries()]
+  const [chosen, setChosen] = useState<Set<string>>(new Set())
+  const all = kinds.length > 1 && kinds.every(([k]) => chosen.has(k))
+  const toggle = (keys: string[], on: boolean) =>
+    setChosen((old) => {
+      const next = new Set(old)
+      for (const k of keys) {
+        if (on) next.add(k)
+        else next.delete(k)
+      }
+      return next
+    })
+  const details = (id: number) => {
+    const fields: Record<number, string> = {}
+    let rating: number | undefined
+    for (const o of each.get(id) ?? []) {
+      if (!chosen.has(o.key)) continue
+      if (o.to === 'rating')
+        rating = o.value.length // shown as that many stars
+      else fields[o.to] = o.value
+    }
+    return { fields, rating }
+  }
+
   async function add() {
     setBusy(true)
-    await enqueueFromProfile(picked, from, { copies })
+    await enqueueFromProfile(picked, from, { copies, details: chosen.size ? details : undefined })
     onAdded()
     navigate('/batch')
   }
@@ -49,6 +87,38 @@ export function AddSheet({
       }
     >
       <div className="space-y-4 py-2">
+        {kinds.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-medium">Bring over from {from}’s copies</p>
+            <div className="flex flex-wrap gap-2">
+              {kinds.length > 1 && (
+                <button
+                  type="button"
+                  aria-pressed={all}
+                  onClick={() =>
+                    toggle(
+                      kinds.map(([k]) => k),
+                      !all,
+                    )
+                  }
+                  className={chip(all)}
+                >
+                  {all && <Check size={14} aria-hidden />}
+                  All
+                </button>
+              )}
+              {kinds.map(([k, label]) => {
+                const on = chosen.has(k)
+                return (
+                  <button key={k} type="button" aria-pressed={on} onClick={() => toggle([k], !on)} className={chip(on)}>
+                    {on && <Check size={14} aria-hidden />}
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
         {waiting > 0 && <p className="text-sm text-stone-500">{plural(waiting, 'record')} already in the batch</p>}
         {owned > 0 && (
           <fieldset className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">

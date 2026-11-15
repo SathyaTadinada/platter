@@ -244,6 +244,8 @@ export function Batch() {
                     onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
                     onRemove={adding ? undefined : () => remove(i.id!)}
                     onEdit={adding || i.source === 'csv' ? undefined : () => setEditing(i)}
+                    // from someone's profile, what it brings from their copy
+                    fills={i.from ? fills(i) : undefined}
                     currency={currency}
                   />
                 ))}

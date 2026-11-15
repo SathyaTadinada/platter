@@ -136,7 +136,16 @@ export function planFills(
 export async function enqueueFromProfile(
   picked: { id: number; title: string; artist: string; year?: number; label?: string; format?: string; thumb?: string }[],
   from: string,
-  { copies = false, now = Date.now() } = {},
+  {
+    copies = false,
+    now = Date.now(),
+    details,
+  }: {
+    copies?: boolean
+    now?: number
+    // what to bring over from their copy of each, already matched to this account's fields
+    details?: (id: number) => { fields: Record<number, string>; rating?: number }
+  } = {},
 ): Promise<number> {
   const waiting = await waitingInBatch()
   const owned = new Set((await db.collection.toArray()).map((c) => c.releaseId))
@@ -159,7 +168,8 @@ export async function enqueueFromProfile(
         format: r.format,
         thumb: r.thumb,
       },
-      fields: {},
+      fields: details?.(r.id).fields ?? {},
+      rating: details?.(r.id).rating || undefined,
     })
   }
   await db.queue.bulkAdd(items)

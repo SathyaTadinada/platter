@@ -28,7 +28,7 @@ type RowProps = {
   onTakeOver?: () => void
   currency?: string
   cover?: string // for rows that came without one
-  fills?: string[] // for a copy getting details from an import: what it adds and changes, a line each
+  fills?: string[] // what it adds and changes (details from an import, or from someone's copy), a line each
 }
 
 function metaSummary(m: Metadata, currency: string): string {

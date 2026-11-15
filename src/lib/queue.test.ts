@@ -317,6 +317,24 @@ describe('enqueueFromProfile', () => {
     { id: 30, title: 'Mirage', artist: 'Fleetwood Mac' },
   ]
 
+  it('brings over what was picked from their copy of each', async () => {
+    await enqueueFromProfile(
+      [
+        { id: 10, title: 'Rumours', artist: 'Fleetwood Mac' },
+        { id: 11, title: 'Tusk', artist: 'Fleetwood Mac' },
+      ],
+      'someone',
+      {
+        details: (id): { fields: Record<number, string>; rating?: number } =>
+          id === 10 ? { fields: { 1: 'Mint (M)' }, rating: 4 } : { fields: {} },
+      },
+    )
+    const [a, b] = await db.queue.orderBy('createdAt').toArray()
+    expect(a).toMatchObject({ fields: { 1: 'Mint (M)' }, rating: 4, from: 'someone' })
+    expect(b.fields).toEqual({})
+    expect(b.rating).toBeUndefined()
+  })
+
   it('adds them ready to go, marked with whose profile they came from', async () => {
     expect(await enqueueFromProfile(picked, 'someone')).toBe(3)
     const queued = await db.queue.orderBy('createdAt').toArray()
