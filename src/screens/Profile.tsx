@@ -17,6 +17,7 @@ import type { ProfileAbout, ProfileItem, ProfileStats, ProfileYear } from '../li
 import type { Section as ProfileSection } from '../../worker/profile'
 import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
+import { CopySheet } from './profile/CopySheet'
 import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
 
@@ -43,6 +44,7 @@ export function Profile({ username }: { username: string }) {
   // records picked to add to your own collection, by their row; null when not picking
   const [picked, setPicked] = useState<Set<string> | null>(null)
   const [adding, setAdding] = useState<{ items: ProfileItem[]; owned: number; waiting: number } | null>(null)
+  const [copy, setCopy] = useState<ProfileItem | null>(null)
 
   const fetchHead = useCallback(
     () =>
@@ -272,7 +274,8 @@ export function Profile({ username }: { username: string }) {
               <YearView years={rows.map((r) => JSON.parse(r.value) as ProfileYear)} />
             ) : (
               <>
-                {/* the same tiles as the collection grid; each opens the release, which says if you have it */}
+                {/* the same tiles as the collection grid; each opens the release, which says if you have it, or
+                    first what they chose to show about their copy */}
                 <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                   {rows.map((row) => {
                     const r = JSON.parse(row.value) as ProfileItem
@@ -312,6 +315,11 @@ export function Profile({ username }: { username: string }) {
                           >
                             {tile}
                           </button>
+                        ) : // with details about their copy, those open first; otherwise straight to the record
+                        r.copy ? (
+                          <button type="button" onClick={() => setCopy(r)} className="group block w-full text-left">
+                            {tile}
+                          </button>
                         ) : (
                           <Link href={`/release/${r.id}`} className="group block">
                             {tile}
@@ -334,6 +342,7 @@ export function Profile({ username }: { username: string }) {
           </Section>
         </>
       )}
+      {copy && <CopySheet item={copy} owner={head.username} onClose={() => setCopy(null)} />}
       {chosen > 0 && (
         <div className="sticky bottom-3 z-10 mt-4">
           <div className="mx-auto max-w-lg rounded-2xl bg-white p-3 shadow-xl ring-1 ring-stone-200 sm:w-fit sm:p-2 dark:bg-stone-900 dark:ring-stone-700">

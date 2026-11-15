@@ -28,6 +28,7 @@ import {
   search as searchProfiles,
   settings as profileSettings,
   setWho,
+  setDetails as setProfileDetails,
   setSections,
   sweep as sweepProfile,
   unpublish as unpublishProfile,
@@ -218,6 +219,7 @@ const SYNC_ACTIONS = [
   'follows',
   'feed',
   'profile-who',
+  'profile-details',
   // admin only
   'admin-members',
   'admin-badge',
@@ -396,6 +398,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await sweepProfile(db, account, input.section, input.before))
       case 'profile-unpublish':
         return ok(await unpublishProfile(db, account, input.section, input.keys))
+      case 'profile-details':
+        return ok({ details: await setProfileDetails(db, account, input.details) })
       case 'profile-who':
         return ok({ who: await setWho(db, account, input.who) })
       case 'admin-members':

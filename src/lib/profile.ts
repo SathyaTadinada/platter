@@ -8,8 +8,8 @@ import { byMonth, localDate, type MonthTotal } from './value'
 import { reviewYears, yearReview } from './yearReview'
 
 // Publishing a profile: the owner's devices send what each switched-on section shows, and nothing
-// else. Release details are Discogs' catalog data, which can be kept; the owner's own ratings,
-// notes, conditions, and what they paid never leave the device.
+// else. Release details are Discogs' catalog data, which can be kept; the owner's own ratings and
+// field values (condition, notes, what they paid) only go when they pick them in Your copy.
 //
 // Each device remembers what it last sent, row by row, so a pass sends only the rows that changed
 // and takes down the ones that are gone, rather than writing the whole section again. The first
@@ -22,8 +22,8 @@ const FULL_EVERY = 7 * 24 * 60 * 60_000
 type SentSection = { mark: string; rows: Record<string, string>; full: number }
 type Sent = Partial<Record<Section, SentSection>> & { about?: string }
 
-// What a visitor sees for one record: Discogs' catalog details and its cover, as a Discogs link. Not
-// the owner's rating, notes, or condition, which would need a switch of their own to share.
+// What a visitor sees for one record: Discogs' catalog details and its cover, as a Discogs link, and
+// whatever the owner picked to show about their copy.
 export type ProfileItem = {
   id: number
   title: string
@@ -33,6 +33,26 @@ export type ProfileItem = {
   format?: string
   thumb?: string
   cover?: string
+  copy?: CopyDetails // only what the owner chose to show, and only what's filled in
+}
+
+// Details about the owner's own copy, when they chose to show some: their rating, and fields from
+// their Discogs collection by name, in their field order
+export type CopyDetails = { rating?: number; fields?: [string, string][] }
+
+// Which details go up: 'rating' and field ids, with each field's name
+export type CopyChoice = { details: string[]; names: Record<number, string> }
+
+function copyOf(r: LibraryItem, choice?: CopyChoice): CopyDetails | undefined {
+  if (!choice?.details.length) return undefined
+  const copy: CopyDetails = {}
+  if (choice.details.includes('rating') && r.rating) copy.rating = r.rating
+  const fields = Object.keys(choice.names)
+    .map(Number)
+    .filter((id) => choice.details.includes(String(id)) && r.fields[id]?.trim())
+    .map((id): [string, string] => [choice.names[id], r.fields[id].trim()])
+  if (fields.length) copy.fields = fields
+  return copy.rating || copy.fields ? copy : undefined
 }
 
 export type ProfileAbout = { avatar?: string; records?: number }
@@ -74,7 +94,8 @@ export type ProfileYear = {
   oldest?: { item: ProfileBrief; year: number }
 }
 
-const item = (r: LibraryItem): ProfileItem => ({
+const item = (r: LibraryItem, choice?: CopyChoice): ProfileItem => ({
+  copy: copyOf(r, choice),
   id: r.releaseId,
   title: r.title,
   artist: r.artist,
@@ -106,8 +127,8 @@ export const addedAt = (key: string) => UNTIL - Number(key.split(':')[0])
 const keyOf = (added: string | undefined, id: number) =>
   `${String(UNTIL - (added ? Date.parse(added) || 0 : 0)).padStart(13, '0')}:${String(id).padStart(10, '0')}`
 
-function itemRows(items: LibraryItem[]): Omit<ProfileRow, 'updatedAt'>[] {
-  return items.map((r) => ({ kind: 'item', key: keyOf(r.dateAdded, r.instanceId), value: JSON.stringify(item(r)) }))
+function itemRows(items: LibraryItem[], choice?: CopyChoice): Omit<ProfileRow, 'updatedAt'>[] {
+  return items.map((r) => ({ kind: 'item', key: keyOf(r.dateAdded, r.instanceId), value: JSON.stringify(item(r, choice)) }))
 }
 
 async function wantRows(): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
@@ -232,6 +253,7 @@ export async function publishProfile(
   sections: Sections,
   about: ProfileAbout,
   at = Date.now(),
+  choice?: CopyChoice,
 ): Promise<(Section | 'about')[]> {
   const sent = ((await db.settings.get(SENT))?.value as Sent | undefined) ?? {}
   const next: Sent = { ...sent }
@@ -273,7 +295,7 @@ export async function publishProfile(
     done.push(section)
   }
 
-  await pass('collection', () => itemRows(items))
+  await pass('collection', () => itemRows(items, choice))
   await pass('wantlist', wantRows)
   await pass('stats', () => statsRows(items, plays))
   await pass('year', () => yearRows(items, plays))

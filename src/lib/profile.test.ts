@@ -121,6 +121,23 @@ describe('publishing a profile', () => {
     expect(sent).not.toContain('rating')
   })
 
+  it('sends only the details about each copy that were chosen, by name, and only filled-in ones', async () => {
+    const server = fakeServer()
+    await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z', 4)
+    await addRecord(2, 'Tusk', '2026-03-01T00:00:00Z')
+    await db.collection.update(2, { fields: { 1: '' } })
+    const choice = { details: ['rating', '2'], names: { 1: 'Location', 2: 'Purchase Price' } }
+    await publishProfile(server.api, ON, {}, 1000, choice)
+    const [tusk, rumours] = server.of('item')
+    expect(rumours.copy).toEqual({ rating: 4, fields: [['Purchase Price', 'Paid 30']] })
+    expect(tusk.copy).toBeUndefined() // nothing chosen is filled in, so nothing goes
+    expect(JSON.stringify(server.of('item'))).not.toContain('Shelf B') // Location wasn't chosen
+
+    // choosing none takes them off again
+    await publishProfile(server.api, ON, {}, 2000, { details: [], names: {} })
+    expect(server.of('item').every((r) => r.copy === undefined)).toBe(true)
+  })
+
   it('sends a section once it goes on, and stops once it goes off', async () => {
     const server = fakeServer()
     await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z')

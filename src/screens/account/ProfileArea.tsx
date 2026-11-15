@@ -1,5 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarRange, ChartLine, Globe, Heart, LibraryBig, Link as LinkIcon, Lock, UserRound, Users, type LucideIcon } from 'lucide-react'
+import {
+  CalendarRange,
+  Check,
+  ChartLine,
+  Globe,
+  Heart,
+  LibraryBig,
+  Link as LinkIcon,
+  Lock,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
@@ -8,6 +20,7 @@ import { toast } from '../../components/Toaster'
 import { IconButton, IconLink, Notice, Section, Spinner, Switch } from '../../components/ui'
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
+import { useCollectionMeta } from '../../hooks/useCollectionMeta'
 import type { Follows } from '../../lib/cloud'
 import { peopleLink, type FollowList } from './Connections'
 
@@ -197,6 +210,49 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
           })}
         </div>
       </Section>
+      {/* what else goes with each record, while the collection is on the profile */}
+      {cloud.sections.collection === 'public' && <CopyChoices onError={onError} />}
     </>
+  )
+}
+
+// Details about each copy anyone can see with your records: your rating, and the fields from your
+// Discogs collection one by one. None to start with.
+function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
+  const cloud = useCloud()
+  const meta = useCollectionMeta()
+  const options = [{ id: 'rating', name: 'Rating' }, ...(meta.data?.fields ?? []).map((f) => ({ id: String(f.id), name: f.name }))]
+  const toggle = async (id: string) => {
+    const on = cloud.details.includes(id)
+    try {
+      await cloud.setDetails(on ? cloud.details.filter((d) => d !== id) : [...cloud.details, id])
+    } catch (e) {
+      onError(e)
+    }
+  }
+  return (
+    <Section title="Your copy">
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => {
+          const on = cloud.details.includes(o.id)
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(o.id)}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
+                on
+                  ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+                  : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+              }`}
+            >
+              {on && <Check size={14} aria-hidden />}
+              {o.name}
+            </button>
+          )
+        })}
+      </div>
+    </Section>
   )
 }

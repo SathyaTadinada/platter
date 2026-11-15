@@ -35,8 +35,8 @@ import {
 } from '../lib/cloud'
 import { demoCloudApi } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
-import { forgetSent, publishProfile, type ProfileAbout } from '../lib/profile'
-import { getProfile } from '../api/discogs/endpoints'
+import { forgetSent, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
+import { getFields, getProfile } from '../api/discogs/endpoints'
 import { lookupBarcode } from '../lib/lookup'
 import { useSession } from './session'
 
@@ -56,6 +56,9 @@ type Ctx = {
   setSections: (next: Sections) => Promise<void>
   who: Who
   setWho: (who: Who) => Promise<void>
+  // which details about each copy the profile shows: 'rating' and Discogs field ids
+  details: string[]
+  setDetails: (details: string[]) => Promise<void>
   hidden: boolean // hidden by an admin
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
@@ -104,6 +107,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   const [sections, setSections] = useState<Sections | null>(null)
+  const [details, setDetailsState] = useState<string[]>([])
+  const chosen = useRef<string[]>([])
   const [who, setWho] = useState<Who>('public')
   const [hidden, setHidden] = useState(false)
   const shared = useRef<Sections>({})
@@ -150,7 +155,26 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       ])
       if (avatar) about.avatar = avatar
     }
-    await publishProfile(api, shared.current, about)
+    // the names of the fields whose values go up with each record, when some do. Without them this
+    // pass waits for the next, rather than sending records without the details they had.
+    let choice: CopyChoice | undefined
+    if (chosen.current.length && shared.current.collection === 'public') {
+      const fieldIds = chosen.current.filter((d) => d !== 'rating')
+      let names: Record<number, string> = {}
+      if (fieldIds.length) {
+        if (!client || !session || session.kind === 'demo') return
+        const fields = await Promise.race([
+          getFields(client, session.username)
+            .then((r) => r.fields)
+            .catch(() => null),
+          new Promise<null>((r) => setTimeout(() => r(null), AVATAR_WAIT)),
+        ])
+        if (!fields) return
+        names = Object.fromEntries([...fields].sort((a, b) => a.position - b.position).map((f) => [f.id, f.name]))
+      }
+      choice = { details: chosen.current, names }
+    }
+    await publishProfile(api, shared.current, about, Date.now(), choice)
   }, [api, client, session])
   // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
   // a sync it waits SHARE_EVERY since the last one, so a busy session doesn't rework the whole
@@ -290,9 +314,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       clearTimeout(timer)
       api
         .profileSettings()
-        .then(({ sections: saved, who: found, hidden: down }) => {
+        .then(({ sections: saved, who: found, hidden: down, details: picked = [] }) => {
           if (stopped) return
           shared.current = saved
+          chosen.current = picked
+          setDetailsState(picked)
           setSections(saved)
           setWho(found)
           setHidden(down)
@@ -345,6 +371,14 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       if (!api) return
       setWho((await api.setWho(next)).who)
     },
+    details,
+    setDetails: async (next) => {
+      if (!api) return
+      const { details: saved } = await api.setDetails(next)
+      chosen.current = saved
+      setDetailsState(saved)
+      await share()
+    },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
       let joined = false
@@ -389,6 +423,7 @@ function useDemoCloud(): Ctx {
   const [off, setOff] = useState<Category[]>([])
   const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'off', stats: 'off', year: 'off' })
   const [demoWho, setDemoWho] = useState<Who>('public')
+  const [demoDetails, setDemoDetails] = useState<string[]>([])
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
@@ -421,6 +456,11 @@ function useDemoCloud(): Ctx {
     setWho: async (next) => {
       await pause(300)
       setDemoWho(next)
+    },
+    details: demoDetails,
+    setDetails: async (next) => {
+      await pause(300)
+      setDemoDetails(next)
     },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {

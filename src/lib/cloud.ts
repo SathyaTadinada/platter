@@ -220,7 +220,8 @@ export type CloudApi = ProfileReader & {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
-  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean }>
+  profileSettings(): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details?: string[] }>
+  setDetails(details: string[]): Promise<{ details: string[] }>
   setSections(sections: Sections): Promise<{ sections: Sections }>
   setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
@@ -268,6 +269,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     profileSettings: () => c('profile-settings'),
     setSections: (sections) => c('profile-sections', { sections }),
     setWho: (who) => c('profile-who', { who }),
+    setDetails: (details) => c('profile-details', { details }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     unpublishProfile: (section, keys) => c('profile-unpublish', { section, keys }),

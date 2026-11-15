@@ -76,15 +76,15 @@ function readSections(stored: string): Sections {
 
 const publicOnes = (s: Sections): Section[] => SECTIONS.filter((x) => s[x] === 'public')
 
-type ProfileRecord = { sections: string; published_at: number | null; visibility: Who; hidden: number }
+type ProfileRecord = { sections: string; published_at: number | null; visibility: Who; hidden: number; details?: string }
 
 // The owner's own view: every section, with the ones they haven't touched off
 export async function settings(
   db: DB,
   account: string,
-): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean }> {
+): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details: string[] }> {
   const row = await db
-    .prepare('SELECT sections, published_at, visibility, hidden FROM profiles WHERE account = ?1')
+    .prepare('SELECT sections, published_at, visibility, hidden, details FROM profiles WHERE account = ?1')
     .bind(account)
     .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
@@ -93,7 +93,40 @@ export async function settings(
     publishedAt: row?.published_at ?? null,
     who: row?.visibility ?? 'public',
     hidden: row?.hidden === 1,
+    details: readDetails(row?.details),
   }
+}
+
+// ---- details about each copy ----
+
+// 'rating', and the ids of the owner's Discogs fields. Each device sends just these with the
+// collection; the server only keeps the choice, so every device sends the same.
+const MAX_DETAILS = 40
+
+export function parseDetails(x: unknown): string[] {
+  if (!Array.isArray(x) || x.length > MAX_DETAILS) throw new SyncError(400, 'Bad details')
+  if (!x.every((d) => typeof d === 'string' && (d === 'rating' || /^\d{1,9}$/.test(d)))) throw new SyncError(400, 'Bad details')
+  return [...new Set(x as string[])]
+}
+
+function readDetails(stored: string | undefined): string[] {
+  try {
+    return parseDetails(JSON.parse(stored ?? '[]'))
+  } catch {
+    return []
+  }
+}
+
+export async function setDetails(db: DB, account: string, input: unknown, now = Date.now()): Promise<string[]> {
+  const details = parseDetails(input)
+  await db
+    .prepare(
+      `INSERT INTO profiles (account, details, created_at) VALUES (?1, ?2, ?3)
+       ON CONFLICT (account) DO UPDATE SET details = excluded.details`,
+    )
+    .bind(account, JSON.stringify(details), now)
+    .run()
+  return details
 }
 
 export async function setWho(db: DB, account: string, who: unknown, now = Date.now()): Promise<Who> {

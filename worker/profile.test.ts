@@ -2,7 +2,20 @@
 import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { discogsSignIn } from './account'
-import { head, parseRows, publish, rows, search, setSections, settings, setWho, sweep, unpublish, type ProfileRow } from './profile'
+import {
+  head,
+  parseRows,
+  publish,
+  rows,
+  search,
+  setSections,
+  settings,
+  setDetails,
+  setWho,
+  sweep,
+  unpublish,
+  type ProfileRow,
+} from './profile'
 import { members, setHidden } from './admin'
 import { deviceAccount, forget, push } from './sync'
 
@@ -30,6 +43,18 @@ async function shared(db: ReturnType<typeof testDB>, who = ME) {
 }
 
 describe('what a profile shows', () => {
+  it('keeps which details about each copy are shown, none to start with', async () => {
+    const db = testDB()
+    const { id } = await account(db)
+    expect((await settings(db, id)).details).toEqual([])
+    expect(await setDetails(db, id, ['rating', '3', '3', '5'])).toEqual(['rating', '3', '5'])
+    expect((await settings(db, id)).details).toEqual(['rating', '3', '5'])
+    // and it doesn't touch the rest of the profile
+    expect((await settings(db, id)).sections.collection).toBe('off')
+    await expect(setDetails(db, id, ['notes'])).rejects.toMatchObject({ status: 400 })
+    await expect(setDetails(db, id, 'rating')).rejects.toMatchObject({ status: 400 })
+  })
+
   it('shows nothing until a section is switched on', async () => {
     const db = testDB()
     const { id } = await account(db)
