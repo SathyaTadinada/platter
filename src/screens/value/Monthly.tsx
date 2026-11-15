@@ -57,7 +57,7 @@ export function Monthly({
         <span className="text-xl font-bold tabular-nums">{text(sum)}</span>{' '}
         <span className="text-stone-500">{show === 'spent' ? 'spent' : 'added'} in the last 12 months</span>
       </p>
-      <MonthBars months={months} text={text} short={show === 'spent' ? compact : String} />
+      <MonthBars months={months} text={text} short={show === 'spent' ? compact : String} now />
     </Card>
   )
 }

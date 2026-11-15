@@ -52,23 +52,28 @@ export function MonthBars({
   months,
   text,
   short = text,
+  now,
 }: {
   months: MonthTotal[]
   text: (n: number) => string
   short?: (n: number) => string
+  now?: boolean // the last bar is this month, so it stands out from the rest
 }) {
   const most = Math.max(...months.map((m) => m.total))
   return (
     <>
       <div className="flex h-32 items-end gap-1">
-        {months.map((m) => (
+        {months.map((m, i) => (
           <div
             key={m.month}
             className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
             aria-label={`${m.label}: ${text(m.total)}`}
           >
             {m.total > 0 && <span className="text-[0.625rem] font-semibold whitespace-nowrap tabular-nums">{short(m.total)}</span>}
-            <span className="w-full rounded-t-md bg-accent/80" style={{ height: m.total ? pct(m.total, most) : 0 }} />
+            <span
+              className={`w-full rounded-t-md ${now && i < months.length - 1 ? 'bg-accent/35' : 'bg-accent/80'}`}
+              style={{ height: m.total ? pct(m.total, most) : 0 }}
+            />
           </div>
         ))}
       </div>
