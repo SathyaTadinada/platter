@@ -1,10 +1,8 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, ChevronRight, Flashlight, FlashlightOff, ImageUp, ScanBarcode, SwitchCamera } from 'lucide-react'
+import { Check, Flashlight, FlashlightOff, ImageUp, ScanBarcode, SwitchCamera } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { Link, useLocation } from 'wouter'
+import { useLocation } from 'wouter'
 import { InstallHint } from '../components/InstallHint'
 import { Button, buttonClass, Notice, Screen, Segmented } from '../components/ui'
-import { db } from '../db/db'
 import { useQueue } from '../hooks/queue'
 import { digitsOnly, formatBarcodeInput } from '../lib/barcode'
 import { enqueueBarcode } from '../lib/queue'
@@ -13,6 +11,7 @@ import { FieldNudge } from './FieldNudge'
 import { readChoice, writePref } from '../lib/prefs'
 import { addToShopList, clearShopList, shopList } from '../lib/shop'
 import { ShopList } from './scan/ShopList'
+import { LastScanned } from './scan/LastScanned'
 
 // The camera only starts after an explicit tap, then stays on for the rest of
 // the session so "Scan next" goes straight back to scanning.
@@ -50,7 +49,6 @@ export function Scan() {
   const [shop, setShop] = useState(shopList)
   const wide = useWide()
   const { kick } = useQueue()
-  const waiting = useLiveQuery(() => db.queue.where('status').noneOf(['added']).count(), []) ?? 0
 
   // batch and shop modes: queue it or check it, show a quick confirmation, keep scanning
   const onCode = useCallback(
@@ -291,12 +289,7 @@ export function Scan() {
             <p className="mt-2 text-center text-xs text-stone-500">{scanner.currentLabel}</p>
           )}
 
-          {mode === 'batch' && (
-            <Link href="/batch" className={buttonClass(waiting ? 'primary' : 'secondary', 'mt-4 w-full')}>
-              {waiting ? `Review batch (${waiting})` : 'Batch is empty'}
-              <ChevronRight size={18} aria-hidden />
-            </Link>
-          )}
+          {mode === 'batch' && <LastScanned />}
 
           {mode === 'shop' && !wide && shopPanel}
 
