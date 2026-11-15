@@ -219,7 +219,7 @@ export function Batch() {
       )}
 
       {groups.ready.length > 0 && (
-        <Section title={`To add (${groups.ready.length})`}>
+        <Section title={`Ready to add (${groups.ready.length})`}>
           {readyByCrate.map(({ folder, items: list }) => (
             <div key={folder?.id ?? 'batch'}>
               {/* only split up once records go to more than one crate */}
@@ -254,7 +254,7 @@ export function Batch() {
       )}
 
       {groups.fill.length > 0 && (
-        <Section title={`To update (${groups.fill.length})`}>
+        <Section title={`Update details (${groups.fill.length})`}>
           <List>
             {groups.fill.map((i) => (
               <Row
