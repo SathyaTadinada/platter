@@ -104,6 +104,14 @@ function SignedIn() {
       toast('Passkey added', { tone: 'success' })
     })
 
+  const deleteRow = (
+    <Section>
+      <List>
+        <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
+      </List>
+    </Section>
+  )
+
   const status = cloud.running ? 'Syncing…' : cloud.syncedAt ? `Synced ${timeAgo(cloud.syncedAt)}` : undefined
   const canAddPasskey = passkeysHere()
 
@@ -230,6 +238,8 @@ function SignedIn() {
             </List>
             {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
           </Section>
+          {/* under Sync on wide screens, where that column is the shorter one */}
+          <div className="hidden lg:block">{deleteRow}</div>
         </div>
 
         <div>
@@ -300,26 +310,18 @@ function SignedIn() {
               </List>
             </Section>
           )}
-        </div>
-      </div>
-
-      {/* last, apart from both, so it's never in the middle of the page on a phone */}
-      <div className={columns}>
-        <div>
           {account?.admin && (
-            <Section>
+            <Section title="Admin">
               <List>
                 <Row icon={<Users size={20} />} label="Members" href="/admin" />
               </List>
             </Section>
           )}
-          <Section>
-            <List>
-              <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
-            </List>
-          </Section>
         </div>
       </div>
+
+      {/* last on a phone, so it's never in the middle of the page */}
+      <div className="lg:hidden">{deleteRow}</div>
     </>
   )
 }

@@ -175,22 +175,23 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
           {SHOWS.map(({ id, label, Icon }) => {
             const on = cloud.sections?.[id] === 'public'
             return (
-              <div key={id} className={`${card} ${plain} flex flex-col gap-2 p-3`}>
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
-                      on ? 'bg-accent text-accent-fg' : 'bg-stone-100 text-stone-500 dark:bg-stone-800'
-                    }`}
-                  >
-                    <Icon size={18} aria-hidden />
-                  </span>
+              // icon and switch over the name where tiles are narrow, all on one line where there's room
+              <div key={id} className={`${card} ${plain} grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 p-3 lg:py-2.5`}>
+                <span
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl lg:size-8 ${
+                    on ? 'bg-accent text-accent-fg' : 'bg-stone-100 text-stone-500 dark:bg-stone-800'
+                  }`}
+                >
+                  <Icon size={18} aria-hidden />
+                </span>
+                <span className="col-span-3 row-start-2 truncate font-medium lg:col-span-1 lg:col-start-2 lg:row-start-1">{label}</span>
+                <span className="col-start-3 row-start-1 justify-self-end">
                   <Switch
                     label={label}
                     checked={on}
                     onChange={(next) => attempt(() => cloud.setSections({ [id]: next ? 'public' : 'off' }))}
                   />
-                </div>
-                <span className="font-medium">{label}</span>
+                </span>
               </div>
             )
           })}
