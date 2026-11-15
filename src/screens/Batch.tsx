@@ -192,7 +192,7 @@ export function Batch() {
       )}
 
       {groups.attention.length > 0 && (
-        <Section title={`Check these (${groups.attention.length})`}>
+        <Section title={`Needs attention (${groups.attention.length})`}>
           <List>
             {groups.attention.map((i) => (
               <Row
@@ -219,7 +219,7 @@ export function Batch() {
       )}
 
       {groups.ready.length > 0 && (
-        <Section title={`Ready to add (${groups.ready.length})`}>
+        <Section title={`To add (${groups.ready.length})`}>
           {readyByCrate.map(({ folder, items: list }) => (
             <div key={folder?.id ?? 'batch'}>
               {/* only split up once records go to more than one crate */}
@@ -254,7 +254,7 @@ export function Batch() {
       )}
 
       {groups.fill.length > 0 && (
-        <Section title={`Update details (${groups.fill.length})`}>
+        <Section title={`To update (${groups.fill.length})`}>
           <List>
             {groups.fill.map((i) => (
               <Row
@@ -271,7 +271,7 @@ export function Batch() {
       )}
 
       {groups.ready.length > 0 && shared && groups.ready.some((i) => i.source !== 'csv') && (
-        <Section title="For all records">
+        <Section title="Batch details">
           <MetadataForm value={shared} onChange={updateShared} matches={matches} parts={['date', 'store', 'location']} />
         </Section>
       )}
