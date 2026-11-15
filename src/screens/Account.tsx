@@ -190,6 +190,48 @@ function SignedIn() {
           />
         )}
 
+        {/* left, sync: what this device shares. Right, sign-in: the ways in and the devices that are in */}
+        <div>
+          <Section title="Sync">
+            <List>
+              <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <span className="block">Sync this device</span>
+                  {status && <span className="block text-sm text-stone-500">{status}</span>}
+                </div>
+                <button
+                  type="button"
+                  aria-label="Sync now"
+                  title="Sync now"
+                  disabled={cloud.running}
+                  onClick={() => cloud.syncNow()}
+                  className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
+                >
+                  <RefreshCw size={20} className={cloud.running ? 'animate-spin' : ''} />
+                </button>
+                <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
+              </li>
+            </List>
+            <List>
+              {CATEGORIES.map((c) => (
+                <Row
+                  key={c.id}
+                  icon={c.icon}
+                  label={c.label}
+                  trailing={
+                    <Switch
+                      label={c.label}
+                      checked={!cloud.off.includes(c.id)}
+                      onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
+                    />
+                  }
+                />
+              ))}
+            </List>
+            {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
+          </Section>
+        </div>
+
         <div>
           {offer && (
             <Section>
@@ -212,28 +254,6 @@ function SignedIn() {
               </Card>
             </Section>
           )}
-          <Section>
-            <List>
-              <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <span className="block">Sync this device</span>
-                  {status && <span className="block text-sm text-stone-500">{status}</span>}
-                </div>
-                <button
-                  type="button"
-                  aria-label="Sync now"
-                  title="Sync now"
-                  disabled={cloud.running}
-                  onClick={() => cloud.syncNow()}
-                  className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
-                >
-                  <RefreshCw size={20} className={cloud.running ? 'animate-spin' : ''} />
-                </button>
-                <Switch label="Sync this device" checked onChange={() => attempt(cloud.leave)} />
-              </li>
-            </List>
-            {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
-          </Section>
           <Section title="Sign-in">
             <List>
               <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
@@ -258,39 +278,6 @@ function SignedIn() {
               </List>
             )}
           </Section>
-          {account?.admin && (
-            <Section>
-              <List>
-                <Row icon={<Users size={20} />} label="Members" href="/admin" />
-              </List>
-            </Section>
-          )}
-          <Section>
-            <List>
-              <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
-            </List>
-          </Section>
-        </div>
-
-        <div>
-          <Section title="Synced data">
-            <List>
-              {CATEGORIES.map((c) => (
-                <Row
-                  key={c.id}
-                  icon={c.icon}
-                  label={c.label}
-                  trailing={
-                    <Switch
-                      label={c.label}
-                      checked={!cloud.off.includes(c.id)}
-                      onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
-                    />
-                  }
-                />
-              ))}
-            </List>
-          </Section>
           {devices && (
             <Section title="Devices">
               <List>
@@ -313,6 +300,24 @@ function SignedIn() {
               </List>
             </Section>
           )}
+        </div>
+      </div>
+
+      {/* last, apart from both, so it's never in the middle of the page on a phone */}
+      <div className={columns}>
+        <div>
+          {account?.admin && (
+            <Section>
+              <List>
+                <Row icon={<Users size={20} />} label="Members" href="/admin" />
+              </List>
+            </Section>
+          )}
+          <Section>
+            <List>
+              <Row icon={<Trash2 size={20} />} label="Delete account" danger onClick={() => setDeleting(true)} />
+            </List>
+          </Section>
         </div>
       </div>
     </>
