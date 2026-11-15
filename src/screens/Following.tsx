@@ -6,6 +6,7 @@ import { Button, Notice, Screen, Section, Spinner, useBack } from '../components
 import { useCloud } from '../hooks/cloud'
 import { addedAt, type ProfileItem } from '../lib/profile'
 import { dayAgo } from '../lib/time'
+import { CopySheet } from './profile/CopySheet'
 
 type Added = { username: string; key: string; item: ProfileItem }
 
@@ -17,6 +18,7 @@ export function Following() {
   const [more, setMore] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [open, setOpen] = useState<{ username: string; item: ProfileItem } | null>(null)
 
   const load = useCallback(
     async (after?: string) => {
@@ -43,7 +45,7 @@ export function Following() {
   if (!api) return <Redirect to="/search?who=1" replace />
 
   return (
-    <Screen title="Recently added" back={back} width={added ? 'narrow' : 'full'}>
+    <Screen title="New from people you follow" back={back} width={added ? 'narrow' : 'full'}>
       {error && <Notice tone="error">Couldn’t load this just now. Try again in a minute.</Notice>}
       {!added ? (
         !error && <Spinner />
@@ -56,7 +58,9 @@ export function Following() {
               <li key={`${username}:${key}`}>
                 <RecordRow
                   item={{ instanceId: item.id, title: item.title, artist: item.artist, thumb: item.thumb, cover: item.cover }}
-                  href={`/release/${item.id}`}
+                  // their copy first when they show details about it
+                  href={item.copy ? undefined : `/release/${item.id}`}
+                  onClick={item.copy ? () => setOpen({ username, item }) : undefined}
                   detail={`${item.artist} · ${username}`}
                 >
                   <span className="text-sm text-stone-500 tabular-nums">{dayAgo(addedAt(key))}</span>
@@ -74,6 +78,7 @@ export function Following() {
           </p>
         </Section>
       )}
+      {open && <CopySheet item={open.item} owner={open.username} onClose={() => setOpen(null)} />}
     </Screen>
   )
 }

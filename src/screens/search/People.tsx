@@ -1,7 +1,7 @@
-import { History } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { DiscogsCredit } from '../../components/ReleaseCardView'
 import { List, Notice, Row, Section, Spinner } from '../../components/ui'
+import { NewFromFollowing } from './NewFromFollowing'
 import { useCloud } from '../../hooks/cloud'
 import { type Found, type Person as PersonRow } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
@@ -114,16 +114,18 @@ export function People() {
       </div>
 
       {!enough ? (
-        following?.length ? (
-          <Section title="Following">
-            <List>
-              <Row icon={<History size={20} />} label="Recently added" href="/following" />
-              {following.map((p) => (
-                <Person key={p.username} person={{ username: p.username, about: p.about, publishedAt: null }} />
-              ))}
-            </List>
-          </Section>
-        ) : null
+        <>
+          <NewFromFollowing />
+          {following?.length ? (
+            <Section title="Following">
+              <List>
+                {following.map((p) => (
+                  <Person key={p.username} person={{ username: p.username, about: p.about, publishedAt: null }} />
+                ))}
+              </List>
+            </Section>
+          ) : null}
+        </>
       ) : error ? (
         <Notice tone="error">Couldn’t search just now. Try again in a minute.</Notice>
       ) : !found ? (
