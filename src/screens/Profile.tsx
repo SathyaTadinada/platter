@@ -1,4 +1,4 @@
-import { Ban, CalendarRange, ChartLine, ExternalLink, Heart, LibraryBig, Link as LinkIcon, Pencil, SquareCheckBig } from 'lucide-react'
+import { Ban, ExternalLink, Link as LinkIcon, Pencil, SquareCheckBig } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -21,14 +21,6 @@ import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
 
 const LABELS: Record<ProfileSection, string> = { collection: 'Collection', wantlist: 'Wantlist', stats: 'Stats', year: 'Your year' }
-// icons from sm up, as on Search, so four tabs still fit a phone
-const icon = (Icon: typeof LibraryBig) => <Icon size={16} aria-hidden className="hidden sm:block" />
-const ICONS: Record<ProfileSection, React.ReactNode> = {
-  collection: icon(LibraryBig),
-  wantlist: icon(Heart),
-  stats: icon(ChartLine),
-  year: icon(CalendarRange),
-}
 
 // Someone's profile, as anyone with the link sees it: only the sections they switched on, and only
 // what their devices published.
@@ -258,10 +250,9 @@ export function Profile({ username }: { username: string }) {
         <Section>
           <Segmented
             label="What to show"
-            options={head.sections.map((s) => ({ value: s, label: LABELS[s], icon: ICONS[s] }))}
+            options={head.sections.map((s) => ({ value: s, label: LABELS[s] }))}
             value={section}
             onChange={setSection}
-            card
           />
         </Section>
       )}
