@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CalendarRange, ChartLine, Globe, Heart, LibraryBig, Link as LinkIcon, Lock, UserRound, Users, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
 import { Avatar, useProfile } from '../../components/Profile'
 import { toast } from '../../components/Toaster'
@@ -8,7 +9,7 @@ import { IconButton, IconLink, Notice, Section, Spinner, Switch } from '../../co
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
 import type { Follows } from '../../lib/cloud'
-import { FollowSheet, type FollowList } from './FollowSheet'
+import { peopleLink, type FollowList } from './Connections'
 
 // What a profile can show. Stats leaves out prices, and Your year what was spent.
 const SHOWS: { id: ProfileSection; label: string; Icon: LucideIcon }[] = [
@@ -72,7 +73,6 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
   const records = useLiveQuery(() => db.collection.count(), [])
   const { shared } = useProfileOpen()
   const [follows, setFollows] = useState<Follows | null>(null)
-  const [people, setPeople] = useState<FollowList | null>(null)
 
   const reload = useCallback(async () => {
     if (cloud.api) setFollows(await cloud.api.follows())
@@ -117,13 +117,9 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
                 {extras.map((x) => (
                   <span key={x.list}>
                     {' · '}
-                    <button
-                      type="button"
-                      onClick={() => setPeople(x.list)}
-                      className="underline underline-offset-2 hover:text-stone-900 dark:hover:text-stone-100"
-                    >
+                    <Link href={peopleLink(x.list)} className="underline underline-offset-2 hover:text-stone-900 dark:hover:text-stone-100">
                       {x.label}
-                    </button>
+                    </Link>
                   </span>
                 ))}
               </p>
@@ -138,14 +134,9 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
                 </>
               )
               return c.list ? (
-                <button
-                  key={c.one}
-                  type="button"
-                  onClick={() => setPeople(c.list!)}
-                  className={`flex flex-col-reverse rounded-xl py-1 ${hover}`}
-                >
+                <Link key={c.one} href={peopleLink(c.list)} className={`flex flex-col-reverse rounded-xl py-1 ${hover}`}>
                   {text}
-                </button>
+                </Link>
               ) : (
                 <div key={c.one} className="flex flex-col-reverse py-1">
                   {text}
@@ -205,24 +196,6 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
           })}
         </div>
       </Section>
-
-      {people && follows && (
-        <FollowSheet
-          list={people}
-          people={follows[people]}
-          onAct={(what, username) =>
-            attempt(async () => {
-              const a = cloud.api!
-              if (what === 'remove') await a.removeFollower(username)
-              else if (what === 'unfollow') await a.unfollow(username)
-              else if (what === 'approve' || what === 'decline') await a.respondFollow(username, what === 'approve')
-              else await a.unblock(username)
-              await reload()
-            })
-          }
-          onClose={() => setPeople(null)}
-        />
-      )}
     </>
   )
 }

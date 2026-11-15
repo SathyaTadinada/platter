@@ -45,6 +45,7 @@ import { Report } from './screens/Report'
 import { YourYear } from './screens/YourYear'
 import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
+import { Connections } from './screens/account/Connections'
 
 type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
 
@@ -150,6 +151,7 @@ function Routes({ error }: { error?: string }) {
               <Route path="/play" component={NowPlaying} />
               <Route path="/listenbrainz" component={ListenBrainz} />
               <Route path="/account" component={Account} />
+              <Route path="/account/people" component={Connections} />
               <Route path="/account/profile">
                 <Redirect to="/account" replace />
               </Route>

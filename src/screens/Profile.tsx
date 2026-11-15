@@ -219,6 +219,7 @@ export function Profile({ username }: { username: string }) {
         head={head}
         about={about}
         who={mine ? who : undefined}
+        mine={mine}
         follow={canFollow ? { state: following, onClick: toggleFollow } : undefined}
       />
       {head.locked && (

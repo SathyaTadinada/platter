@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { Link } from 'wouter'
 import type { Who } from '../../../worker/profile'
 import { BadgePill } from '../../components/BadgePill'
 import { Avatar } from '../../components/Profile'
 import { Button, Section } from '../../components/ui'
 import type { ProfileHead } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
+import { peopleLink, type FollowList } from '../account/Connections'
 import { WHO_LABELS } from '../account/ProfileArea'
 
 // badges shown before the rest fold into +N
@@ -19,19 +21,21 @@ export function ProfileHeader({
   head,
   about,
   who,
+  mine,
   follow,
 }: {
   head: ProfileHead
   about: ProfileAbout
   who?: Who // yours, on your own profile
+  mine?: boolean
   follow?: { state: 'none' | 'pending' | 'accepted'; onClick: () => void }
 }) {
   const [showAll, setShowAll] = useState(false)
   // the record count comes with the collection, so it's there only when that is
-  const counts: { n: number; one: string; many: string }[] = [
+  const counts: { n: number; one: string; many: string; list?: FollowList }[] = [
     ...(about.records !== undefined ? [{ n: about.records, one: 'record', many: 'records' }] : []),
-    { n: head.followers, one: 'follower', many: 'followers' },
-    { n: head.following, one: 'following', many: 'following' },
+    { n: head.followers, one: 'follower', many: 'followers', list: 'followers' },
+    { n: head.following, one: 'following', many: 'following', list: 'following' },
   ]
   const details = [`Joined ${joined(head.memberSince)}`, who && WHO_LABELS[who], head.relation?.followsYou && 'Follows you'].filter(Boolean)
 
@@ -64,13 +68,29 @@ export function ProfileHeader({
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
           <dl className={`grid text-center md:w-64 ${counts.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            {counts.map((c) => (
-              <div key={c.one} className="flex flex-col-reverse">
-                {/* label first for the list's sake, shown under the number */}
-                <dt className="text-sm text-stone-500">{c.n === 1 ? c.one : c.many}</dt>
-                <dd className="text-xl font-semibold tabular-nums">{c.n.toLocaleString()}</dd>
-              </div>
-            ))}
+            {counts.map((c) => {
+              const text = (
+                <>
+                  {/* label first for the list's sake, shown under the number */}
+                  <dt className="text-sm text-stone-500">{c.n === 1 ? c.one : c.many}</dt>
+                  <dd className="text-xl font-semibold tabular-nums">{c.n.toLocaleString()}</dd>
+                </>
+              )
+              // your own followers and following open the lists, which are only yours to see
+              return mine && c.list ? (
+                <Link
+                  key={c.one}
+                  href={peopleLink(c.list)}
+                  className="flex flex-col-reverse rounded-xl py-1 hover:bg-stone-100 dark:hover:bg-stone-800"
+                >
+                  {text}
+                </Link>
+              ) : (
+                <div key={c.one} className="flex flex-col-reverse py-1">
+                  {text}
+                </div>
+              )
+            })}
           </dl>
           {follow && (
             <Button

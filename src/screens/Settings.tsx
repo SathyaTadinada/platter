@@ -175,12 +175,15 @@ export function Settings() {
                   // the same place as the picture in the sidebar, which phones don't have
                   to={yours}
                   chevron={Boolean(yours)}
+                  // says where it goes when that's your profile, otherwise how you're logged in
                   detail={
                     session.expired
                       ? 'Needs logging in again'
-                      : session.kind === 'oauth'
-                        ? 'Logged in with Discogs'
-                        : 'Using a personal access token'
+                      : yours?.startsWith('/u/')
+                        ? 'Your profile'
+                        : session.kind === 'oauth'
+                          ? 'Logged in with Discogs'
+                          : 'Using a personal access token'
                   }
                   className="px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
                 />
