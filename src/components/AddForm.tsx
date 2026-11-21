@@ -13,7 +13,7 @@ import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
 import { Stars } from './Stars'
-import { Button, List, Notice, ToggleChip } from './ui'
+import { Button, List, Notice, Switch } from './ui'
 
 export type Added = { folder: string; instanceId: number; problems: string[] }
 
@@ -82,7 +82,7 @@ export function AddForm({
     }
     setPicked(next)
   }
-  const all = options.length > 1 && options.every((o) => picked.has(o.key))
+  const all = options.length > 0 && options.every((o) => picked.has(o.key))
   const fields = (meta.data?.fields ?? []).filter((f) => !SKIP.includes(keyOf(f.id)!))
 
   useEffect(() => {
@@ -142,38 +142,22 @@ export function AddForm({
   return (
     <div className="space-y-3">
       <List>
-        {/* what can come over from their copy, at the top of the form it fills in */}
+        {/* their details, all at once; any of them can still be changed in its row below */}
         {options.length > 0 && (
-          <li className="px-4 py-3">
-            <div className="mb-2 flex items-baseline justify-between gap-4">
-              <span className="text-sm text-stone-500">From {their!.owner}’s copy</span>
-              {/* picking them all is a shortcut, not one more thing to fill in, so it isn't a chip */}
-              {options.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    pick(
-                      options.map((o) => o.key),
-                      !all,
-                    )
-                  }
-                  className="shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
-                >
-                  {all ? 'Select none' : 'Select all'}
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {options.map((o) => {
-                const on = picked.has(o.key)
-                return (
-                  <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
-                    {o.label}
-                  </ToggleChip>
-                )
-              })}
-            </div>
-          </li>
+          <Row label={`Use ${their!.owner}’s details`}>
+            <span className="flex justify-end px-2">
+              <Switch
+                label={`Use ${their!.owner}’s details`}
+                checked={all}
+                onChange={(on) =>
+                  pick(
+                    options.map((o) => o.key),
+                    on,
+                  )
+                }
+              />
+            </span>
+          </Row>
         )}
         <Row label="Crate">
           <CrateSelect
@@ -187,7 +171,10 @@ export function AddForm({
         </Row>
         {rating > 0 && (
           <Row label="Rating">
-            <Stars value={rating} onChange={setRating} size={20} />
+            {/* lined up with the values in the other rows */}
+            <span className="flex justify-end px-2">
+              <Stars value={rating} onChange={setRating} size={20} />
+            </span>
           </Row>
         )}
         {fields.map((f) => {

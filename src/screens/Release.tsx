@@ -7,6 +7,7 @@ import { AddForm, type Added } from '../components/AddForm'
 import { MarketPrice } from '../components/MarketPrice'
 import { RecordLayout, YourCopies } from '../components/RecordLayout'
 import { ShareButton } from '../components/ShareButton'
+import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
 import { Button, IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
@@ -28,9 +29,10 @@ export function Release({ id }: { id: string }) {
   const [, navigate] = useLocation()
   const search = new URLSearchParams(useSearch())
   const fromScan = search.has('scan')
-  // looking through someone's records isn't the same as adding them, so from a profile the form waits
-  // for a tap
-  const [adding, setAdding] = useState(!search.has('from'))
+  // looking through someone's records isn't the same as adding them, so from a profile the form is
+  // a tap away in a sheet, the same as adding several of theirs
+  const fromProfile = search.has('from')
+  const [adding, setAdding] = useState(false)
 
   const r = release.data
   const own = useLiveQuery(async () => {
@@ -156,17 +158,27 @@ export function Release({ id }: { id: string }) {
           releaseId={releaseId}
           same="This pressing"
         />
-        {adding ? (
-          <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
-            <AddForm release={r} onAdded={added} their={their ?? undefined} />
-          </Section>
-        ) : (
+        {fromProfile ? (
           <Section>
             <Button variant="secondary" className="w-full" onClick={() => setAdding(true)}>
               <Plus size={18} aria-hidden />
               {copyCount ? 'Add another copy' : 'Add to my collection'}
             </Button>
           </Section>
+        ) : (
+          <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
+            <AddForm release={r} onAdded={added} />
+          </Section>
+        )}
+        {adding && (
+          <Sheet
+            title={copyCount ? 'Add another copy' : 'Add to my collection'}
+            width="md"
+            bodyClassName="p-4"
+            onClose={() => setAdding(false)}
+          >
+            <AddForm release={r} onAdded={added} their={their ?? undefined} />
+          </Sheet>
         )}
         <Section title="Market">
           {digital ? (
