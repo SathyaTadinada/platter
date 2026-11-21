@@ -141,39 +141,40 @@ export function AddForm({
 
   return (
     <div className="space-y-3">
-      {options.length > 0 && (
-        <div>
-          {/* picking them all is a shortcut, not one more thing to fill in, so it isn't a chip */}
-          <div className="mb-2 flex items-baseline justify-between gap-4 px-1">
-            <p className="text-sm text-stone-500">Fill in from {their!.owner}’s copy</p>
-            {options.length > 1 && (
-              <button
-                type="button"
-                onClick={() =>
-                  pick(
-                    options.map((o) => o.key),
-                    !all,
-                  )
-                }
-                className="shrink-0 text-sm text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
-              >
-                {all ? 'Select none' : 'Select all'}
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {options.map((o) => {
-              const on = picked.has(o.key)
-              return (
-                <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
-                  {o.label}
-                </ToggleChip>
-              )
-            })}
-          </div>
-        </div>
-      )}
       <List>
+        {/* what can come over from their copy, at the top of the form it fills in */}
+        {options.length > 0 && (
+          <li className="px-4 py-3">
+            <div className="mb-2 flex items-baseline justify-between gap-4">
+              <span className="text-sm text-stone-500">From {their!.owner}’s copy</span>
+              {/* picking them all is a shortcut, not one more thing to fill in, so it isn't a chip */}
+              {options.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    pick(
+                      options.map((o) => o.key),
+                      !all,
+                    )
+                  }
+                  className="shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+                >
+                  {all ? 'Select none' : 'Select all'}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {options.map((o) => {
+                const on = picked.has(o.key)
+                return (
+                  <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
+                    {o.label}
+                  </ToggleChip>
+                )
+              })}
+            </div>
+          </li>
+        )}
         <Row label="Crate">
           <CrateSelect
             value={folderId}

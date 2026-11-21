@@ -13,7 +13,7 @@ import { rememberTitle } from '../lib/nav'
 import { enqueueFromProfile, waitingInBatch } from '../lib/queue'
 import { CloudError, type ProfileHead } from '../lib/cloud'
 import { useCloud } from '../hooks/cloud'
-import { recordFrom, type ProfileAbout, type ProfileItem, type ProfileStats, type ProfileYear } from '../lib/profile'
+import { instanceOf, recordFrom, type ProfileAbout, type ProfileItem, type ProfileStats, type ProfileYear } from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
 import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
@@ -318,7 +318,15 @@ export function Profile({ username }: { username: string }) {
                             {tile}
                           </button>
                         ) : (
-                          <Link href={recordFrom(r, head.username, row.key)} className="group block">
+                          // your own records open as yours, not as someone's copy
+                          <Link
+                            href={
+                              mine && section === 'collection'
+                                ? `/collection/${instanceOf(row.key)}`
+                                : recordFrom(r, head.username, row.key)
+                            }
+                            className="group block"
+                          >
                             {tile}
                           </Link>
                         )}

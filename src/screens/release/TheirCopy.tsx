@@ -3,6 +3,7 @@ import { Row } from '../../components/CopyDetails'
 import { Stars } from '../../components/Stars'
 import { List, Section } from '../../components/ui'
 import { useCloud } from '../../hooks/cloud'
+import { useSession } from '../../hooks/session'
 import { useAsync } from '../../hooks/useAsync'
 import type { CopyDetails, ProfileItem } from '../../lib/profile'
 
@@ -15,13 +16,15 @@ export function useTheirCopy(releaseId: number): { owner: string; copy: CopyDeta
   const owner = params.get('from')
   const key = params.get('copy')
   const { reader } = useCloud()
+  // a link to one of your own copies isn't someone else's copy
+  const me = useSession().session?.username.toLowerCase()
   const found = useAsync(async () => {
-    if (!owner || !key) return null
+    if (!owner || !key || owner.toLowerCase() === me) return null
     const row = await reader.profileItem(owner, key)
     const item = JSON.parse(row.value) as ProfileItem
     // only for this release, so an old link can't put one record's details on another
     return item.id === releaseId && item.copy ? { owner, copy: item.copy } : null
-  }, [owner, key, releaseId])
+  }, [owner, key, releaseId, me])
   return found.data ?? null
 }
 

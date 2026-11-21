@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, Heart } from 'lucide-react'
+import { Check, Heart, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useSearch } from 'wouter'
 import { addWant, getOwnedInstances, getRelease, removeWant } from '../api/discogs/endpoints'
@@ -8,7 +8,7 @@ import { MarketPrice } from '../components/MarketPrice'
 import { RecordLayout, YourCopies } from '../components/RecordLayout'
 import { ShareButton } from '../components/ShareButton'
 import { toast } from '../components/Toaster'
-import { IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { Button, IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -26,7 +26,11 @@ export function Release({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null)
   const their = useTheirCopy(Number(id))
   const [, navigate] = useLocation()
-  const fromScan = new URLSearchParams(useSearch()).has('scan')
+  const search = new URLSearchParams(useSearch())
+  const fromScan = search.has('scan')
+  // looking through someone's records isn't the same as adding them, so from a profile the form waits
+  // for a tap
+  const [adding, setAdding] = useState(!search.has('from'))
 
   const r = release.data
   const own = useLiveQuery(async () => {
@@ -152,9 +156,18 @@ export function Release({ id }: { id: string }) {
           releaseId={releaseId}
           same="This pressing"
         />
-        <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
-          <AddForm release={r} onAdded={added} their={their ?? undefined} />
-        </Section>
+        {adding ? (
+          <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
+            <AddForm release={r} onAdded={added} their={their ?? undefined} />
+          </Section>
+        ) : (
+          <Section>
+            <Button variant="secondary" className="w-full" onClick={() => setAdding(true)}>
+              <Plus size={18} aria-hidden />
+              {copyCount ? 'Add another copy' : 'Add to my collection'}
+            </Button>
+          </Section>
+        )}
         <Section title="Market">
           {digital ? (
             <p className="px-1 text-sm text-stone-500">Digital releases can't be sold on Discogs.</p>

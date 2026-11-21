@@ -374,5 +374,8 @@ export function copyable(copy: CopyDetails | undefined, mine: CollectionField[],
 }
 
 // Where a record from someone's profile opens: the record page, with their copy on it when they show one
+// The copy a record on a profile is, read back from its key, for opening your own one as yours
+export const instanceOf = (key: string) => Number(key.split(':')[1])
+
 export const recordFrom = (item: ProfileItem, owner: string, key: string) =>
   item.copy ? `/release/${item.id}?from=${encodeURIComponent(owner)}&copy=${encodeURIComponent(key)}` : `/release/${item.id}`
