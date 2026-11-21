@@ -6,13 +6,14 @@ import {
   Globe,
   Heart,
   LibraryBig,
+  ListChecks,
   Link as LinkIcon,
   Lock,
   UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
 import { Avatar, useProfile } from '../../components/Profile'
@@ -204,17 +205,22 @@ export function ProfileShows({ onError }: { onError: (e: unknown) => void }) {
         {SHOWS.map(({ id, label, Icon }) => {
           const on = cloud.sections?.[id] === 'public'
           return (
-            <Fragment key={id}>
-              <Row
-                icon={<Icon size={20} />}
-                label={label}
-                trailing={<Switch label={label} checked={on} onChange={(next) => set(id, next)} />}
-              />
-              {id === 'collection' && on && <CopyChoices onError={onError} />}
-            </Fragment>
+            <Row
+              key={id}
+              icon={<Icon size={20} />}
+              label={label}
+              trailing={<Switch label={label} checked={on} onChange={(next) => set(id, next)} />}
+            />
           )
         })}
       </List>
+      {/* what else goes with each record, while the collection is on the profile, set apart the way
+          Synced data is under Sync */}
+      {cloud.sections.collection === 'public' && (
+        <List>
+          <CopyChoices onError={onError} />
+        </List>
+      )}
     </Section>
   )
 }
@@ -236,7 +242,7 @@ function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
   const on = options.filter((o) => cloud.details.includes(o.id)).map((o) => o.name)
   return (
     <ExpandRow
-      inset
+      icon={<ListChecks size={20} />}
       label="Your copy"
       value={
         meta.data
@@ -247,7 +253,7 @@ function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
           : undefined
       }
     >
-      <div className="flex flex-wrap gap-2 pt-3 pr-4 pb-4 pl-12">
+      <div className="flex flex-wrap gap-2 p-4">
         {options.map((o) => {
           const on = cloud.details.includes(o.id)
           return (
