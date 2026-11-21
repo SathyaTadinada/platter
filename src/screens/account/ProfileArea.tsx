@@ -6,6 +6,7 @@ import {
   Globe,
   Heart,
   LibraryBig,
+  ListChecks,
   Link as LinkIcon,
   Lock,
   UserRound,
@@ -17,7 +18,7 @@ import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
 import { Avatar, useProfile } from '../../components/Profile'
 import { toast } from '../../components/Toaster'
-import { IconButton, IconLink, Notice, Section, Spinner, Switch } from '../../components/ui'
+import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Section, Spinner, Switch } from '../../components/ui'
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
@@ -35,7 +36,7 @@ const SHOWS: { id: ProfileSection; label: string; Icon: LucideIcon }[] = [
 export const WHO_LABELS: Record<Who, string> = { private: 'Private', followers: 'Followers', unlisted: 'Link only', public: 'Public' }
 
 const WHO: { id: Who; Icon: LucideIcon; detail: string }[] = [
-  { id: 'private', Icon: Lock, detail: 'Only you' },
+  { id: 'private', Icon: Lock, detail: 'No profile' },
   { id: 'followers', Icon: Users, detail: 'People you approve' },
   { id: 'unlisted', Icon: LinkIcon, detail: 'Anyone with the link' },
   { id: 'public', Icon: Globe, detail: 'Found in Search' },
@@ -48,11 +49,10 @@ const hover = 'hover:bg-stone-50 dark:hover:bg-stone-800/60'
 
 const profileLink = (username: string) => `/u/${encodeURIComponent(username)}`
 
-// Whether your profile can be opened at all: something on it, and not Private or hidden
+// Whether your profile can be opened at all: not Private, and not hidden
 export function useProfileOpen() {
   const cloud = useCloud()
-  const shared = Object.values(cloud.sections ?? {}).some((v) => v === 'public')
-  return { shared, open: shared && cloud.who !== 'private' && !cloud.hidden }
+  return { open: cloud.who !== 'private' && !cloud.hidden }
 }
 
 // For the page's toolbar: your profile, and its link
@@ -84,7 +84,6 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
   const cloud = useCloud()
   const discogs = useProfile()
   const records = useLiveQuery(() => db.collection.count(), [])
-  const { shared } = useProfileOpen()
   const [follows, setFollows] = useState<Follows | null>(null)
 
   const reload = useCallback(async () => {
@@ -105,13 +104,14 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
   // drawn once its settings have come back, so it never shows Public or off by mistake
   if (!cloud.sections) return <Spinner />
 
-  const status = cloud.hidden ? 'Hidden' : shared ? WHO_LABELS[cloud.who] : 'Off'
+  const status = cloud.hidden ? 'Hidden' : WHO_LABELS[cloud.who]
+  const open = cloud.who !== 'private'
   const extras: { list: FollowList; label: string }[] = [
     ...(follows?.requests.length ? [{ list: 'requests' as const, label: `${follows.requests.length} waiting` }] : []),
     ...(follows?.blocked.length ? [{ list: 'blocked' as const, label: `${follows.blocked.length} blocked` }] : []),
   ]
   const counts: { n?: number; one: string; many: string; list?: FollowList }[] = [
-    { n: cloud.sections.collection === 'public' ? records : undefined, one: 'record', many: 'records' },
+    { n: open && cloud.sections.collection === 'public' ? records : undefined, one: 'record', many: 'records' },
     { n: follows?.followers.length, one: 'follower', many: 'followers', list: 'followers' },
     { n: follows?.following.length, one: 'following', many: 'following', list: 'following' },
   ]
@@ -183,35 +183,38 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
           })}
         </div>
       </Section>
-      <Section title="On your profile">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {SHOWS.map(({ id, label, Icon }) => {
-            const on = cloud.sections?.[id] === 'public'
-            return (
-              // icon and switch over the name where tiles are narrow, all on one line where there's room
-              <div key={id} className={`${card} ${plain} grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 p-3 lg:py-2.5`}>
-                <span
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl lg:size-8 ${
-                    on ? 'bg-accent text-accent-fg' : 'bg-stone-100 text-stone-500 dark:bg-stone-800'
-                  }`}
-                >
-                  <Icon size={18} aria-hidden />
-                </span>
-                <span className="col-span-3 row-start-2 truncate font-medium lg:col-span-1 lg:col-start-2 lg:row-start-1">{label}</span>
-                <span className="col-start-3 row-start-1 justify-self-end">
-                  <Switch
-                    label={label}
-                    checked={on}
-                    onChange={(next) => attempt(() => cloud.setSections({ [id]: next ? 'public' : 'off' }))}
-                  />
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </Section>
-      {/* what else goes with each record, while the collection is on the profile */}
-      {cloud.sections.collection === 'public' && <CopyChoices onError={onError} />}
+      {/* Private is no profile at all, so there's nothing to put on it */}
+      {open && (
+        <Section title="On your profile">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {SHOWS.map(({ id, label, Icon }) => {
+              const on = cloud.sections?.[id] === 'public'
+              return (
+                // icon and switch over the name where tiles are narrow, all on one line where there's room
+                <div key={id} className={`${card} ${plain} grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 p-3 xl:py-2.5`}>
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl xl:size-8 ${
+                      on ? 'bg-accent text-accent-fg' : 'bg-stone-100 text-stone-500 dark:bg-stone-800'
+                    }`}
+                  >
+                    <Icon size={18} aria-hidden />
+                  </span>
+                  <span className="col-span-3 row-start-2 truncate font-medium xl:col-span-1 xl:col-start-2 xl:row-start-1">{label}</span>
+                  <span className="col-start-3 row-start-1 justify-self-end">
+                    <Switch
+                      label={label}
+                      checked={on}
+                      onChange={(next) => attempt(() => cloud.setSections({ [id]: next ? 'public' : 'off' }))}
+                    />
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          {/* what else goes with each record, while the collection is on the profile */}
+          {cloud.sections.collection === 'public' && <CopyChoices onError={onError} />}
+        </Section>
+      )}
     </>
   )
 }
@@ -230,29 +233,45 @@ function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
       onError(e)
     }
   }
+  const on = options.filter((o) => cloud.details.includes(o.id)).map((o) => o.name)
   return (
-    <Section title="Your copy">
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => {
-          const on = cloud.details.includes(o.id)
-          return (
-            <button
-              key={o.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => toggle(o.id)}
-              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
-                on
-                  ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
-                  : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
-              }`}
-            >
-              {on && <Check size={14} aria-hidden />}
-              {o.name}
-            </button>
-          )
-        })}
-      </div>
-    </Section>
+    <div className="mt-2">
+      <List>
+        <ExpandRow
+          icon={<ListChecks size={20} />}
+          label="Your copy"
+          value={
+            meta.data
+              ? howMany(
+                  on,
+                  options.map((o) => o.name),
+                )
+              : undefined
+          }
+        >
+          <div className="flex flex-wrap gap-2 p-4">
+            {options.map((o) => {
+              const on = cloud.details.includes(o.id)
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggle(o.id)}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
+                    on
+                      ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+                      : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  {on && <Check size={14} aria-hidden />}
+                  {o.name}
+                </button>
+              )
+            })}
+          </div>
+        </ExpandRow>
+      </List>
+    </div>
   )
 }

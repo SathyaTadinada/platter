@@ -31,6 +31,7 @@ import { Account } from './screens/Account'
 import { Admin } from './screens/Admin'
 import { Following } from './screens/Following'
 import { Profile } from './screens/Profile'
+import { ProfilePeople } from './screens/profile/People'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -111,6 +112,15 @@ function Routes({ error }: { error?: string }) {
       <Switch>
         <Route path="/about" component={About} />
         {/* a profile is for anyone with the link, signed in or not */}
+        <Route path="/u/:username/people">
+          {(p) => (
+            <CloudProvider>
+              <Visitor>
+                <ProfilePeople username={p.username!} />
+              </Visitor>
+            </CloudProvider>
+          )}
+        </Route>
         <Route path="/u/:username">
           {(p) => (
             <CloudProvider>
@@ -160,6 +170,7 @@ function Routes({ error }: { error?: string }) {
               </Route>
               <Route path="/admin" component={Admin} />
               <Route path="/following" component={Following} />
+              <Route path="/u/:username/people">{(p) => <ProfilePeople username={p.username!} />}</Route>
               <Route path="/u/:username">{(p) => <Profile username={p.username!} />}</Route>
               <Route path="/value" component={Stats} />
               <Route path="/about" component={About} />

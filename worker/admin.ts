@@ -16,8 +16,8 @@ export type Member = {
   password: boolean
   admin: boolean
   badges: string[]
-  // none when nothing is switched on, so there's no profile to see whoever it's for
-  profile: 'none' | Who
+  // private when they never set one up
+  profile: Who
   hidden: boolean
 }
 
@@ -32,7 +32,7 @@ export async function members(db: DB): Promise<Member[]> {
          (SELECT COUNT(*) FROM devices d WHERE d.account = a.id) AS devices,
          (SELECT MAX(last_seen_at) FROM devices d WHERE d.account = a.id) AS last_seen_at,
          (SELECT COUNT(*) FROM passkeys p WHERE p.account = a.id) AS passkeys,
-         pr.sections, pr.visibility, pr.hidden
+         pr.visibility, pr.hidden
        FROM accounts a LEFT JOIN profiles pr ON pr.account = a.id ORDER BY a.created_at`,
     )
     .all<{
@@ -46,7 +46,6 @@ export async function members(db: DB): Promise<Member[]> {
       devices: number
       last_seen_at: number | null
       passkeys: number
-      sections: string | null
       visibility: Who | null
       hidden: number | null
     }>()
@@ -61,17 +60,9 @@ export async function members(db: DB): Promise<Member[]> {
     password: r.password === 1,
     admin: r.admin === 1,
     badges: JSON.parse(r.badges),
-    profile: r.sections && r.visibility && sharesSomething(r.sections) ? r.visibility : 'none',
+    profile: r.visibility ?? 'private',
     hidden: r.hidden === 1,
   }))
-}
-
-const sharesSomething = (sections: string) => {
-  try {
-    return Object.values(JSON.parse(sections) as Record<string, string>).includes('public')
-  } catch {
-    return false
-  }
 }
 
 // Takes a profile down whoever it's for, until an admin puts it back. Its owner keeps what they
@@ -81,7 +72,7 @@ export async function setHidden(db: DB, member: unknown, on: unknown) {
   const id = parseMember(member)
   await db
     .prepare(
-      `INSERT INTO profiles (account, hidden, created_at) VALUES (?1, ?2, ?3)
+      `INSERT INTO profiles (account, hidden, visibility, created_at) VALUES (?1, ?2, 'private', ?3)
        ON CONFLICT (account) DO UPDATE SET hidden = excluded.hidden`,
     )
     .bind(id, on ? 1 : 0, Date.now())

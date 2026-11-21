@@ -254,13 +254,15 @@ async function send(api: Publisher, rows: Omit<ProfileRow, 'updatedAt'>[], at: n
   }
 }
 
-// Sends what's changed in the sections that are on. Returns the sections it sent.
+// Sends what's changed in the sections that are on, and their picture while there's a profile to
+// show it on (open: it isn't Private). Returns what it sent.
 export async function publishProfile(
   api: Publisher,
   sections: Sections,
   about: ProfileAbout,
   at = Date.now(),
   choice?: CopyChoice,
+  open = false,
 ): Promise<(Section | 'about')[]> {
   const sent = ((await db.settings.get(SENT))?.value as Sent | undefined) ?? {}
   const next: Sent = { ...sent }
@@ -307,8 +309,7 @@ export async function publishProfile(
   await pass('stats', () => statsRows(items, plays))
   await pass('year', () => yearRows(items, plays))
 
-  // their Discogs picture, while any section is on
-  const anything = Object.values(sections).some((v) => v === 'public')
+  const anything = open || Object.values(sections).some((v) => v === 'public')
   const value = JSON.stringify(about)
   const mark = await fingerprint([{ key: 'about', value }])
   if (!anything) delete next.about

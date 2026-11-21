@@ -4,7 +4,7 @@ import {
   Image,
   KeyRound,
   Layers,
-  MonitorSmartphone,
+  Database,
   Plus,
   Radio,
   RefreshCw,
@@ -19,7 +19,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PairingCodeDisplay } from '../components/PairingCode'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
-import { Button, Card, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
+import { Button, Card, ExpandRow, howMany, List, Notice, Row, Screen, Section, Switch } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import { addPasskey, passkeysHere, type AccountInfo, type DeviceInfo, type PasskeyInfo } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
@@ -221,20 +221,31 @@ function SignedIn() {
               </li>
             </List>
             <List>
-              {CATEGORIES.map((c) => (
-                <Row
-                  key={c.id}
-                  icon={c.icon}
-                  label={c.label}
-                  trailing={
-                    <Switch
+              <ExpandRow
+                icon={<Database size={20} />}
+                label="Synced data"
+                value={howMany(
+                  CATEGORIES.filter((c) => !cloud.off.includes(c.id)).map((c) => c.label),
+                  CATEGORIES.map((c) => c.label),
+                )}
+              >
+                <ul className="divide-y divide-stone-200 dark:divide-stone-800">
+                  {CATEGORIES.map((c) => (
+                    <Row
+                      key={c.id}
+                      icon={c.icon}
                       label={c.label}
-                      checked={!cloud.off.includes(c.id)}
-                      onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
+                      trailing={
+                        <Switch
+                          label={c.label}
+                          checked={!cloud.off.includes(c.id)}
+                          onChange={(on) => (on ? setCategory(c.id, true) : setStopping(c))}
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
+                  ))}
+                </ul>
+              </ExpandRow>
             </List>
             {(error ?? cloud.error) && <Notice tone="error">{error ?? cloud.error}</Notice>}
           </Section>
@@ -266,27 +277,22 @@ function SignedIn() {
           )}
           <Section title="Sign-in">
             <List>
-              <Row icon={<MonitorSmartphone size={20} />} label="Add a device" onClick={newCode} />
               <Row
                 icon={<KeyRound size={20} />}
                 label={account?.password === false ? 'Set a password' : 'Change password'}
                 onClick={() => setChanging(true)}
               />
+              {passkeys?.map((p) => (
+                <Row
+                  key={p.id}
+                  icon={<Fingerprint size={20} />}
+                  label={p.name}
+                  detail={p.lastUsedAt ? `Last used ${timeAgo(p.lastUsedAt)}` : `Added ${timeAgo(p.createdAt)}`}
+                  onClick={() => setEditing(p)}
+                />
+              ))}
+              {canAddPasskey && <Row icon={<Plus size={20} />} label="Add a passkey" onClick={newPasskey} />}
             </List>
-            {(canAddPasskey || !!passkeys?.length) && (
-              <List>
-                {passkeys?.map((p) => (
-                  <Row
-                    key={p.id}
-                    icon={<Fingerprint size={20} />}
-                    label={p.name}
-                    detail={p.lastUsedAt ? `Last used ${timeAgo(p.lastUsedAt)}` : `Added ${timeAgo(p.createdAt)}`}
-                    onClick={() => setEditing(p)}
-                  />
-                ))}
-                {canAddPasskey && <Row icon={<Plus size={20} />} label="Add a passkey" onClick={newPasskey} />}
-              </List>
-            )}
           </Section>
           {devices && (
             <Section title="Devices">
@@ -307,6 +313,7 @@ function SignedIn() {
                     onSignOut={() => setSigningOut(d)}
                   />
                 ))}
+                <Row icon={<Plus size={20} />} label="Add a device" onClick={newCode} />
               </List>
             </Section>
           )}

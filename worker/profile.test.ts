@@ -6,6 +6,7 @@ import {
   head,
   item,
   parseRows,
+  people,
   publish,
   rows,
   search,
@@ -18,6 +19,7 @@ import {
   type ProfileRow,
 } from './profile'
 import { members, setHidden } from './admin'
+import { block, follow } from './follow'
 import { deviceAccount, forget, push } from './sync'
 
 const ME = { id: 42, username: 'Tadinada' }
@@ -38,6 +40,7 @@ const record = (id: number, title: string, updatedAt = 1000) => row('item', Stri
 
 async function shared(db: ReturnType<typeof testDB>, who = ME) {
   const acc = await account(db, who)
+  await setWho(db, acc.id, 'public')
   await setSections(db, acc.id, { collection: 'public' })
   await publish(db, acc.id, [record(1, 'Rumours'), record(2, 'Kind of Blue')])
   return acc
@@ -56,12 +59,26 @@ describe('what a profile shows', () => {
     await expect(setDetails(db, id, 'rating')).rejects.toMatchObject({ status: 400 })
   })
 
-  it('shows nothing until a section is switched on', async () => {
+  it('starts private, with every section off', async () => {
     const db = testDB()
     const { id } = await account(db)
     expect(await head(db, 'tadinada')).toBeNull()
-    expect((await settings(db, id)).sections).toEqual({ collection: 'off', wantlist: 'off', stats: 'off', year: 'off' })
+    expect(await settings(db, id)).toMatchObject({
+      who: 'private',
+      sections: { collection: 'off', wantlist: 'off', stats: 'off', year: 'off' },
+    })
+    // picking sections first doesn't open it
+    await setSections(db, id, { collection: 'public' })
+    await setDetails(db, id, ['rating'])
+    expect(await head(db, 'tadinada')).toBeNull()
+    expect((await settings(db, id)).who).toBe('private')
+  })
 
+  it('shows the name and picture once it is open, with whichever sections are on under them', async () => {
+    const db = testDB()
+    const { id } = await account(db)
+    await setWho(db, id, 'public')
+    expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada', sections: [] })
     await setSections(db, id, { collection: 'public' })
     expect(await head(db, 'tadinada')).toMatchObject({ username: 'tadinada', sections: ['collection'] })
   })
@@ -76,6 +93,7 @@ describe('what a profile shows', () => {
   it("isn't served for an account the server hasn't tied to its Discogs user", async () => {
     const db = testDB()
     await db.prepare("INSERT INTO accounts (id, name, proof, created_at) VALUES ('old', 'tadinada', 'x', 0)").run()
+    await setWho(db, 'old', 'public')
     await setSections(db, 'old', { collection: 'public' })
     expect(await head(db, 'tadinada')).toBeNull()
     await expect(rows(db, 'tadinada', 'collection', undefined)).rejects.toMatchObject({ status: 404 })
@@ -188,11 +206,11 @@ describe('publishing', () => {
     expect(JSON.parse((await head(db, 'tadinada'))!.about!).avatar).toBe('a.jpg')
   })
 
-  it("sends their Discogs picture while anything is shared, and not once it isn't", async () => {
+  it('sends their Discogs picture once there is a profile, even with every section off', async () => {
     const db = testDB()
     const { id } = await account(db)
     expect(await publish(db, id, [row('about', 'about', { avatar: 'a.jpg' })])).toEqual({ saved: 0 })
-    await setSections(db, id, { collection: 'public' })
+    await setWho(db, id, 'unlisted')
     expect(await publish(db, id, [row('about', 'about', { avatar: 'a.jpg' })])).toEqual({ saved: 1 })
   })
 
@@ -225,13 +243,22 @@ describe('finding someone', () => {
     expect(await names(db, 'nobody')).toEqual([])
   })
 
-  it('waits for more than a letter, and gives nothing for an empty search', async () => {
+  it('finds from the first letter, and gives nothing for an empty search', async () => {
     const db = testDB()
     await shared(db)
     expect(await names(db)).toEqual([])
-    expect(await names(db, '')).toEqual([])
-    expect(await names(db, 't')).toEqual([])
-    expect(await names(db, 'ta')).toEqual(['tadinada'])
+    expect(await names(db, '  ')).toEqual([])
+    expect(await names(db, 't')).toEqual(['tadinada'])
+  })
+
+  it('says whether a signed-in viewer follows each one', async () => {
+    const db = testDB()
+    await shared(db)
+    const you = await shared(db, YOU)
+    expect((await search(db, 'tad')).found[0].following).toBeUndefined()
+    expect((await search(db, 'tad', you.id)).found[0].following).toBe('none')
+    await follow(db, you.id, 'tadinada')
+    expect((await search(db, 'tad', you.id)).found[0].following).toBe('accepted')
   })
 
   it('leaves out an unlisted profile, which still works by link', async () => {
@@ -244,13 +271,17 @@ describe('finding someone', () => {
     expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toHaveLength(2)
   })
 
-  it('leaves out profiles with nothing shared and accounts not tied to Discogs', async () => {
+  it('leaves out private profiles and accounts not tied to Discogs', async () => {
     const db = testDB()
     const { id } = await shared(db)
     await db.prepare("INSERT INTO accounts (id, name, proof, discogs_id, created_at) VALUES ('old', 'tadpole', 'x', NULL, 0)").run()
+    await setWho(db, 'old', 'public')
     await setSections(db, 'old', { collection: 'public' })
     expect(await names(db, 'tad')).toEqual(['tadinada'])
+    // every section off still leaves the profile itself
     await setSections(db, id, { collection: 'off' })
+    expect(await names(db, 'tad')).toEqual(['tadinada'])
+    await setWho(db, id, 'private')
     expect(await names(db, 'tad')).toEqual([])
   })
 
@@ -327,7 +358,7 @@ describe('hidden by an admin', () => {
     await setHidden(db, id, true)
     expect((await members(db)).map((m) => [m.name, m.profile, m.hidden])).toEqual([
       ['tadinada', 'unlisted', true],
-      ['someone', 'none', false],
+      ['someone', 'private', false],
     ])
   })
 })
@@ -337,7 +368,7 @@ describe('switching off and deleting', () => {
     const db = testDB()
     const { id } = await shared(db)
     await setSections(db, id, { collection: 'off' })
-    expect(await head(db, 'tadinada')).toBeNull()
+    expect((await head(db, 'tadinada'))?.sections).toEqual([])
     await setSections(db, id, { collection: 'public' })
     expect((await rows(db, 'tadinada', 'collection', undefined)).rows).toEqual([])
   })
@@ -361,5 +392,47 @@ describe('switching off and deleting', () => {
     expect(seen.map((r) => r.key)).toEqual(['1', '2'])
     expect(JSON.stringify(seen)).not.toContain('secret')
     expect((await rows(db, 'someone', 'collection', undefined)).rows.map((r) => r.key)).toEqual(['1', '2', '5'])
+  })
+})
+
+describe('who follows them', () => {
+  const THIRD = { id: 9, username: 'third' }
+  const names = (r: { people: { username: string }[] }) => r.people.map((p) => p.username)
+
+  it('names the people who can be found in Search, and counts the rest', async () => {
+    const db = testDB()
+    await shared(db)
+    const you = await shared(db, YOU)
+    const third = await shared(db, THIRD)
+    await follow(db, you.id, 'tadinada', 1000)
+    await follow(db, third.id, 'tadinada', 2000)
+    expect(names(await people(db, 'tadinada', 'followers'))).toEqual(['third', 'someone'])
+
+    // Link only and Private people chose not to be found, so they're only counted
+    await setWho(db, third.id, 'unlisted')
+    expect(await people(db, 'tadinada', 'followers')).toMatchObject({ people: [{ username: 'someone' }], more: 1 })
+    // except to themselves
+    expect(names(await people(db, 'tadinada', 'followers', third.id))).toEqual(['third', 'someone'])
+
+    expect(names(await people(db, 'someone', 'following'))).toEqual(['tadinada'])
+    await expect(people(db, 'tadinada', 'everyone')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("leaves out anyone the viewer blocked, and follows the profile's own rules", async () => {
+    const db = testDB()
+    const me = await shared(db)
+    const you = await shared(db, YOU)
+    const third = await shared(db, THIRD)
+    await follow(db, you.id, 'tadinada')
+    await follow(db, third.id, 'tadinada')
+    await block(db, third.id, 'someone')
+    expect(await people(db, 'tadinada', 'followers', third.id)).toMatchObject({ people: [{ username: 'third' }], more: 1 })
+
+    // a Followers profile's lists are for its approved followers
+    await setWho(db, me.id, 'followers')
+    await expect(people(db, 'tadinada', 'followers')).rejects.toMatchObject({ status: 404 })
+    expect(names(await people(db, 'tadinada', 'followers', you.id))).toEqual(['someone'])
+    await setWho(db, me.id, 'private')
+    await expect(people(db, 'tadinada', 'followers', you.id)).rejects.toMatchObject({ status: 404 })
   })
 })

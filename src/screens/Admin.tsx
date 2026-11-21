@@ -1,4 +1,4 @@
-import { Award, Eye, EyeOff, KeyRound, Search, Trash2, X } from 'lucide-react'
+import { Award, Eye, EyeOff, KeyRound, Search, Trash2, UserRound, X } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, Redirect } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -37,32 +37,31 @@ function SignIn({ m, wrap = true }: { m: Member; wrap?: boolean }) {
 }
 
 const WHO: Record<Member['profile'], string> = {
-  none: 'None',
   private: 'Private',
   followers: 'Followers',
   unlisted: 'Link only',
   public: 'Public',
 }
 
+// Whether there's a profile to open: not Private, not hidden, and tied to Discogs (profiles go by
+// Discogs name)
+const viewable = (m: Member) => !m.hidden && m.profile !== 'private' && m.discogsId !== null
+
 function ProfileState({ m }: { m: Member }) {
-  if (m.profile === 'none' && !m.hidden) return <span className="text-sm text-stone-500">None</span>
-  return (
-    <span className="flex flex-wrap gap-1">
-      {m.hidden ? (
-        <Chip tone="warn">Hidden</Chip>
-      ) : (
-        <Link href={`/u/${encodeURIComponent(m.name)}`} className="rounded-md hover:opacity-80">
-          <Chip>{WHO[m.profile]}</Chip>
-        </Link>
-      )}
-    </span>
-  )
+  return m.hidden ? <Chip tone="warn">Hidden</Chip> : <Chip>{WHO[m.profile]}</Chip>
 }
 
-function Name({ m }: { m: Member }) {
+// link: the name opens their profile, where there's one (not inside a row that's already a button)
+function Name({ m, link }: { m: Member; link?: boolean }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <span className="truncate font-medium">{m.name}</span>
+      {link && viewable(m) ? (
+        <Link href={`/u/${encodeURIComponent(m.name)}`} className="truncate font-medium hover:underline">
+          {m.name}
+        </Link>
+      ) : (
+        <span className="truncate font-medium">{m.name}</span>
+      )}
       {m.admin && <Chip>Admin</Chip>}
     </span>
   )
@@ -116,7 +115,7 @@ export function Admin() {
     attempt(() => api.setBadge(m.id, badge, on))
   }
   const choices = (m: Member) => [
-    ...(m.profile === 'none' && !m.hidden
+    ...(m.profile === 'private' && !m.hidden
       ? []
       : [
           {
@@ -215,6 +214,9 @@ export function Admin() {
               </dd>
             </dl>
             <List>
+              {viewable(opened) && (
+                <Row icon={<UserRound size={20} />} label="View profile" href={`/u/${encodeURIComponent(opened.name)}`} />
+              )}
               {choices(opened).map((c) => (
                 <Row key={c.label} icon={c.icon} label={c.label} danger={c.danger} onClick={c.onSelect} />
               ))}
@@ -276,7 +278,7 @@ export function Admin() {
                 {shown.map((m) => (
                   <tr key={m.id}>
                     <td className="max-w-56 py-2.5 pr-3 pl-4">
-                      <Name m={m} />
+                      <Name m={m} link />
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-stone-600 dark:text-stone-400">{joined(m.createdAt)}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-stone-600 dark:text-stone-400">{lastSeen(m)}</td>
@@ -306,7 +308,7 @@ export function Admin() {
                     key={m.id}
                     label={<Name m={m} />}
                     detail={`Last seen ${lastSeen(m).toLowerCase()} · ${plural(m.devices, 'device')}`}
-                    value={m.hidden ? 'Hidden' : m.profile === 'none' ? undefined : WHO[m.profile]}
+                    value={m.hidden ? 'Hidden' : WHO[m.profile]}
                     onClick={() => setOpen(m.id)}
                   />
                 ))}

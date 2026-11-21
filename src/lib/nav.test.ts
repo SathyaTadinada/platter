@@ -178,6 +178,10 @@ describe('home tabs', () => {
     expect(nav.sectionFor('/collection/3')).toBe('stats')
     go(nav, '/u/someone')
     expect(nav.sectionFor('/u/someone')).toBe('stats')
+    // and who follows them, with it
+    go(nav, '/u/someone/people')
+    expect(nav.sectionFor('/u/someone/people')).toBe('stats')
+    await back(nav)
     await back(nav)
     await back(nav)
     expect(here()).toBe('/stats')

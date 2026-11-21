@@ -1,7 +1,7 @@
 import { backLabel, backTarget, rememberTitle, subscribeNav } from '../lib/nav'
-import { Check, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useState, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'wouter'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'danger'
@@ -246,6 +246,54 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
       )}
     </li>
   )
+}
+
+// A row in a List that opens what's behind it in place: settings that are set once and then left,
+// summed up in its value while closed
+export function ExpandRow({
+  icon,
+  label,
+  value,
+  children,
+}: {
+  icon?: ReactNode
+  label: ReactNode
+  value?: ReactNode
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((o) => !o)}
+        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left select-none hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+      >
+        {icon && <span className="shrink-0 text-stone-500">{icon}</span>}
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {value && <span className="min-w-0 truncate text-sm text-stone-500">{value}</span>}
+        <ChevronDown size={18} aria-hidden className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div id={id} className="border-t border-stone-200 dark:border-stone-800">
+          {children}
+        </div>
+      )}
+    </li>
+  )
+}
+
+// What a set of switches comes to, for a closed ExpandRow: All, None, the one that's off or on,
+// or how many
+export function howMany(on: string[], all: string[]): string {
+  if (!on.length) return 'None'
+  if (on.length === all.length) return 'All'
+  if (on.length === 1) return on[0]
+  if (on.length === all.length - 1) return `All but ${all.find((x) => !on.includes(x))}`
+  return `${on.length} of ${all.length}`
 }
 
 // A row of mutually exclusive buttons, like the Scan modes or a chart's grouping.

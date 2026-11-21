@@ -103,8 +103,9 @@ export function Search() {
   return (
     <Screen title="Search" width="wide" toolbar={kinds}>
       <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-12">
-        <div>
-          {kind === 'people' && <People />}
+        {/* People fills both columns itself */}
+        {kind === 'people' && <People />}
+        <div className={kind === 'people' ? 'hidden' : ''}>
           {kind === 'music' && (
             <>
               <SearchBy mode={mode} onChange={setMode} />

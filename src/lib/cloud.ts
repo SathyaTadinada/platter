@@ -132,14 +132,15 @@ export type Member = {
   password: boolean
   admin: boolean
   badges: string[]
-  profile: 'none' | Who
+  profile: Who
   hidden: boolean
 }
 type Challenge<T> = { id: string; options: T }
 export type { Badge, BadgeLook } from '../../worker/badges'
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
-export type Found = { username: string; about: string | null; publishedAt: number | null }
+// following: whether you follow them, when you're signed in
+export type Found = { username: string; about: string | null; publishedAt: number | null; following?: 'none' | 'pending' | 'accepted' }
 export type Relation = { following: 'none' | 'pending' | 'accepted'; followsYou: boolean; blocked: boolean }
 export type ProfileHead = {
   locked: boolean // a Followers profile the viewer isn't approved for
@@ -153,7 +154,7 @@ export type ProfileHead = {
   followers: number
   following: number
 }
-export type Person = { username: string; about: string | null; since: number }
+export type Person = { username: string; about: string | null; since: number; status?: 'pending' | 'accepted' }
 export type Follows = { followers: Person[]; following: Person[]; requests: Person[]; blocked: Person[] }
 type Page = { rows: { key: string; value: string; updatedAt: number }[]; more: boolean }
 
@@ -164,6 +165,8 @@ export type ProfileReader = {
   profileRows(username: string, section: Section, after?: string): Promise<Page>
   profileItem(username: string, key: string): Promise<{ key: string; value: string }>
   searchProfiles(q: string): Promise<{ found: Found[] }>
+  // more: how many aren't named, since their own profiles can't be found
+  profilePeople(username: string, list: 'followers' | 'following'): Promise<{ people: Person[]; more: number }>
 }
 
 // Getting in, before there's a device key
@@ -194,6 +197,8 @@ export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
       after,
     }),
   profileItem: (username: string, key: string) => call<{ key: string; value: string }>(fetchFn, 'profile-item', { username, key }),
+  profilePeople: (username: string, list: 'followers' | 'following') =>
+    call<{ people: Person[]; more: number }>(fetchFn, 'profile-people', { username, list }),
   passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
     call<{ device: string; name: string }>(fetchFn, 'passkey-signin', {
       discogsId,
@@ -279,6 +284,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
     profileItem: (username, key) => c('profile-item', { username, key }),
     searchProfiles: (q) => c('profile-search', { q }),
+    profilePeople: (username, list) => c('profile-people', { username, list }),
     follow: (username) => c('follow', { username }),
     unfollow: (username) => c('unfollow', { username }),
     respondFollow: (username, approve) => c('follow-respond', { username, approve }),

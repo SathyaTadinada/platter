@@ -9,7 +9,8 @@ import { SyncError, type DB } from './sync'
 
 export type Status = 'pending' | 'accepted'
 export type Relation = { following: 'none' | Status; followsYou: boolean; blocked: boolean }
-export type Person = { username: string; about: string | null; since: number }
+// status: for the people you follow, whether they've approved it yet
+export type Person = { username: string; about: string | null; since: number; status?: Status }
 
 const parseName = (x: unknown) => {
   if (typeof x !== 'string' || !x.trim() || x.length > 100) throw new SyncError(400, 'Bad username')
@@ -146,7 +147,7 @@ export async function lists(
       .then((r) => r.results)
   const [followers, following, requests, blocked] = await Promise.all([
     q("FROM follows x JOIN accounts a ON a.id = x.follower WHERE x.followee = ?1 AND x.status = 'accepted'"),
-    q('FROM follows x JOIN accounts a ON a.id = x.followee WHERE x.follower = ?1'),
+    q(', x.status FROM follows x JOIN accounts a ON a.id = x.followee WHERE x.follower = ?1'),
     q("FROM follows x JOIN accounts a ON a.id = x.follower WHERE x.followee = ?1 AND x.status = 'pending'"),
     q('FROM blocks x JOIN accounts a ON a.id = x.blocked WHERE x.blocker = ?1'),
   ])

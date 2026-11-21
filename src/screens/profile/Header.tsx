@@ -6,7 +6,8 @@ import { Avatar } from '../../components/Profile'
 import { Button, Section } from '../../components/ui'
 import type { ProfileHead } from '../../lib/cloud'
 import type { ProfileAbout } from '../../lib/profile'
-import { peopleLink, type FollowList } from '../account/Connections'
+import { peopleLink } from '../account/Connections'
+import { theirPeople } from './People'
 import { WHO_LABELS } from '../account/ProfileArea'
 
 // badges shown before the rest fold into +N
@@ -32,7 +33,7 @@ export function ProfileHeader({
 }) {
   const [showAll, setShowAll] = useState(false)
   // the record count comes with the collection, so it's there only when that is
-  const counts: { n: number; one: string; many: string; list?: FollowList }[] = [
+  const counts: { n: number; one: string; many: string; list?: 'followers' | 'following' }[] = [
     ...(about.records !== undefined ? [{ n: about.records, one: 'record', many: 'records' }] : []),
     { n: head.followers, one: 'follower', many: 'followers', list: 'followers' },
     { n: head.following, one: 'following', many: 'following', list: 'following' },
@@ -76,11 +77,11 @@ export function ProfileHeader({
                   <dd className="text-xl font-semibold tabular-nums">{c.n.toLocaleString()}</dd>
                 </>
               )
-              // your own followers and following open the lists, which are only yours to see
-              return mine && c.list ? (
+              // your own open the full lists on your account, someone else's who they show
+              return c.list && (mine || !head.locked) ? (
                 <Link
                   key={c.one}
-                  href={peopleLink(c.list)}
+                  href={mine ? peopleLink(c.list) : theirPeople(head.username, c.list)}
                   className="flex flex-col-reverse rounded-xl py-1 hover:bg-stone-100 dark:hover:bg-stone-800"
                 >
                   {text}

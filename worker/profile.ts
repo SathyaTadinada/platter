@@ -7,7 +7,7 @@
 
 import { accountById, type Account } from './account'
 import { looksOf, type BadgeLook } from './badges'
-import { approveWaiting, blockedEither, relation, statusOf, type Relation } from './follow'
+import { approveWaiting, blockedEither, relation, statusOf, type Person, type Relation, type Status } from './follow'
 import { MAX_PUSH, SyncError, type DB } from './sync'
 
 export const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
@@ -18,8 +18,9 @@ export type Section = (typeof SECTIONS)[number]
 export const VISIBILITY = ['off', 'public'] as const
 export type Visibility = (typeof VISIBILITY)[number]
 
-// private: nobody, and the link doesn't work. unlisted: anyone with the link. public: that, and
-// they turn up when people search.
+// private: there's no profile, and the link doesn't work. unlisted: anyone with the link. public:
+// that, and they turn up when people search. Anything but private shows at least the name and
+// picture, with whichever sections are on under them. A new account starts private.
 export const WHO = ['private', 'followers', 'unlisted', 'public'] as const
 export type Who = (typeof WHO)[number]
 
@@ -91,7 +92,7 @@ export async function settings(
   return {
     sections: Object.fromEntries(SECTIONS.map((s) => [s, saved[s] ?? 'off'])) as Sections,
     publishedAt: row?.published_at ?? null,
-    who: row?.visibility ?? 'public',
+    who: row?.visibility ?? 'private',
     hidden: row?.hidden === 1,
     details: readDetails(row?.details),
   }
@@ -121,7 +122,7 @@ export async function setDetails(db: DB, account: string, input: unknown, now = 
   const details = parseDetails(input)
   await db
     .prepare(
-      `INSERT INTO profiles (account, details, created_at) VALUES (?1, ?2, ?3)
+      `INSERT INTO profiles (account, details, visibility, created_at) VALUES (?1, ?2, 'private', ?3)
        ON CONFLICT (account) DO UPDATE SET details = excluded.details`,
     )
     .bind(account, JSON.stringify(details), now)
@@ -152,7 +153,7 @@ export async function setSections(db: DB, account: string, input: unknown, now =
   await db.batch([
     db
       .prepare(
-        `INSERT INTO profiles (account, sections, created_at) VALUES (?1, ?2, ?3)
+        `INSERT INTO profiles (account, sections, visibility, created_at) VALUES (?1, ?2, 'private', ?3)
          ON CONFLICT (account) DO UPDATE SET sections = excluded.sections`,
       )
       .bind(account, JSON.stringify(sections), now),
@@ -184,8 +185,9 @@ export function parseRows(x: unknown): ProfileRow[] {
 // Rows for a section that's off are dropped rather than refused: a device that hasn't heard about
 // the change yet shouldn't have its whole push turned away.
 export async function publish(db: DB, account: string, rows: ProfileRow[], now = Date.now()): Promise<{ saved: number }> {
-  const { sections } = await settings(db, account)
-  const anything = SECTIONS.some((x) => sections[x] === 'public')
+  const { sections, who } = await settings(db, account)
+  // their picture goes with the profile itself, which has one even with every section off
+  const anything = who !== 'private' || SECTIONS.some((x) => sections[x] === 'public')
   const on = (kind: ProfileKind) => (kind === ABOUT ? anything : sections[SECTION_OF[kind]] === 'public')
   const wanted = rows.filter((r) => on(r.kind))
   if (!wanted.length) return { saved: 0 }
@@ -267,47 +269,46 @@ const pictureOnly = (about: string | null) => {
 
 // ---- finding someone ----
 
-export type Found = { username: string; about: string | null; publishedAt: number | null }
+export type Found = { username: string; about: string | null; publishedAt: number | null; following?: 'none' | Status }
 
 export const MAX_FOUND = 20
-const MIN_SEARCH = 2 // a letter or two finds half of everyone, so it waits for more
-
 // Part of a username finds them, among Public profiles and Followers ones (so people can ask to
-// follow), with something on them. Anyone the viewer has blocked, or who blocked them, isn't found.
+// follow). Anyone the viewer has blocked, or who blocked them, isn't found. A signed-in viewer also
+// gets whether they follow each one.
 export async function search(db: DB, query: unknown, viewer: string | null = null): Promise<{ found: Found[] }> {
   if (query !== undefined && typeof query !== 'string') throw new SyncError(400, 'Bad search')
   const q = (query ?? '').trim().toLowerCase().replace(/^@/, '').slice(0, 100)
-  if (q.length < MIN_SEARCH) return { found: [] }
+  if (!q) return { found: [] }
   const like = `%${q.replace(/[%_\\]/g, '\\$&')}%`
   const { results } = await db
     .prepare(
-      `SELECT a.name, p.sections, p.published_at, p.visibility,
+      `SELECT a.name, p.published_at, p.visibility, f.status AS following,
          (SELECT value FROM profile_rows r WHERE r.account = a.id AND r.kind = 'about' AND r.key = 'about') AS about
        FROM accounts a JOIN profiles p ON p.account = a.id
+         LEFT JOIN follows f ON f.follower = ?4 AND f.followee = a.id
        WHERE a.discogs_id IS NOT NULL AND p.visibility IN ('public', 'followers') AND p.hidden = 0
-         AND p.sections LIKE '%"public"%' AND a.name LIKE ?2 ESCAPE '\\'
+         AND a.name LIKE ?2 ESCAPE '\\'
          AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker = a.id AND b.blocked = ?4) OR (b.blocker = ?4 AND b.blocked = a.id))
        ORDER BY (a.name = ?3) DESC, (instr(a.name, ?3) = 1) DESC, a.name
        LIMIT ?1`,
     )
-    .bind(MAX_FOUND * 3, like, q, viewer ?? '')
-    .all<{ name: string; sections: string; published_at: number | null; visibility: Who; about: string | null }>()
-  // the LIKE above only narrows it; this is the real check that something is shared
-  const found = results
-    .filter((r) => publicOnes(readSections(r.sections)).length)
-    .slice(0, MAX_FOUND)
-    .map((r) =>
-      r.visibility === 'followers'
-        ? { username: r.name, about: pictureOnly(r.about), publishedAt: null }
-        : { username: r.name, about: r.about, publishedAt: r.published_at },
-    )
+    .bind(MAX_FOUND, like, q, viewer ?? '')
+    .all<{ name: string; published_at: number | null; visibility: Who; following: Status | null; about: string | null }>()
+  const found = results.map((r) => ({
+    username: r.name,
+    ...(r.visibility === 'followers' && r.following !== 'accepted'
+      ? { about: pictureOnly(r.about), publishedAt: null }
+      : { about: r.about, publishedAt: r.published_at }),
+    ...(viewer ? { following: r.following ?? ('none' as const) } : {}),
+  }))
   return { found }
 }
 
 // ---- reading a profile ----
 
 // Found by Discogs username, and only for an account tied to that Discogs user, so nobody can put a
-// profile under someone else's name. A private or hidden one isn't found at all.
+// profile under someone else's name. A private or hidden one isn't found at all, nor is an account
+// that never set one up.
 async function owner(
   db: DB,
   username: unknown,
@@ -337,7 +338,6 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
   const found = await owner(db, username)
   if (!found) return null
   const sections = publicOnes(found.sections)
-  if (!sections.length) return null // nothing shared, so there's nothing to show
   const can = await access(db, found, viewer)
   if (can === 'none') return null
   const about = await db
@@ -367,6 +367,44 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
     publishedAt: locked ? null : found.publishedAt,
     sections: locked ? [] : sections,
     about: locked ? pictureOnly(about?.value ?? null) : (about?.value ?? null),
+  }
+}
+
+// Who follows someone, or who they follow, for anyone who can see their profile. Only people who
+// can be found in Search are named, since they already chose to be seen; the rest are counted.
+// The viewer always sees themselves.
+const MAX_PEOPLE = 500
+
+export async function people(
+  db: DB,
+  username: unknown,
+  list: unknown,
+  viewer: string | null = null,
+): Promise<{ people: Person[]; more: number }> {
+  if (list !== 'followers' && list !== 'following') throw new SyncError(400, 'Bad list')
+  const found = await owner(db, username)
+  if (!found || (await access(db, found, viewer)) !== 'full') throw new SyncError(404, 'Nothing to show')
+  const [theirs, other] = list === 'followers' ? ['followee', 'follower'] : ['follower', 'followee']
+  const { results } = await db
+    .prepare(
+      `SELECT a.id, a.name AS username, x.created_at AS since, p.visibility,
+         (a.discogs_id IS NOT NULL AND p.visibility IN ('public', 'followers') AND p.hidden = 0
+           AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker = a.id AND b.blocked = ?2) OR (b.blocker = ?2 AND b.blocked = a.id))) AS listed,
+         (SELECT value FROM profile_rows r WHERE r.account = a.id AND r.kind = 'about' AND r.key = 'about') AS about
+       FROM follows x JOIN accounts a ON a.id = x.${other} LEFT JOIN profiles p ON p.account = a.id
+       WHERE x.${theirs} = ?1 AND x.status = 'accepted'
+       ORDER BY x.created_at DESC, a.name`,
+    )
+    .bind(found.id, viewer ?? '')
+    .all<{ id: string; username: string; since: number; visibility: Who | null; listed: number; about: string | null }>()
+  const shown = results.filter((r) => r.listed === 1 || r.id === viewer)
+  return {
+    people: shown.slice(0, MAX_PEOPLE).map((r) => ({
+      username: r.username,
+      since: r.since,
+      about: r.visibility === 'followers' && r.id !== viewer ? pictureOnly(r.about) : r.about,
+    })),
+    more: results.length - Math.min(shown.length, MAX_PEOPLE),
   }
 }
 

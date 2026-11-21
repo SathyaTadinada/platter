@@ -110,9 +110,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [sections, setSections] = useState<Sections | null>(null)
   const [details, setDetailsState] = useState<string[]>([])
   const chosen = useRef<string[]>([])
-  const [who, setWho] = useState<Who>('public')
+  const [who, setWho] = useState<Who>('private')
   const [hidden, setHidden] = useState(false)
   const shared = useRef<Sections>({})
+  const open = useRef(false) // there's a profile: it isn't Private
   const busy = useRef(false)
   const again = useRef(false)
   const failures = useRef(0)
@@ -141,7 +142,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   // What the profile shows goes up after a sync, and only when something in it changed
   const sharing = useRef<Promise<void>>(Promise.resolve())
   const shareNow = useCallback(async () => {
-    if (!api || !Object.values(shared.current).some((v) => v === 'public')) return
+    if (!api || (!open.current && !Object.values(shared.current).some((v) => v === 'public'))) return
     // how many records they have is part of their collection, so it only goes with that section
     const about: ProfileAbout = shared.current.collection === 'public' ? { records: await db.collection.count() } : {}
     if (client && session && session.kind !== 'demo') {
@@ -179,7 +180,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       }
       choice = { details: chosen.current, names, roles }
     }
-    await publishProfile(api, shared.current, about, Date.now(), choice)
+    await publishProfile(api, shared.current, about, Date.now(), choice, open.current)
   }, [api, client, session])
   // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
   // a sync it waits SHARE_EVERY since the last one, so a busy session doesn't rework the whole
@@ -322,6 +323,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         .then(({ sections: saved, who: found, hidden: down, details: picked = [] }) => {
           if (stopped) return
           shared.current = saved
+          open.current = found !== 'private'
           chosen.current = picked
           setDetailsState(picked)
           setSections(saved)
@@ -374,7 +376,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     hidden,
     setWho: async (next) => {
       if (!api) return
-      setWho((await api.setWho(next)).who)
+      const { who: saved } = await api.setWho(next)
+      setWho(saved)
+      // opening it sends the picture that goes with it
+      const opening = !open.current && saved !== 'private'
+      open.current = saved !== 'private'
+      if (opening) await share()
     },
     details,
     setDetails: async (next) => {
@@ -511,7 +518,6 @@ export function useYourPage(): string | undefined {
   const cloud = useCloud()
   const { session } = useSession()
   if (!cloud.enabled) return undefined
-  const sharing =
-    session?.kind !== 'demo' && !cloud.hidden && cloud.who !== 'private' && Object.values(cloud.sections ?? {}).some((v) => v === 'public')
+  const sharing = session?.kind !== 'demo' && !cloud.hidden && cloud.who !== 'private'
   return sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account'
 }

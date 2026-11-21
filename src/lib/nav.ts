@@ -39,7 +39,7 @@ const ROOT_TITLES: Record<Section, string> = {
 const rootOf = (path: string) => (Object.keys(ROOTS) as Section[]).find((s) => ROOTS[s] === path)
 
 // pages about one thing, which stay in the tab they were opened from
-const SHARED = /^\/(collection|release|u)\/[^/]+$/
+const SHARED = /^\/(collection|release|u)\/[^/]+$|^\/u\/[^/]+\/people$/
 const pathOf = (url: string) => url.split('?')[0]
 
 const KEY = 'platterKey' // names the page, for its stack entry, scroll position and saved state

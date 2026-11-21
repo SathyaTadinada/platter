@@ -4,7 +4,7 @@ import { testDB } from '../tests/d1'
 import { accountById, discogsSignIn } from './account'
 import { members, setBadge } from './admin'
 import { createBadge, deleteBadge, editBadge, isBadge, listBadges } from './badges'
-import { head, setSections } from './profile'
+import { head, setSections, setWho } from './profile'
 import { deviceAccount } from './sync'
 
 async function account(db: ReturnType<typeof testDB>, username = 'tadinada', id = 42) {
@@ -42,6 +42,7 @@ describe('badges', () => {
   it('renames everywhere at once, profiles included', async () => {
     const db = testDB()
     const id = await account(db)
+    await setWho(db, id, 'public')
     await setSections(db, id, { collection: 'public' })
     await setBadge(db, id, 'early', true)
     expect((await head(db, 'tadinada'))?.badges).toEqual([{ label: 'Early supporter', color: 'amber', icon: 'award' }])

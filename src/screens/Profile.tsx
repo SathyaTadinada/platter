@@ -257,7 +257,7 @@ export function Profile({ username }: { username: string }) {
         </Section>
       )}
 
-      {!head.locked && (
+      {!head.locked && section && (
         <>
           {/* with tabs above, they already say which section this is */}
           <Section title={section && head.sections.length === 1 ? LABELS[section] : undefined}>
