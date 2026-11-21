@@ -83,157 +83,165 @@ export function ProfileHeader({
 
   const setup = SETUP_LABELS.filter(([slot]) => head.setup?.[slot])
 
+  // in the same place as Follow on anyone else's; while editing, Cancel and Save take its place
+  const action = follow ? (
+    <Button variant={follow.state === 'none' ? 'primary' : 'secondary'} className="min-h-9 px-4 text-sm" onClick={follow.onClick}>
+      {follow.state === 'accepted' ? 'Following' : follow.state === 'pending' ? 'Requested' : 'Follow'}
+    </Button>
+  ) : mine ? (
+    editing ? (
+      <div className="flex gap-2">
+        <Button variant="secondary" className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={() => setEditing(null)}>
+          Cancel
+        </Button>
+        <Button className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={save}>
+          {busy ? 'Saving…' : 'Save'}
+        </Button>
+      </div>
+    ) : (
+      <Button variant="secondary" className="min-h-9 px-4 text-sm" onClick={edit}>
+        Edit profile
+      </Button>
+    )
+  ) : null
+
+  const countRow = (
+    <dl className="flex gap-6 max-md:justify-around">
+      {counts.map((c) => {
+        const text = (
+          <>
+            {/* label first for the list's sake, shown after the number */}
+            <dt className="text-stone-500 max-md:text-sm">{c.n === 1 ? c.one : c.many}</dt>
+            <dd className="font-semibold tabular-nums max-md:text-xl">{c.n.toLocaleString()}</dd>
+          </>
+        )
+        const cls = 'flex flex-col-reverse items-center gap-x-1.5 md:flex-row-reverse md:items-baseline'
+        // your own open the full lists on your account, someone else's who they show
+        return c.list && (mine || !head.locked) ? (
+          <Link
+            key={c.one}
+            href={mine ? peopleLink(c.list) : theirPeople(head.username, c.list)}
+            className={`${cls} -mx-1.5 rounded-lg px-1.5 hover:bg-stone-100 dark:hover:bg-stone-800`}
+          >
+            {text}
+          </Link>
+        ) : (
+          <div key={c.one} className={cls}>
+            {text}
+          </div>
+        )
+      })}
+    </dl>
+  )
+
   return (
-    <>
-      <Section>
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
-          <div className="flex min-w-0 flex-1 items-center gap-4">
-            <Avatar src={about.avatar} name={head.username} size="size-20 text-2xl" />
-            <div className="min-w-0">
-              <p className="truncate text-2xl font-bold tracking-tight">{head.username}</p>
-              <p className="mt-1 text-sm text-stone-500">{details.join(' · ')}</p>
-              {editing ? (
-                <div className="mt-2 max-w-prose">
-                  <textarea
-                    aria-label="Bio"
-                    placeholder="Add a bio"
-                    value={editing.bio}
-                    maxLength={BIO_MAX}
-                    rows={2}
-                    autoFocus
-                    onChange={(e) => setEditing({ ...editing, bio: e.target.value })}
-                    className={`${field} resize-none`}
-                  />
-                  {/* only once it's getting close, so it doesn't nag */}
-                  {bioLength > BIO_MAX - 30 && (
-                    <p className="mt-1 text-right text-xs text-stone-500 tabular-nums">
-                      {bioLength}/{BIO_MAX}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                head.bio && <p className="mt-2 max-w-prose text-sm break-words whitespace-pre-line">{head.bio}</p>
-              )}
-              {head.badges.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {(showAll ? head.badges : head.badges.slice(0, SHOWN)).map((b) => (
-                    <BadgePill key={b.label} badge={b} />
-                  ))}
-                  {!showAll && head.badges.length > SHOWN && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAll(true)}
-                      aria-label={`Show ${head.badges.length - SHOWN} more ${head.badges.length - SHOWN === 1 ? 'badge' : 'badges'}`}
-                      className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-                    >
-                      +{head.badges.length - SHOWN}
-                    </button>
-                  )}
-                </div>
+    <Section>
+      {/* picture on the left; everything else in one column beside it (under it on phones), so editing
+          only changes what's being edited and nothing above it moves. Any spare height goes to the last
+          row, never between the name and the counts. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 md:grid-rows-[auto_auto_1fr] md:gap-x-8">
+        <div className="md:row-span-3">
+          <Avatar src={about.avatar} name={head.username} size="size-16 text-xl md:size-28 md:text-3xl" />
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 self-center md:self-start">
+          <div className="min-w-0">
+            <p className="truncate text-2xl font-bold tracking-tight">{head.username}</p>
+            <p className="text-sm text-stone-500">{details.join(' · ')}</p>
+          </div>
+          <div className="max-md:hidden">{action}</div>
+        </div>
+        <div className="max-md:hidden">{countRow}</div>
+
+        <div className="col-span-2 min-w-0 space-y-3 md:col-span-1 md:col-start-2">
+          {editing ? (
+            <div className="max-w-xl">
+              <textarea
+                aria-label="Bio"
+                placeholder="Add a bio"
+                value={editing.bio}
+                maxLength={BIO_MAX}
+                rows={3}
+                autoFocus
+                onChange={(e) => setEditing({ ...editing, bio: e.target.value })}
+                className={`${field} resize-none`}
+              />
+              <p className="mt-1 text-right text-xs text-stone-500 tabular-nums">
+                {bioLength}/{BIO_MAX}
+              </p>
+            </div>
+          ) : (
+            head.bio && <p className="max-w-xl text-sm break-words whitespace-pre-line">{head.bio}</p>
+          )}
+
+          {head.badges.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {(showAll ? head.badges : head.badges.slice(0, SHOWN)).map((b) => (
+                <BadgePill key={b.label} badge={b} />
+              ))}
+              {!showAll && head.badges.length > SHOWN && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  aria-label={`Show ${head.badges.length - SHOWN} more ${head.badges.length - SHOWN === 1 ? 'badge' : 'badges'}`}
+                  className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                >
+                  +{head.badges.length - SHOWN}
+                </button>
               )}
             </div>
-          </div>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
-            <dl className={`grid text-center md:w-64 ${counts.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-              {counts.map((c) => {
-                const text = (
-                  <>
-                    {/* label first for the list's sake, shown under the number */}
-                    <dt className="text-sm text-stone-500">{c.n === 1 ? c.one : c.many}</dt>
-                    <dd className="text-xl font-semibold tabular-nums">{c.n.toLocaleString()}</dd>
-                  </>
-                )
-                // your own open the full lists on your account, someone else's who they show
-                return c.list && (mine || !head.locked) ? (
-                  <Link
-                    key={c.one}
-                    href={mine ? peopleLink(c.list) : theirPeople(head.username, c.list)}
-                    className="flex flex-col-reverse rounded-xl py-1 hover:bg-stone-100 dark:hover:bg-stone-800"
-                  >
-                    {text}
-                  </Link>
-                ) : (
-                  <div key={c.one} className="flex flex-col-reverse py-1">
-                    {text}
-                  </div>
-                )
-              })}
-            </dl>
-            {follow && (
-              <Button
-                variant={follow.state === 'none' ? 'primary' : 'secondary'}
-                className="min-h-10 text-sm md:min-w-32"
-                onClick={follow.onClick}
-              >
-                {follow.state === 'accepted' ? 'Following' : follow.state === 'pending' ? 'Requested' : 'Follow'}
-              </Button>
-            )}
-            {/* in the same place as Follow on anyone else's */}
-            {mine &&
-              (editing ? (
-                <div className="grid grid-cols-2 gap-2 md:flex">
-                  <Button variant="secondary" className="min-h-10 text-sm md:min-w-24" disabled={busy} onClick={() => setEditing(null)}>
-                    Cancel
-                  </Button>
-                  <Button className="min-h-10 text-sm md:min-w-24" disabled={busy} onClick={save}>
-                    {busy ? 'Saving…' : 'Save'}
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="secondary" className="min-h-10 text-sm md:min-w-32" onClick={edit}>
-                  Edit profile
-                </Button>
-              ))}
-          </div>
-        </div>
-      </Section>
-      {editing ? (
-        <Section title="Setup">
-          {/* every slot, filled or not, so any of them can be added */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {SETUP_LABELS.map(([slot, label]) => {
-              const Icon = SLOT_ICONS[slot]
-              return (
-                <label key={slot} className="block">
-                  <span className="mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500">
-                    <Icon size={14} aria-hidden />
-                    {label}
-                  </span>
-                  <input
-                    value={editing.setup[slot] ?? ''}
-                    maxLength={SETUP_MAX}
-                    autoComplete="off"
-                    onChange={(e) => setEditing({ ...editing, setup: { ...editing.setup, [slot]: e.target.value } })}
-                    className={field}
-                  />
-                </label>
-              )
-            })}
-          </div>
-          {error && <Notice tone="error">{error}</Notice>}
-        </Section>
-      ) : (
-        // what they listen on, when they've said; the card is only as wide as what's in it, so a setup
-        // of two doesn't leave a long empty stretch
-        setup.length > 0 && (
-          <Section title="Setup">
-            <dl className="flex w-fit max-w-full flex-wrap gap-x-8 gap-y-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-              {setup.map(([slot, label]) => {
+          )}
+
+          {editing ? (
+            // every slot, filled or not, so any of them can be added
+            <div className="grid max-w-xl gap-x-3 gap-y-2.5 sm:grid-cols-2">
+              {SETUP_LABELS.map(([slot, label]) => {
                 const Icon = SLOT_ICONS[slot]
                 return (
-                  <div key={slot} className="flex min-w-0 items-center gap-2.5">
-                    <Icon size={18} aria-hidden className="shrink-0 text-stone-500" />
-                    <div className="min-w-0">
-                      <dt className="text-xs text-stone-500">{label}</dt>
-                      <dd className="text-sm font-medium break-words">{head.setup[slot]}</dd>
-                    </div>
-                  </div>
+                  <label key={slot} className="block">
+                    <span className="mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500">
+                      <Icon size={14} aria-hidden />
+                      {label}
+                    </span>
+                    <input
+                      value={editing.setup[slot] ?? ''}
+                      maxLength={SETUP_MAX}
+                      autoComplete="off"
+                      onChange={(e) => setEditing({ ...editing, setup: { ...editing.setup, [slot]: e.target.value } })}
+                      className={field}
+                    />
+                  </label>
                 )
               })}
-            </dl>
-          </Section>
-        )
-      )}
-    </>
+            </div>
+          ) : (
+            // what they listen on, as a line of small pills, each named by its icon (and its label on hover)
+            setup.length > 0 && (
+              <ul aria-label="Setup" className="flex flex-wrap gap-1.5">
+                {setup.map(([slot, label]) => {
+                  const Icon = SLOT_ICONS[slot]
+                  return (
+                    <li
+                      key={slot}
+                      title={label}
+                      className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-stone-900/5 px-2.5 py-1 text-sm dark:bg-white/10"
+                    >
+                      <Icon size={14} aria-hidden className="shrink-0 text-stone-500" />
+                      <span className="sr-only">{label}: </span>
+                      <span className="truncate">{head.setup[slot]}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )
+          )}
+          {error && <Notice tone="error">{error}</Notice>}
+        </div>
+      </div>
+      {/* phones: the counts and the button under it all, full width */}
+      <div className="mt-4 space-y-3 md:hidden">
+        {countRow}
+        {action && <div className="[&>*]:w-full">{action}</div>}
+      </div>
+    </Section>
   )
 }
