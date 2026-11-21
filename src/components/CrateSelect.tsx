@@ -102,8 +102,10 @@ export function NewCrateDialog({ onClose, onCreated }: { onClose: () => void; on
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
-          aria-label="Crate name"
+          // not "name": Safari offers contacts to any field that mentions one
+          placeholder="e.g. Jazz"
+          aria-label="New crate"
+          autoComplete="off"
           className="min-h-11 w-full rounded-xl border border-stone-300 bg-transparent px-3 text-base dark:border-stone-700"
         />
         {error && <Notice tone="error">{error}</Notice>}

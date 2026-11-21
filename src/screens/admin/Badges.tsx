@@ -97,8 +97,10 @@ function BadgeForm({
         <input
           value={look.label}
           onChange={(e) => setLook({ ...look, label: e.target.value })}
-          aria-label="Badge name"
-          placeholder="Name"
+          // not "name": Safari offers contacts to any field that mentions one
+          aria-label="Badge"
+          placeholder="e.g. Early supporter"
+          autoComplete="off"
           maxLength={30}
           autoFocus
           className={`${field} flex-1`}

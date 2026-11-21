@@ -43,7 +43,8 @@ export function Device({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            aria-label="Device name"
+            aria-label="Device"
+            autoComplete="off"
             maxLength={60}
             autoFocus
             className="min-h-10 w-full min-w-0 rounded-lg border border-stone-300 bg-transparent px-3 sm:w-auto sm:flex-1 dark:border-stone-700"

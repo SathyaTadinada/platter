@@ -65,7 +65,7 @@ export function ProfileHeader({
     try {
       await cloud.setAbout(editing.bio, editing.setup)
       await onSaved?.()
-      setEditing(null)
+      stopEditing()
     } catch (e) {
       setError(e instanceof CloudError && e.status === 400 ? 'That didn’t save. Check it for links and try again.' : (e as Error).message)
     } finally {
@@ -73,6 +73,12 @@ export function ProfileHeader({
     }
   }
   const bioLength = [...(editing?.bio ?? '')].length
+  // focus leaves the fields before they go: Safari keeps its writing tools button next to a text box
+  // that disappears while focused
+  const stopEditing = () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+    setEditing(null)
+  }
   // the record count comes with the collection, so it's there only when that is
   const counts: { n: number; one: string; many: string; list?: 'followers' | 'following' }[] = [
     ...(about.records !== undefined ? [{ n: about.records, one: 'record', many: 'records' }] : []),
@@ -91,7 +97,7 @@ export function ProfileHeader({
   ) : mine ? (
     editing ? (
       <div className="flex gap-2">
-        <Button variant="secondary" className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={() => setEditing(null)}>
+        <Button variant="secondary" className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={stopEditing}>
           Cancel
         </Button>
         <Button className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={save}>
@@ -134,108 +140,116 @@ export function ProfileHeader({
     </dl>
   )
 
+  // what they listen on: a labelled card beside the header on wide screens, under it on phones. While
+  // editing, every slot is a field, filled or not, so any of them can be added.
+  const showSetup = Boolean(editing) || setup.length > 0
+  const setupCard = (
+    <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+      <h3 className="mb-3 text-xs font-semibold tracking-wide text-stone-500 uppercase">Setup</h3>
+      {editing ? (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          {SETUP_LABELS.map(([slot, label]) => {
+            const Icon = SLOT_ICONS[slot]
+            return (
+              <label key={slot} className="block min-w-0">
+                <span className="mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500">
+                  <Icon size={14} aria-hidden />
+                  {label}
+                </span>
+                <input
+                  value={editing.setup[slot] ?? ''}
+                  maxLength={SETUP_MAX}
+                  autoComplete="off"
+                  onChange={(e) => setEditing({ ...editing, setup: { ...editing.setup, [slot]: e.target.value } })}
+                  className={field}
+                />
+              </label>
+            )
+          })}
+        </div>
+      ) : (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+          {setup.map(([slot, label]) => {
+            const Icon = SLOT_ICONS[slot]
+            return (
+              <div key={slot} className="flex min-w-0 items-start gap-2.5">
+                <Icon size={18} aria-hidden className="mt-0.5 shrink-0 text-stone-500" />
+                <div className="min-w-0">
+                  <dt className="text-xs text-stone-500">{label}</dt>
+                  <dd className="text-sm font-medium break-words">{head.setup[slot]}</dd>
+                </div>
+              </div>
+            )
+          })}
+        </dl>
+      )}
+    </div>
+  )
+
   return (
     <Section>
-      {/* picture on the left; everything else in one column beside it (under it on phones), so editing
+      <div
+        className={showSetup ? 'space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-10 lg:space-y-0' : ''}
+      >
+        {/* picture on the left; everything else in one column beside it (under it on phones), so editing
           only changes what's being edited and nothing above it moves. Any spare height goes to the last
           row, never between the name and the counts. */}
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 md:grid-rows-[auto_auto_1fr] md:gap-x-8">
-        <div className="md:row-span-3">
-          <Avatar src={about.avatar} name={head.username} size="size-16 text-xl md:size-28 md:text-3xl" />
-        </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 self-center md:self-start">
-          <div className="min-w-0">
-            <p className="truncate text-2xl font-bold tracking-tight">{head.username}</p>
-            <p className="text-sm text-stone-500">{details.join(' · ')}</p>
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 md:grid-rows-[auto_auto_1fr] md:gap-x-8">
+          <div className="md:row-span-3">
+            <Avatar src={about.avatar} name={head.username} size="size-16 text-xl md:size-28 md:text-3xl" />
           </div>
-          <div className="max-md:hidden">{action}</div>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 self-center md:self-start">
+            <div className="min-w-0">
+              <p className="truncate text-2xl font-bold tracking-tight">{head.username}</p>
+              <p className="text-sm text-stone-500">{details.join(' · ')}</p>
+            </div>
+            <div className="max-md:hidden">{action}</div>
+          </div>
+          <div className="max-md:hidden">{countRow}</div>
+
+          <div className="col-span-2 min-w-0 space-y-3 md:col-span-1 md:col-start-2">
+            {editing ? (
+              <div className="max-w-xl">
+                <textarea
+                  aria-label="Bio"
+                  placeholder="Add a bio"
+                  value={editing.bio}
+                  maxLength={BIO_MAX}
+                  rows={3}
+                  autoFocus
+                  onChange={(e) => setEditing({ ...editing, bio: e.target.value })}
+                  className={`${field} resize-none`}
+                />
+                <p className="mt-1 text-right text-xs text-stone-500 tabular-nums">
+                  {bioLength}/{BIO_MAX}
+                </p>
+              </div>
+            ) : (
+              head.bio && <p className="max-w-xl text-sm break-words whitespace-pre-line">{head.bio}</p>
+            )}
+
+            {head.badges.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {(showAll ? head.badges : head.badges.slice(0, SHOWN)).map((b) => (
+                  <BadgePill key={b.label} badge={b} />
+                ))}
+                {!showAll && head.badges.length > SHOWN && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAll(true)}
+                    aria-label={`Show ${head.badges.length - SHOWN} more ${head.badges.length - SHOWN === 1 ? 'badge' : 'badges'}`}
+                    className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                  >
+                    +{head.badges.length - SHOWN}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {error && <Notice tone="error">{error}</Notice>}
+          </div>
         </div>
-        <div className="max-md:hidden">{countRow}</div>
-
-        <div className="col-span-2 min-w-0 space-y-3 md:col-span-1 md:col-start-2">
-          {editing ? (
-            <div className="max-w-xl">
-              <textarea
-                aria-label="Bio"
-                placeholder="Add a bio"
-                value={editing.bio}
-                maxLength={BIO_MAX}
-                rows={3}
-                autoFocus
-                onChange={(e) => setEditing({ ...editing, bio: e.target.value })}
-                className={`${field} resize-none`}
-              />
-              <p className="mt-1 text-right text-xs text-stone-500 tabular-nums">
-                {bioLength}/{BIO_MAX}
-              </p>
-            </div>
-          ) : (
-            head.bio && <p className="max-w-xl text-sm break-words whitespace-pre-line">{head.bio}</p>
-          )}
-
-          {head.badges.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {(showAll ? head.badges : head.badges.slice(0, SHOWN)).map((b) => (
-                <BadgePill key={b.label} badge={b} />
-              ))}
-              {!showAll && head.badges.length > SHOWN && (
-                <button
-                  type="button"
-                  onClick={() => setShowAll(true)}
-                  aria-label={`Show ${head.badges.length - SHOWN} more ${head.badges.length - SHOWN === 1 ? 'badge' : 'badges'}`}
-                  className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-                >
-                  +{head.badges.length - SHOWN}
-                </button>
-              )}
-            </div>
-          )}
-
-          {editing ? (
-            // every slot, filled or not, so any of them can be added
-            <div className="grid max-w-xl gap-x-3 gap-y-2.5 sm:grid-cols-2">
-              {SETUP_LABELS.map(([slot, label]) => {
-                const Icon = SLOT_ICONS[slot]
-                return (
-                  <label key={slot} className="block">
-                    <span className="mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500">
-                      <Icon size={14} aria-hidden />
-                      {label}
-                    </span>
-                    <input
-                      value={editing.setup[slot] ?? ''}
-                      maxLength={SETUP_MAX}
-                      autoComplete="off"
-                      onChange={(e) => setEditing({ ...editing, setup: { ...editing.setup, [slot]: e.target.value } })}
-                      className={field}
-                    />
-                  </label>
-                )
-              })}
-            </div>
-          ) : (
-            // what they listen on, as a line of small pills, each named by its icon (and its label on hover)
-            setup.length > 0 && (
-              <ul aria-label="Setup" className="flex flex-wrap gap-1.5">
-                {setup.map(([slot, label]) => {
-                  const Icon = SLOT_ICONS[slot]
-                  return (
-                    <li
-                      key={slot}
-                      title={label}
-                      className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-stone-900/5 px-2.5 py-1 text-sm dark:bg-white/10"
-                    >
-                      <Icon size={14} aria-hidden className="shrink-0 text-stone-500" />
-                      <span className="sr-only">{label}: </span>
-                      <span className="truncate">{head.setup[slot]}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )
-          )}
-          {error && <Notice tone="error">{error}</Notice>}
-        </div>
+        {showSetup && setupCard}
       </div>
       {/* phones: the counts and the button under it all, full width */}
       <div className="mt-4 space-y-3 md:hidden">

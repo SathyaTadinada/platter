@@ -56,10 +56,18 @@ export function EditPasskey({
           if (name.trim()) save()
         }}
       >
-        <label className="block text-sm font-medium" htmlFor="passkey-name">
-          Name
+        {/* not "name": Safari offers contacts to any field that mentions one */}
+        <label className="block text-sm font-medium" htmlFor="passkey-label">
+          Passkey
         </label>
-        <input id="passkey-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className={fieldClass} />
+        <input
+          id="passkey-label"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={60}
+          autoComplete="off"
+          className={fieldClass}
+        />
       </form>
     </Sheet>
   )
