@@ -205,7 +205,7 @@ export function ProfileHeader({
                 )}
               </div>
             )}
-            {recordsHere && <div className="grid max-w-xl gap-x-6 sm:grid-cols-2">{records}</div>}
+            {recordsHere && <div className="grid max-w-xl grid-cols-1 gap-x-6 sm:grid-cols-2">{records}</div>}
           </div>
         </div>
         {side}

@@ -57,7 +57,7 @@ export function RecordLine({ item, note, link = true }: { item: ProfileBrief | P
   return link ? (
     <Link
       href={`/release/${item.id}`}
-      className="-mx-2 flex items-center gap-3 rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+      className="-mx-2 flex min-w-0 items-center gap-3 rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
     >
       {inside}
     </Link>
