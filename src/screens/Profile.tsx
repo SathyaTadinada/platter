@@ -178,7 +178,7 @@ export function Profile({ username }: { username: string }) {
       )}
       {mine ? (
         <>
-          {/* who sees it and what's on it; the bio and setup are edited on the page itself */}
+          {/* who sees it and what's on it; what it says about you is under Edit profile */}
           <IconLink label="Profile settings" href="/account">
             <Settings size={20} />
           </IconLink>

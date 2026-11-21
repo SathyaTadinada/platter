@@ -65,7 +65,8 @@ type Ctx = {
   setDetails: (details: string[]) => Promise<void>
   // what the profile says about its owner: a bio, their setup, links, and the rest
   about: About
-  setAbout: (about: About) => Promise<void>
+  // published: done once the profile shows it, for what goes up with the rest (the record last played)
+  setAbout: (about: About) => Promise<{ published: Promise<void> }>
   hidden: boolean // hidden by an admin
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
@@ -408,14 +409,13 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     },
     about,
     setAbout: async (next) => {
-      if (!api) return
+      if (!api) return { published: Promise.resolve() }
       const saved = await api.setAbout(next)
       setAboutState(saved)
       // showing or hiding the record last played goes up straight away, without holding up the save
-      if (saved.playing !== playing.current) {
-        playing.current = saved.playing
-        share().catch(() => {})
-      }
+      if (saved.playing === playing.current) return { published: Promise.resolve() }
+      playing.current = saved.playing
+      return { published: share().catch(() => {}) }
     },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
@@ -522,6 +522,7 @@ function useDemoCloud(): Ctx {
     setAbout: async (next) => {
       await pause(300)
       setDemoAbout(next)
+      return { published: Promise.resolve() }
     },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {

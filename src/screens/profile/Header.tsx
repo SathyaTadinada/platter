@@ -1,41 +1,22 @@
-import { AudioLines, CircuitBoard, Disc3, Gem, MapPin, Pin, Plus, Speaker, X, type LucideIcon } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { MapPin } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'wouter'
-import { handleFrom, LINK_NAMES, LINK_SERVICES, linkFor, validHandle, type LinkService } from '../../../worker/links'
+import { LINK_NAMES, LINK_SERVICES, linkFor } from '../../../worker/links'
 import type { Who } from '../../../worker/profile'
 import { BadgePill } from '../../components/BadgePill'
 import { BrandIcon } from '../../components/BrandIcon'
-import { Cover } from '../../components/Cover'
-import { Menu } from '../../components/Menu'
 import { Avatar } from '../../components/Profile'
-import { Button, IconButton, Notice, Section, Switch } from '../../components/ui'
-import { useCloud } from '../../hooks/cloud'
-import { CloudError, type About, type Pinned, type ProfileHead, type SetupSlot } from '../../lib/cloud'
-import { BIO_MAX, hasLink, SETUP_LABELS, SETUP_MAX, type ProfileAbout, type ProfileBrief } from '../../lib/profile'
+import { Button, Section } from '../../components/ui'
+import type { ProfileHead } from '../../lib/cloud'
+import { SETUP_LABELS, type ProfileAbout } from '../../lib/profile'
 import { timeAgo } from '../../lib/time'
 import { peopleLink } from '../account/Connections'
 import { WHO_LABELS } from '../account/ProfileArea'
+import { EditSheet, pinnedNote, RecordLine, SLOT_ICONS } from './EditSheet'
 import { theirPeople } from './People'
-import { PinSheet } from './PinSheet'
 
-const SLOT_ICONS: Record<SetupSlot, LucideIcon> = {
-  turntable: Disc3,
-  cartridge: Gem, // the stylus's diamond
-  preamp: CircuitBoard,
-  amp: AudioLines,
-  speakers: Speaker,
-}
-
-const LOCATION_MAX = 40
-const PRONOUNS_MAX = 20
-
-const field =
-  'w-full rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-stone-200 focus:ring-2 focus:ring-accent/60 focus:outline-none dark:bg-stone-900 dark:ring-stone-800'
-const fieldLabel = 'mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500'
 const card = 'rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800'
 const cardTitle = 'mb-3 text-xs font-semibold tracking-wide text-stone-500 uppercase'
-const pill =
-  'inline-flex items-center gap-1.5 rounded-full bg-stone-900/5 px-3 py-1.5 text-sm font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15'
 
 // badges shown before the rest fold into +N
 const SHOWN = 3
@@ -43,27 +24,9 @@ const SHOWN = 3
 export const discogsUser = (name: string) => `https://www.discogs.com/user/${encodeURIComponent(name)}`
 const joined = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 
-// A record on the profile (pinned, or the last one played), opening its page
-function RecordLine({ item, note }: { item: ProfileBrief | Pinned; note: ReactNode }) {
-  return (
-    <Link
-      href={`/release/${item.id}`}
-      className="-mx-2 flex items-center gap-3 rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
-    >
-      <Cover item={{ cover: item.thumb, thumb: item.thumb }} small className="size-12 shrink-0 rounded-lg" />
-      <span className="min-w-0">
-        <span className="flex items-center gap-1 text-xs text-stone-500">{note}</span>
-        <span className="block truncate text-sm font-medium">{item.title}</span>
-        <span className="block truncate text-xs text-stone-500">{item.artist}</span>
-      </span>
-    </Link>
-  )
-}
-
 // The top of a profile. On the left, the picture and beside it the name (with Follow, or Edit profile on
-// your own), the counts, the bio, links elsewhere, and badges. On the right on wide screens (under it
-// on phones), cards for a pinned record and the one last played, and their setup. Edit profile turns
-// all of it into fields right where it is.
+// your own), the counts, the bio, links elsewhere, badges, and a pinned record and the one last played.
+// Their setup sits on the right on wide screens (under it all on phones). Edit profile opens a sheet.
 export function ProfileHeader({
   head,
   about,
@@ -80,48 +43,7 @@ export function ProfileHeader({
   onSaved?: () => Promise<unknown> | void // after editing, to read the profile again
 }) {
   const [showAll, setShowAll] = useState(false)
-  const cloud = useCloud()
-  const [editing, setEditing] = useState<About | null>(null)
-  const [added, setAdded] = useState<LinkService | null>(null) // a link just added, to type into
-  const [picking, setPicking] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const change = (patch: Partial<About>) => editing && setEditing({ ...editing, ...patch })
-
-  const edit = () => {
-    setError(null)
-    setAdded(null)
-    setEditing({ ...cloud.about })
-  }
-  // focus leaves the fields before they go: Safari keeps its writing tools button next to a text box
-  // that disappears while focused
-  const stopEditing = () => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-    setEditing(null)
-  }
-  async function save() {
-    if (!editing) return
-    setError(null)
-    const texts = [editing.bio, editing.location, editing.pronouns, ...Object.values(editing.setup)]
-    if (texts.some((t) => t && hasLink(t))) return setError('Links can’t go in your bio or setup. Add them under Links instead.')
-    const links: Record<string, string> = {}
-    for (const [s, raw] of Object.entries(editing.links) as [LinkService, string][]) {
-      const handle = handleFrom(s, raw ?? '')
-      if (!handle) continue
-      if (!validHandle(s, handle)) return setError(`That isn’t a ${LINK_NAMES[s]} username.`)
-      links[s] = handle
-    }
-    setBusy(true)
-    try {
-      await cloud.setAbout({ ...editing, links })
-      await onSaved?.()
-      stopEditing()
-    } catch (e) {
-      setError(e instanceof CloudError && e.status === 400 ? 'That didn’t save. Check it and try again.' : (e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
+  const [editing, setEditing] = useState(false)
 
   // the record count comes with the collection, so it's there only when that is
   const counts: { n: number; one: string; many: string; list?: 'followers' | 'following' }[] = [
@@ -135,26 +57,15 @@ export function ProfileHeader({
   const pinned = head.pinned
   const playing = about.playing
 
-  // in the same place as Follow on anyone else's; while editing, Cancel and Save take its place
+  // in the same place as Follow on anyone else's
   const action = follow ? (
     <Button variant={follow.state === 'none' ? 'primary' : 'secondary'} className="min-h-9 px-4 text-sm" onClick={follow.onClick}>
       {follow.state === 'accepted' ? 'Following' : follow.state === 'pending' ? 'Requested' : 'Follow'}
     </Button>
   ) : mine ? (
-    editing ? (
-      <div className="flex gap-2">
-        <Button variant="secondary" className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={stopEditing}>
-          Cancel
-        </Button>
-        <Button className="min-h-9 flex-1 px-4 text-sm" disabled={busy} onClick={save}>
-          {busy ? 'Saving…' : 'Save'}
-        </Button>
-      </div>
-    ) : (
-      <Button variant="secondary" className="min-h-9 px-4 text-sm" onClick={edit}>
-        Edit profile
-      </Button>
-    )
+    <Button variant="secondary" className="min-h-9 px-4 text-sm" onClick={() => setEditing(true)}>
+      Edit profile
+    </Button>
   ) : null
 
   const countRow = (
@@ -186,205 +97,33 @@ export function ProfileHeader({
     </dl>
   )
 
-  // ---- the left: who they are ----
+  const linkRow = links.length > 0 && (
+    <ul className="-ml-1.5 flex flex-wrap gap-0.5">
+      {links.map((s) => (
+        <li key={s}>
+          <a
+            href={linkFor(s, head.links[s]!)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${LINK_NAMES[s]} · ${head.links[s]}`}
+            aria-label={`${LINK_NAMES[s]}: ${head.links[s]}`}
+            className="flex size-8 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          >
+            <BrandIcon service={s} size={17} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
 
-  const aboutThem = editing ? (
-    <div className="max-w-xl space-y-3">
-      <div>
-        <textarea
-          aria-label="Bio"
-          placeholder="Add a bio"
-          value={editing.bio}
-          maxLength={BIO_MAX}
-          rows={3}
-          autoFocus
-          onChange={(e) => change({ bio: e.target.value })}
-          className={`${field} resize-none`}
-        />
-        <p className="mt-1 text-right text-xs text-stone-500 tabular-nums">
-          {[...editing.bio].length}/{BIO_MAX}
-        </p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block">
-          <span className={fieldLabel}>Pronouns</span>
-          <input
-            value={editing.pronouns}
-            maxLength={PRONOUNS_MAX}
-            autoComplete="off"
-            onChange={(e) => change({ pronouns: e.target.value })}
-            className={field}
-          />
-        </label>
-        <label className="block">
-          <span className={fieldLabel}>
-            <MapPin size={14} aria-hidden />
-            Location
-          </span>
-          <input
-            value={editing.location}
-            maxLength={LOCATION_MAX}
-            autoComplete="off"
-            onChange={(e) => change({ location: e.target.value })}
-            className={field}
-          />
-        </label>
-      </div>
-      <div>
-        <span className={fieldLabel}>Links</span>
-        <div className="space-y-2">
-          {LINK_SERVICES.filter((s) => s in editing.links).map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <span className="flex size-9 shrink-0 items-center justify-center text-stone-500" title={LINK_NAMES[s]}>
-                <BrandIcon service={s} size={18} />
-              </span>
-              <input
-                aria-label={`${LINK_NAMES[s]} username`}
-                placeholder={s === 'mastodon' ? 'you@server' : `${LINK_NAMES[s]} username`}
-                value={editing.links[s] ?? ''}
-                autoFocus={s === added}
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                onChange={(e) => change({ links: { ...editing.links, [s]: e.target.value } })}
-                className={field}
-              />
-              <IconButton
-                label={`Remove ${LINK_NAMES[s]}`}
-                onClick={() => {
-                  const { [s]: _, ...rest } = editing.links
-                  change({ links: rest })
-                }}
-              >
-                <X size={16} />
-              </IconButton>
-            </div>
-          ))}
-          {LINK_SERVICES.some((s) => !(s in editing.links)) && (
-            <Menu
-              label="Add a link"
-              align="left"
-              button={
-                <>
-                  <Plus size={16} aria-hidden />
-                  Add a link
-                </>
-              }
-              buttonClassName={pill}
-              items={LINK_SERVICES.filter((s) => !(s in editing.links)).map((s) => ({
-                label: LINK_NAMES[s],
-                icon: <BrandIcon service={s} size={16} />,
-                onSelect: () => {
-                  setAdded(s)
-                  change({ links: { ...editing.links, [s]: '' } })
-                },
-              }))}
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  ) : (
+  const records = (pinned || playing) && (
     <>
-      {head.bio && <p className="max-w-xl text-sm break-words whitespace-pre-line">{head.bio}</p>}
-      {links.length > 0 && (
-        <ul className="-ml-1.5 flex flex-wrap gap-0.5">
-          {links.map((s) => (
-            <li key={s}>
-              <a
-                href={linkFor(s, head.links[s]!)}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`${LINK_NAMES[s]} · ${head.links[s]}`}
-                aria-label={`${LINK_NAMES[s]}: ${head.links[s]}`}
-                className="flex size-8 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-              >
-                <BrandIcon service={s} size={17} />
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+      {pinned && <RecordLine item={pinned} note={pinnedNote} />}
+      {playing && <RecordLine item={playing.item} note={`Last played ${timeAgo(playing.at)}`} />}
     </>
   )
 
-  // ---- the right: records and setup ----
-
-  const recordsCard = editing ? (
-    <div className={card}>
-      <h3 className={cardTitle}>Records</h3>
-      <div className="space-y-3">
-        {editing.pinned ? (
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <RecordLine
-                item={editing.pinned}
-                note={
-                  <>
-                    <Pin size={12} aria-hidden />
-                    Pinned
-                  </>
-                }
-              />
-            </div>
-            <IconButton label="Unpin" onClick={() => change({ pinned: null })}>
-              <X size={16} />
-            </IconButton>
-          </div>
-        ) : (
-          <button type="button" onClick={() => setPicking(true)} className={pill}>
-            <Pin size={16} aria-hidden />
-            Pin a record
-          </button>
-        )}
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm">Show what I last played</span>
-          <Switch label="Show what I last played" checked={editing.playing} onChange={(on) => change({ playing: on })} />
-        </div>
-      </div>
-    </div>
-  ) : pinned || playing ? (
-    <div className={`${card} space-y-1`}>
-      {pinned && (
-        <RecordLine
-          item={pinned}
-          note={
-            <>
-              <Pin size={12} aria-hidden />
-              Pinned
-            </>
-          }
-        />
-      )}
-      {playing && <RecordLine item={playing.item} note={`Last played ${timeAgo(playing.at)}`} />}
-    </div>
-  ) : null
-
-  const setupCard = editing ? (
-    <div className={card}>
-      <h3 className={cardTitle}>Setup</h3>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-        {SETUP_LABELS.map(([slot, label]) => {
-          const Icon = SLOT_ICONS[slot]
-          return (
-            <label key={slot} className="block min-w-0">
-              <span className={fieldLabel}>
-                <Icon size={14} aria-hidden />
-                {label}
-              </span>
-              <input
-                value={editing.setup[slot] ?? ''}
-                maxLength={SETUP_MAX}
-                autoComplete="off"
-                onChange={(e) => change({ setup: { ...editing.setup, [slot]: e.target.value } })}
-                className={field}
-              />
-            </label>
-          )
-        })}
-      </div>
-    </div>
-  ) : setup.length > 0 ? (
+  const setupCard = setup.length > 0 && (
     <div className={card}>
       <h3 className={cardTitle}>Setup</h3>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -402,16 +141,18 @@ export function ProfileHeader({
         })}
       </dl>
     </div>
-  ) : null
+  )
 
-  const side = recordsCard || setupCard
+  // the setup is the taller of the two, so it takes the right and the records stay with the rest on
+  // the left. Without a setup the records take the right instead.
+  const side = setupCard || (records && <div className={`${card} space-y-1`}>{records}</div>)
+  const recordsHere = setupCard && records
 
   return (
     <Section>
       <div className={side ? 'space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-10 lg:space-y-0' : ''}>
-        {/* picture on the left; everything else in one column beside it (under it on phones), so editing
-            only changes what's being edited and nothing above it moves. Any spare height goes to the last
-            row, never between the name and the counts. */}
+        {/* picture on the left and everything else in one column beside it (under it on phones). Any spare
+            height goes to the last row, never between the name and the counts. */}
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 md:grid-rows-[auto_auto_1fr] md:gap-x-8">
           <div className="md:row-span-3">
             <Avatar src={about.avatar} name={head.username} size="size-16 text-xl md:size-28 md:text-3xl" />
@@ -440,7 +181,8 @@ export function ProfileHeader({
           <div className="col-span-2 min-w-0 space-y-3 md:col-span-1 md:col-start-2">
             {/* phones: the counts right under the name, in the same order as wide screens */}
             <div className="md:hidden">{countRow}</div>
-            {aboutThem}
+            {head.bio && <p className="max-w-xl text-sm break-words whitespace-pre-line">{head.bio}</p>}
+            {linkRow}
             {head.badges.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {(showAll ? head.badges : head.badges.slice(0, SHOWN)).map((b) => (
@@ -458,25 +200,22 @@ export function ProfileHeader({
                 )}
               </div>
             )}
-            {error && <Notice tone="error">{error}</Notice>}
+            {recordsHere && <div className="grid max-w-xl gap-x-6 sm:grid-cols-2">{records}</div>}
           </div>
         </div>
-        {side && (
-          <div className="space-y-3">
-            {recordsCard}
-            {setupCard}
-          </div>
-        )}
+        {side}
       </div>
       {/* phones: the button last, full width */}
       {action && <div className="mt-4 md:hidden [&>*]:w-full">{action}</div>}
-      {picking && editing && (
-        <PinSheet
-          onPick={(record) => {
-            change({ pinned: record })
-            setPicking(false)
+      {editing && (
+        <EditSheet
+          onClose={() => setEditing(false)}
+          onSaved={(published) => {
+            setEditing(false)
+            onSaved?.()
+            // the record last played goes up with the rest of the profile, a moment later
+            published.then(() => onSaved?.())
           }}
-          onClose={() => setPicking(false)}
         />
       )}
     </Section>

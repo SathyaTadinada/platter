@@ -1,5 +1,5 @@
 import { Check, MoreHorizontal } from 'lucide-react'
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 
 // checkedMark: shown on the checked item in place of the tick, e.g. which way a sort runs
 export type MenuItem = {
@@ -21,6 +21,7 @@ export function Menu({
   buttonClassName = 'rounded-full p-2 text-stone-700 hover:bg-stone-200 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-800',
   align = 'right',
   className = '',
+  short = false,
 }: {
   label: string
   items: MenuItem[]
@@ -28,8 +29,12 @@ export function Menu({
   buttonClassName?: string
   align?: 'left' | 'right'
   className?: string
+  // a short scrolling list placed over everything, for a long menu inside a sheet, which would otherwise
+  // be cut off by the sheet's edge. It opens upward when there isn't room below and closes on scroll.
+  short?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const [place, setPlace] = useState<CSSProperties>()
   const ref = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const menuItems = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not(:disabled)') ?? [])]
@@ -39,8 +44,29 @@ export function Menu({
     menuItems()[0]?.focus()
     const onDown = (e: PointerEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
     document.addEventListener('pointerdown', onDown)
-    return () => document.removeEventListener('pointerdown', onDown)
+    const onScroll = (e: Event) => !ref.current?.contains(e.target as Node) && setOpen(false)
+    if (short) document.addEventListener('scroll', onScroll, true)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('scroll', onScroll, true)
+    }
   }, [open])
+
+  function toggle() {
+    if (!open && short && trigger.current) {
+      const r = trigger.current.getBoundingClientRect()
+      const below = innerHeight - r.bottom - 12
+      const up = below < 160 && r.top > below
+      const side = align === 'right' ? { right: innerWidth - r.right } : { left: r.left }
+      setPlace({
+        position: 'fixed',
+        ...side,
+        ...(up ? { bottom: innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
+        maxHeight: Math.min(240, up ? r.top - 12 : below),
+      })
+    }
+    setOpen(!open)
+  }
 
   function onKeyDown(e: KeyboardEvent) {
     if (!open) return
@@ -71,7 +97,7 @@ export function Menu({
         title={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
         className={buttonClassName}
       >
         {button ?? <MoreHorizontal size={20} />}
@@ -80,7 +106,8 @@ export function Menu({
         <div
           role="menu"
           aria-label={label}
-          className={`absolute top-full z-30 mt-1 max-h-[70dvh] min-w-56 overflow-y-auto ${align === 'right' ? 'right-0' : 'left-0'} overflow-hidden rounded-xl bg-white py-1 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700`}
+          style={short ? place : undefined}
+          className={`z-30 min-w-56 overflow-y-auto ${short ? '' : `absolute top-full mt-1 max-h-[70dvh] ${align === 'right' ? 'right-0' : 'left-0'}`} rounded-xl bg-white py-1 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700`}
         >
           {items.map((item) => (
             <button
