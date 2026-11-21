@@ -33,6 +33,8 @@ export function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: n
   const rising = series.at(-1)!.median >= first.median
   const color = rising ? 'emerald' : 'red'
   const point = hover !== null ? paths.points[hover] : null
+  // between the whole amounts shown, so a few cents don't read as +$0 or −$0
+  const moved = change(Math.round(first.median), Math.round(shown.median))
 
   function scrub(e: React.PointerEvent) {
     const r = e.currentTarget.getBoundingClientRect()
@@ -51,8 +53,8 @@ export function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: n
           <span className="text-xl font-bold tabular-nums">{money(shown.median)}</span>{' '}
           <span className="text-sm text-stone-500">{hover === null ? 'today' : shortDate(shown)}</span>
         </span>
-        {/* the card above already shows the overall change */}
-        {hover !== null && <Delta {...change(first.median, shown.median)} money={money} suffix={`since ${shortDate(first)}`} />}
+        {/* the card above already shows the overall change, and there's nothing to say when it hasn't moved */}
+        {hover !== null && moved.abs !== 0 && <Delta {...moved} money={money} suffix={`since ${shortDate(first)}`} />}
       </figcaption>
       <div className="relative touch-pan-y" onPointerMove={scrub} onPointerDown={scrub} onPointerLeave={() => setHover(null)}>
         <svg
