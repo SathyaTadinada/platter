@@ -6,19 +6,18 @@ import {
   Globe,
   Heart,
   LibraryBig,
-  ListChecks,
   Link as LinkIcon,
   Lock,
   UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
 import { Avatar, useProfile } from '../../components/Profile'
 import { toast } from '../../components/Toaster'
-import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Section, Spinner, Switch } from '../../components/ui'
+import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Row, Section, Spinner, Switch } from '../../components/ui'
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
@@ -183,39 +182,40 @@ export function ProfileArea({ onError }: { onError: (e: unknown) => void }) {
           })}
         </div>
       </Section>
-      {/* Private is no profile at all, so there's nothing to put on it */}
-      {open && (
-        <Section title="On your profile">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {SHOWS.map(({ id, label, Icon }) => {
-              const on = cloud.sections?.[id] === 'public'
-              return (
-                // icon and switch over the name where tiles are narrow, all on one line where there's room
-                <div key={id} className={`${card} ${plain} grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 p-3 xl:py-2.5`}>
-                  <span
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl xl:size-8 ${
-                      on ? 'bg-accent text-accent-fg' : 'bg-stone-100 text-stone-500 dark:bg-stone-800'
-                    }`}
-                  >
-                    <Icon size={18} aria-hidden />
-                  </span>
-                  <span className="col-span-3 row-start-2 truncate font-medium xl:col-span-1 xl:col-start-2 xl:row-start-1">{label}</span>
-                  <span className="col-start-3 row-start-1 justify-self-end">
-                    <Switch
-                      label={label}
-                      checked={on}
-                      onChange={(next) => attempt(() => cloud.setSections({ [id]: next ? 'public' : 'off' }))}
-                    />
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          {/* what else goes with each record, while the collection is on the profile */}
-          {cloud.sections.collection === 'public' && <CopyChoices onError={onError} />}
-        </Section>
-      )}
     </>
+  )
+}
+
+// What the profile shows, a switch a section, with what goes with each record under Collection.
+// Nothing while it's Private, since there's no profile to put anything on.
+export function ProfileShows({ onError }: { onError: (e: unknown) => void }) {
+  const cloud = useCloud()
+  if (!cloud.enabled || !cloud.sections || cloud.who === 'private') return null
+  const set = async (id: ProfileSection, next: boolean) => {
+    try {
+      await cloud.setSections({ [id]: next ? 'public' : 'off' })
+    } catch (e) {
+      onError(e)
+    }
+  }
+  return (
+    <Section title="On your profile">
+      <List>
+        {SHOWS.map(({ id, label, Icon }) => {
+          const on = cloud.sections?.[id] === 'public'
+          return (
+            <Fragment key={id}>
+              <Row
+                icon={<Icon size={20} />}
+                label={label}
+                trailing={<Switch label={label} checked={on} onChange={(next) => set(id, next)} />}
+              />
+              {id === 'collection' && on && <CopyChoices onError={onError} />}
+            </Fragment>
+          )
+        })}
+      </List>
+    </Section>
   )
 }
 
@@ -235,43 +235,39 @@ function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
   }
   const on = options.filter((o) => cloud.details.includes(o.id)).map((o) => o.name)
   return (
-    <div className="mt-2">
-      <List>
-        <ExpandRow
-          icon={<ListChecks size={20} />}
-          label="Your copy"
-          value={
-            meta.data
-              ? howMany(
-                  on,
-                  options.map((o) => o.name),
-                )
-              : undefined
-          }
-        >
-          <div className="flex flex-wrap gap-2 p-4">
-            {options.map((o) => {
-              const on = cloud.details.includes(o.id)
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggle(o.id)}
-                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
-                    on
-                      ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
-                      : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
-                  }`}
-                >
-                  {on && <Check size={14} aria-hidden />}
-                  {o.name}
-                </button>
-              )
-            })}
-          </div>
-        </ExpandRow>
-      </List>
-    </div>
+    <ExpandRow
+      inset
+      label="Your copy"
+      value={
+        meta.data
+          ? howMany(
+              on,
+              options.map((o) => o.name),
+            )
+          : undefined
+      }
+    >
+      <div className="flex flex-wrap gap-2 pt-3 pr-4 pb-4 pl-12">
+        {options.map((o) => {
+          const on = cloud.details.includes(o.id)
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(o.id)}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
+                on
+                  ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+                  : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+              }`}
+            >
+              {on && <Check size={14} aria-hidden />}
+              {o.name}
+            </button>
+          )
+        })}
+      </div>
+    </ExpandRow>
   )
 }

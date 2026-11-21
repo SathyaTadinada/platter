@@ -249,16 +249,19 @@ export function Row({ icon, label, detail, value, trailing, href, onClick, dange
 }
 
 // A row in a List that opens what's behind it in place: settings that are set once and then left,
-// summed up in its value while closed
+// summed up in its value while closed. inset: it belongs to the row above, so it lines up with that
+// row's label rather than its icon.
 export function ExpandRow({
   icon,
   label,
   value,
+  inset,
   children,
 }: {
   icon?: ReactNode
   label: ReactNode
   value?: ReactNode
+  inset?: boolean
   children: ReactNode
 }) {
   const [open, setOpen] = useState(false)
@@ -270,7 +273,7 @@ export function ExpandRow({
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
-        className="flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left select-none hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+        className={`flex min-h-13 w-full items-center gap-3 py-2.5 pr-4 text-left select-none ${inset ? 'pl-12' : 'pl-4'} hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800`}
       >
         {icon && <span className="shrink-0 text-stone-500">{icon}</span>}
         <span className="min-w-0 flex-1 truncate">{label}</span>

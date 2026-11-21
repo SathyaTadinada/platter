@@ -28,7 +28,7 @@ import { Device } from './account/Device'
 import { EditPasskey } from './account/EditPasskey'
 import { GetIn } from './account/GetIn'
 import { created, explain } from './account/shared'
-import { ProfileActions, ProfileArea } from './account/ProfileArea'
+import { ProfileActions, ProfileArea, ProfileShows } from './account/ProfileArea'
 
 // Album years, record lengths, and the barcode index ('catalog') aren't listed: they're public catalog
 // data that only makes a new device quicker to set up, so they always sync
@@ -198,8 +198,10 @@ function SignedIn() {
           />
         )}
 
-        {/* left, sync: what this device shares. Right, sign-in: the ways in and the devices that are in */}
+        {/* left: what the profile shows, and what this device syncs. Right, sign-in: the ways in and the
+            devices that are in */}
         <div>
+          <ProfileShows onError={(e) => setError(explain(e, "This device isn't signed in anymore."))} />
           <Section title="Sync">
             <List>
               <li className="flex min-h-13 items-center gap-3 px-4 py-2.5">
