@@ -8,7 +8,6 @@ import {
   ListChecks,
   Link as LinkIcon,
   Lock,
-  Pencil,
   UserRound,
   Users,
   type LucideIcon,
@@ -24,7 +23,6 @@ import { useCloud } from '../../hooks/cloud'
 import { useSession } from '../../hooks/session'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
 import type { Follows } from '../../lib/cloud'
-import { EditSheet } from '../profile/EditSheet'
 import { peopleLink, type FollowList } from './Connections'
 
 // What a profile can show. Stats leaves out prices, and Your year what was spent.
@@ -62,14 +60,9 @@ export function ProfileActions() {
   const cloud = useCloud()
   const { session } = useSession()
   const { open } = useProfileOpen()
-  const [editing, setEditing] = useState(false)
   if (!cloud.enabled || !open) return null
   return (
     <>
-      <IconButton label="Edit profile" onClick={() => setEditing(true)}>
-        <Pencil size={20} />
-      </IconButton>
-      {editing && <EditSheet onClose={() => setEditing(false)} />}
       <IconLink label="View profile" href={profileLink(cloud.username)}>
         <UserRound size={20} />
       </IconLink>
