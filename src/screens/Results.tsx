@@ -80,12 +80,35 @@ export function Results() {
     ? { catno }
     : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
 
-  const state = useAsync<LookupResult | { kind: 'search'; results: SearchResult[]; pages: number }>(async () => {
+  // runout: what was typed matched no catalog number, only a runout
+  const state = useAsync<LookupResult | { kind: 'search'; results: SearchResult[]; pages: number; runout?: boolean }>(async () => {
     const barcode = params.get('barcode')
     if (barcode) return lookupBarcode(barcode, { searchDiscogs: search, searchMb: (b) => searchMbBarcode(b) })
+    if (catno) {
+      // What's etched near the label is easy to take for the catalog number, and often starts with it.
+      // Discogs keeps runouts with a release's other identifiers, which its barcode search covers, so
+      // the same text goes there too. Pressings whose runout has it come first.
+      const [byCatno, byRunout] = await Promise.all([
+        searchReleases(client, searchParams),
+        searchReleases(client, { barcode: catno }).catch(() => null),
+      ])
+      const etched = byRunout?.results ?? []
+      const ids = new Set(etched.map((r) => r.id))
+      return {
+        kind: 'search',
+        results: [...etched, ...byCatno.results.filter((r) => !ids.has(r.id))],
+        pages: byCatno.pagination?.pages ?? 1,
+        runout: !byCatno.results.length && etched.length > 0,
+      }
+    }
     const r = await searchReleases(client, searchParams)
     return { kind: 'search', results: r.results, pages: r.pagination?.pages ?? 1 }
   }, [qs, client])
+  // a search that only matched a runout is matched by it straight away, so the right pressing shows
+  const typedRunout = state.data?.kind === 'search' && state.data.runout ? catno! : ''
+  useEffect(() => {
+    if (typedRunout) setRunoutOpen(true)
+  }, [typedRunout])
 
   const pages = state.data?.kind === 'search' ? state.data.pages : 1
   async function loadMore() {
@@ -166,7 +189,14 @@ export function Results() {
             {/* only when there are at least two pressings a runout could tell apart, not cassettes or files */}
             {cards.filter(hasRunout).length > 1 && !runoutOpen && <RunoutButton onClick={() => setRunoutOpen(true)} />}
           </div>
-          <RunoutPanel candidates={results} onRanked={setRanked} open={runoutOpen} onOpenChange={setRunoutOpen} />
+          <RunoutPanel
+            key={typedRunout}
+            candidates={results}
+            onRanked={setRanked}
+            open={runoutOpen}
+            onOpenChange={setRunoutOpen}
+            initial={typedRunout}
+          />
           <ShowFilter cards={cards} own={own} value={show} onChange={setShow} />
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {ordered

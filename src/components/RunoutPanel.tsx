@@ -46,11 +46,13 @@ export function RunoutPanel({
   onRanked,
   open: openProp,
   onOpenChange,
+  initial = '',
 }: {
   candidates: SearchResult[]
   onRanked: (r: Ranked<SearchResult>[] | null) => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  initial?: string // a runout already typed, as the first side
 }) {
   const [openState, setOpenState] = useState(false)
   const open = openProp ?? openState
@@ -58,7 +60,7 @@ export function RunoutPanel({
     setOpenState(o)
     onOpenChange?.(o)
   }
-  const [sides, setSides] = useState(['', ''])
+  const [sides, setSides] = useState([initial, ''])
   const [suggestions, setSuggestions] = useState<string[] | null>(null)
   const ids = useMemo(() => candidates.map((c) => c.id), [candidates])
   const { map: identifiers, done } = useIdentifiers(ids, open)
