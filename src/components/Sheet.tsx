@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 
-const widths = { md: 'sm:max-w-md', lg: 'sm:max-w-lg', xl: 'sm:max-w-xl' }
+const widths = { md: 'sm:max-w-md', lg: 'sm:max-w-lg', xl: 'sm:max-w-xl', '3xl': 'sm:max-w-3xl' }
 // "page" is the app's own background, so cards inside stand out from it
 const backgrounds = { plain: 'bg-white dark:bg-stone-900', page: 'bg-stone-50 dark:bg-stone-950' }
 

@@ -181,7 +181,7 @@ export function Release({ id }: { id: string }) {
         {adding && (
           <Sheet
             title={copyCount ? 'Add another copy' : 'Add to my collection'}
-            width="md"
+            width={their ? '3xl' : 'md'}
             bodyClassName="p-4"
             onClose={() => setAdding(false)}
           >

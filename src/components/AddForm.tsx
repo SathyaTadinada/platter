@@ -141,74 +141,103 @@ export function AddForm({
     }
   }
 
+  // their details, picked all at once with the switch or a chip at a time; whatever comes over can still
+  // be changed in its row
+  const theirs = options.length > 0 && (
+    <li className="px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-stone-500">Use {their!.owner}’s details</span>
+        <Switch
+          label={`Use all of ${their!.owner}’s details`}
+          checked={all}
+          onChange={(on) =>
+            pick(
+              options.map((o) => o.key),
+              on,
+            )
+          }
+        />
+      </div>
+      {options.length > 1 && (
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {options.map((o) => {
+            const on = picked.has(o.key)
+            return (
+              <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
+                {o.label}
+              </ToggleChip>
+            )
+          })}
+        </div>
+      )}
+    </li>
+  )
+  // in a sheet with room, their details sit beside the form rather than above it, so it all fits
+  const two = Boolean(sheet && theirs)
+
+  const crate = (
+    <Row label="Crate">
+      <CrateSelect
+        value={folderId}
+        folders={folders.data ?? []}
+        onChange={setFolderId}
+        onCreated={folders.reload}
+        disabled={!folders.data}
+        className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
+      />
+    </Row>
+  )
+  const stars = rating > 0 && (
+    <Row label="Rating">
+      {/* lined up with the values in the other rows */}
+      <span className="flex justify-end px-2">
+        <Stars value={rating} onChange={setRating} size={20} />
+      </span>
+    </Row>
+  )
+  const field = (f: (typeof fields)[number]) => {
+    const key = keyOf(f.id)
+    return (
+      <Field
+        key={f.id}
+        field={f}
+        kind={kindOf(f, key)}
+        value={values[f.id] ?? ''}
+        currency={currency}
+        suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : []}
+        onSave={(v) => setValues((old) => ({ ...old, [f.id]: v }))}
+        quiet
+      />
+    )
+  }
+  const isNotes = (f: (typeof fields)[number]) => kindOf(f, keyOf(f.id)) === 'notes'
+
   return (
     <div className="space-y-3">
-      <List>
-        {/* their details: the switch takes all of them, a chip one at a time, and whatever comes over
-            can still be changed in its row below */}
-        {options.length > 0 && (
-          <li className="px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-stone-500">Use {their!.owner}’s details</span>
-              <Switch
-                label={`Use all of ${their!.owner}’s details`}
-                checked={all}
-                onChange={(on) =>
-                  pick(
-                    options.map((o) => o.key),
-                    on,
-                  )
-                }
-              />
-            </div>
-            {options.length > 1 && (
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                {options.map((o) => {
-                  const on = picked.has(o.key)
-                  return (
-                    <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
-                      {o.label}
-                    </ToggleChip>
-                  )
-                })}
-              </div>
-            )}
-          </li>
-        )}
-        <Row label="Crate">
-          <CrateSelect
-            value={folderId}
-            folders={folders.data ?? []}
-            onChange={setFolderId}
-            onCreated={folders.reload}
-            disabled={!folders.data}
-            className={`${inline} cursor-pointer appearance-none [text-align-last:right]`}
-          />
-        </Row>
-        {rating > 0 && (
-          <Row label="Rating">
-            {/* lined up with the values in the other rows */}
-            <span className="flex justify-end px-2">
-              <Stars value={rating} onChange={setRating} size={20} />
-            </span>
-          </Row>
-        )}
-        {fields.map((f) => {
-          const key = keyOf(f.id)
-          return (
-            <Field
-              key={f.id}
-              field={f}
-              kind={kindOf(f, key)}
-              value={values[f.id] ?? ''}
-              currency={currency}
-              suggestions={key === 'purchasedFrom' ? stores : key === 'location' ? locations : []}
-              onSave={(v) => setValues((old) => ({ ...old, [f.id]: v }))}
-              quiet
-            />
-          )
-        })}
-      </List>
+      {two ? (
+        // two columns of about the same height: their details, the crate, and notes on the left, the
+        // details of the copy on the right
+        <div className="space-y-3 sm:grid sm:grid-cols-2 sm:items-start sm:gap-4 sm:space-y-0">
+          <div className="space-y-3">
+            <List>{theirs}</List>
+            <List>
+              {crate}
+              {fields.filter(isNotes).map(field)}
+            </List>
+          </div>
+          <List>
+            {stars}
+            {fields.filter((f) => !isNotes(f)).map(field)}
+          </List>
+        </div>
+      ) : (
+        <List>
+          {theirs}
+          {crate}
+          {stars}
+          {fields.map(field)}
+        </List>
+      )}
       <div
         className={
           sheet
