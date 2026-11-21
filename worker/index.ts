@@ -16,7 +16,7 @@ import {
   waysIn,
 } from './account'
 import { clearAbout, clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
-import { createBadge, deleteBadge, editBadge, listBadges } from './badges'
+import { createBadge, deleteBadge, editBadge, listBadges, moveBadge } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow, waiting as waitingFollows } from './follow'
 import { header, signParams } from './oauth'
@@ -236,6 +236,7 @@ const SYNC_ACTIONS = [
   'admin-badge-create',
   'admin-badge-rename',
   'admin-badge-delete',
+  'admin-badge-move',
   'admin-delete',
 ] as const
 type SyncAction = (typeof SYNC_ACTIONS)[number]
@@ -414,7 +415,7 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       case 'profile-details':
         return ok({ details: await setProfileDetails(db, account, input.details) })
       case 'profile-about':
-        return ok(await setProfileAbout(db, account, input.bio, input.setup))
+        return ok(await setProfileAbout(db, account, input.about))
       case 'profile-who':
         return ok({ who: await setWho(db, account, input.who) })
       case 'admin-members':
@@ -427,6 +428,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await createBadge(db, input.label, input.color, input.icon))
       case 'admin-badge-rename':
         await editBadge(db, input.id, { label: input.label, color: input.color, icon: input.icon })
+        return ok({ ok: true })
+      case 'admin-badge-move':
+        await moveBadge(db, input.id, input.by)
         return ok({ ok: true })
       case 'admin-badge-delete':
         await deleteBadge(db, input.id)

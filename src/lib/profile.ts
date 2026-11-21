@@ -62,7 +62,8 @@ function copyOf(r: LibraryItem, choice?: CopyChoice): CopyDetails | undefined {
   return copy.rating || copy.fields ? copy : undefined
 }
 
-export type ProfileAbout = { avatar?: string; records?: number }
+// what their devices send with their picture; playing only while they've chosen to show it
+export type ProfileAbout = { avatar?: string; records?: number; playing?: { item: ProfileBrief; at: number } }
 
 // A record in a list on a profile: just enough to show it and open it
 export type ProfileBrief = Pick<ProfileItem, 'id' | 'title' | 'artist' | 'thumb'>
@@ -374,6 +375,13 @@ export function copyable(copy: CopyDetails | undefined, mine: CollectionField[],
 }
 
 // Where a record from someone's profile opens: the record page, with their copy on it when they show one
+// The record they last logged a play of, for a profile that shows it
+export async function lastPlayed(): Promise<{ item: ProfileBrief; at: number } | undefined> {
+  const play = await db.plays.orderBy('at').last()
+  const item = play && (await db.collection.get(play.instanceId))
+  return play && item ? { item: brief(item), at: play.at } : undefined
+}
+
 // A setup's slots in the order they show, as worker/profile has them
 export const SETUP_LABELS = [
   ['turntable', 'Turntable'],

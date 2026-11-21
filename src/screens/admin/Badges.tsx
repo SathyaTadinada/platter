@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { BADGE_COLORS, BADGE_ICONS, type BadgeLook } from '../../../worker/badges'
 import { BADGE_ICON, BadgePill, BADGE_SWATCH } from '../../components/BadgePill'
@@ -165,6 +165,7 @@ export function BadgesSheet({
   onCreate,
   onEdit,
   onDelete,
+  onMove,
   onClose,
 }: {
   badges: Badge[]
@@ -172,6 +173,7 @@ export function BadgesSheet({
   onCreate: (look: BadgeLook) => Promise<unknown>
   onEdit: (id: string, look: BadgeLook) => Promise<unknown>
   onDelete: (id: string) => Promise<unknown>
+  onMove: (id: string, by: -1 | 1) => Promise<unknown>
   onClose: () => void
 }) {
   const [editing, setEditing] = useState<string | null>(null)
@@ -216,7 +218,7 @@ export function BadgesSheet({
       <div className="space-y-4 py-2">
         {error && <Notice tone="error">{error}</Notice>}
         <List>
-          {badges.map((b) =>
+          {badges.map((b, i) =>
             editing === b.id ? (
               <li key={b.id} className="px-4 py-3">
                 <BadgeForm
@@ -236,6 +238,29 @@ export function BadgesSheet({
                   <BadgePill badge={b} />
                   <p className="mt-1 text-sm text-stone-500">{b.members ? plural(b.members, 'member') : 'No members'}</p>
                 </div>
+                {/* the order every profile and list shows them in */}
+                {badges.length > 1 && (
+                  <span className="flex flex-col">
+                    <button
+                      type="button"
+                      aria-label={`Move ${b.label} up`}
+                      disabled={i === 0}
+                      onClick={() => run(() => onMove(b.id, -1))}
+                      className="rounded-md p-0.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900 disabled:opacity-25 disabled:hover:bg-transparent dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                    >
+                      <ChevronUp size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Move ${b.label} down`}
+                      disabled={i === badges.length - 1}
+                      onClick={() => run(() => onMove(b.id, 1))}
+                      className="rounded-md p-0.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900 disabled:opacity-25 disabled:hover:bg-transparent dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                    >
+                      <ChevronDown size={18} />
+                    </button>
+                  </span>
+                )}
                 <IconButton label={`Edit ${b.label}`} onClick={() => setEditing(b.id)}>
                   <Pencil size={18} />
                 </IconButton>

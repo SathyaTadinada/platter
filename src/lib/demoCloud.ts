@@ -1,17 +1,24 @@
 import type { Section, Sections, Who } from '../../worker/profile'
 import { db } from '../db/db'
-import { CloudError, type CloudApi, type DeviceInfo, type PasskeyInfo, type ProfileReader, type Setup } from './cloud'
-import { localProfile } from './profile'
+import { CloudError, type About, type CloudApi, type DeviceInfo, type PasskeyInfo, type ProfileReader } from './cloud'
+import { lastPlayed, localProfile } from './profile'
 
 const DEMO_USER = 'demo'
 // what the sample profile says about itself
-export const DEMO_BIO = 'Mostly jazz and 70s soul, with a soft spot for whatever the shop is playing when I walk in.'
-export const DEMO_SETUP: Setup = {
-  turntable: 'Technics SL-1200MK2',
-  cartridge: 'Audio-Technica VM540ML',
-  preamp: 'Schiit Mani 2',
-  amp: 'Yamaha A-S501',
-  speakers: 'KEF LS50',
+export const DEMO_ABOUT: About = {
+  bio: 'Mostly jazz and 70s soul, with a soft spot for whatever the shop is playing when I walk in.',
+  setup: {
+    turntable: 'Technics SL-1200MK2',
+    cartridge: 'Audio-Technica VM540ML',
+    preamp: 'Schiit Mani 2',
+    amp: 'Yamaha A-S501',
+    speakers: 'KEF LS50',
+  },
+  links: { instagram: 'platter.demo', lastfm: 'platterdemo', bandcamp: 'platterdemo' },
+  location: 'Somewhere with good shops',
+  pronouns: '',
+  pinned: null, // the first record in the sample collection, once it's loaded
+  playing: true,
 }
 const PAGE = 100 // as the server pages a profile
 // as worker/profile has them, which is server code
@@ -91,12 +98,11 @@ export function demoCloudApi(): CloudApi {
       who,
       hidden: false,
       details,
-      bio: DEMO_BIO,
-      setup: DEMO_SETUP,
+      ...DEMO_ABOUT,
     }),
-    setAbout: async (bio, setup) => {
+    setAbout: async (about) => {
       await pause()
-      return { bio, setup }
+      return about
     },
     setDetails: async (next) => {
       await pause()
@@ -143,6 +149,7 @@ export function demoCloudApi(): CloudApi {
     createBadge: async (label, color, icon) => ({ id: label, label, color, icon, members: 0 }),
     editBadge: nothing,
     deleteBadge: nothing,
+    moveBadge: nothing,
     deleteMember: nothing,
   }
 }
@@ -151,7 +158,7 @@ export function demoCloudApi(): CloudApi {
 // settings, so View profile shows what a profile looks like. Anyone else's comes from the server.
 export function demoReader(
   server: ProfileReader,
-  current: () => { sections: Sections; who: Who; details: string[]; bio: string; setup: Setup },
+  current: () => { sections: Sections; who: Who; details: string[]; about: About },
 ): ProfileReader {
   const mine = (username: string) => username.trim().toLowerCase() === DEMO_USER
   const rows = async () => {
@@ -175,11 +182,13 @@ export function demoReader(
         memberSince: Date.now() - 60 * 24 * 60 * 60_000,
         publishedAt: Date.now(),
         sections: on,
-        about: JSON.stringify(on.includes('collection') ? { records: await db.collection.count() } : {}),
+        about: JSON.stringify({
+          ...(on.includes('collection') ? { records: await db.collection.count() } : {}),
+          ...(current().about.playing ? { playing: await lastPlayed() } : {}),
+        }),
         followers: 0,
         following: 0,
-        bio: current().bio,
-        setup: current().setup,
+        ...current().about,
       }
     },
     profileRows: async (username, section, after) => {

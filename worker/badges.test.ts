@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { testDB } from '../tests/d1'
 import { accountById, discogsSignIn } from './account'
 import { members, setBadge } from './admin'
-import { createBadge, deleteBadge, editBadge, isBadge, listBadges } from './badges'
+import { createBadge, deleteBadge, editBadge, isBadge, listBadges, moveBadge } from './badges'
 import { head, setSections, setWho } from './profile'
 import { deviceAccount } from './sync'
 
@@ -71,5 +71,28 @@ describe('badges', () => {
     expect((await accountById(db, you))?.badges).toEqual([])
     expect((await listBadges(db)).map((b) => b.label)).toEqual(['Early supporter'])
     expect((await members(db)).map((m) => m.badges)).toEqual([['early'], []])
+  })
+
+  it('keeps an order an admin can change, used on profiles too', async () => {
+    const db = testDB()
+    const id = await account(db)
+    await setWho(db, id, 'public')
+    await setSections(db, id, { collection: 'public' })
+    const owner = await createBadge(db, 'Owner', 'blue', 'crown')
+    const tester = await createBadge(db, 'Tester', 'green', 'flask')
+    const labels = async () => (await listBadges(db)).map((b) => b.label)
+    expect(await labels()).toEqual(['Early supporter', 'Owner', 'Tester'])
+    await moveBadge(db, tester.id, -1)
+    await moveBadge(db, tester.id, -1)
+    expect(await labels()).toEqual(['Tester', 'Early supporter', 'Owner'])
+    // already first, so nothing moves
+    await moveBadge(db, tester.id, -1)
+    expect(await labels()).toEqual(['Tester', 'Early supporter', 'Owner'])
+    // given in another order, a profile shows them in this one
+    await setBadge(db, id, owner.id, true)
+    await setBadge(db, id, 'early', true)
+    await setBadge(db, id, tester.id, true)
+    expect((await head(db, 'tadinada'))?.badges.map((b) => b.label)).toEqual(['Tester', 'Early supporter', 'Owner'])
+    await expect(moveBadge(db, owner.id, 2)).rejects.toMatchObject({ status: 400 })
   })
 })

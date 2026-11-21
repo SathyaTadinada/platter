@@ -170,6 +170,10 @@ export function Admin() {
             await api.editBadge(id, look)
             await reload()
           }}
+          onMove={async (id, by) => {
+            await api.moveBadge(id, by)
+            await reload()
+          }}
           onDelete={async (id) => {
             await api.deleteBadge(id)
             await reload()

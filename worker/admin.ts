@@ -33,7 +33,8 @@ export async function members(db: DB): Promise<Member[]> {
          (SELECT COUNT(*) FROM devices d WHERE d.account = a.id) AS devices,
          (SELECT MAX(last_seen_at) FROM devices d WHERE d.account = a.id) AS last_seen_at,
          (SELECT COUNT(*) FROM passkeys p WHERE p.account = a.id) AS passkeys,
-         pr.visibility, pr.hidden, (COALESCE(pr.bio, '') <> '' OR COALESCE(pr.setup, '{}') <> '{}') AS about
+         pr.visibility, pr.hidden, (COALESCE(pr.bio, '') <> '' OR COALESCE(pr.setup, '{}') <> '{}' OR COALESCE(pr.links, '{}') <> '{}'
+           OR COALESCE(pr.location, '') <> '' OR COALESCE(pr.pronouns, '') <> '' OR COALESCE(pr.pinned, '') <> '') AS about
        FROM accounts a LEFT JOIN profiles pr ON pr.account = a.id ORDER BY a.created_at`,
     )
     .all<{
@@ -99,7 +100,10 @@ export async function setBadge(db: DB, member: unknown, badge: unknown, on: bool
 
 // Takes down what someone wrote on their profile, for when it shouldn't be there but the rest can stay
 export async function clearAbout(db: DB, member: unknown) {
-  await db.prepare("UPDATE profiles SET bio = '', setup = '{}' WHERE account = ?1").bind(parseMember(member)).run()
+  await db
+    .prepare("UPDATE profiles SET bio = '', setup = '{}', links = '{}', location = '', pronouns = '', pinned = '' WHERE account = ?1")
+    .bind(parseMember(member))
+    .run()
 }
 
 // The password, passkeys, codes, and every device. Logging in with Discogs still gets them back in.

@@ -1,7 +1,8 @@
 import type { Badge, BadgeColor, BadgeIcon, BadgeLook } from '../../worker/badges'
 import { categoryOf, type Category } from '../../worker/categories'
-import type { Sections, Section, Setup, Who } from '../../worker/profile'
-export type { Setup, SetupSlot } from '../../worker/profile'
+import type { About, Pinned, Sections, Section, Setup, Who } from '../../worker/profile'
+export type { About, Pinned, Setup, SetupSlot } from '../../worker/profile'
+import type { Links } from '../../worker/links'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
 import {
@@ -156,7 +157,12 @@ export type ProfileHead = {
   followers: number
   following: number
   bio: string
-  setup: Setup // empty on a locked profile
+  pronouns: string
+  // empty on a locked profile
+  setup: Setup
+  links: Links
+  location: string
+  pinned: Pinned | null
 }
 export type Person = { username: string; about: string | null; since: number; status?: 'pending' | 'accepted' }
 export type Follows = { followers: Person[]; following: Person[]; requests: Person[]; blocked: Person[] }
@@ -231,17 +237,17 @@ export type CloudApi = ProfileReader & {
   passkeys(): Promise<{ passkeys: PasskeyInfo[] }>
   renamePasskey(id: string, name: string): Promise<unknown>
   removePasskey(id: string): Promise<unknown>
-  profileSettings(): Promise<{
-    sections: Sections
-    publishedAt: number | null
-    who: Who
-    hidden: boolean
-    details?: string[]
-    bio?: string
-    setup?: Setup
-  }>
+  profileSettings(): Promise<
+    {
+      sections: Sections
+      publishedAt: number | null
+      who: Who
+      hidden: boolean
+      details?: string[]
+    } & Partial<About>
+  >
   setDetails(details: string[]): Promise<{ details: string[] }>
-  setAbout(bio: string, setup: Setup): Promise<{ bio: string; setup: Setup }>
+  setAbout(about: About): Promise<About>
   setSections(sections: Sections): Promise<{ sections: Sections }>
   setWho(who: Who): Promise<{ who: Who }>
   publishProfile(rows: ProfileRow[]): Promise<{ saved: number }>
@@ -264,6 +270,7 @@ export type CloudApi = ProfileReader & {
   createBadge(label: string, color: BadgeColor, icon: BadgeIcon): Promise<Badge>
   editBadge(id: string, changes: Partial<BadgeLook>): Promise<unknown>
   deleteBadge(id: string): Promise<unknown>
+  moveBadge(id: string, by: -1 | 1): Promise<unknown>
   deleteMember(member: string): Promise<unknown>
 }
 
@@ -291,7 +298,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setSections: (sections) => c('profile-sections', { sections }),
     setWho: (who) => c('profile-who', { who }),
     setDetails: (details) => c('profile-details', { details }),
-    setAbout: (bio, setup) => c('profile-about', { bio, setup }),
+    setAbout: (about) => c('profile-about', { about }),
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     unpublishProfile: (section, keys) => c('profile-unpublish', { section, keys }),
@@ -317,6 +324,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     createBadge: (label, color, icon) => c('admin-badge-create', { label, color, icon }),
     editBadge: (id, changes) => c('admin-badge-rename', { id, ...changes }),
     deleteBadge: (id) => c('admin-badge-delete', { id }),
+    moveBadge: (id, by) => c('admin-badge-move', { id, by }),
     deleteMember: (member) => c('admin-delete', { member }),
   }
 }

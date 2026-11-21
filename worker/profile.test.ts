@@ -438,46 +438,108 @@ describe('who follows them', () => {
   })
 })
 
-describe('a bio and a setup', () => {
-  it('keeps them, tidied, and shows them on the profile', async () => {
+describe('what a profile says about its owner', () => {
+  const about = (x: Record<string, unknown>) => ({ bio: '', setup: {}, ...x })
+
+  it('keeps it, tidied, and shows it on the profile', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    expect(await settings(db, id)).toMatchObject({ bio: '', setup: {} })
-    const saved = await setAbout(db, id, '  Mostly jazz.\r\n\n\n\nSome soul.  ', { turntable: ' Technics SL-1200MK2 ', speakers: '' })
-    expect(saved).toEqual({ bio: 'Mostly jazz.\n\nSome soul.', setup: { turntable: 'Technics SL-1200MK2' } })
+    expect(await settings(db, id)).toMatchObject({
+      bio: '',
+      setup: {},
+      links: {},
+      location: '',
+      pronouns: '',
+      pinned: null,
+      playing: false,
+    })
+    const saved = await setAbout(
+      db,
+      id,
+      about({
+        bio: '  Mostly jazz.\r\n\n\n\nSome soul.  ',
+        setup: { turntable: ' Technics SL-1200MK2 ', speakers: '' },
+        links: { instagram: '@crate.digger', mastodon: 'https://mastodon.social/@vinyl', lastfm: '' },
+        location: ' Portland ',
+        pronouns: 'she/her',
+        pinned: { id: 249504, title: 'Kind of Blue', artist: 'Miles Davis', thumb: 'https://i.discogs.com/a.jpg' },
+        playing: true,
+      }),
+    )
+    expect(saved).toEqual({
+      bio: 'Mostly jazz.\n\nSome soul.',
+      setup: { turntable: 'Technics SL-1200MK2' },
+      links: { instagram: 'crate.digger', mastodon: 'vinyl@mastodon.social' },
+      location: 'Portland',
+      pronouns: 'she/her',
+      pinned: { id: 249504, title: 'Kind of Blue', artist: 'Miles Davis', thumb: 'https://i.discogs.com/a.jpg' },
+      playing: true,
+    })
     expect(await settings(db, id)).toMatchObject(saved)
-    expect(await head(db, 'tadinada')).toMatchObject(saved)
+    const { playing: _, ...shown } = saved
+    expect(await head(db, 'tadinada')).toMatchObject(shown)
   })
 
-  it('turns away links, long text, and slots it does not know', async () => {
+  it('turns away links, long text, and anything it does not know', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    await expect(setAbout(db, id, 'see https://spam.example', {})).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, 'visit www.spam', {})).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, 'buy at cheapvinyl.com', {})).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, 'x'.repeat(161), {})).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, '', { turntable: 'x'.repeat(61) })).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, '', { car: 'Volvo' })).rejects.toMatchObject({ status: 400 })
-    await expect(setAbout(db, id, '', ['Technics'])).rejects.toMatchObject({ status: 400 })
-    // a setup is one line each
-    expect((await setAbout(db, id, '', { amp: 'Marantz\n2270' })).setup).toEqual({ amp: 'Marantz 2270' })
+    const refused = (x: Record<string, unknown>) => expect(setAbout(db, id, about(x))).rejects.toMatchObject({ status: 400 })
+    await refused({ bio: 'see https://spam.example' })
+    await refused({ bio: 'visit www.spam' })
+    await refused({ bio: 'buy at cheapvinyl.com' })
+    await refused({ bio: 'x'.repeat(161) })
+    await refused({ setup: { turntable: 'x'.repeat(61) } })
+    await refused({ setup: { car: 'Volvo' } })
+    await refused({ links: { myspace: 'tom' } })
+    await refused({ links: { instagram: 'not a name!' } })
+    await refused({ location: 'x'.repeat(41) })
+    await refused({ pronouns: 'x'.repeat(21) })
+    await refused({ pinned: { id: 'one', title: 'A', artist: 'B' } })
+    // a picture that isn't one of Discogs' own is left off rather than refused
+    expect(
+      (await setAbout(db, id, about({ pinned: { id: 1, title: 'A', artist: 'B', thumb: 'https://evil.example/x.png' } }))).pinned,
+    ).toEqual({
+      id: 1,
+      title: 'A',
+      artist: 'B',
+    })
+    expect((await setAbout(db, id, about({ setup: { amp: 'Marantz\n2270' } }))).setup).toEqual({ amp: 'Marantz 2270' })
   })
 
-  it('shows the bio to someone waiting on a Followers profile, but not the setup', async () => {
+  it('shows a locked Followers profile its bio and pronouns, and nothing else of it', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    await setAbout(db, id, 'Hi', { turntable: 'Rega P3' })
+    await setAbout(db, id, about({ bio: 'Hi', pronouns: 'he/him', setup: { turntable: 'Rega P3' }, links: { x: 'me' }, location: 'Leeds' }))
     await setWho(db, id, 'followers')
-    expect(await head(db, 'tadinada')).toMatchObject({ locked: true, bio: 'Hi', setup: {} })
+    expect(await head(db, 'tadinada')).toMatchObject({
+      locked: true,
+      bio: 'Hi',
+      pronouns: 'he/him',
+      setup: {},
+      links: {},
+      location: '',
+      pinned: null,
+    })
+  })
+
+  it('keeps the record they last played off the profile unless they chose to show it', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    const sent = row('about', 'about', { avatar: 'a.jpg', playing: { item: { id: 1, title: 'A', artist: 'B' }, at: 5 } })
+    await publish(db, id, [sent])
+    expect(JSON.parse((await head(db, 'tadinada'))!.about!)).toEqual({ avatar: 'a.jpg' })
+    await setAbout(db, id, about({ playing: true }))
+    await publish(db, id, [{ ...sent, updatedAt: 2000 }])
+    expect(JSON.parse((await head(db, 'tadinada'))!.about!).playing).toMatchObject({ at: 5 })
   })
 
   it('can be cleared by an admin, and says so in the member list', async () => {
     const db = testDB()
     const { id } = await shared(db)
-    await setAbout(db, id, 'Hi', { turntable: 'Rega P3' })
+    await setAbout(db, id, about({ bio: 'Hi', links: { x: 'me' } }))
     expect((await members(db)).find((m) => m.id === id)?.about).toBe(true)
     await clearAbout(db, id)
-    expect(await settings(db, id)).toMatchObject({ bio: '', setup: {} })
+    expect(await settings(db, id)).toMatchObject({ bio: '', setup: {}, links: {} })
     expect((await members(db)).find((m) => m.id === id)?.about).toBe(false)
   })
 })

@@ -9,6 +9,7 @@ import { accountById, type Account } from './account'
 import { looksOf, type BadgeLook } from './badges'
 import { approveWaiting, blockedEither, relation, statusOf, type Person, type Relation, type Status } from './follow'
 import { MAX_PUSH, SyncError, type DB } from './sync'
+import { handleFrom, LINK_NAMES, LINK_SERVICES, validHandle, type Links, type LinkService } from './links'
 
 export const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
 export type Section = (typeof SECTIONS)[number]
@@ -53,7 +54,11 @@ export type ProfileHead = {
   followers: number
   following: number
   bio: string // shown even on a locked profile, so someone can decide whether to ask
-  setup: Setup // only to those who can see the whole profile
+  pronouns: string // with the bio
+  setup: Setup // the rest only to those who can see the whole profile
+  links: Links
+  location: string
+  pinned: Pinned | null
 }
 
 // ---- reading what the owner chose ----
@@ -87,15 +92,22 @@ type ProfileRecord = {
   details?: string
   bio?: string
   setup?: string
+  links?: string
+  location?: string
+  pronouns?: string
+  pinned?: string
+  playing?: number
 }
 
 // The owner's own view: every section, with the ones they haven't touched off
 export async function settings(
   db: DB,
   account: string,
-): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details: string[]; bio: string; setup: Setup }> {
+): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details: string[] } & About> {
   const row = await db
-    .prepare('SELECT sections, published_at, visibility, hidden, details, bio, setup FROM profiles WHERE account = ?1')
+    .prepare(
+      'SELECT sections, published_at, visibility, hidden, details, bio, setup, links, location, pronouns, pinned, playing FROM profiles WHERE account = ?1',
+    )
     .bind(account)
     .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
@@ -105,8 +117,7 @@ export async function settings(
     who: row?.visibility ?? 'private',
     hidden: row?.hidden === 1,
     details: readDetails(row?.details),
-    bio: row?.bio ?? '',
-    setup: readSetup(row?.setup),
+    ...readAbout(row ?? {}),
   }
 }
 
@@ -154,20 +165,95 @@ function readSetup(stored: string | undefined): Setup {
   }
 }
 
-export async function setAbout(
-  db: DB,
-  account: string,
-  bio: unknown,
-  setup: unknown,
-  now = Date.now(),
-): Promise<{ bio: string; setup: Setup }> {
-  const about = { bio: cleanText(bio, BIO_MAX, true), setup: parseSetup(setup) }
+// A record pinned to the top of a profile: enough to show it and open it
+export type Pinned = { id: number; title: string; artist: string; thumb?: string }
+export type About = {
+  bio: string
+  setup: Setup
+  links: Links
+  location: string
+  pronouns: string
+  pinned: Pinned | null
+  playing: boolean // the record they last played goes up with their picture
+}
+export const LOCATION_MAX = 40
+export const PRONOUNS_MAX = 20
+
+export function parseLinks(x: unknown): Links {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) throw new SyncError(400, 'Bad links')
+  const out: Links = {}
+  for (const [key, value] of Object.entries(x as Record<string, unknown>)) {
+    if (!(LINK_SERVICES as readonly string[]).includes(key) || typeof value !== 'string') throw new SyncError(400, 'Bad links')
+    const handle = handleFrom(key as LinkService, value)
+    if (!handle) continue
+    if (!validHandle(key as LinkService, handle)) throw new SyncError(400, `That isn’t a ${LINK_NAMES[key as LinkService]} username`)
+    out[key as LinkService] = handle
+  }
+  return out
+}
+
+function parsePinned(x: unknown): Pinned | null {
+  if (x === null || x === undefined || x === '') return null
+  const p = x as Pinned
+  const text = (t: unknown) => typeof t === 'string' && t.trim().length > 0 && t.length <= 200
+  if (typeof p !== 'object' || !Number.isInteger(p.id) || p.id <= 0 || !text(p.title) || !text(p.artist)) {
+    throw new SyncError(400, 'Bad record')
+  }
+  // only Discogs' own pictures, the same as every cover in the app
+  const thumb = typeof p.thumb === 'string' && /^https:\/\/i\.discogs\.com\//.test(p.thumb) && p.thumb.length <= 500 ? p.thumb : undefined
+  return { id: p.id, title: p.title.trim(), artist: p.artist.trim(), ...(thumb ? { thumb } : {}) }
+}
+
+const readJson = <T>(stored: string | undefined, parse: (x: unknown) => T, empty: T): T => {
+  try {
+    return stored ? parse(JSON.parse(stored)) : empty
+  } catch {
+    return empty
+  }
+}
+
+function readAbout(row: Partial<ProfileRecord>): About {
+  return {
+    bio: row.bio ?? '',
+    setup: readSetup(row.setup),
+    links: readJson(row.links, parseLinks, {}),
+    location: row.location ?? '',
+    pronouns: row.pronouns ?? '',
+    pinned: readJson(row.pinned, parsePinned, null),
+    playing: row.playing === 1,
+  }
+}
+
+export async function setAbout(db: DB, account: string, input: unknown, now = Date.now()): Promise<About> {
+  if (!input || typeof input !== 'object') throw new SyncError(400, 'Bad profile')
+  const x = input as Record<string, unknown>
+  const about: About = {
+    bio: cleanText(x.bio ?? '', BIO_MAX, true),
+    setup: parseSetup(x.setup ?? {}),
+    links: parseLinks(x.links ?? {}),
+    location: cleanText(x.location ?? '', LOCATION_MAX, false),
+    pronouns: cleanText(x.pronouns ?? '', PRONOUNS_MAX, false),
+    pinned: parsePinned(x.pinned),
+    playing: x.playing === true,
+  }
   await db
     .prepare(
-      `INSERT INTO profiles (account, bio, setup, visibility, created_at) VALUES (?1, ?2, ?3, 'private', ?4)
-       ON CONFLICT (account) DO UPDATE SET bio = excluded.bio, setup = excluded.setup`,
+      `INSERT INTO profiles (account, bio, setup, links, location, pronouns, pinned, playing, visibility, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'private', ?9)
+       ON CONFLICT (account) DO UPDATE SET bio = excluded.bio, setup = excluded.setup, links = excluded.links,
+         location = excluded.location, pronouns = excluded.pronouns, pinned = excluded.pinned, playing = excluded.playing`,
     )
-    .bind(account, about.bio, JSON.stringify(about.setup), now)
+    .bind(
+      account,
+      about.bio,
+      JSON.stringify(about.setup),
+      JSON.stringify(about.links),
+      about.location,
+      about.pronouns,
+      about.pinned ? JSON.stringify(about.pinned) : '',
+      about.playing ? 1 : 0,
+      now,
+    )
     .run()
   return about
 }
@@ -259,11 +345,12 @@ export function parseRows(x: unknown): ProfileRow[] {
 // Rows for a section that's off are dropped rather than refused: a device that hasn't heard about
 // the change yet shouldn't have its whole push turned away.
 export async function publish(db: DB, account: string, rows: ProfileRow[], now = Date.now()): Promise<{ saved: number }> {
-  const { sections, who } = await settings(db, account)
+  const { sections, who, playing } = await settings(db, account)
   // their picture goes with the profile itself, which has one even with every section off
   const anything = who !== 'private' || SECTIONS.some((x) => sections[x] === 'public')
   const on = (kind: ProfileKind) => (kind === ABOUT ? anything : sections[SECTION_OF[kind]] === 'public')
-  const wanted = rows.filter((r) => on(r.kind))
+  // the record they last played only while they've chosen to show it, whatever a device sends
+  const wanted = rows.filter((r) => on(r.kind)).map((r) => (r.kind === ABOUT && !playing ? { ...r, value: withoutPlaying(r.value) } : r))
   if (!wanted.length) return { saved: 0 }
   await db.batch([
     db.prepare('UPDATE profiles SET published_at = ?2 WHERE account = ?1').bind(account, now),
@@ -278,6 +365,15 @@ export async function publish(db: DB, account: string, rows: ProfileRow[], now =
     ),
   ])
   return { saved: wanted.length }
+}
+
+function withoutPlaying(value: string): string {
+  try {
+    const { playing: _, ...rest } = JSON.parse(value) as Record<string, unknown>
+    return JSON.stringify(rest)
+  } catch {
+    return value
+  }
 }
 
 // After a device has sent a whole section, whatever it didn't send isn't there any more: a sold
@@ -386,11 +482,12 @@ export async function search(db: DB, query: unknown, viewer: string | null = nul
 async function owner(
   db: DB,
   username: unknown,
-): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections; who: Who; bio: string; setup: Setup }) | null> {
+): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections; who: Who } & About) | null> {
   if (typeof username !== 'string' || !username.trim() || username.length > 100) throw new SyncError(400, 'Bad username')
   const row = await db
     .prepare(
-      `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility, p.bio, p.setup FROM accounts a JOIN profiles p ON p.account = a.id
+      `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility, p.bio, p.setup, p.links, p.location, p.pronouns, p.pinned, p.playing
+       FROM accounts a JOIN profiles p ON p.account = a.id
        WHERE a.name = ?1 AND a.discogs_id IS NOT NULL AND p.visibility <> 'private' AND p.hidden = 0`,
     )
     .bind(username.trim().toLowerCase())
@@ -404,8 +501,7 @@ async function owner(
       publishedAt: row.published_at,
       sections: readSections(row.sections),
       who: row.visibility,
-      bio: row.bio ?? '',
-      setup: readSetup(row.setup),
+      ...readAbout(row),
     }
   )
 }
@@ -444,7 +540,11 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
     sections: locked ? [] : sections,
     about: locked ? pictureOnly(about?.value ?? null) : (about?.value ?? null),
     bio: found.bio,
+    pronouns: found.pronouns,
     setup: locked ? {} : found.setup,
+    links: locked ? {} : found.links,
+    location: locked ? '' : found.location,
+    pinned: locked ? null : found.pinned,
   }
 }
 

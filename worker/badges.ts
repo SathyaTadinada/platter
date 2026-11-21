@@ -41,7 +41,7 @@ async function holders(db: DB, id: string): Promise<{ id: string; badges: string
 
 export async function listBadges(db: DB): Promise<Badge[]> {
   const [{ results: badges }, { results: accounts }] = await Promise.all([
-    db.prepare('SELECT id, label, color, icon FROM badges ORDER BY created_at').all<BadgeLook & { id: string }>(),
+    db.prepare('SELECT id, label, color, icon FROM badges ORDER BY position, created_at').all<BadgeLook & { id: string }>(),
     db.prepare("SELECT badges FROM accounts WHERE badges <> '[]'").all<{ badges: string }>(),
   ])
   const counts = new Map<string, number>()
@@ -57,7 +57,9 @@ export async function isBadge(db: DB, id: unknown): Promise<boolean> {
 export async function looksOf(db: DB, ids: string[]): Promise<BadgeLook[]> {
   if (!ids.length) return []
   const { results } = await db
-    .prepare(`SELECT label, color, icon FROM badges WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(', ')}) ORDER BY created_at`)
+    .prepare(
+      `SELECT label, color, icon FROM badges WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(', ')}) ORDER BY position, created_at`,
+    )
     .bind(...ids)
     .all<BadgeLook>()
   return results
@@ -83,10 +85,27 @@ export async function createBadge(
   if (await taken(db, name)) throw new SyncError(409, 'There’s already a badge with that name')
   const id = newId()
   await db
-    .prepare('INSERT INTO badges (id, label, color, icon, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
+    // last in the order
+    .prepare(
+      'INSERT INTO badges (id, label, color, icon, created_at, position) VALUES (?1, ?2, ?3, ?4, ?5, (SELECT COALESCE(MAX(position), -1) + 1 FROM badges))',
+    )
     .bind(id, name, look.color, look.icon, now)
     .run()
   return { id, label: name, ...look, members: 0 }
+}
+
+// Moves a badge one place earlier (-1) or later (1) in the order every profile and list shows them in
+export async function moveBadge(db: DB, id: unknown, by: unknown) {
+  const badge = parseId(id)
+  if (by !== -1 && by !== 1) throw new SyncError(400, 'Bad move')
+  const { results } = await db.prepare('SELECT id FROM badges ORDER BY position, created_at').all<{ id: string }>()
+  const ids = results.map((r) => r.id)
+  const from = ids.indexOf(badge)
+  if (from < 0) throw new SyncError(404, 'No such badge')
+  const to = from + by
+  if (to < 0 || to >= ids.length) return
+  ;[ids[from], ids[to]] = [ids[to], ids[from]]
+  await db.batch(ids.map((b, i) => db.prepare('UPDATE badges SET position = ?2 WHERE id = ?1').bind(b, i)))
 }
 
 // Renames a badge, or changes how it looks; whatever isn't given stays as it was
