@@ -53,6 +53,8 @@ export function RecordLayout({
 }) {
   const stickyColumn = useStickyColumn()
   const [viewing, setViewing] = useState(false)
+  // a genre can also be one of its styles ("Classical" is both), so each shows once
+  const shownTags = tags.filter((t, i) => tags.findIndex((o) => o.label === t.label) === i)
   const photos = release?.images?.length ?? 0
 
   const tracklist = (
@@ -95,9 +97,9 @@ export function RecordLayout({
               <p key={d as string}>{d}</p>
             ))}
           </div>
-          {tags.length > 0 && (
+          {shownTags.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {tags.map((t) =>
+              {shownTags.map((t) =>
                 t.href ? (
                   <Link key={t.label} href={t.href} className={`${pill} hover:bg-stone-900/10 dark:hover:bg-white/15`}>
                     {t.label}
