@@ -36,10 +36,12 @@ export function AddForm({
   release,
   onAdded,
   their,
+  sheet,
 }: {
   release: Release
   onAdded: (a: Added) => void
   their?: { owner: string; copy: CopyDetails }
+  sheet?: boolean // in a sheet, where Add stays at the bottom however far the form scrolls
 }) {
   const { client, username } = useSignedIn()
   const meta = useCollectionMeta()
@@ -207,10 +209,18 @@ export function AddForm({
           )
         })}
       </List>
-      {(error || folders.error) && <Notice tone="error">{error ?? folders.error?.message}</Notice>}
-      <Button className="w-full" onClick={add} disabled={busy || !folderId}>
-        {busy ? 'Adding…' : 'Add to collection'}
-      </Button>
+      <div
+        className={
+          sheet
+            ? 'sticky -bottom-4 -mx-4 -mb-4 space-y-3 border-t border-stone-200 bg-white p-4 pb-[max(env(safe-area-inset-bottom),1rem)] dark:border-stone-800 dark:bg-stone-900'
+            : 'space-y-3'
+        }
+      >
+        {(error || folders.error) && <Notice tone="error">{error ?? folders.error?.message}</Notice>}
+        <Button className="w-full" onClick={add} disabled={busy || !folderId}>
+          {busy ? 'Adding…' : 'Add to collection'}
+        </Button>
+      </div>
     </div>
   )
 }

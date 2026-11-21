@@ -222,7 +222,8 @@ export function Field({
             ref={notesRef}
             aria-label={field.name}
             value={draft}
-            rows={3}
+            // forms filling in a new copy keep it to a line until something's typed; it grows from there
+            rows={quiet ? 1 : 3}
             placeholder="Add notes"
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit(draft.trim())}

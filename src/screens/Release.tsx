@@ -185,7 +185,7 @@ export function Release({ id }: { id: string }) {
             bodyClassName="p-4"
             onClose={() => setAdding(false)}
           >
-            <AddForm release={r} onAdded={added} their={their ?? undefined} />
+            <AddForm release={r} onAdded={added} their={their ?? undefined} sheet />
           </Sheet>
         )}
         <Section title="Market">
