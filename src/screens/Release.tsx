@@ -9,7 +9,7 @@ import { RecordLayout, YourCopies } from '../components/RecordLayout'
 import { ShareButton } from '../components/ShareButton'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/Toaster'
-import { Button, IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -140,11 +140,26 @@ export function Release({ id }: { id: string }) {
         details={[label && [cleanLabel(label.name), label.catno !== 'none' && label.catno].filter(Boolean).join(' · '), where, format]}
         tags={[...(r.genres ?? []), ...(r.styles ?? [])].map((g) => ({ label: g }))}
         extra={
-          copyCount > 0 && (
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-700 dark:bg-accent/20 dark:text-accent">
-              <Check size={16} aria-hidden />
-              {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
-            </p>
+          (copyCount > 0 || fromProfile) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {copyCount > 0 && (
+                <p className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-700 dark:bg-accent/20 dark:text-accent">
+                  <Check size={16} aria-hidden />
+                  {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
+                </p>
+              )}
+              {/* there when wanted, beside the record, rather than a form in the way of their copy */}
+              {fromProfile && (
+                <button
+                  type="button"
+                  onClick={() => setAdding(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-stone-900/5 px-3 py-1.5 text-sm font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15"
+                >
+                  <Plus size={16} aria-hidden />
+                  {copyCount ? 'Add another copy' : 'Add to my collection'}
+                </button>
+              )}
+            </div>
           )
         }
         error={error}
@@ -158,14 +173,7 @@ export function Release({ id }: { id: string }) {
           releaseId={releaseId}
           same="This pressing"
         />
-        {fromProfile ? (
-          <Section>
-            <Button variant="secondary" className="w-full" onClick={() => setAdding(true)}>
-              <Plus size={18} aria-hidden />
-              {copyCount ? 'Add another copy' : 'Add to my collection'}
-            </Button>
-          </Section>
-        ) : (
+        {!fromProfile && (
           <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
             <AddForm release={r} onAdded={added} />
           </Section>

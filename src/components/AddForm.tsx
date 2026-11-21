@@ -13,7 +13,7 @@ import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
 import { Stars } from './Stars'
-import { Button, List, Notice, Switch } from './ui'
+import { Button, List, Notice, Switch, ToggleChip } from './ui'
 
 export type Added = { folder: string; instanceId: number; problems: string[] }
 
@@ -142,12 +142,14 @@ export function AddForm({
   return (
     <div className="space-y-3">
       <List>
-        {/* their details, all at once; any of them can still be changed in its row below */}
+        {/* their details: the switch takes all of them, a chip one at a time, and whatever comes over
+            can still be changed in its row below */}
         {options.length > 0 && (
-          <Row label={`Use ${their!.owner}’s details`}>
-            <span className="flex justify-end px-2">
+          <li className="px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-stone-500">Use {their!.owner}’s details</span>
               <Switch
-                label={`Use ${their!.owner}’s details`}
+                label={`Use all of ${their!.owner}’s details`}
                 checked={all}
                 onChange={(on) =>
                   pick(
@@ -156,8 +158,20 @@ export function AddForm({
                   )
                 }
               />
-            </span>
-          </Row>
+            </div>
+            {options.length > 1 && (
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {options.map((o) => {
+                  const on = picked.has(o.key)
+                  return (
+                    <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
+                      {o.label}
+                    </ToggleChip>
+                  )
+                })}
+              </div>
+            )}
+          </li>
         )}
         <Row label="Crate">
           <CrateSelect
