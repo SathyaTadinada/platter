@@ -18,6 +18,7 @@ export type Member = {
   badges: string[]
   // private when they never set one up
   profile: Who
+  about: boolean // they've written a bio or setup
   hidden: boolean
 }
 
@@ -32,7 +33,7 @@ export async function members(db: DB): Promise<Member[]> {
          (SELECT COUNT(*) FROM devices d WHERE d.account = a.id) AS devices,
          (SELECT MAX(last_seen_at) FROM devices d WHERE d.account = a.id) AS last_seen_at,
          (SELECT COUNT(*) FROM passkeys p WHERE p.account = a.id) AS passkeys,
-         pr.visibility, pr.hidden
+         pr.visibility, pr.hidden, (COALESCE(pr.bio, '') <> '' OR COALESCE(pr.setup, '{}') <> '{}') AS about
        FROM accounts a LEFT JOIN profiles pr ON pr.account = a.id ORDER BY a.created_at`,
     )
     .all<{
@@ -48,6 +49,7 @@ export async function members(db: DB): Promise<Member[]> {
       passkeys: number
       visibility: Who | null
       hidden: number | null
+      about: number
     }>()
   return results.map((r) => ({
     id: r.id,
@@ -62,6 +64,7 @@ export async function members(db: DB): Promise<Member[]> {
     badges: JSON.parse(r.badges),
     profile: r.visibility ?? 'private',
     hidden: r.hidden === 1,
+    about: r.about === 1,
   }))
 }
 
@@ -92,6 +95,11 @@ export async function setBadge(db: DB, member: unknown, badge: unknown, on: bool
   const badges = on ? [...new Set([...acc.badges, badge])] : acc.badges.filter((b) => b !== badge)
   await db.prepare('UPDATE accounts SET badges = ?2 WHERE id = ?1').bind(acc.id, JSON.stringify(badges)).run()
   return badges
+}
+
+// Takes down what someone wrote on their profile, for when it shouldn't be there but the rest can stay
+export async function clearAbout(db: DB, member: unknown) {
+  await db.prepare("UPDATE profiles SET bio = '', setup = '{}' WHERE account = ?1").bind(parseMember(member)).run()
 }
 
 // The password, passkeys, codes, and every device. Logging in with Discogs still gets them back in.

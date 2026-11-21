@@ -1,9 +1,18 @@
 import type { Section, Sections, Who } from '../../worker/profile'
 import { db } from '../db/db'
-import { CloudError, type CloudApi, type DeviceInfo, type PasskeyInfo, type ProfileReader } from './cloud'
+import { CloudError, type CloudApi, type DeviceInfo, type PasskeyInfo, type ProfileReader, type Setup } from './cloud'
 import { localProfile } from './profile'
 
 const DEMO_USER = 'demo'
+// what the sample profile says about itself
+export const DEMO_BIO = 'Mostly jazz and 70s soul, with a soft spot for whatever the shop is playing when I walk in.'
+export const DEMO_SETUP: Setup = {
+  turntable: 'Technics SL-1200MK2',
+  cartridge: 'Audio-Technica VM540ML',
+  preamp: 'Schiit Mani 2',
+  amp: 'Yamaha A-S501',
+  speakers: 'KEF LS50',
+}
 const PAGE = 100 // as the server pages a profile
 // as worker/profile has them, which is server code
 const SECTIONS: Section[] = ['collection', 'wantlist', 'stats', 'year']
@@ -76,7 +85,19 @@ export function demoCloudApi(): CloudApi {
       passkeys = passkeys.filter((p) => p.id !== id)
       return {}
     },
-    profileSettings: async () => ({ sections, publishedAt: now - 3_600_000, who, hidden: false, details }),
+    profileSettings: async () => ({
+      sections,
+      publishedAt: now - 3_600_000,
+      who,
+      hidden: false,
+      details,
+      bio: DEMO_BIO,
+      setup: DEMO_SETUP,
+    }),
+    setAbout: async (bio, setup) => {
+      await pause()
+      return { bio, setup }
+    },
     setDetails: async (next) => {
       await pause()
       details = next
@@ -117,6 +138,7 @@ export function demoCloudApi(): CloudApi {
     setBadge: async () => ({ badges: [] }),
     clearWaysIn: nothing,
     hideProfile: async (_member, on) => ({ hidden: on }),
+    clearAbout: nothing,
     badges: async () => ({ badges: [] }),
     createBadge: async (label, color, icon) => ({ id: label, label, color, icon, members: 0 }),
     editBadge: nothing,
@@ -127,7 +149,10 @@ export function demoCloudApi(): CloudApi {
 
 // The demo's own profile, made on the spot from the sample collection with the demo's current
 // settings, so View profile shows what a profile looks like. Anyone else's comes from the server.
-export function demoReader(server: ProfileReader, current: () => { sections: Sections; who: Who; details: string[] }): ProfileReader {
+export function demoReader(
+  server: ProfileReader,
+  current: () => { sections: Sections; who: Who; details: string[]; bio: string; setup: Setup },
+): ProfileReader {
   const mine = (username: string) => username.trim().toLowerCase() === DEMO_USER
   const rows = async () => {
     const { sections, details } = current()
@@ -153,6 +178,8 @@ export function demoReader(server: ProfileReader, current: () => { sections: Sec
         about: JSON.stringify(on.includes('collection') ? { records: await db.collection.count() } : {}),
         followers: 0,
         following: 0,
+        bio: current().bio,
+        setup: current().setup,
       }
     },
     profileRows: async (username, section, after) => {

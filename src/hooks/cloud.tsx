@@ -32,8 +32,9 @@ import {
   type Login,
   type ProfileReader,
   type WaysIn,
+  type Setup,
 } from '../lib/cloud'
-import { demoCloudApi, demoReader } from '../lib/demoCloud'
+import { DEMO_BIO, DEMO_SETUP, demoCloudApi, demoReader } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
 import { forgetSent, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
 import { getFields, getProfile } from '../api/discogs/endpoints'
@@ -60,6 +61,10 @@ type Ctx = {
   // which details about each copy the profile shows: 'rating' and Discogs field ids
   details: string[]
   setDetails: (details: string[]) => Promise<void>
+  // what the profile says about its owner: a short bio and their setup
+  bio: string
+  setup: Setup
+  setAbout: (bio: string, setup: Setup) => Promise<void>
   hidden: boolean // hidden by an admin
   // whether this Discogs user has an account, and its ways in. legacy: one made before Discogs
   // logins were confirmed, which only its password or a code opens
@@ -109,6 +114,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const [sections, setSections] = useState<Sections | null>(null)
   const [details, setDetailsState] = useState<string[]>([])
+  const [about, setAboutState] = useState<{ bio: string; setup: Setup }>({ bio: '', setup: {} })
   const chosen = useRef<string[]>([])
   const [who, setWho] = useState<Who>('private')
   const [hidden, setHidden] = useState(false)
@@ -320,8 +326,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       clearTimeout(timer)
       api
         .profileSettings()
-        .then(({ sections: saved, who: found, hidden: down, details: picked = [] }) => {
+        .then(({ sections: saved, who: found, hidden: down, details: picked = [], bio = '', setup = {} }) => {
           if (stopped) return
+          setAboutState({ bio, setup })
           shared.current = saved
           open.current = found !== 'private'
           chosen.current = picked
@@ -391,6 +398,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setDetailsState(saved)
       await share()
     },
+    bio: about.bio,
+    setup: about.setup,
+    setAbout: async (bio, setup) => {
+      if (!api) return
+      setAboutState(await api.setAbout(bio, setup))
+    },
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
       let joined = false
@@ -438,13 +451,14 @@ function useDemoCloud(): Ctx {
   const [demoWho, setDemoWho] = useState<Who>('public')
   // the rating and both conditions (the demo's fields 1 and 2)
   const [demoDetails, setDemoDetails] = useState<string[]>(['rating', '1', '2'])
+  const [demoAbout, setDemoAbout] = useState({ bio: DEMO_BIO, setup: DEMO_SETUP })
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
   const anonymous = useMemo(() => cloudEntry(), [])
   // read by the demo's own profile when it's opened, so it shows the settings as they are then
-  const settings = useRef({ sections: demoSections, who: demoWho, details: demoDetails })
-  settings.current = { sections: demoSections, who: demoWho, details: demoDetails }
+  const settings = useRef({ sections: demoSections, who: demoWho, details: demoDetails, ...demoAbout })
+  settings.current = { sections: demoSections, who: demoWho, details: demoDetails, ...demoAbout }
   const reader = useMemo(() => demoReader(anonymous, () => settings.current), [anonymous])
   const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
   const signIn = async () => {
@@ -479,6 +493,12 @@ function useDemoCloud(): Ctx {
     setDetails: async (next) => {
       await pause(300)
       setDemoDetails(next)
+    },
+    bio: demoAbout.bio,
+    setup: demoAbout.setup,
+    setAbout: async (bio, setup) => {
+      await pause(300)
+      setDemoAbout({ bio, setup })
     },
     waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
     signInWithDiscogs: async () => {

@@ -17,6 +17,7 @@ import { instanceOf, recordFrom, type ProfileAbout, type ProfileItem, type Profi
 import type { Section as ProfileSection } from '../../worker/profile'
 import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
+import { EditSheet } from './profile/EditSheet'
 import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
 
@@ -39,6 +40,7 @@ export function Profile({ username }: { username: string }) {
   const { api, reader, who } = useCloud()
   const [unfollowing, setUnfollowing] = useState(false)
   const [blocking, setBlocking] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [, navigate] = useLocation()
   // records picked to add to your own collection, by their row; null when not picking
   const [picked, setPicked] = useState<Set<string> | null>(null)
@@ -178,9 +180,9 @@ export function Profile({ username }: { username: string }) {
       )}
       {mine ? (
         <>
-          <IconLink label="Edit profile" href="/account">
+          <IconButton label="Edit profile" onClick={() => setEditing(true)}>
             <Pencil size={20} />
-          </IconLink>
+          </IconButton>
           {/* the demo's profile is only here, so its link would open nothing for anyone else */}
           {!demo && (
             <IconButton
@@ -222,6 +224,15 @@ export function Profile({ username }: { username: string }) {
         <Section>
           <Notice>Only followers can see this profile.</Notice>
         </Section>
+      )}
+      {editing && (
+        <EditSheet
+          onClose={() => {
+            setEditing(false)
+            // what was saved shows straight away
+            fetchHead()
+          }}
+        />
       )}
       {unfollowing && (
         <ConfirmDialog

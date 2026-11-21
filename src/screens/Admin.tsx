@@ -1,4 +1,4 @@
-import { Award, Eye, EyeOff, KeyRound, Search, Trash2, UserRound, X } from 'lucide-react'
+import { Award, Eraser, Eye, EyeOff, KeyRound, Search, Trash2, UserRound, X } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, Redirect } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -79,7 +79,7 @@ export function Admin() {
   const [open, setOpen] = useState<string | null>(null)
   const [refused, setRefused] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [confirming, setConfirming] = useState<{ member: Member; what: 'clear' | 'delete' } | null>(null)
+  const [confirming, setConfirming] = useState<{ member: Member; what: 'clear' | 'about' | 'delete' } | null>(null)
 
   const reload = useCallback(async () => {
     if (!api) return
@@ -124,6 +124,9 @@ export function Admin() {
             onSelect: () => attempt(() => api.hideProfile(m.id, !m.hidden)),
           },
         ]),
+    ...(m.about
+      ? [{ label: 'Clear bio and setup', icon: <Eraser size={18} />, onSelect: () => setConfirming({ member: m, what: 'about' }) }]
+      : []),
     { label: 'Reset sign-in', icon: <KeyRound size={18} />, onSelect: () => setConfirming({ member: m, what: 'clear' }) },
     { label: 'Delete account', icon: <Trash2 size={18} />, danger: true, onSelect: () => setConfirming({ member: m, what: 'delete' }) },
   ]
@@ -176,18 +179,28 @@ export function Admin() {
       )}
       {confirming && (
         <ConfirmDialog
-          title={confirming.what === 'clear' ? `Reset ${confirming.member.name}’s sign-in?` : `Delete ${confirming.member.name}’s account?`}
-          action={confirming.what === 'clear' ? 'Reset' : 'Delete'}
+          title={
+            confirming.what === 'clear'
+              ? `Reset ${confirming.member.name}’s sign-in?`
+              : confirming.what === 'about'
+                ? `Clear ${confirming.member.name}’s bio and setup?`
+                : `Delete ${confirming.member.name}’s account?`
+          }
+          action={confirming.what === 'clear' ? 'Reset' : confirming.what === 'about' ? 'Clear' : 'Delete'}
           onConfirm={() => {
             const { member, what } = confirming
             setConfirming(null)
-            attempt(() => (what === 'clear' ? api.clearWaysIn(member.id) : api.deleteMember(member.id)))
+            attempt(() =>
+              what === 'clear' ? api.clearWaysIn(member.id) : what === 'about' ? api.clearAbout(member.id) : api.deleteMember(member.id),
+            )
           }}
           onCancel={() => setConfirming(null)}
         >
           {confirming.what === 'clear'
             ? 'Removes their password and passkeys and signs out all their devices. Logging in with Discogs still gets them back in.'
-            : 'Deletes everything they have on Platter’s server, right away.'}
+            : confirming.what === 'about'
+              ? 'The rest of their profile stays as it is.'
+              : 'Deletes everything they have on Platter’s server, right away.'}
         </ConfirmDialog>
       )}
       {opened && (

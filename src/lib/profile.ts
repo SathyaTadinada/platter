@@ -2,7 +2,7 @@ import type { Section, Sections } from '../../worker/profile'
 import { db, type LibraryItem, type WantItem } from '../db/db'
 import type { CollectionField } from '../api/discogs/types'
 import { fieldFor, type FieldKey, type FieldMatch } from './fields'
-import type { CloudApi, ProfileRow } from './cloud'
+import type { CloudApi, ProfileRow, SetupSlot } from './cloud'
 import { decadeOf, yearOf } from './library'
 import { libraryItems } from './masters'
 import { listening, listeningStats, type Play, type PlayFields } from './plays'
@@ -374,6 +374,19 @@ export function copyable(copy: CopyDetails | undefined, mine: CollectionField[],
 }
 
 // Where a record from someone's profile opens: the record page, with their copy on it when they show one
+// A setup's slots in the order they show, as worker/profile has them
+export const SETUP_LABELS = [
+  ['turntable', 'Turntable'],
+  ['cartridge', 'Cartridge'],
+  ['preamp', 'Phono preamp'],
+  ['amp', 'Amp'],
+  ['speakers', 'Speakers'],
+] as const satisfies readonly (readonly [SetupSlot, string])[]
+export const BIO_MAX = 160
+export const SETUP_MAX = 60
+// as the server checks it, so the reason shows before anything's sent
+export const hasLink = (text: string) => /https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|co|me|ly|xyz|app|shop|store|link)\b/i.test(text)
+
 // The copy a record on a profile is, read back from its key, for opening your own one as yours
 export const instanceOf = (key: string) => Number(key.split(':')[1])
 

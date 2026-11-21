@@ -15,7 +15,7 @@ import {
   renameDevice,
   waysIn,
 } from './account'
-import { clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
+import { clearAbout, clearWaysIn, deleteMember, members, requireAdmin, setBadge, setHidden } from './admin'
 import { createBadge, deleteBadge, editBadge, listBadges } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow, waiting as waitingFollows } from './follow'
@@ -31,6 +31,7 @@ import {
   settings as profileSettings,
   setWho,
   setDetails as setProfileDetails,
+  setAbout as setProfileAbout,
   setSections,
   sweep as sweepProfile,
   unpublish as unpublishProfile,
@@ -224,10 +225,12 @@ const SYNC_ACTIONS = [
   'feed',
   'profile-who',
   'profile-details',
+  'profile-about',
   // admin only
   'admin-members',
   'admin-badge',
   'admin-clear',
+  'admin-clear-about',
   'admin-hide',
   'admin-badges',
   'admin-badge-create',
@@ -410,6 +413,8 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok(await unpublishProfile(db, account, input.section, input.keys))
       case 'profile-details':
         return ok({ details: await setProfileDetails(db, account, input.details) })
+      case 'profile-about':
+        return ok(await setProfileAbout(db, account, input.bio, input.setup))
       case 'profile-who':
         return ok({ who: await setWho(db, account, input.who) })
       case 'admin-members':
@@ -430,6 +435,9 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         return ok({ hidden: await setHidden(db, input.member, input.on) })
       case 'admin-clear':
         await clearWaysIn(db, input.member)
+        return ok({ ok: true })
+      case 'admin-clear-about':
+        await clearAbout(db, input.member)
         return ok({ ok: true })
       case 'admin-delete':
         await deleteMember(db, input.member)

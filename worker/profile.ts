@@ -52,6 +52,8 @@ export type ProfileHead = {
   about: string | null // JSON their devices sent, with their Discogs picture
   followers: number
   following: number
+  bio: string // shown even on a locked profile, so someone can decide whether to ask
+  setup: Setup // only to those who can see the whole profile
 }
 
 // ---- reading what the owner chose ----
@@ -77,15 +79,23 @@ function readSections(stored: string): Sections {
 
 const publicOnes = (s: Sections): Section[] => SECTIONS.filter((x) => s[x] === 'public')
 
-type ProfileRecord = { sections: string; published_at: number | null; visibility: Who; hidden: number; details?: string }
+type ProfileRecord = {
+  sections: string
+  published_at: number | null
+  visibility: Who
+  hidden: number
+  details?: string
+  bio?: string
+  setup?: string
+}
 
 // The owner's own view: every section, with the ones they haven't touched off
 export async function settings(
   db: DB,
   account: string,
-): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details: string[] }> {
+): Promise<{ sections: Sections; publishedAt: number | null; who: Who; hidden: boolean; details: string[]; bio: string; setup: Setup }> {
   const row = await db
-    .prepare('SELECT sections, published_at, visibility, hidden, details FROM profiles WHERE account = ?1')
+    .prepare('SELECT sections, published_at, visibility, hidden, details, bio, setup FROM profiles WHERE account = ?1')
     .bind(account)
     .first<ProfileRecord>()
   const saved = row ? readSections(row.sections) : {}
@@ -95,7 +105,71 @@ export async function settings(
     who: row?.visibility ?? 'private',
     hidden: row?.hidden === 1,
     details: readDetails(row?.details),
+    bio: row?.bio ?? '',
+    setup: readSetup(row?.setup),
   }
+}
+
+// ---- a bio and a setup ----
+
+// Plain text the owner writes, shown to whoever can see the profile. Kept short, and without links,
+// which is most of what would make it worth spamming.
+export const BIO_MAX = 160
+export const SETUP_MAX = 60
+export const SETUP_SLOTS = ['turntable', 'cartridge', 'preamp', 'amp', 'speakers'] as const
+export type SetupSlot = (typeof SETUP_SLOTS)[number]
+export type Setup = Partial<Record<SetupSlot, string>>
+
+const LINK = /https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|co|me|ly|xyz|app|shop|store|link)\b/i
+
+// One line or a few, without control characters or runs of blank lines
+function cleanText(x: unknown, max: number, lines: boolean): string {
+  if (typeof x !== 'string') throw new SyncError(400, 'Bad text')
+  const text = x
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, '')
+    .replace(lines ? /\n{3,}/g : /\n+/g, lines ? '\n\n' : ' ')
+    .trim()
+  if ([...text].length > max) throw new SyncError(400, 'Too long')
+  if (LINK.test(text)) throw new SyncError(400, 'Links can’t go on a profile')
+  return text
+}
+
+export function parseSetup(x: unknown): Setup {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) throw new SyncError(400, 'Bad setup')
+  const out: Setup = {}
+  for (const [key, value] of Object.entries(x as Record<string, unknown>)) {
+    if (!(SETUP_SLOTS as readonly string[]).includes(key)) throw new SyncError(400, 'Bad setup')
+    const text = cleanText(value, SETUP_MAX, false)
+    if (text) out[key as SetupSlot] = text
+  }
+  return out
+}
+
+function readSetup(stored: string | undefined): Setup {
+  try {
+    return parseSetup(JSON.parse(stored ?? '{}'))
+  } catch {
+    return {}
+  }
+}
+
+export async function setAbout(
+  db: DB,
+  account: string,
+  bio: unknown,
+  setup: unknown,
+  now = Date.now(),
+): Promise<{ bio: string; setup: Setup }> {
+  const about = { bio: cleanText(bio, BIO_MAX, true), setup: parseSetup(setup) }
+  await db
+    .prepare(
+      `INSERT INTO profiles (account, bio, setup, visibility, created_at) VALUES (?1, ?2, ?3, 'private', ?4)
+       ON CONFLICT (account) DO UPDATE SET bio = excluded.bio, setup = excluded.setup`,
+    )
+    .bind(account, about.bio, JSON.stringify(about.setup), now)
+    .run()
+  return about
 }
 
 // ---- details about each copy ----
@@ -312,11 +386,11 @@ export async function search(db: DB, query: unknown, viewer: string | null = nul
 async function owner(
   db: DB,
   username: unknown,
-): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections; who: Who }) | null> {
+): Promise<(Account & { createdAt: number; publishedAt: number | null; sections: Sections; who: Who; bio: string; setup: Setup }) | null> {
   if (typeof username !== 'string' || !username.trim() || username.length > 100) throw new SyncError(400, 'Bad username')
   const row = await db
     .prepare(
-      `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility FROM accounts a JOIN profiles p ON p.account = a.id
+      `SELECT a.id, a.created_at, p.sections, p.published_at, p.visibility, p.bio, p.setup FROM accounts a JOIN profiles p ON p.account = a.id
        WHERE a.name = ?1 AND a.discogs_id IS NOT NULL AND p.visibility <> 'private' AND p.hidden = 0`,
     )
     .bind(username.trim().toLowerCase())
@@ -330,6 +404,8 @@ async function owner(
       publishedAt: row.published_at,
       sections: readSections(row.sections),
       who: row.visibility,
+      bio: row.bio ?? '',
+      setup: readSetup(row.setup),
     }
   )
 }
@@ -367,6 +443,8 @@ export async function head(db: DB, username: unknown, viewer: string | null = nu
     publishedAt: locked ? null : found.publishedAt,
     sections: locked ? [] : sections,
     about: locked ? pictureOnly(about?.value ?? null) : (about?.value ?? null),
+    bio: found.bio,
+    setup: locked ? {} : found.setup,
   }
 }
 

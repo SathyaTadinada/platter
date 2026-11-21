@@ -10,6 +10,7 @@ import {
   publish,
   rows,
   search,
+  setAbout,
   setSections,
   settings,
   setDetails,
@@ -18,7 +19,7 @@ import {
   unpublish,
   type ProfileRow,
 } from './profile'
-import { members, setHidden } from './admin'
+import { clearAbout, members, setHidden } from './admin'
 import { block, follow } from './follow'
 import { deviceAccount, forget, push } from './sync'
 
@@ -434,5 +435,49 @@ describe('who follows them', () => {
     expect(names(await people(db, 'tadinada', 'followers', you.id))).toEqual(['someone'])
     await setWho(db, me.id, 'private')
     await expect(people(db, 'tadinada', 'followers', you.id)).rejects.toMatchObject({ status: 404 })
+  })
+})
+
+describe('a bio and a setup', () => {
+  it('keeps them, tidied, and shows them on the profile', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    expect(await settings(db, id)).toMatchObject({ bio: '', setup: {} })
+    const saved = await setAbout(db, id, '  Mostly jazz.\r\n\n\n\nSome soul.  ', { turntable: ' Technics SL-1200MK2 ', speakers: '' })
+    expect(saved).toEqual({ bio: 'Mostly jazz.\n\nSome soul.', setup: { turntable: 'Technics SL-1200MK2' } })
+    expect(await settings(db, id)).toMatchObject(saved)
+    expect(await head(db, 'tadinada')).toMatchObject(saved)
+  })
+
+  it('turns away links, long text, and slots it does not know', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await expect(setAbout(db, id, 'see https://spam.example', {})).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, 'visit www.spam', {})).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, 'buy at cheapvinyl.com', {})).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, 'x'.repeat(161), {})).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, '', { turntable: 'x'.repeat(61) })).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, '', { car: 'Volvo' })).rejects.toMatchObject({ status: 400 })
+    await expect(setAbout(db, id, '', ['Technics'])).rejects.toMatchObject({ status: 400 })
+    // a setup is one line each
+    expect((await setAbout(db, id, '', { amp: 'Marantz\n2270' })).setup).toEqual({ amp: 'Marantz 2270' })
+  })
+
+  it('shows the bio to someone waiting on a Followers profile, but not the setup', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setAbout(db, id, 'Hi', { turntable: 'Rega P3' })
+    await setWho(db, id, 'followers')
+    expect(await head(db, 'tadinada')).toMatchObject({ locked: true, bio: 'Hi', setup: {} })
+  })
+
+  it('can be cleared by an admin, and says so in the member list', async () => {
+    const db = testDB()
+    const { id } = await shared(db)
+    await setAbout(db, id, 'Hi', { turntable: 'Rega P3' })
+    expect((await members(db)).find((m) => m.id === id)?.about).toBe(true)
+    await clearAbout(db, id)
+    expect(await settings(db, id)).toMatchObject({ bio: '', setup: {} })
+    expect((await members(db)).find((m) => m.id === id)?.about).toBe(false)
   })
 })
