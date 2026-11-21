@@ -54,7 +54,7 @@ export function ProfilePeople({ username }: { username: string }) {
       ) : !shown ? (
         <Spinner />
       ) : !shown.people.length && !shown.more ? (
-        <Notice>Nobody yet.</Notice>
+        <Notice>{list === 'followers' ? 'No followers.' : 'Not following anyone.'}</Notice>
       ) : (
         <Section>
           {shown.people.length > 0 && (

@@ -19,6 +19,13 @@ const TITLES: Record<FollowList, string> = {
 
 const LISTS = Object.keys(TITLES) as FollowList[]
 
+const EMPTY: Record<FollowList, string> = {
+  followers: 'No followers.',
+  following: 'You’re not following anyone.',
+  requests: 'No follow requests.',
+  blocked: 'No one blocked.',
+}
+
 // Where a count of followers, following, or requests leads
 export const peopleLink = (list: FollowList) => `/account/people?list=${list}`
 
@@ -101,7 +108,7 @@ export function Connections() {
           />
         </Section>
       ) : (
-        <Notice>Nobody yet.</Notice>
+        <Notice>{EMPTY[list]}</Notice>
       )}
     </Screen>
   )

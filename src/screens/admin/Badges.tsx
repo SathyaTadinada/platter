@@ -233,7 +233,7 @@ export function BadgesSheet({
               <li key={b.id} className="flex min-h-13 items-center gap-3 py-2 pr-2 pl-4">
                 <div className="min-w-0 flex-1">
                   <BadgePill badge={b} />
-                  <p className="mt-1 text-sm text-stone-500">{b.members ? plural(b.members, 'member') : 'Nobody yet'}</p>
+                  <p className="mt-1 text-sm text-stone-500">{b.members ? plural(b.members, 'member') : 'No members'}</p>
                 </div>
                 <IconButton label={`Edit ${b.label}`} onClick={() => setEditing(b.id)}>
                   <Pencil size={18} />
