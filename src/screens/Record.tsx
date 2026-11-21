@@ -1,29 +1,24 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { Link, useLocation } from 'wouter'
-import { deleteInstance, editInstance, getRelease, setFieldValue } from '../api/discogs/endpoints'
-import type { CollectionField, Release } from '../api/discogs/types'
+import { useLocation } from 'wouter'
+import { deleteInstance, editInstance, getRelease, removeWant, setFieldValue } from '../api/discogs/endpoints'
+import type { CollectionField } from '../api/discogs/types'
 import { CopyDetails } from '../components/CopyDetails'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { CoverSheet } from '../components/CoverSheet'
-import { Identifiers } from '../components/Identifiers'
-import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
 import { PlayButton } from '../components/PlayButton'
-import { DiscogsCredit } from '../components/ReleaseCardView'
+import { RecordLayout, YourCopies } from '../components/RecordLayout'
 import { ShareButton } from '../components/ShareButton'
 import { useProfile } from '../components/Profile'
 import { Stars } from '../components/Stars'
-import { Button, List, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
 import { useSignedIn } from '../hooks/session'
-import { useStickyColumn } from '../hooks/useStickyColumn'
 import { useAsync } from '../hooks/useAsync'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { discogsUrl } from '../lib/format'
-import { Cover } from '../components/Cover'
 import { rememberRelease } from '../lib/barcodes'
 import { rememberLength } from '../lib/stylus'
 
@@ -48,7 +43,7 @@ export function Record({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [removing, setRemoving] = useState(false)
-  const [pickingCover, setPickingCover] = useState(false)
+  const wanted = useLiveQuery(async () => (item ? Boolean(await db.wants.get(item.releaseId)) : false), [item?.releaseId])
 
   // other copies of this release, and other pressings of the same album
   const related = useLiveQuery(async () => {
@@ -60,8 +55,6 @@ export function Record({ id }: { id: string }) {
       pressings: pressings.filter((p) => p.releaseId !== item.releaseId),
     }
   }, [item?.instanceId, item?.releaseId, item?.masterId])
-
-  const stickyColumn = useStickyColumn()
 
   if (item === undefined) {
     return (
@@ -138,19 +131,16 @@ export function Record({ id }: { id: string }) {
   const first = original && original !== pressed ? original : 0
   const when = pressed ? (first ? `${pressed} (originally ${first})` : String(pressed)) : first ? `originally ${first}` : null
   const where = [r?.country, when].filter(Boolean).join(' · ')
-  const canPickCover = (r?.images?.length ?? 0) > 1 || Boolean(item.originalCover)
 
-  const tracklist = (
-    <Section title="Tracklist">
-      {release.loading && !r ? (
-        <Spinner label="Loading tracklist" />
-      ) : r ? (
-        <Tracklist release={r} />
-      ) : (
-        <p className="text-sm text-stone-500">Tracklist isn't available right now.</p>
-      )}
-    </Section>
-  )
+  async function dropWant() {
+    setError(null)
+    try {
+      await removeWant(client, username, item!.releaseId)
+      await db.wants.delete(item!.releaseId)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
 
   return (
     <Screen
@@ -160,128 +150,73 @@ export function Record({ id }: { id: string }) {
       backdrop={item.cover ?? item.thumb}
       actions={<ShareButton url={url} title={`${item.artist} – ${item.title}`} />}
     >
-      <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
-        {/* on wide screens the tracklist sits under the cover, and both stay in view while the details scroll past */}
-        <div ref={stickyColumn} className="space-y-6 lg:sticky lg:self-start">
-          <div>
-            <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
-            {canPickCover && (
-              <button
-                type="button"
-                onClick={() => setPickingCover(true)}
-                className="relative mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs after:absolute after:-inset-y-2.5 font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
-              >
-                Change cover
-              </button>
-            )}
-          </div>
-          <div className="hidden lg:block">{tracklist}</div>
-        </div>
-
-        <div className="mt-6 min-w-0 lg:mt-0">
-          <p className="text-2xl font-bold tracking-tight lg:text-3xl">{item.title}</p>
-          <p className="text-lg text-stone-600 dark:text-stone-300">{item.artist}</p>
-          <div className="mt-2 space-y-0.5 text-sm text-stone-500">
-            {(item.label || item.catno) && <p>{[item.label, item.catno].filter(Boolean).join(' · ')}</p>}
-            {where && <p>{where}</p>}
-            {item.format && <p>{item.format}</p>}
-          </div>
-
-          {(item.genres.length > 0 || item.styles.length > 0) && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {[...item.genres.map((g) => ['genre', g]), ...item.styles.map((s) => ['style', s])].map(([k, v]) => (
-                <Link
-                  key={`${k}${v}`}
-                  href={`/?${k}=${encodeURIComponent(v)}`}
-                  className="rounded-full bg-stone-900/5 px-2.5 py-1 text-xs font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15"
-                >
-                  {v}
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 space-y-3">
+      <RecordLayout
+        releaseId={item.releaseId}
+        release={r}
+        loading={release.loading}
+        cover={item}
+        own={item}
+        title={item.title}
+        artist={item.artist}
+        details={[(item.label || item.catno) && [item.label, item.catno].filter(Boolean).join(' · '), where, item.format]}
+        tags={[
+          ...item.genres.map((g) => ({ label: g, href: `/?genre=${encodeURIComponent(g)}` })),
+          ...item.styles.map((s) => ({ label: s, href: `/?style=${encodeURIComponent(s)}` })),
+        ]}
+        extra={
+          <>
             <Stars value={item.rating} onChange={setRating} />
             <PlayButton item={item} />
-            <ListenLinks releaseId={item.releaseId} artist={item.artist} title={item.title} identifiers={r?.identifiers} />
-          </div>
-
-          {error && (
-            <div className="mt-4">
-              <Notice tone="error">{error}</Notice>
-            </div>
+          </>
+        }
+        error={error}
+        url={url}
+        after={
+          <Section>
+            <Button variant="destructive" className="w-full" onClick={() => setConfirmRemove(true)}>
+              Remove from collection
+            </Button>
+          </Section>
+        }
+      >
+        {/* owning it now, it may still be on the wantlist from before */}
+        {wanted && (
+          <Section>
+            <Notice tone="info">
+              This is still on your wantlist.{' '}
+              <button type="button" onClick={dropWant} className="font-semibold underline">
+                Take it off
+              </button>
+            </Notice>
+          </Section>
+        )}
+        <Section title="Your copy">
+          {meta.data ? (
+            <CopyDetails
+              item={item}
+              folders={meta.data.folders}
+              fields={meta.data.fields}
+              matches={matches}
+              currency={currency}
+              onMove={moveTo}
+              onSetField={setField}
+            />
+          ) : (
+            <Spinner label="Loading your fields" />
           )}
+        </Section>
 
-          <div className="mt-6">
-            {/* phones: right after the record itself, in the same order as wide screens */}
-            <div className="lg:hidden">{tracklist}</div>
+        <Section title="Market">
+          <MarketPrice releaseId={item.releaseId} mediaCondition={mediaField !== undefined ? item.fields[mediaField] : undefined} />
+        </Section>
 
-            <Section title="Your copy">
-              {meta.data ? (
-                <CopyDetails
-                  item={item}
-                  folders={meta.data.folders}
-                  fields={meta.data.fields}
-                  matches={matches}
-                  currency={currency}
-                  onMove={moveTo}
-                  onSetField={setField}
-                />
-              ) : (
-                <Spinner label="Loading your fields" />
-              )}
-            </Section>
-
-            <Section title="Market">
-              <MarketPrice releaseId={item.releaseId} mediaCondition={mediaField !== undefined ? item.fields[mediaField] : undefined} />
-            </Section>
-
-            {related?.copies.length || related?.pressings.length ? (
-              <Section title="Also in your collection">
-                <List>
-                  {[...related.copies, ...related.pressings].map((o) => (
-                    <li key={o.instanceId}>
-                      <Link
-                        href={`/collection/${o.instanceId}`}
-                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50"
-                      >
-                        <Cover item={o} small className="size-11 shrink-0 rounded-md" />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
-                            {o.releaseId === item.releaseId ? 'Another copy of this pressing' : o.format || 'Another pressing'}
-                          </p>
-                          <p className="truncate text-xs text-stone-500">
-                            {[o.label, o.catno, o.year || null].filter(Boolean).join(' · ')}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </List>
-              </Section>
-            ) : null}
-
-            {/* shown even when empty, so a pressing with nothing listed doesn't look like a missing section */}
-            {r && (
-              <Section title="Identifiers">
-                <Identifiers identifiers={r.identifiers ?? []} />
-              </Section>
-            )}
-
-            <Section>
-              <DiscogsCredit url={url} />
-            </Section>
-
-            <Section>
-              <Button variant="destructive" className="w-full" onClick={() => setConfirmRemove(true)}>
-                Remove from collection
-              </Button>
-            </Section>
-          </div>
-        </div>
-      </div>
-      {pickingCover && <CoverSheet item={item} release={r} onClose={() => setPickingCover(false)} />}
+        <YourCopies
+          title="Also in your collection"
+          items={[...(related?.copies ?? []), ...(related?.pressings ?? [])]}
+          releaseId={item.releaseId}
+          same="Another copy of this pressing"
+        />
+      </RecordLayout>
       {confirmRemove && (
         <ConfirmDialog
           title="Remove this record?"
@@ -294,27 +229,5 @@ export function Record({ id }: { id: string }) {
         </ConfirmDialog>
       )}
     </Screen>
-  )
-}
-
-export function Tracklist({ release }: { release: Release }) {
-  const tracks = release.tracklist ?? []
-  if (!tracks.length) return <p className="text-sm text-stone-500">No tracklist on Discogs.</p>
-  return (
-    <ol className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
-      {tracks.map((t, i) =>
-        t.type_ === 'heading' ? (
-          <li key={i} className="bg-stone-50 px-4 py-2 text-xs font-semibold tracking-wide text-stone-500 uppercase dark:bg-stone-950/50">
-            {t.title}
-          </li>
-        ) : (
-          <li key={i} className="flex gap-3 border-t border-stone-100 px-4 py-2 text-sm first:border-t-0 dark:border-stone-800">
-            <span className="w-8 shrink-0 text-stone-500 tabular-nums">{t.position}</span>
-            <span className="min-w-0 flex-1">{t.title}</span>
-            {t.duration && <span className="shrink-0 text-stone-500 tabular-nums">{t.duration}</span>}
-          </li>
-        ),
-      )}
-    </ol>
   )
 }

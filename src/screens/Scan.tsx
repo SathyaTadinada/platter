@@ -53,7 +53,8 @@ export function Scan() {
   // batch and shop modes: queue it or check it, show a quick confirmation, keep scanning
   const onCode = useCallback(
     (code: string, source: 'scan' | 'typed' = 'scan') => {
-      if (mode === 'single') return navigate(`/results?barcode=${code}`)
+      // scan: the record found can offer the camera again once it's added
+      if (mode === 'single') return navigate(`/results?barcode=${code}&scan=1`)
       if (mode === 'play') return navigate(`/play?barcode=${code}`)
       if (mode === 'shop') setShop(addToShopList(code))
       else enqueueBarcode(code, source).then(kick)

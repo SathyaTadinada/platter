@@ -69,7 +69,9 @@ export function Results() {
     const p = new URLSearchParams(qs)
     const kind = p.get('barcode') ? 'barcode' : p.get('catno') ? 'catno' : 'title'
     const label = describeQuery(p)
-    if (label) rememberSearch({ kind, label, url: `/results?${qs}` })
+    // without the scan flag: opened again from Recent searches, it's a search like any other
+    p.delete('scan')
+    if (label) rememberSearch({ kind, label, url: `/results?${p}` })
   }, [qs])
 
   const search = (p: SearchParams) => searchReleases(client, p).then((r) => r.results)
@@ -174,7 +176,7 @@ export function Results() {
                   key={c.id}
                   card={c.thumb || !covers.has(c.id) ? c : { ...c, thumb: covers.get(c.id) }}
                   own={own?.get(c.id)}
-                  onPick={() => navigate(`/release/${c.id}`)}
+                  onPick={() => navigate(`/release/${c.id}${params.has('scan') ? '?scan=1' : ''}`)}
                   extra={matchOf.get(c.id) && <RunoutMatch result={matchOf.get(c.id)!} />}
                 />
               ))}

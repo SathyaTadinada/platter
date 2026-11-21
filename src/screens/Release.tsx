@@ -1,26 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, Heart, ScanBarcode } from 'lucide-react'
+import { Check, Heart } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'wouter'
+import { useLocation, useSearch } from 'wouter'
 import { addWant, getOwnedInstances, getRelease, removeWant } from '../api/discogs/endpoints'
 import { AddForm, type Added } from '../components/AddForm'
-import { DiscogsCredit } from '../components/ReleaseCardView'
-import { Identifiers } from '../components/Identifiers'
-import { ListenLinks } from '../components/ListenLinks'
 import { MarketPrice } from '../components/MarketPrice'
-import { PhotosSheet } from '../components/PhotosSheet'
+import { RecordLayout, YourCopies } from '../components/RecordLayout'
 import { ShareButton } from '../components/ShareButton'
 import { toast } from '../components/Toaster'
-import { RecordRow, statCard } from '../components/stats'
-import { buttonClass, IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
+import { IconButton, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
-import { useStickyColumn } from '../hooks/useStickyColumn'
 import { cleanLabel, discogsUrl, sentences } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
-import { Cover } from '../components/Cover'
-import { Tracklist } from './Record'
 import { TheirCopy, useTheirCopy } from './release/TheirCopy'
 
 // A Discogs release you looked up: everything the record page shows, plus adding it
@@ -29,12 +22,11 @@ export function Release({ id }: { id: string }) {
   const { client, username } = useSignedIn()
   const back = useBack('/search')
   const release = useAsync(() => getRelease(client, releaseId), [client, releaseId])
-  const [added, setAdded] = useState<Added | null>(null)
   const [wantBusy, setWantBusy] = useState(false)
-  const [viewingPhotos, setViewingPhotos] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const their = useTheirCopy(Number(id))
-  const stickyColumn = useStickyColumn()
+  const [, navigate] = useLocation()
+  const fromScan = new URLSearchParams(useSearch()).has('scan')
 
   const r = release.data
   const own = useLiveQuery(async () => {
@@ -103,11 +95,15 @@ export function Release({ id }: { id: string }) {
     )
     .join(' + ')
 
-  const tracklist = (
-    <Section title="Tracklist">
-      <Tracklist release={r} />
-    </Section>
-  )
+  // once it's yours, this becomes your record's own page, in place
+  function added(a: Added) {
+    toast(a.problems.length ? `Added to ${a.folder}. Some details didn't save: ${sentences(a.problems)}` : `Added to ${a.folder}`, {
+      tone: a.problems.length ? 'error' : 'success',
+      // straight back to the camera, for someone going through a stack of records
+      action: fromScan ? { label: 'Scan next', onClick: () => navigate('/scan') } : undefined,
+    })
+    navigate(`/collection/${a.instanceId}`, { replace: true })
+  }
 
   return (
     <Screen
@@ -129,129 +125,44 @@ export function Release({ id }: { id: string }) {
         </>
       }
     >
-      <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
-        {/* the cover and tracklist stay in view on wide screens, as on a record in the collection */}
-        <div ref={stickyColumn} className="space-y-6 lg:sticky lg:self-start">
-          <div>
-            <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
-            {(r.images?.length ?? 0) > 1 && (
-              <button
-                type="button"
-                onClick={() => setViewingPhotos(true)}
-                className="mx-auto mt-3 block rounded-full bg-stone-900/5 px-3 py-1 text-xs font-medium text-stone-600 hover:bg-stone-900/10 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/15"
-              >
-                {r.images!.length} photos
-              </button>
-            )}
-          </div>
-          <div className="hidden lg:block">{tracklist}</div>
-        </div>
-
-        <div className="mt-6 min-w-0 lg:mt-0">
-          <p className="text-2xl font-bold tracking-tight lg:text-3xl">{r.title}</p>
-          <p className="text-lg text-stone-600 dark:text-stone-300">{joinArtists(r.artists)}</p>
-          <div className="mt-2 space-y-0.5 text-sm text-stone-500">
-            {label && <p>{[cleanLabel(label.name), label.catno !== 'none' && label.catno].filter(Boolean).join(' · ')}</p>}
-            {where && <p>{where}</p>}
-            {format && <p>{format}</p>}
-          </div>
-          {(r.genres?.length || r.styles?.length) && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {[...(r.genres ?? []), ...(r.styles ?? [])].map((g) => (
-                <span key={g} className="rounded-full bg-stone-900/5 px-2.5 py-1 text-xs font-medium dark:bg-white/10">
-                  {g}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {copyCount > 0 && (
-            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-700 dark:bg-accent/20 dark:text-accent">
+      <RecordLayout
+        releaseId={releaseId}
+        release={r}
+        cover={item}
+        title={r.title}
+        artist={joinArtists(r.artists)}
+        details={[label && [cleanLabel(label.name), label.catno !== 'none' && label.catno].filter(Boolean).join(' · '), where, format]}
+        tags={[...(r.genres ?? []), ...(r.styles ?? [])].map((g) => ({ label: g }))}
+        extra={
+          copyCount > 0 && (
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-medium text-accent-700 dark:bg-accent/20 dark:text-accent">
               <Check size={16} aria-hidden />
               {copyCount > 1 ? `You own ${copyCount} copies` : 'You own this'}
             </p>
+          )
+        }
+        error={error}
+        url={discogsUrl(r.uri)}
+      >
+        {/* opened from someone's profile, their copy first */}
+        {their && <TheirCopy owner={their.owner} copy={their.copy} />}
+        <YourCopies
+          title="In your collection"
+          items={[...(own?.copies ?? []), ...(own?.pressings ?? [])]}
+          releaseId={releaseId}
+          same="This pressing"
+        />
+        <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
+          <AddForm release={r} onAdded={added} their={their ?? undefined} />
+        </Section>
+        <Section title="Market">
+          {digital ? (
+            <p className="px-1 text-sm text-stone-500">Digital releases can't be sold on Discogs.</p>
+          ) : (
+            <MarketPrice releaseId={releaseId} />
           )}
-          <div className="mt-4">
-            <ListenLinks releaseId={releaseId} artist={joinArtists(r.artists)} title={r.title} identifiers={r.identifiers} />
-          </div>
-          {error && (
-            <div className="mt-3">
-              <Notice tone="error">{error}</Notice>
-            </div>
-          )}
-
-          <div className="mt-6">
-            {/* opened from someone's profile, their copy first */}
-            {their && <TheirCopy owner={their.owner} copy={their.copy} />}
-            {own?.copies.length || own?.pressings.length ? (
-              <Section title="In your collection">
-                <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
-                  {[...own.copies, ...own.pressings].map((o) => (
-                    <li key={o.instanceId}>
-                      <RecordRow
-                        item={o}
-                        detail={
-                          o.releaseId === releaseId
-                            ? 'This pressing'
-                            : [o.label, o.catno, o.year || null].filter(Boolean).join(' · ') || 'Another pressing'
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </Section>
-            ) : null}
-
-            <Section title={copyCount ? 'Add another copy' : 'Add to your collection'}>
-              {added ? (
-                <div className="space-y-3">
-                  <Notice tone="success">Added to {added.folder}.</Notice>
-                  {added.problems.length > 0 && <Notice tone="warn">Some details didn't save: {sentences(added.problems)}</Notice>}
-                  {own?.wanted && (
-                    <Notice tone="info">
-                      This was on your wantlist.{' '}
-                      <button type="button" disabled={wantBusy} onClick={toggleWant} className="font-semibold underline">
-                        Remove it
-                      </button>
-                    </Notice>
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link href={`/collection/${added.instanceId}`} className={buttonClass('secondary')}>
-                      Open record
-                    </Link>
-                    <Link href="/scan" className={buttonClass('primary')}>
-                      <ScanBarcode size={18} aria-hidden />
-                      Scan next
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <AddForm release={r} onAdded={setAdded} their={their ?? undefined} />
-              )}
-            </Section>
-
-            <Section title="Market">
-              {digital ? (
-                <p className="px-1 text-sm text-stone-500">Digital releases can't be sold on Discogs.</p>
-              ) : (
-                <MarketPrice releaseId={releaseId} />
-              )}
-            </Section>
-
-            {/* shown even when empty, so a pressing with nothing listed doesn't look like a missing section */}
-            <Section title="Identifiers">
-              <Identifiers identifiers={r.identifiers ?? []} />
-            </Section>
-
-            <div className="lg:hidden">{tracklist}</div>
-
-            <Section>
-              <DiscogsCredit url={discogsUrl(r.uri)} />
-            </Section>
-          </div>
-        </div>
-      </div>
-      {viewingPhotos && <PhotosSheet release={r} onClose={() => setViewingPhotos(false)} />}
+        </Section>
+      </RecordLayout>
     </Screen>
   )
 }
