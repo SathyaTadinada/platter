@@ -123,16 +123,20 @@ export function ProfileHeader({
     </>
   )
 
-  // beside a taller left side the card grows to match, with its rows spread out rather than bunched at the top
+  // each part is a tile, and beside a taller left side the tiles grow to fill the card, so the heading
+  // stays with them and no gaps open up. An odd one out at the end takes the whole row.
   const setupCard = setup.length > 0 && (
     <div className={`${card} flex flex-col`}>
       <h3 className={cardTitle}>Setup</h3>
-      <dl className="grid flex-1 grid-cols-2 content-evenly gap-x-4 gap-y-3">
-        {setup.map(([slot, label]) => {
+      <dl className="grid flex-1 auto-rows-fr grid-cols-2 gap-2">
+        {setup.map(([slot, label], i) => {
           const Icon = SLOT_ICONS[slot]
           return (
-            <div key={slot} className="flex min-w-0 items-start gap-2.5">
-              <Icon size={18} aria-hidden className="mt-0.5 shrink-0 text-stone-500" />
+            <div
+              key={slot}
+              className={`flex min-w-0 items-center gap-3 rounded-xl bg-stone-50 px-3 py-2.5 dark:bg-white/5 ${i === setup.length - 1 && i % 2 === 0 ? 'col-span-2' : ''}`}
+            >
+              <Icon size={18} aria-hidden className="shrink-0 text-stone-500" />
               <div className="min-w-0">
                 <dt className="text-xs text-stone-500">{label}</dt>
                 <dd className="text-sm font-medium break-words">{head.setup[slot]}</dd>
