@@ -89,6 +89,16 @@ function demoAuth(identity: Identity): Auth {
   }
 }
 
+// For someone looking at a profile without Platter: Discogs signed out, as the demo does, and
+// nothing of theirs to sign out of
+export const visitorAuth: Auth = {
+  kind: 'demo',
+  getAuthHeaders: async () => ({}),
+  prepare: async () => {},
+  getIdentity: () => ({ username: '', id: 0 }),
+  signOut: async () => {},
+}
+
 export function authFromSession(s: Session): Auth {
   const identity = { username: s.username, id: s.userId }
   if (s.kind === 'demo') return demoAuth(identity)

@@ -48,7 +48,9 @@ export function Welcome({ error }: { error?: string }) {
           <Disc3 size={56} strokeWidth={1.5} className="text-accent" aria-hidden />
           <h1 className="mt-4 text-4xl font-bold tracking-tight">Platter</h1>
           <p className="mt-2 text-stone-500">Scan your records into Discogs.</p>
-          <p className="mt-4 text-sm text-stone-500">It also keeps track of what your records are worth and how often you play them.</p>
+          <p className="mt-4 text-sm text-stone-500">
+            It also keeps track of what they’re worth and how often you play them, and gives you a profile to share with friends.
+          </p>
 
           <div className="mt-10 w-full space-y-3 text-left">
             {(startError ?? error) && <Notice tone="error">{startError ?? error}</Notice>}

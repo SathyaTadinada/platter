@@ -32,6 +32,7 @@ import { Admin } from './screens/Admin'
 import { Following } from './screens/Following'
 import { Profile } from './screens/Profile'
 import { ProfilePeople } from './screens/profile/People'
+import { VisitorRelease } from './screens/release/Visitor'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
@@ -112,6 +113,16 @@ function Routes({ error }: { error?: string }) {
       <Switch>
         <Route path="/about" component={About} />
         {/* a profile is for anyone with the link, signed in or not */}
+        {/* a record opened from someone's profile, read-only */}
+        <Route path="/release/:id">
+          {(p) => (
+            <CloudProvider>
+              <Visitor>
+                <VisitorRelease id={p.id!} />
+              </Visitor>
+            </CloudProvider>
+          )}
+        </Route>
         <Route path="/u/:username/people">
           {(p) => (
             <CloudProvider>

@@ -20,6 +20,7 @@ import { toast } from '../../components/Toaster'
 import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Row, Section, Spinner, Switch, ToggleChip } from '../../components/ui'
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
+import { useSession } from '../../hooks/session'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
 import type { Follows } from '../../lib/cloud'
 import { peopleLink, type FollowList } from './Connections'
@@ -57,6 +58,7 @@ export function useProfileOpen() {
 // For the page's toolbar: your profile, and its link
 export function ProfileActions() {
   const cloud = useCloud()
+  const { session } = useSession()
   const { open } = useProfileOpen()
   if (!cloud.enabled || !open) return null
   return (
@@ -64,15 +66,18 @@ export function ProfileActions() {
       <IconLink label="View profile" href={profileLink(cloud.username)}>
         <UserRound size={20} />
       </IconLink>
-      <IconButton
-        label="Copy link"
-        onClick={async () => {
-          await navigator.clipboard.writeText(`${location.origin}${profileLink(cloud.username)}`)
-          toast('Link copied', { tone: 'success' })
-        }}
-      >
-        <LinkIcon size={20} />
-      </IconButton>
+      {/* the demo's profile is only here, so its link would open nothing for anyone else */}
+      {session?.kind !== 'demo' && (
+        <IconButton
+          label="Copy link"
+          onClick={async () => {
+            await navigator.clipboard.writeText(`${location.origin}${profileLink(cloud.username)}`)
+            toast('Link copied', { tone: 'success' })
+          }}
+        >
+          <LinkIcon size={20} />
+        </IconButton>
+      )}
     </>
   )
 }

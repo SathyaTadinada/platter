@@ -33,7 +33,7 @@ import {
   type ProfileReader,
   type WaysIn,
 } from '../lib/cloud'
-import { demoCloudApi } from '../lib/demoCloud'
+import { demoCloudApi, demoReader } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
 import { forgetSent, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
 import { getFields, getProfile } from '../api/discogs/endpoints'
@@ -433,13 +433,19 @@ function useDemoCloud(): Ctx {
   const [enabled, setEnabled] = useState(true)
   const [exists, setExists] = useState(true)
   const [off, setOff] = useState<Category[]>([])
-  const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'off', stats: 'off', year: 'off' })
+  // everything on, so the sample profile shows what a profile can have
+  const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'public', stats: 'public', year: 'public' })
   const [demoWho, setDemoWho] = useState<Who>('public')
-  const [demoDetails, setDemoDetails] = useState<string[]>([])
+  // the rating and both conditions (the demo's fields 1 and 2)
+  const [demoDetails, setDemoDetails] = useState<string[]>(['rating', '1', '2'])
   const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
   const [running, setRunning] = useState(false)
   const api = useMemo(() => demoCloudApi(), [])
   const anonymous = useMemo(() => cloudEntry(), [])
+  // read by the demo's own profile when it's opened, so it shows the settings as they are then
+  const settings = useRef({ sections: demoSections, who: demoWho, details: demoDetails })
+  settings.current = { sections: demoSections, who: demoWho, details: demoDetails }
+  const reader = useMemo(() => demoReader(anonymous, () => settings.current), [anonymous])
   const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
   const signIn = async () => {
     await pause(600)
@@ -456,8 +462,8 @@ function useDemoCloud(): Ctx {
     syncedAt,
     off,
     api: enabled ? api : null,
-    // the demo has no account to read as, so profiles come from the real server like anyone's
-    reader: anonymous,
+    // its own profile is made here; anyone else's comes from the real server, read anonymously
+    reader,
     sections: demoSections,
     setSections: async (next) => {
       await pause(300)
@@ -516,8 +522,7 @@ export function useCloud() {
 // (it's opt-in) undefined, for your Discogs profile
 export function useYourPage(): string | undefined {
   const cloud = useCloud()
-  const { session } = useSession()
   if (!cloud.enabled) return undefined
-  const sharing = session?.kind !== 'demo' && !cloud.hidden && cloud.who !== 'private'
+  const sharing = !cloud.hidden && cloud.who !== 'private'
   return sharing ? `/u/${encodeURIComponent(cloud.username)}` : '/account'
 }

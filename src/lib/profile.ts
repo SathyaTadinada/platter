@@ -323,6 +323,20 @@ export async function publishProfile(
   return done
 }
 
+// Every row each switched-on section would show, built here rather than read from the server, for
+// the demo, whose profile never goes anywhere
+export async function localProfile(sections: Sections, choice?: CopyChoice): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
+  const on = (x: Section) => sections[x] === 'public'
+  const items = await libraryItems()
+  const plays = await db.plays.toArray()
+  return [
+    ...(on('collection') ? itemRows(items, choice) : []),
+    ...(on('wantlist') ? await wantRows() : []),
+    ...(on('stats') ? (statsRows(items, plays) ?? []) : []),
+    ...(on('year') ? await yearRows(items, plays) : []),
+  ]
+}
+
 // After the sections change, so the next pass sends a section that has just gone back on
 export async function forgetSent(sections: Sections) {
   const sent = ((await db.settings.get(SENT))?.value as Sent | undefined) ?? {}

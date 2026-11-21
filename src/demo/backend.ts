@@ -34,7 +34,7 @@ const text = (id: number, name: string, position: number): CollectionField => ({
 
 // ordered like a real account's (yours sets the order on Discogs; Notes is a Discogs default
 // that tends to end up last); the ids match the sample collection's notes
-const FIELDS: CollectionField[] = [
+export const DEMO_FIELDS: CollectionField[] = [
   { id: 1, name: 'Media Condition', type: 'dropdown', position: 1, public: false, options: GRADES },
   { id: 2, name: 'Sleeve Condition', type: 'dropdown', position: 2, public: false, options: ['Generic', 'No Cover', ...GRADES] },
   text(5, 'Purchase Price', 3),
@@ -159,7 +159,7 @@ async function handle(realFetch: typeof fetch, url: URL, method: string, body: u
 
   if (path === '/oauth/identity') return json({ id: 0, username: DEMO_USER })
   if (path === mine) return json({ username: DEMO_USER, uri: '', curr_abbr: 'USD' })
-  if (path === `${mine}/collection/fields`) return json({ fields: FIELDS })
+  if (path === `${mine}/collection/fields`) return json({ fields: DEMO_FIELDS })
   if (path === `${mine}/collection/value`) {
     const median = demoValue(s.items.map((i) => i.id))
     return json({ minimum: usd(median * 0.55), median: usd(median), maximum: usd(median * 1.6) })

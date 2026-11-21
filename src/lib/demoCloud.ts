@@ -1,5 +1,13 @@
-import type { Sections, Who } from '../../worker/profile'
-import type { CloudApi, DeviceInfo, PasskeyInfo } from './cloud'
+import type { Section, Sections, Who } from '../../worker/profile'
+import { db } from '../db/db'
+import { CloudError, type CloudApi, type DeviceInfo, type PasskeyInfo, type ProfileReader } from './cloud'
+import { localProfile } from './profile'
+
+const DEMO_USER = 'demo'
+const PAGE = 100 // as the server pages a profile
+// as worker/profile has them, which is server code
+const SECTIONS: Section[] = ['collection', 'wantlist', 'stats', 'year']
+const KINDS: Record<Section, string> = { collection: 'item', wantlist: 'want', stats: 'stats', year: 'year' }
 import { deviceKind, deviceName } from './deviceName'
 
 // The account page in the demo: a couple of devices and a passkey, kept in memory, with nothing sent
@@ -114,5 +122,54 @@ export function demoCloudApi(): CloudApi {
     editBadge: nothing,
     deleteBadge: nothing,
     deleteMember: nothing,
+  }
+}
+
+// The demo's own profile, made on the spot from the sample collection with the demo's current
+// settings, so View profile shows what a profile looks like. Anyone else's comes from the server.
+export function demoReader(server: ProfileReader, current: () => { sections: Sections; who: Who; details: string[] }): ProfileReader {
+  const mine = (username: string) => username.trim().toLowerCase() === DEMO_USER
+  const rows = async () => {
+    const { sections, details } = current()
+    // the demo's code is only loaded for the demo, and is already in by now
+    const { DEMO_FIELDS } = await import('../demo/backend')
+    const names = Object.fromEntries(DEMO_FIELDS.map((f) => [f.id, f.name]))
+    return localProfile(sections, details.length ? { details, names } : undefined)
+  }
+  const missing = () => new CloudError(404, 'No profile here')
+  return {
+    profile: async (username) => {
+      if (!mine(username)) return server.profile(username)
+      const { sections, who } = current()
+      if (who === 'private') throw missing()
+      const on = SECTIONS.filter((s) => sections[s] === 'public')
+      return {
+        username: DEMO_USER,
+        locked: false,
+        badges: [],
+        memberSince: Date.now() - 60 * 24 * 60 * 60_000,
+        publishedAt: Date.now(),
+        sections: on,
+        about: JSON.stringify(on.includes('collection') ? { records: await db.collection.count() } : {}),
+        followers: 0,
+        following: 0,
+      }
+    },
+    profileRows: async (username, section, after) => {
+      if (!mine(username)) return server.profileRows(username, section, after)
+      if (current().who === 'private' || current().sections[section] !== 'public') throw missing()
+      const all = (await rows())
+        .filter((r) => r.kind === KINDS[section] && (!after || r.key > after))
+        .sort((a, b) => (a.key < b.key ? -1 : 1))
+      return { rows: all.slice(0, PAGE).map((r) => ({ ...r, updatedAt: Date.now() })), more: all.length > PAGE }
+    },
+    profileItem: async (username, key) => {
+      if (!mine(username)) return server.profileItem(username, key)
+      const found = (await rows()).find((r) => r.kind === 'item' && r.key === key)
+      if (!found) throw missing()
+      return { key, value: found.value }
+    },
+    searchProfiles: (q) => server.searchProfiles(q),
+    profilePeople: async (username, list) => (mine(username) ? { people: [], more: 0 } : server.profilePeople(username, list)),
   }
 }

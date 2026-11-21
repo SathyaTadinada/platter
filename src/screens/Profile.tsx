@@ -114,7 +114,8 @@ export function Profile({ username }: { username: string }) {
 
   const about: ProfileAbout = head.about ? JSON.parse(head.about) : {}
   const rows = loaded && loaded.section === section ? loaded.rows : null
-  const mine = session?.kind !== 'demo' && head.username === session?.username.toLowerCase()
+  const mine = head.username === session?.username.toLowerCase()
+  const demo = session?.kind === 'demo'
   // someone else's records can be picked out and added to yours
   const pickable = !!session && !mine && section === 'collection' && !!rows?.length
   const picking = pickable && picked
@@ -180,15 +181,18 @@ export function Profile({ username }: { username: string }) {
           <IconLink label="Edit profile" href="/account">
             <Pencil size={20} />
           </IconLink>
-          <IconButton
-            label="Copy link"
-            onClick={async () => {
-              await navigator.clipboard.writeText(location.href)
-              toast('Link copied', { tone: 'success' })
-            }}
-          >
-            <LinkIcon size={20} />
-          </IconButton>
+          {/* the demo's profile is only here, so its link would open nothing for anyone else */}
+          {!demo && (
+            <IconButton
+              label="Copy link"
+              onClick={async () => {
+                await navigator.clipboard.writeText(location.href)
+                toast('Link copied', { tone: 'success' })
+              }}
+            >
+              <LinkIcon size={20} />
+            </IconButton>
+          )}
         </>
       ) : (
         <IconLink label="Discogs profile" href={discogsUser(head.username)} external>
