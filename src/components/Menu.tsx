@@ -37,11 +37,17 @@ export function Menu({
   const [place, setPlace] = useState<CSSProperties>()
   const ref = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  // opened with a click or tap, nothing is highlighted until the arrow keys are used; from the keyboard,
+  // the first item is
+  const byPointer = useRef(false)
   const menuItems = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not(:disabled)') ?? [])]
 
   useEffect(() => {
     if (!open) return
-    menuItems()[0]?.focus()
+    if (byPointer.current) panel.current?.focus()
+    else menuItems()[0]?.focus()
+    byPointer.current = false
     const onDown = (e: PointerEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
     document.addEventListener('pointerdown', onDown)
     const onScroll = (e: Event) => !ref.current?.contains(e.target as Node) && setOpen(false)
@@ -65,6 +71,7 @@ export function Menu({
         maxHeight: Math.min(240, up ? r.top - 12 : below),
       })
     }
+    if (open) byPointer.current = false
     setOpen(!open)
   }
 
@@ -72,7 +79,7 @@ export function Menu({
     if (!open) return
     const list = menuItems()
     const at = list.indexOf(document.activeElement as HTMLButtonElement)
-    const to = ({ ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: list.length - 1 } as Record<string, number>)[e.key]
+    const to = ({ ArrowDown: at + 1, ArrowUp: at < 0 ? -1 : at - 1, Home: 0, End: list.length - 1 } as Record<string, number>)[e.key]
     if (e.key === 'Escape') {
       setOpen(false)
       trigger.current?.focus()
@@ -97,6 +104,7 @@ export function Menu({
         title={label}
         aria-haspopup="menu"
         aria-expanded={open}
+        onPointerDown={() => (byPointer.current = true)}
         onClick={toggle}
         className={buttonClassName}
       >
@@ -104,10 +112,12 @@ export function Menu({
       </button>
       {open && (
         <div
+          ref={panel}
           role="menu"
           aria-label={label}
+          tabIndex={-1}
           style={short ? place : undefined}
-          className={`z-30 min-w-56 overflow-y-auto ${short ? '' : `absolute top-full mt-1 max-h-[70dvh] ${align === 'right' ? 'right-0' : 'left-0'}`} rounded-xl bg-white py-1 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700`}
+          className={`z-30 min-w-56 overflow-y-auto ${short ? '' : `absolute top-full mt-1 max-h-[70dvh] ${align === 'right' ? 'right-0' : 'left-0'}`} rounded-xl bg-white py-1 shadow-xl focus:outline-none ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700`}
         >
           {items.map((item) => (
             <button

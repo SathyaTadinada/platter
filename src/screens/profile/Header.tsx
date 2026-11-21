@@ -123,10 +123,11 @@ export function ProfileHeader({
     </>
   )
 
+  // beside a taller left side the card grows to match, with its rows spread out rather than bunched at the top
   const setupCard = setup.length > 0 && (
-    <div className={card}>
+    <div className={`${card} flex flex-col`}>
       <h3 className={cardTitle}>Setup</h3>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+      <dl className="grid flex-1 grid-cols-2 content-evenly gap-x-4 gap-y-3">
         {setup.map(([slot, label]) => {
           const Icon = SLOT_ICONS[slot]
           return (
@@ -145,12 +146,12 @@ export function ProfileHeader({
 
   // the setup is the taller of the two, so it takes the right and the records stay with the rest on
   // the left. Without a setup the records take the right instead.
-  const side = setupCard || (records && <div className={`${card} space-y-1`}>{records}</div>)
+  const side = setupCard || (records && <div className={`${card} flex flex-col justify-evenly gap-1`}>{records}</div>)
   const recordsHere = setupCard && records
 
   return (
     <Section>
-      <div className={side ? 'space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-10 lg:space-y-0' : ''}>
+      <div className={side ? 'space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-10 lg:space-y-0' : ''}>
         {/* picture on the left and everything else in one column beside it (under it on phones). Any spare
             height goes to the last row, never between the name and the counts. */}
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 md:grid-rows-[auto_auto_1fr] md:gap-x-8">

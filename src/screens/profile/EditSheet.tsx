@@ -26,12 +26,21 @@ const PRONOUNS_MAX = 20
 const field =
   'w-full rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-stone-200 focus:ring-2 focus:ring-accent/60 focus:outline-none dark:bg-stone-900 dark:ring-stone-800'
 const fieldLabel = 'mb-1 flex items-center gap-1.5 px-1 text-xs text-stone-500'
+// a line between each group, so records and setup (and about and links) read as separate
+const divided = 'space-y-5 [&>*+*]:border-t [&>*+*]:border-stone-200 [&>*+*]:pt-5 dark:[&>*+*]:border-stone-800'
 const groupTitle = 'mb-2 px-1 text-xs font-semibold tracking-wide text-stone-500 uppercase'
 const pill =
   'inline-flex items-center gap-1.5 rounded-full bg-stone-900/5 px-3 py-1.5 text-sm font-medium hover:bg-stone-900/10 dark:bg-white/10 dark:hover:bg-white/15'
 
-// nothing here is a login, so password managers keep their buttons out of these fields
-const noFill = { autoComplete: 'off', 'data-bwignore': true, 'data-1p-ignore': true, 'data-lpignore': 'true' } as const
+// nothing here is a login, so password managers keep their buttons out of these fields. Bitwarden also
+// takes any field labelled "username" for one whatever it's told, so the links say handle.
+const noFill = {
+  autoComplete: 'off',
+  'data-bwignore': true,
+  'data-1p-ignore': true,
+  'data-lpignore': 'true',
+  'data-form-type': 'other',
+} as const
 
 // A record on the profile (pinned, or the last one played), opening its page
 export function RecordLine({ item, note, link = true }: { item: ProfileBrief | Pinned; note: ReactNode; link?: boolean }) {
@@ -84,7 +93,7 @@ export function EditSheet({ onSaved, onClose }: { onSaved: (published: Promise<v
     for (const [s, raw] of Object.entries(editing.links) as [LinkService, string][]) {
       const handle = handleFrom(s, raw ?? '')
       if (!handle) continue
-      if (!validHandle(s, handle)) return setError(`That isn’t a ${LINK_NAMES[s]} username.`)
+      if (!validHandle(s, handle)) return setError(`That ${LINK_NAMES[s]} username doesn’t look right.`)
       links[s] = handle
     }
     setBusy(true)
@@ -117,8 +126,8 @@ export function EditSheet({ onSaved, onClose }: { onSaved: (published: Promise<v
         </div>
       }
     >
-      <div className="space-y-6 sm:grid sm:grid-cols-2 sm:items-start sm:gap-6 sm:space-y-0">
-        <div className="space-y-6">
+      <div className={`${divided} sm:grid sm:grid-cols-2 sm:items-start sm:gap-8 sm:space-y-0 sm:[&>*+*]:border-t-0 sm:[&>*+*]:pt-0`}>
+        <div className={divided}>
           <div className="space-y-3">
             <h3 className={groupTitle}>About</h3>
             <div>
@@ -172,8 +181,8 @@ export function EditSheet({ onSaved, onClose }: { onSaved: (published: Promise<v
                     <BrandIcon service={s} size={18} />
                   </span>
                   <input
-                    aria-label={`${LINK_NAMES[s]} username`}
-                    placeholder={s === 'mastodon' ? 'you@server' : `${LINK_NAMES[s]} username`}
+                    aria-label={`${LINK_NAMES[s]} handle`}
+                    placeholder={s === 'mastodon' ? '@you@server' : '@handle'}
                     value={editing.links[s] ?? ''}
                     autoFocus={s === added}
                     autoCapitalize="none"
@@ -219,7 +228,7 @@ export function EditSheet({ onSaved, onClose }: { onSaved: (published: Promise<v
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className={divided}>
           <div>
             <h3 className={groupTitle}>Records</h3>
             <div className="space-y-3">
