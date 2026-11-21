@@ -1,8 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  ArrowDownUp,
-  ArrowDownWideNarrow,
-  ArrowUpNarrowWide,
   Disc3,
   Dices,
   Download,
@@ -21,6 +18,7 @@ import { Link, useLocation, useSearch } from 'wouter'
 import { deleteInstance, editInstance, setFieldValue } from '../api/discogs/endpoints'
 import { FilterSheet } from '../components/FilterSheet'
 import { Menu } from '../components/Menu'
+import { SortPill } from '../components/SortPill'
 import { toast } from '../components/Toaster'
 import { Button, buttonClass, IconButton, List, Notice, Screen, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
@@ -36,7 +34,6 @@ import { download, today } from '../lib/download'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
 import {
   activeFilterCount,
-  DESCENDING,
   facets as buildFacets,
   filterItems,
   groupItems,
@@ -177,7 +174,6 @@ export function Collection() {
     () => (items ? sortItems(filterItems(items, query), query.sort, sortCtx, query.reversed) : []),
     [items, query, sortCtx],
   )
-  const sorting = SORTS.find((s) => s.key === query.sort)!
   function sortBy(sort: SortKey, reversed: boolean) {
     saveSort(sort, reversed)
     setSortPicked((n) => n + 1)
@@ -252,43 +248,13 @@ export function Collection() {
         )}
       </label>
       <div className="flex items-center gap-2">
-        {/* what to sort by, and a separate button that turns it around in one tap */}
-        <div className="flex min-w-0 items-center rounded-full bg-stone-200 dark:bg-stone-800">
-          <Menu
-            label="Sort by"
-            align="left"
-            className="min-w-0"
-            buttonClassName="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-l-full py-1 pr-2.5 pl-3 text-sm font-medium hover:bg-stone-300 dark:hover:bg-stone-700"
-            button={
-              <>
-                <ArrowDownUp size={16} className="shrink-0" aria-hidden />
-                <span className="truncate whitespace-nowrap">{sorting.label}</span>
-              </>
-            }
-            // picking the current sort again turns it around too
-            // Paid needs a purchase price field to read from
-            items={SORTS.filter((s) => s.key !== 'paid' || paidField !== undefined).map((s) => ({
-              label: s.label,
-              checked: s.key === query.sort,
-              checkedMark: (
-                <span className="flex items-center gap-1.5 text-xs text-stone-500">
-                  {s.order[query.reversed ? 1 : 0]}
-                  <SortArrow sort={s.key} reversed={query.reversed} size={16} className="text-accent" />
-                </span>
-              ),
-              onSelect: () => sortBy(s.key, s.key === query.sort ? !query.reversed : false),
-            }))}
-          />
-          <button
-            type="button"
-            onClick={() => sortBy(query.sort, !query.reversed)}
-            aria-label={`${sorting.order[query.reversed ? 1 : 0]}. Reverse order`}
-            title={sorting.order[query.reversed ? 1 : 0]}
-            className="inline-flex min-h-9 items-center rounded-r-full border-l border-stone-300 pr-3 pl-2.5 hover:bg-stone-300 dark:border-stone-700 dark:hover:bg-stone-700"
-          >
-            <SortArrow sort={query.sort} reversed={query.reversed} size={16} />
-          </button>
-        </div>
+        {/* Paid needs a purchase price field to read from */}
+        <SortPill
+          sorts={SORTS.filter((s) => s.key !== 'paid' || paidField !== undefined)}
+          sort={query.sort}
+          reversed={query.reversed}
+          onChange={sortBy}
+        />
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
@@ -570,20 +536,4 @@ export function Collection() {
       )}
     </Screen>
   )
-}
-
-// Which way a sort runs: high to low, or low to high (A to Z)
-function SortArrow({
-  sort,
-  reversed,
-  size,
-  className = 'shrink-0',
-}: {
-  sort: SortKey
-  reversed: boolean
-  size: number
-  className?: string
-}) {
-  const Icon = DESCENDING[sort] !== reversed ? ArrowDownWideNarrow : ArrowUpNarrowWide
-  return <Icon size={size} className={className} aria-hidden />
 }

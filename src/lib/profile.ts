@@ -3,7 +3,7 @@ import { db, type LibraryItem, type WantItem } from '../db/db'
 import type { CollectionField } from '../api/discogs/types'
 import { fieldFor, type FieldKey, type FieldMatch } from './fields'
 import type { CloudApi, ProfileRow, SetupSlot } from './cloud'
-import { decadeOf, yearOf } from './library'
+import { byText, decadeOf, DESCENDING, fold, SORTS, sortName, wordsOf, yearOf, type SortKey } from './library'
 import { libraryItems } from './masters'
 import { listening, listeningStats, type Play, type PlayFields } from './plays'
 import { byMonth, localDate, type MonthTotal } from './value'
@@ -396,6 +396,39 @@ export const SETUP_MAX = 60
 export const hasLink = (text: string) => /https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|co|me|ly|xyz|app|shop|store|link)\b/i.test(text)
 
 // The copy a record on a profile is, read back from its key, for opening your own one as yours
+// The sorts someone else's records can have: nothing private is published, so no ratings, plays,
+// or prices to sort by
+export const SHELF_SORTS = SORTS.filter((s) => ['added', 'artist', 'title', 'year'].includes(s.key))
+
+export type ShelfRow = { key: string; item: ProfileItem }
+
+// Someone's collection or wantlist, searched and sorted in the browser. Keys count down, so key order
+// is newest first, and it breaks ties.
+export function arrangeShelf(rows: ShelfRow[], q: string, sort: SortKey, reversed: boolean): ShelfRow[] {
+  const words = wordsOf(q)
+  const found = words.length
+    ? rows.filter(({ item }) => {
+        const h = fold(`${item.artist} ${item.title} ${item.label ?? ''}`)
+        return words.every((w) => h.includes(w))
+      })
+    : rows
+  const newest = (a: ShelfRow, b: ShelfRow) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
+  const names = (a: ShelfRow, b: ShelfRow) =>
+    byText(sortName(a.item.artist), sortName(b.item.artist)) || byText(sortName(a.item.title), sortName(b.item.title))
+  // low to high, or A to Z
+  const ascending = {
+    added: (a: ShelfRow, b: ShelfRow) => newest(b, a),
+    artist: (a: ShelfRow, b: ShelfRow) => names(a, b) || (a.item.year ?? 0) - (b.item.year ?? 0),
+    title: (a: ShelfRow, b: ShelfRow) => byText(sortName(a.item.title), sortName(b.item.title)),
+    year: (a: ShelfRow, b: ShelfRow) => (a.item.year ?? 0) - (b.item.year ?? 0),
+  }[sort as 'added' | 'artist' | 'title' | 'year']
+  if (!ascending) return found
+  const dir = DESCENDING[sort] !== reversed ? -1 : 1
+  // records without a year go last, whichever way it runs
+  const yearless = (r: ShelfRow) => Number(sort === 'year' && !r.item.year)
+  return [...found].sort((a, b) => yearless(a) - yearless(b) || dir * ascending(a, b) || names(a, b) || newest(a, b))
+}
+
 export const instanceOf = (key: string) => Number(key.split(':')[1])
 
 export const recordFrom = (item: ProfileItem, owner: string, key: string) =>

@@ -236,7 +236,7 @@ export const activeFilterCount = (f: Filters) =>
 
 // ---- filtering ----
 
-const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+export const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 export const decadeOf = (year: number) => (year ? Math.floor(year / 10) * 10 : 0)
 
@@ -293,7 +293,7 @@ function matchesText(i: LibraryItem, words: string[]): boolean {
   return words.every((w) => h.includes(w))
 }
 
-const wordsOf = (q: string) => fold(q).split(/\s+/).filter(Boolean)
+export const wordsOf = (q: string) => fold(q).split(/\s+/).filter(Boolean)
 
 export function filterItems(items: LibraryItem[], q: LibraryQuery): LibraryItem[] {
   const words = wordsOf(q.q)
@@ -305,7 +305,7 @@ export function filterItems(items: LibraryItem[], q: LibraryQuery): LibraryItem[
 // "The Beatles" sorts under B
 export const sortName = (s: string) => fold(s).replace(/^(the|a|an)\s+/, '')
 
-const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+export const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
 
 // Some sorts need data that lives outside the library: prices, plays, the location field
 export type SortContext = {

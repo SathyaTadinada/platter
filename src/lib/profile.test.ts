@@ -5,6 +5,7 @@ import type { ProfileRow } from './cloud'
 import type { CollectionField } from '../api/discogs/types'
 import { matchFields } from './fields'
 import {
+  arrangeShelf,
   copyable,
   forgetSent,
   publishProfile,
@@ -336,5 +337,41 @@ describe('copying someone else’s details', () => {
       ],
     }
     expect(copyable(copy, mine, matches)).toEqual([])
+  })
+})
+
+describe('searching and sorting someone’s records', () => {
+  // keys count down, so a smaller key was added later
+  const row = (key: string, artist: string, title: string, year?: number, label?: string) => ({
+    key,
+    item: { id: Number(key), artist, title, year, label } as ProfileItem,
+  })
+  const rows = [
+    row('1', 'The Beatles', 'Abbey Road', 1969, 'Apple'),
+    row('2', 'Björk', 'Debut', 1993, 'One Little Indian'),
+    row('3', 'Aphex Twin', 'Selected Ambient Works', undefined, 'Apollo'),
+  ]
+  const titles = (q: string, sort: Parameters<typeof arrangeShelf>[2], reversed = false) =>
+    arrangeShelf(rows, q, sort, reversed).map((r) => r.item.title)
+
+  it('keeps the newest first by default and reverses to oldest first', () => {
+    expect(titles('', 'added')).toEqual(['Abbey Road', 'Debut', 'Selected Ambient Works'])
+    expect(titles('', 'added', true)).toEqual(['Selected Ambient Works', 'Debut', 'Abbey Road'])
+  })
+
+  it('matches every word against artist, title, and label, ignoring accents', () => {
+    expect(titles('bjork', 'added')).toEqual(['Debut'])
+    expect(titles('apple abbey', 'added')).toEqual(['Abbey Road'])
+    expect(titles('apollo', 'added')).toEqual(['Selected Ambient Works'])
+    expect(titles('nothing', 'added')).toEqual([])
+  })
+
+  it('sorts artists without a leading "The"', () => {
+    expect(titles('', 'artist')).toEqual(['Selected Ambient Works', 'Abbey Road', 'Debut'])
+  })
+
+  it('puts records without a year last either way', () => {
+    expect(titles('', 'year')).toEqual(['Debut', 'Abbey Road', 'Selected Ambient Works'])
+    expect(titles('', 'year', true)).toEqual(['Abbey Road', 'Debut', 'Selected Ambient Works'])
   })
 })

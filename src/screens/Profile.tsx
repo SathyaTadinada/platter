@@ -1,9 +1,10 @@
-import { Ban, ExternalLink, Link as LinkIcon, Settings, SquareCheckBig } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Ban, ExternalLink, Link as LinkIcon, Search, Settings, SquareCheckBig, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Cover } from '../components/Cover'
 import { Menu } from '../components/Menu'
+import { SortPill } from '../components/SortPill'
 import { toast } from '../components/Toaster'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { Button, IconButton, IconLink, Notice, Screen, Section, Segmented, Spinner, useBack } from '../components/ui'
@@ -13,7 +14,17 @@ import { rememberTitle } from '../lib/nav'
 import { enqueueFromProfile, waitingInBatch } from '../lib/queue'
 import { CloudError, type ProfileHead } from '../lib/cloud'
 import { useCloud } from '../hooks/cloud'
-import { instanceOf, recordFrom, type ProfileAbout, type ProfileItem, type ProfileStats, type ProfileYear } from '../lib/profile'
+import type { SortKey } from '../lib/library'
+import {
+  arrangeShelf,
+  instanceOf,
+  recordFrom,
+  SHELF_SORTS,
+  type ProfileAbout,
+  type ProfileItem,
+  type ProfileStats,
+  type ProfileYear,
+} from '../lib/profile'
 import type { Section as ProfileSection } from '../../worker/profile'
 import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
@@ -21,6 +32,8 @@ import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
 
 const LABELS: Record<ProfileSection, string> = { collection: 'Collection', wantlist: 'Wantlist', stats: 'Stats', year: 'Your year' }
+// search and sort only show once a list is longer than a screen or so
+const SHORT_LIST = 24
 
 // Someone's profile, as anyone with the link sees it: only the sections they switched on, and only
 // what their devices published.
@@ -43,6 +56,9 @@ export function Profile({ username }: { username: string }) {
   // records picked to add to your own collection, by their row; null when not picking
   const [picked, setPicked] = useState<Set<string> | null>(null)
   const [adding, setAdding] = useState<{ items: ProfileItem[]; owned: number; waiting: number } | null>(null)
+  const [text, setText] = useState('')
+  const [sort, setSort] = useState<SortKey>('added')
+  const [reversed, setReversed] = useState(false)
 
   const fetchHead = useCallback(
     () =>
@@ -86,6 +102,29 @@ export function Profile({ username }: { username: string }) {
     load()
   }, [load])
 
+  useEffect(() => {
+    setText('')
+    setSort('added')
+    setReversed(false)
+  }, [username, section])
+
+  const rows = loaded && loaded.section === section ? loaded.rows : null
+  const records = useMemo(
+    () =>
+      rows && (section === 'collection' || section === 'wantlist')
+        ? rows.map((r) => ({ key: r.key, item: JSON.parse(r.value) as ProfileItem }))
+        : null,
+    [rows, section],
+  )
+  const searching = text.trim() !== ''
+  // searching or sorting needs every record, not just the pages loaded so far
+  const wantAll = searching || sort !== 'added' || reversed
+  const shown = useMemo(() => records && arrangeShelf(records, text, sort, reversed), [records, text, sort, reversed])
+  const fetchingRest = Boolean(wantAll && records && more && !error)
+  useEffect(() => {
+    if (fetchingRest && !loading) load(more!)
+  }, [fetchingRest, loading, load, more])
+
   if (missing) {
     return (
       <Screen title="Profile" back={back} width="narrow">
@@ -113,13 +152,14 @@ export function Profile({ username }: { username: string }) {
   }
 
   const about: ProfileAbout = head.about ? JSON.parse(head.about) : {}
-  const rows = loaded && loaded.section === section ? loaded.rows : null
   const mine = head.username === session?.username.toLowerCase()
   const demo = session?.kind === 'demo'
   // someone else's records can be picked out and added to yours
   const pickable = !!session && !mine && section === 'collection' && !!rows?.length
   const picking = pickable && picked
   const chosen = picking ? picked.size : 0
+  // Select all picks what the search shows
+  const allOn = Boolean(picking && shown?.length && shown.every((r) => picked.has(r.key)))
 
   async function review() {
     if (!rows || !picked) return
@@ -160,10 +200,19 @@ export function Profile({ username }: { username: string }) {
     <>
       <button
         type="button"
-        onClick={() => setPicked(new Set(chosen === rows!.length ? [] : rows!.map((r) => r.key)))}
+        onClick={() =>
+          setPicked((old) => {
+            const next = new Set(old)
+            for (const r of shown ?? []) {
+              if (allOn) next.delete(r.key)
+              else next.add(r.key)
+            }
+            return next
+          })
+        }
         className="rounded-lg px-2 py-1.5 text-sm font-medium"
       >
-        {chosen === rows!.length ? 'Select none' : 'Select all'}
+        {allOn ? 'Select none' : 'Select all'}
       </button>
       <button type="button" onClick={() => setPicked(null)} className="rounded-lg px-2 py-1.5 text-sm font-semibold">
         Done
@@ -278,12 +327,65 @@ export function Profile({ username }: { username: string }) {
               <YearView years={rows.map((r) => JSON.parse(r.value) as ProfileYear)} />
             ) : (
               <>
+                {(rows.length > SHORT_LIST || more) && (
+                  <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label className="relative block sm:w-80">
+                      <span className="sr-only">
+                        Search {head.username}’s {LABELS[section].toLowerCase()}
+                      </span>
+                      <Search
+                        size={18}
+                        className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-stone-500"
+                        aria-hidden
+                      />
+                      <input
+                        type="search"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Search artist, title, label…"
+                        autoComplete="off"
+                        className="min-h-11 w-full rounded-xl border border-stone-300 bg-white pr-9 pl-10 text-base dark:border-stone-700 dark:bg-stone-900 [&::-webkit-search-cancel-button]:hidden"
+                      />
+                      {text && (
+                        <button
+                          type="button"
+                          aria-label="Clear search"
+                          onClick={() => setText('')}
+                          className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-stone-500"
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <SortPill sorts={SHELF_SORTS} sort={sort} reversed={reversed} onChange={(s, r) => (setSort(s), setReversed(r))} />
+                      <span className="ml-auto text-sm text-stone-500 tabular-nums sm:ml-2">
+                        {fetchingRest ? (
+                          <span
+                            role="status"
+                            aria-label="Loading"
+                            className="block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                          />
+                        ) : (
+                          !more && (searching ? `${shown!.length} of ${rows.length}` : rows.length)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {!shown!.length && !fetchingRest && (
+                  <div className="flex flex-col items-center gap-3 py-16 text-center">
+                    <p className="text-lg font-semibold">No matches</p>
+                    <Button variant="secondary" onClick={() => setText('')}>
+                      Clear search
+                    </Button>
+                  </div>
+                )}
                 {/* the same tiles as the collection grid; each opens the release, which says if you have it, or
                     with their copy on it when they show one */}
                 <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                  {rows.map((row) => {
-                    const r = JSON.parse(row.value) as ProfileItem
-                    const on = Boolean(picking && picked.has(row.key))
+                  {shown!.map(({ key, item: r }) => {
+                    const on = Boolean(picking && picked.has(key))
                     const tile = (
                       <>
                         <div className="relative">
@@ -302,7 +404,7 @@ export function Profile({ username }: { username: string }) {
                       </>
                     )
                     return (
-                      <li key={row.key} className="min-w-0">
+                      <li key={key} className="min-w-0">
                         {picking ? (
                           <button
                             type="button"
@@ -310,8 +412,8 @@ export function Profile({ username }: { username: string }) {
                             onClick={() =>
                               setPicked((old) => {
                                 const next = new Set(old)
-                                if (next.has(row.key)) next.delete(row.key)
-                                else next.add(row.key)
+                                if (next.has(key)) next.delete(key)
+                                else next.add(key)
                                 return next
                               })
                             }
@@ -322,11 +424,7 @@ export function Profile({ username }: { username: string }) {
                         ) : (
                           // your own records open as yours, not as someone's copy
                           <Link
-                            href={
-                              mine && section === 'collection'
-                                ? `/collection/${instanceOf(row.key)}`
-                                : recordFrom(r, head.username, row.key)
-                            }
+                            href={mine && section === 'collection' ? `/collection/${instanceOf(key)}` : recordFrom(r, head.username, key)}
                             className="group block"
                           >
                             {tile}
@@ -336,7 +434,7 @@ export function Profile({ username }: { username: string }) {
                     )
                   })}
                 </ul>
-                {more && (
+                {more && !fetchingRest && (
                   <Button variant="secondary" className="mt-4 w-full" disabled={loading} onClick={() => load(more)}>
                     {loading ? 'Loading…' : 'Show more'}
                   </Button>
