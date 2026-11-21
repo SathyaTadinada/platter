@@ -185,7 +185,10 @@ function Routes({ error }: { error?: string }) {
               <Route path="/u/:username">{(p) => <Profile username={p.username!} />}</Route>
               <Route path="/value" component={Stats} />
               <Route path="/about" component={About} />
-              <Route component={Collection} />
+              {/* an address that isn't a page goes home, so the bar doesn't keep saying it */}
+              <Route>
+                <Redirect to="/" replace />
+              </Route>
             </Switch>
           </Shell>
         </QueueProvider>
