@@ -32,7 +32,8 @@ export function BadgeCell({
   onToggle: (badge: string, on: boolean) => void
   onNew: () => void
 }) {
-  const theirs = m.badges.map((id) => badges.find((b) => b.id === id)).filter((b): b is Badge => Boolean(b))
+  // in the same order as everywhere else (when each badge was made), not the order they were given
+  const theirs = badges.filter((b) => m.badges.includes(b.id))
   const others = badges.filter((b) => !m.badges.includes(b.id))
   return (
     <span className="flex flex-wrap items-center gap-1">
