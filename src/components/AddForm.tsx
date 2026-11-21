@@ -1,4 +1,3 @@
-import { Check } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { addToFolder, editInstance, getFolders, setFieldValue } from '../api/discogs/endpoints'
 import type { Folder, Release } from '../api/discogs/types'
@@ -14,7 +13,7 @@ import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
 import { Stars } from './Stars'
-import { Button, List, Notice } from './ui'
+import { Button, List, Notice, ToggleChip } from './ui'
 
 export type Added = { folder: string; instanceId: number; problems: string[] }
 
@@ -140,13 +139,6 @@ export function AddForm({
     }
   }
 
-  const chip = (on: boolean) =>
-    `inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
-      on
-        ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
-        : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
-    }`
-
   return (
     <div className="space-y-3">
       {options.length > 0 && (
@@ -154,28 +146,25 @@ export function AddForm({
           <p className="mb-2 px-1 text-sm text-stone-500">Fill in from {their!.owner}’s copy</p>
           <div className="flex flex-wrap gap-2">
             {options.length > 1 && (
-              <button
-                type="button"
-                aria-pressed={all}
+              <ToggleChip
+                size="sm"
+                on={all}
                 onClick={() =>
                   pick(
                     options.map((o) => o.key),
                     !all,
                   )
                 }
-                className={chip(all)}
               >
-                {all && <Check size={14} aria-hidden />}
                 All
-              </button>
+              </ToggleChip>
             )}
             {options.map((o) => {
               const on = picked.has(o.key)
               return (
-                <button key={o.key} type="button" aria-pressed={on} onClick={() => pick([o.key], !on)} className={chip(on)}>
-                  {on && <Check size={14} aria-hidden />}
+                <ToggleChip key={o.key} size="sm" on={on} onClick={() => pick([o.key], !on)}>
                   {o.label}
-                </button>
+                </ToggleChip>
               )
             })}
           </div>

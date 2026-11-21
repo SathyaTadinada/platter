@@ -1,5 +1,5 @@
 import { backLabel, backTarget, rememberTitle, subscribeNav } from '../lib/nav'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, TriangleAlert } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink as ExternalIcon, Info, Plus, TriangleAlert } from 'lucide-react'
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { useEffect, useId, useState, useSyncExternalStore } from 'react'
 import { Link, useLocation } from 'wouter'
@@ -286,14 +286,41 @@ export function ExpandRow({
   )
 }
 
-// What a set of switches comes to, for a closed ExpandRow: All, None, the one that's off or on,
-// or how many
+// What a set of switches comes to, for a closed ExpandRow
 export function howMany(on: string[], all: string[]): string {
   if (!on.length) return 'None'
   if (on.length === all.length) return 'All'
-  if (on.length === 1) return on[0]
-  if (on.length === all.length - 1) return `All but ${all.find((x) => !on.includes(x))}`
   return `${on.length} of ${all.length}`
+}
+
+// A chip that's picked or not: a plus while it's off, a tick once it's on, so it keeps its width and
+// the ones around it don't move when it's tapped
+export function ToggleChip({
+  on,
+  onClick,
+  size = 'md',
+  children,
+}: {
+  on: boolean
+  onClick: () => void
+  size?: 'sm' | 'md'
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full text-sm font-medium ${size === 'sm' ? 'min-h-8 pr-3 pl-2.5' : 'min-h-9 pr-3.5 pl-3'} ${
+        on
+          ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
+          : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
+      }`}
+    >
+      {on ? <Check size={14} aria-hidden /> : <Plus size={14} aria-hidden className="text-stone-400" />}
+      {children}
+    </button>
+  )
 }
 
 // A row of mutually exclusive buttons, like the Scan modes or a chart's grouping.

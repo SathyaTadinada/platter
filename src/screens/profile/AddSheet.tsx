@@ -1,21 +1,13 @@
-import { Check } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation } from 'wouter'
 import { Sheet } from '../../components/Sheet'
-import { Button } from '../../components/ui'
+import { Button, ToggleChip } from '../../components/ui'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
 import { useFieldMatches } from '../../hooks/useFields'
 import { copyable, type ProfileItem } from '../../lib/profile'
 import { enqueueFromProfile } from '../../lib/queue'
 
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
-const chip = (on: boolean) =>
-  `inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
-    on
-      ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
-      : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
-  }`
-
 // Records picked from someone's profile, on their way to Batch: which of their details come too, when
 // they show some, and what to do about ones already in the collection, as an import asks.
 export function AddSheet({
@@ -92,28 +84,25 @@ export function AddSheet({
             <p className="mb-2 text-sm font-medium">Bring over from {from}’s copies</p>
             <div className="flex flex-wrap gap-2">
               {kinds.length > 1 && (
-                <button
-                  type="button"
-                  aria-pressed={all}
+                <ToggleChip
+                  size="sm"
+                  on={all}
                   onClick={() =>
                     toggle(
                       kinds.map(([k]) => k),
                       !all,
                     )
                   }
-                  className={chip(all)}
                 >
-                  {all && <Check size={14} aria-hidden />}
                   All
-                </button>
+                </ToggleChip>
               )}
               {kinds.map(([k, label]) => {
                 const on = chosen.has(k)
                 return (
-                  <button key={k} type="button" aria-pressed={on} onClick={() => toggle([k], !on)} className={chip(on)}>
-                    {on && <Check size={14} aria-hidden />}
+                  <ToggleChip key={k} size="sm" on={on} onClick={() => toggle([k], !on)}>
                     {label}
-                  </button>
+                  </ToggleChip>
                 )
               })}
             </div>

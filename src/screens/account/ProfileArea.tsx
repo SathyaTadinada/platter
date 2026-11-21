@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   CalendarRange,
-  Check,
   ChartLine,
   Globe,
   Heart,
@@ -18,7 +17,7 @@ import { Link } from 'wouter'
 import type { Section as ProfileSection, Who } from '../../../worker/profile'
 import { Avatar, useProfile } from '../../components/Profile'
 import { toast } from '../../components/Toaster'
-import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Row, Section, Spinner, Switch } from '../../components/ui'
+import { ExpandRow, howMany, IconButton, IconLink, List, Notice, Row, Section, Spinner, Switch, ToggleChip } from '../../components/ui'
 import { db } from '../../db/db'
 import { useCloud } from '../../hooks/cloud'
 import { useCollectionMeta } from '../../hooks/useCollectionMeta'
@@ -257,20 +256,9 @@ function CopyChoices({ onError }: { onError: (e: unknown) => void }) {
         {options.map((o) => {
           const on = cloud.details.includes(o.id)
           return (
-            <button
-              key={o.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => toggle(o.id)}
-              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium ${
-                on
-                  ? 'bg-stone-900 text-white dark:bg-accent dark:text-accent-fg'
-                  : 'bg-white ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:hover:bg-stone-800'
-              }`}
-            >
-              {on && <Check size={14} aria-hidden />}
+            <ToggleChip key={o.id} on={on} onClick={() => toggle(o.id)}>
               {o.name}
-            </button>
+            </ToggleChip>
           )
         })}
       </div>
