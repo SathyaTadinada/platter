@@ -56,6 +56,9 @@ export function StatsView({ stats }: { stats: ProfileStats }) {
   const thisMonth = months.find((m) => m.month === now.slice(0, 7))?.total ?? 0
   const thisYear = months.filter((m) => m.month.startsWith(now.slice(0, 4))).reduce((n, m) => n + m.total, 0)
   const played = stats.mostPlayed.length > 0
+  const added = relabel(stats.addedByMonth)
+  // this month stands out, as on your own Stats, but only when the owner's summary reaches it
+  const current = (list: MonthTotal[]) => list.at(-1)?.month === now.slice(0, 7)
 
   return (
     <div className={columns}>
@@ -71,7 +74,7 @@ export function StatsView({ stats }: { stats: ProfileStats }) {
             </Section>
             <Section title="Plays by month">
               <Card>
-                <MonthBars months={months} text={(n) => plural(n, 'play')} short={String} />
+                <MonthBars months={months} text={(n) => plural(n, 'play')} short={String} now={current(months)} />
               </Card>
             </Section>
             <Section title="Most played">
@@ -95,7 +98,7 @@ export function StatsView({ stats }: { stats: ProfileStats }) {
         )}
         <Section title="Added by month">
           <Card>
-            <MonthBars months={relabel(stats.addedByMonth)} text={(n) => plural(n, 'record')} short={String} />
+            <MonthBars months={added} text={(n) => plural(n, 'record')} short={String} now={current(added)} />
           </Card>
         </Section>
         {stats.decades.length > 0 && (

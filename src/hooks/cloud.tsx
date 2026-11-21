@@ -36,7 +36,7 @@ import {
 } from '../lib/cloud'
 import { DEMO_ABOUT, demoCloudApi, demoReader } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
-import { forgetSent, lastPlayed, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
+import { forgetSent, lastPlayed, publishAbout, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
 
 const EMPTY_ABOUT: About = { bio: '', setup: {}, links: {}, location: '', pronouns: '', pinned: null, playing: false }
 import { getFields, getProfile } from '../api/discogs/endpoints'
@@ -150,25 +150,32 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   // What the profile shows goes up after a sync, and only when something in it changed
   const sharing = useRef<Promise<void>>(Promise.resolve())
-  const shareNow = useCallback(async () => {
-    if (!api || (!open.current && !Object.values(shared.current).some((v) => v === 'public'))) return
+  const avatar = useRef<string | undefined>(undefined) // from the last full pass, for the ones between
+  const showing = () => open.current || Object.values(shared.current).some((v) => v === 'public')
+  const aboutNow = useCallback(async () => {
     // how many records they have is part of their collection, so it only goes with that section
     const about: ProfileAbout = shared.current.collection === 'public' ? { records: await db.collection.count() } : {}
     if (playing.current) {
       const last = await lastPlayed()
       if (last) about.playing = last
     }
+    if (avatar.current) about.avatar = avatar.current
+    return about
+  }, [])
+  const shareNow = useCallback(async () => {
+    if (!api || !showing()) return
+    const about = await aboutNow()
     if (client && session && session.kind !== 'demo') {
       // Their Discogs picture is worth having but not worth waiting on: the client keeps retrying a
       // request Discogs turns down, and the profile shouldn't sit unpublished while it does. Without
-      // it the profile goes up anyway, and the next pass picks the picture up.
-      const avatar = await Promise.race([
+      // it the profile goes up with the one from last time, and the next pass picks the new one up.
+      const picture = await Promise.race([
         getProfile(client, session.username)
           .then((p) => p.avatar_url)
           .catch(() => undefined),
         new Promise<undefined>((r) => setTimeout(r, AVATAR_WAIT)),
       ])
-      if (avatar) about.avatar = avatar
+      if (picture) about.avatar = avatar.current = picture
     }
     // the names of the fields whose values go up with each record, when some do. Without them this
     // pass waits for the next, rather than sending records without the details they had.
@@ -194,20 +201,26 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       choice = { details: chosen.current, names, roles }
     }
     await publishProfile(api, shared.current, about, Date.now(), choice, open.current)
-  }, [api, client, session])
+  }, [api, client, session, aboutNow])
+  // Between full passes only the small row goes: the picture, record count, and record last played
+  const shareAbout = useCallback(async () => {
+    if (!api || !showing()) return
+    await publishAbout(api, shared.current, await aboutNow(), Date.now(), open.current)
+  }, [api, aboutNow])
   // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
   // a sync it waits SHARE_EVERY since the last one, so a busy session doesn't rework the whole
-  // collection every half minute; changing the profile's settings sends straight away.
+  // collection every half minute, and sends only the small row in between; changing the profile's
+  // settings sends straight away.
   const lastShared = useRef(0)
   const share = useCallback(
     (now = true) => {
-      if (!now && Date.now() - lastShared.current < SHARE_EVERY) return Promise.resolve()
-      lastShared.current = Date.now()
-      const next = sharing.current.then(shareNow)
+      const full = now || Date.now() - lastShared.current >= SHARE_EVERY
+      if (full) lastShared.current = Date.now()
+      const next = sharing.current.then(full ? shareNow : shareAbout)
       sharing.current = next.catch(() => {})
       return next
     },
-    [shareNow],
+    [shareNow, shareAbout],
   )
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet

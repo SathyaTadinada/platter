@@ -9,6 +9,7 @@ import {
   arrangeShelf,
   copyable,
   forgetSent,
+  publishAbout,
   publishProfile,
   SENT,
   type CopyDetails,
@@ -90,6 +91,28 @@ describe('publishing a profile', () => {
 
     // nothing changed, so nothing is sent again
     expect(await publishProfile(server.api, ON, { avatar: 'a.jpg' }, 2000)).toEqual([])
+  })
+
+  it('sends just the small row between passes, and only when it changed', async () => {
+    const server = fakeServer()
+    await addRecord(1, 'Rumours', '2026-01-01T00:00:00Z')
+    await publishProfile(server.api, ON, { avatar: 'a.jpg', records: 1 }, 1000)
+    const written = server.written()
+
+    const playing = { item: { id: 10, title: 'Rumours', artist: 'Fleetwood Mac' }, at: 2000 }
+    expect(await publishAbout(server.api, ON, { avatar: 'a.jpg', records: 1, playing }, 2000)).toBe(true)
+    expect(server.written()).toBe(written + 1)
+    expect(await publishAbout(server.api, ON, { avatar: 'a.jpg', records: 1, playing }, 3000)).toBe(false)
+    // and a full pass after it doesn't send the row again
+    expect(await publishProfile(server.api, ON, { avatar: 'a.jpg', records: 1, playing }, 4000)).toEqual([])
+    expect(server.written()).toBe(written + 1)
+  })
+
+  it('sends no small row without a profile', async () => {
+    const server = fakeServer()
+    const off: Sections = { collection: 'off', wantlist: 'off', stats: 'off', year: 'off' }
+    expect(await publishAbout(server.api, off, { avatar: 'a.jpg' })).toBe(false)
+    expect(server.count()).toBe(0)
   })
 
   it('keeps the keys of the records already up when a newer one arrives', async () => {

@@ -306,18 +306,33 @@ export async function publishProfile(
   await pass('stats', () => statsRows(items, plays))
   await pass('year', () => yearRows(items, plays))
 
+  if (await aboutPass(api, sections, about, at, open, sent, next)) done.push('about')
+  await db.settings.put({ key: SENT, value: next })
+  return done
+}
+
+// The picture, record count, and record last played: one small row, sent when it changed
+async function aboutPass(api: Publisher, sections: Sections, about: ProfileAbout, at: number, open: boolean, sent: Sent, next: Sent) {
   const anything = open || Object.values(sections).some((v) => v === 'public')
   const value = JSON.stringify(about)
   const mark = await fingerprint([{ key: 'about', value }])
-  if (!anything) delete next.about
-  else if (mark !== sent.about) {
-    await api.publishProfile([{ kind: 'about', key: 'about', value, updatedAt: at }])
-    next.about = mark
-    done.push('about')
+  if (!anything) {
+    delete next.about
+    return false
   }
+  if (mark === sent.about) return false
+  await api.publishProfile([{ kind: 'about', key: 'about', value, updatedAt: at }])
+  next.about = mark
+  return true
+}
 
+// Just that row, between full passes, so the record last played goes up soon after it's played
+export async function publishAbout(api: Publisher, sections: Sections, about: ProfileAbout, at = Date.now(), open = false) {
+  const sent = ((await db.settings.get(SENT))?.value as Sent | undefined) ?? {}
+  const next: Sent = { ...sent }
+  if (!(await aboutPass(api, sections, about, at, open, sent, next))) return false
   await db.settings.put({ key: SENT, value: next })
-  return done
+  return true
 }
 
 // Every row each switched-on section would show, built here rather than read from the server, for
