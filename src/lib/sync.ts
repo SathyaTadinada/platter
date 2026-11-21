@@ -3,8 +3,11 @@ import { getCollectionPage, getOwnedInstances, getWantsPage } from '../api/disco
 import { db, getSetting, setSetting, type LibraryItem, type WantItem } from '../db/db'
 import { applyCoverChoices } from './covers'
 import { toLibraryItem, wantFromApi } from './library'
+import { awaitPlayFields, noticedPlays } from './plays'
 
 export const SYNC_MAX_AGE = 6 * 60 * 60 * 1000
+// how long a refresh waits for the play count fields before it stops looking for plays logged elsewhere
+const FIELDS_WAIT = 15_000
 
 type Progress = (done: number, total: number) => void
 
@@ -22,14 +25,21 @@ async function allPages<T>(fetchPage: (page: number) => Promise<{ items: T[]; pa
 
 // Pulls the whole collection for the library and ownership checks.
 export async function syncCollection(client: DiscogsClient, username: string, onProgress?: Progress) {
+  // plays logged somewhere else since the last refresh are found by the play count going up, which
+  // needs to know the play count fields; they usually arrive while the pages load
+  const fields = awaitPlayFields(FIELDS_WAIT)
   const items = await allPages<LibraryItem>(async (page) => {
     const r = await getCollectionPage(client, username, page)
     return { pages: r.pagination.pages, items: r.releases.map(toLibraryItem) }
   }, onProgress)
   const withCovers = await applyCoverChoices(items)
-  await db.transaction('rw', db.collection, async () => {
+  const ids = await fields
+  const since = (await getSetting<number>('collectionSyncedAt')) ?? 0
+  await db.transaction('rw', db.collection, db.plays, async () => {
+    const found = ids && since ? noticedPlays(await db.collection.toArray(), withCovers, await db.plays.toArray(), ids, since) : []
     await db.collection.clear()
     await db.collection.bulkPut(withCovers)
+    if (found.length) await db.plays.bulkAdd(found)
   })
   await setSetting('collectionSyncedAt', Date.now())
   return items.length

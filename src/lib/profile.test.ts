@@ -4,13 +4,13 @@ import { db } from '../db/db'
 import type { ProfileRow } from './cloud'
 import type { CollectionField } from '../api/discogs/types'
 import { matchFields } from './fields'
+import { setPlayFields } from './plays'
 import {
   arrangeShelf,
   copyable,
   forgetSent,
   publishProfile,
   SENT,
-  setPlayFields,
   type CopyDetails,
   type ProfileItem,
   type ProfileStats,

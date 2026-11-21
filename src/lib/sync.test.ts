@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import page from '../../tests/fixtures/collection-page.json'
 import wants from '../../tests/fixtures/wants.json'
 import { fakeAuth, fakeClock, json, routeFetch } from '../../tests/helpers'
 import { DiscogsClient, RateLimiter } from '../api/discogs/client'
 import { db, getSetting, type LibraryItem } from '../db/db'
+import { setPlayFields } from './plays'
 import { isStale, refreshReleases, syncCollection, syncWants } from './sync'
 
 const makeClient = (fn: typeof fetch) => {
@@ -12,6 +13,8 @@ const makeClient = (fn: typeof fetch) => {
 }
 
 describe('sync', () => {
+  beforeAll(() => setPlayFields({ count: 8, last: 9 }))
+
   it('indexes every page of the collection', async () => {
     const p2 = { ...page, pagination: { ...page.pagination, page: 2, pages: 2 } }
     const p1 = { ...page, pagination: { ...page.pagination, pages: 2 } }
@@ -26,6 +29,21 @@ describe('sync', () => {
     expect(progress).toEqual([1, 2])
     expect(await db.collection.where('releaseId').equals(249504).count()).toBe(2)
     expect(await isStale('collectionSyncedAt')).toBe(false)
+  })
+
+  it('notices plays logged elsewhere since the last refresh', async () => {
+    const today = new Date().toLocaleDateString('en-CA')
+    const r = page.releases[0]
+    await db.plays.clear()
+    await db.collection.clear()
+    await db.collection.put({ instanceId: r.instance_id, releaseId: r.id, fields: { 8: '1' } } as unknown as LibraryItem)
+    await db.settings.put({ key: 'collectionSyncedAt', value: Date.now() - 60 * 60 * 1000 })
+    const played = { ...r, notes: [...(r.notes ?? []), { field_id: 8, value: '2' }, { field_id: 9, value: today }] }
+    const { fn } = routeFetch([['&page=1', () => json({ ...page, releases: [played] })]])
+    await syncCollection(makeClient(fn), 'platter-test')
+    expect((await db.plays.toArray()).map((p) => [p.instanceId, p.uid, p.noticed])).toEqual([
+      [r.instance_id, `seen:${r.instance_id}:2`, true],
+    ])
   })
 
   it('fetches just a few added records, when that beats reloading every page', async () => {

@@ -5,7 +5,7 @@ import { fieldFor, type FieldKey, type FieldMatch } from './fields'
 import type { CloudApi, ProfileRow, SetupSlot } from './cloud'
 import { byText, decadeOf, DESCENDING, fold, SORTS, sortName, wordsOf, yearOf, type SortKey } from './library'
 import { libraryItems } from './masters'
-import { listening, listeningStats, type Play, type PlayFields } from './plays'
+import { knownPlayFields, listening, listeningStats, type Play } from './plays'
 import { byMonth, localDate, type MonthTotal } from './value'
 import { reviewYears, yearReview } from './yearReview'
 
@@ -144,13 +144,6 @@ async function wantRows(): Promise<Omit<ProfileRow, 'updatedAt'>[]> {
   return all.map((w) => ({ kind: 'want', key: keyOf(w.dateAdded, w.releaseId), value: JSON.stringify(want(w)) }))
 }
 
-// Which Discogs fields hold play counts, once they're known (Shell sets them). Until then Stats waits,
-// rather than going up with only the plays logged in Platter and then changing.
-let playFieldIds: PlayFields | null = null
-export const setPlayFields = (ids: PlayFields | null) => {
-  playFieldIds = ids
-}
-
 const TOP = 8
 const NEWEST = 6
 
@@ -164,6 +157,9 @@ function counted(labels: string[], top = TOP): ProfileCount[] {
 }
 
 function statsRows(items: LibraryItem[], plays: Play[]): Omit<ProfileRow, 'updatedAt'>[] | null {
+  // until the play count fields are known, Stats waits, rather than going up with only the plays
+  // logged in Platter and then changing
+  const playFieldIds = knownPlayFields()
   if (!playFieldIds) return null
   const s = listeningStats(listening(items, plays, playFieldIds))
   const decades = items.map(yearOf).filter(Boolean)

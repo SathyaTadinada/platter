@@ -3,7 +3,7 @@ import { listensFor, parseDuration } from '../api/listenbrainz'
 import type { Release } from '../api/discogs/types'
 import { db, type LibraryItem } from '../db/db'
 import { matchFields } from './fields'
-import { latch, listening, listeningStats, nextPlayValues, pickToPlay, playFields, trimPlays, type Play } from './plays'
+import { latch, listening, listeningStats, nextPlayValues, noticedPlays, pickToPlay, playFields, trimPlays, type Play } from './plays'
 
 const item = (instanceId: number, fields: Record<number, string> = {}) =>
   ({ instanceId, releaseId: instanceId * 10, fields }) as LibraryItem
@@ -81,11 +81,76 @@ describe('trimPlays', () => {
     expect(await db.plays.count()).toBe(2)
   })
 
+  it('drops a noticed play before a logged one, whichever is newer', async () => {
+    // this device noticed the count go up, then the play logged on another device arrived
+    await db.plays.bulkAdd([
+      play(1, day('2026-10-01')),
+      { ...play(1, day('2026-10-10')), noticed: true, uid: 'seen:1:2' },
+      play(1, day('2026-10-09')),
+    ])
+    expect(await trimPlays([item(1, { 8: '2' })], ids)).toBe(1)
+    expect((await db.plays.toArray()).map((p) => [p.at, p.noticed])).toEqual([
+      [day('2026-10-01'), undefined],
+      [day('2026-10-09'), undefined],
+    ])
+  })
+
   it("leaves plays alone when there's no count to go by", async () => {
     await db.plays.bulkAdd([play(1, day('2026-10-01')), play(3, day('2026-10-02'))])
     expect(await trimPlays([item(1), item(3, { 8: 'lots' })], ids)).toBe(0)
     expect(await trimPlays([item(1, { 8: '5' })], { last: 9 })).toBe(0)
     expect(await db.plays.count()).toBe(2)
+  })
+})
+
+describe('noticedPlays', () => {
+  const since = day('2026-11-20') - 6 * 60 * 60 * 1000
+  const now = day('2026-11-21') + 60 * 60 * 1000
+
+  it('adds plays logged elsewhere, dated by Last Played', () => {
+    const found = noticedPlays([item(1, { 8: '3', 9: '2026-11-02' })], [item(1, { 8: '5', 9: '2026-11-21' })], [], ids, since, now)
+    expect(found.map((p) => [p.instanceId, p.releaseId, p.at, p.uid, p.noticed])).toEqual([
+      [1, 10, day('2026-11-21') - 60_000, 'seen:1:4', true],
+      [1, 10, day('2026-11-21'), 'seen:1:5', true],
+    ])
+    expect(found[0].scrobble).toBeUndefined()
+  })
+
+  it('counts from the plays already logged here when there are more of them', () => {
+    // one logged here on another device and synced, which this device's copy doesn't show yet
+    const logged = [play(1, day('2026-11-01')), play(1, day('2026-11-21'))]
+    const found = noticedPlays([item(1, { 8: '1' })], [item(1, { 8: '3', 9: '2026-11-21' })], logged, ids, since, now)
+    expect(found.map((p) => p.uid)).toEqual(['seen:1:3'])
+  })
+
+  it('makes the same play another device would, and only once', () => {
+    const found = noticedPlays([item(1, { 8: '1' })], [item(1, { 8: '2', 9: '2026-11-21' })], [], ids, since, now)
+    expect(found.map((p) => p.uid)).toEqual(['seen:1:2'])
+    const synced = [play(1, day('2026-11-01')), { ...found[0] }]
+    expect(noticedPlays([item(1, { 8: '1' })], [item(1, { 8: '2', 9: '2026-11-21' })], synced, ids, since, now)).toEqual([])
+  })
+
+  it('takes a play on the same day as the last one', () => {
+    const found = noticedPlays([item(1, { 8: '1', 9: '2026-11-21' })], [item(1, { 8: '2', 9: '2026-11-21' })], [], ids, since, now)
+    expect(found).toHaveLength(1)
+  })
+
+  it('leaves out imported history, new records, edits, and lowered counts', () => {
+    const before = [item(1, { 8: '0' }), item(2, { 8: '1', 9: '2026-11-01' }), item(3, { 8: '4' }), item(4, { 8: '2' })]
+    const after = [
+      item(1, { 8: '1', 9: '2026-10-23' }), // an old date: imported, not played
+      item(2, { 8: '2' }), // no date at all
+      item(3, { 8: '40', 9: '2026-11-21' }), // too many at once to be listening
+      item(4, { 8: '1', 9: '2026-11-21' }), // turned down
+      item(5, { 8: '3', 9: '2026-11-21' }), // new to this device
+    ]
+    expect(noticedPlays(before, after, [], ids, since, now)).toEqual([])
+  })
+
+  it('needs a play count field, and uses the refresh time without a Last Played one', () => {
+    expect(noticedPlays([item(1, { 9: '1' })], [item(1, { 9: '2' })], [], { last: 9 }, since, now)).toEqual([])
+    const found = noticedPlays([item(1, { 8: '1' })], [item(1, { 8: '2' })], [], { count: 8 }, since, now)
+    expect(found.map((p) => p.at)).toEqual([now])
   })
 })
 
