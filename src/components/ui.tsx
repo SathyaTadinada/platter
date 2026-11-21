@@ -149,15 +149,18 @@ export function Screen({
 
 // info: a note about the section, behind an (i) next to the title. Or the section shows more
 // itself: details is whether that's open, and the (i) toggles it.
+// link: a way on from the section (See all, someone's profile), at the end of its title
 export function Section({
   title,
   info,
   details,
+  link,
   children,
 }: {
   title?: string
   info?: ReactNode
   details?: { open: boolean; toggle: () => void }
+  link?: { label: string; href: string }
   children: ReactNode
 }) {
   const [noteOpen, setNoteOpen] = useState(false)
@@ -177,6 +180,11 @@ export function Section({
             >
               <Info size={14} />
             </button>
+          )}
+          {link && (
+            <Link href={link.href} className="ml-auto shrink-0 text-sm text-stone-500 hover:text-stone-900 dark:hover:text-stone-100">
+              {link.label}
+            </Link>
           )}
         </div>
       )}

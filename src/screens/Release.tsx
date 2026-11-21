@@ -16,6 +16,7 @@ import { buttonClass, IconButton, Notice, Screen, Section, Spinner, useBack } fr
 import { db } from '../db/db'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
+import { useStickyColumn } from '../hooks/useStickyColumn'
 import { cleanLabel, discogsUrl, sentences } from '../lib/format'
 import { joinArtists, wantFromRelease } from '../lib/library'
 import { Cover } from '../components/Cover'
@@ -33,6 +34,7 @@ export function Release({ id }: { id: string }) {
   const [viewingPhotos, setViewingPhotos] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const their = useTheirCopy(Number(id))
+  const stickyColumn = useStickyColumn()
 
   const r = release.data
   const own = useLiveQuery(async () => {
@@ -128,7 +130,8 @@ export function Release({ id }: { id: string }) {
       }
     >
       <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr] xl:gap-10">
-        <div className="space-y-6">
+        {/* the cover and tracklist stay in view on wide screens, as on a record in the collection */}
+        <div ref={stickyColumn} className="space-y-6 lg:sticky lg:self-start">
           <div>
             <Cover item={item} className="mx-auto aspect-square w-full max-w-sm rounded-2xl shadow-xl ring-1 ring-black/10" />
             {(r.images?.length ?? 0) > 1 && (

@@ -143,22 +143,25 @@ export function AddForm({
     <div className="space-y-3">
       {options.length > 0 && (
         <div>
-          <p className="mb-2 px-1 text-sm text-stone-500">Fill in from {their!.owner}’s copy</p>
-          <div className="flex flex-wrap gap-2">
+          {/* picking them all is a shortcut, not one more thing to fill in, so it isn't a chip */}
+          <div className="mb-2 flex items-baseline justify-between gap-4 px-1">
+            <p className="text-sm text-stone-500">Fill in from {their!.owner}’s copy</p>
             {options.length > 1 && (
-              <ToggleChip
-                size="sm"
-                on={all}
+              <button
+                type="button"
                 onClick={() =>
                   pick(
                     options.map((o) => o.key),
                     !all,
                   )
                 }
+                className="shrink-0 text-sm text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
               >
-                All
-              </ToggleChip>
+                {all ? 'Select none' : 'Select all'}
+              </button>
             )}
+          </div>
+          <div className="flex flex-wrap gap-2">
             {options.map((o) => {
               const on = picked.has(o.key)
               return (

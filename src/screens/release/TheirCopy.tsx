@@ -1,13 +1,12 @@
-import { ChevronRight } from 'lucide-react'
-import { Link, useSearch } from 'wouter'
+import { useSearch } from 'wouter'
+import { Row } from '../../components/CopyDetails'
 import { Stars } from '../../components/Stars'
-import { Section } from '../../components/ui'
+import { List, Section } from '../../components/ui'
 import { useCloud } from '../../hooks/cloud'
 import { useAsync } from '../../hooks/useAsync'
 import type { CopyDetails, ProfileItem } from '../../lib/profile'
 
 const LONG = 32
-const row = 'flex justify-between gap-4 px-4 py-3'
 
 // Someone's copy of this release, when the page was opened from their profile: who it's from (in the
 // address, so a reload or a shared link keeps it) and what they show about it
@@ -26,40 +25,28 @@ export function useTheirCopy(releaseId: number): { owner: string; copy: CopyDeta
   return found.data ?? null
 }
 
+// Their copy in the same rows as your own copy's details, so the two read as one kind of thing. Long
+// values (notes, usually) go under their name rather than beside it.
 export function TheirCopy({ owner, copy }: { owner: string; copy: CopyDetails }) {
   return (
-    <Section title={`${owner}’s copy`}>
-      <dl className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+    <Section title={`${owner}’s copy`} link={{ label: 'View profile', href: `/u/${encodeURIComponent(owner)}` }}>
+      <List>
         {copy.rating ? (
-          <div className={`${row} items-center`}>
-            <dt className="text-stone-500">Rating</dt>
-            <dd>
-              <Stars value={copy.rating} size={16} />
-            </dd>
-          </div>
+          <Row label="Rating">
+            <span className="flex justify-end px-2">
+              <Stars value={copy.rating} size={18} />
+            </span>
+          </Row>
         ) : null}
-        {copy.fields?.map(([name, value]) =>
-          // a short value sits beside its name; a long one (notes, usually) reads better under it
-          value.length > LONG || value.includes('\n') ? (
-            <div key={name} className="px-4 py-3">
-              <dt className="text-stone-500">{name}</dt>
-              <dd className="mt-1 break-words whitespace-pre-line">{value}</dd>
-            </div>
-          ) : (
-            <div key={name} className={row}>
-              <dt className="shrink-0 text-stone-500">{name}</dt>
-              <dd className="min-w-0 text-right break-words">{value}</dd>
-            </div>
-          ),
-        )}
-        <Link
-          href={`/u/${encodeURIComponent(owner)}`}
-          className="flex items-center justify-between gap-4 px-4 py-3 text-sm text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800/50"
-        >
-          {owner}’s profile
-          <ChevronRight size={16} aria-hidden />
-        </Link>
-      </dl>
+        {copy.fields?.map(([name, value]) => {
+          const long = value.length > LONG || value.includes('\n')
+          return (
+            <Row key={name} label={name} stacked={long}>
+              <span className={`block font-medium break-words ${long ? 'whitespace-pre-line' : 'px-2 text-right'}`}>{value}</span>
+            </Row>
+          )
+        })}
+      </List>
     </Section>
   )
 }

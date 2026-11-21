@@ -81,22 +81,24 @@ export function AddSheet({
       <div className="space-y-4 py-2">
         {kinds.length > 0 && (
           <div>
-            <p className="mb-2 text-sm font-medium">Bring over from {from}’s copies</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="mb-2 flex items-baseline justify-between gap-4">
+              <p className="text-sm font-medium">Bring over from {from}’s copies</p>
               {kinds.length > 1 && (
-                <ToggleChip
-                  size="sm"
-                  on={all}
+                <button
+                  type="button"
                   onClick={() =>
                     toggle(
                       kinds.map(([k]) => k),
                       !all,
                     )
                   }
+                  className="shrink-0 text-sm text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
                 >
-                  All
-                </ToggleChip>
+                  {all ? 'Select none' : 'Select all'}
+                </button>
               )}
+            </div>
+            <div className="flex flex-wrap gap-2">
               {kinds.map(([k, label]) => {
                 const on = chosen.has(k)
                 return (

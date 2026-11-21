@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../../components/Cover'
+import { Section } from '../../components/ui'
 import { useCloud } from '../../hooks/cloud'
 import { recordFrom, type ProfileItem } from '../../lib/profile'
 
@@ -27,15 +28,7 @@ export function NewFromFollowing() {
 
   if (!added?.length) return null
   return (
-    <section className="mb-6">
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">New from people you follow</h2>
-        {(more || added.length > 3) && (
-          <Link href="/following" className="text-sm text-stone-500 hover:text-stone-900 dark:hover:text-stone-100">
-            See all
-          </Link>
-        )}
-      </div>
+    <Section title="New from people you follow" link={more || added.length > 3 ? { label: 'See all', href: '/following' } : undefined}>
       <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0">
         {added.map((a) => {
           const tile = (
@@ -54,6 +47,6 @@ export function NewFromFollowing() {
           )
         })}
       </ul>
-    </section>
+    </Section>
   )
 }
