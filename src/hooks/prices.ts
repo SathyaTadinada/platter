@@ -33,7 +33,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export async function checkPrices(client: DiscogsClient, releaseIds: number[], currency: string) {
   if (busy) {
-    pending = [client, releaseIds, currency]
+    // added to any waiting already, so a smaller one (the stylus page's) doesn't replace a full one
+    pending = [client, [...(pending?.[1] ?? []), ...releaseIds], currency]
     return
   }
   busy = true
