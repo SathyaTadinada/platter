@@ -17,6 +17,8 @@ import { theirPeople } from './People'
 
 const card = 'rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800'
 const cardTitle = 'mb-3 text-xs font-semibold tracking-wide text-stone-500 uppercase'
+// one part of the line under the name, with the dot before it (see where it's used)
+const part = "flex min-w-0 items-center whitespace-nowrap before:w-4 before:shrink-0 before:text-center before:content-['·']"
 
 // badges shown before the rest fold into +N
 const SHOWN = 3
@@ -168,15 +170,23 @@ export function ProfileHeader({
                 {head.username}
                 {head.pronouns && <span className="ml-2 text-base font-normal tracking-normal text-stone-500">{head.pronouns}</span>}
               </p>
-              <p className="flex flex-wrap items-center gap-x-1 text-sm text-stone-500">
-                {head.location && (
-                  <>
-                    <MapPin size={13} aria-hidden />
-                    <span>{head.location}</span>
-                    <span aria-hidden>·</span>
-                  </>
-                )}
-                <span>{details.join(' · ')}</span>
+              {/* It breaks between the parts, never inside one. Each part has its dot in front, and the
+                  row is pulled left by one dot's width, so a part that starts a line has its dot cut off.
+                  Phones put the place on a line of its own. */}
+              <p className="overflow-hidden text-sm text-stone-500">
+                <span className="-ml-4 flex flex-wrap">
+                  {head.location && (
+                    <span className={`${part} max-md:basis-full`}>
+                      <MapPin size={13} className="mr-1 shrink-0" aria-hidden />
+                      <span className="whitespace-normal">{head.location}</span>
+                    </span>
+                  )}
+                  {details.map((d) => (
+                    <span key={d as string} className={part}>
+                      {d}
+                    </span>
+                  ))}
+                </span>
               </p>
             </div>
             <div className="max-md:hidden">{action}</div>
