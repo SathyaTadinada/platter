@@ -76,9 +76,10 @@ export function Results() {
 
   const search = (p: SearchParams) => searchReleases(client, p).then((r) => r.results)
   const catno = params.get('catno')
-  const searchParams: SearchParams = catno
-    ? { catno }
-    : { artist: params.get('artist') ?? undefined, release_title: params.get('title') ?? undefined }
+  // The title goes to Discogs' general search rather than its title-only one, which needs every word
+  // as written ("maad" never finds "M.A.A.D") and leaves out albums titled otherwise, like XXIVK Magic
+  // for "24k magic". The general one also ranks the likelier records first.
+  const searchParams: SearchParams = catno ? { catno } : { artist: params.get('artist') ?? undefined, q: params.get('title') ?? undefined }
 
   // runout: what was typed matched no catalog number, only a runout
   const state = useAsync<LookupResult | { kind: 'search'; results: SearchResult[]; pages: number; runout?: boolean }>(async () => {
