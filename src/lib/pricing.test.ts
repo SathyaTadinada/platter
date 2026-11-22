@@ -45,6 +45,19 @@ describe('fetchPrice', () => {
     expect(calls.filter((x) => x.url.includes('price_suggestions'))).toHaveLength(2)
   })
 
+  it('asks for suggestions again after Refresh from Discogs', async () => {
+    const { fn, calls } = routeFetch([
+      ['/marketplace/stats/', () => json(stats)],
+      ['/price_suggestions/', () => json({ message: 'You must fill out your seller settings first.' }, 404)],
+    ])
+    const c = client(fn)
+    const t = Date.now()
+    await fetchPrice(c, 7, 'USD', () => t)
+    await db.settings.put({ key: 'refreshedAt', value: t + 1000 })
+    await fetchPrice(c, 8, 'USD', () => t + 60_000)
+    expect(calls.filter((x) => x.url.includes('price_suggestions'))).toHaveLength(2)
+  })
+
   it('ignores a listing in another currency', async () => {
     const { fn } = routeFetch([
       ['/marketplace/stats/', () => json({ ...stats, lowest_price: { value: 3, currency: 'EUR' } })],

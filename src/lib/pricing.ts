@@ -4,14 +4,14 @@ import { db, getSetting, setSetting } from '../db/db'
 import { localDate, parseMoney, type PriceEntry, type ValueSnapshot } from './value'
 
 // Price suggestions only work once seller settings are filled in. When they
-// aren't, don't ask again for a day.
+// aren't, don't ask again for a day, or until Refresh from Discogs.
 const SUGGESTIONS_KEY = 'priceSuggestions'
 const RECHECK = 24 * 60 * 60 * 1000
 type SuggestionsState = { available: boolean; at: number }
 
 async function suggestionsWorth(now: number) {
   const s = await getSetting<SuggestionsState>(SUGGESTIONS_KEY)
-  return !s || s.available || now - s.at > RECHECK
+  return !s || s.available || now - s.at > RECHECK || s.at < ((await getSetting<number>('refreshedAt')) ?? 0)
 }
 
 // Background work catching up (anything missing) uses a bit over half the rate limit, leaving the
