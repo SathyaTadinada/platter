@@ -86,7 +86,7 @@ export function Wantlist() {
           <p className="mt-1 text-sm text-stone-500">Tap the heart on a record to add it here.</p>
         </div>
       ) : (
-        <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
           {sorted.map((w) => {
             const price = prices?.get(w.releaseId)
             return (

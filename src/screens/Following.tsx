@@ -51,7 +51,7 @@ export function Following() {
         <Notice>Nothing yet.</Notice>
       ) : (
         <Section>
-          <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+          <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
             {added.map(({ username, key, item }) => (
               <li key={`${username}:${key}`}>
                 <RecordRow

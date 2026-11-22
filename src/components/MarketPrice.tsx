@@ -37,7 +37,7 @@ export function MarketPrice({ releaseId, mediaCondition }: { releaseId: number; 
     )
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+    <div className="overflow-clip rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       {ladder.length >= 2 && (
         <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
           <p className="mb-2 text-sm text-stone-600 dark:text-stone-400">Suggested by condition</p>

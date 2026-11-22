@@ -26,7 +26,7 @@ import { toCard, type ReleaseCard } from '../lib/format'
 import { itemFromRelease } from '../lib/library'
 import { lookupBarcode } from '../lib/lookup'
 
-const rows = `divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`
+const rows = `divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`
 const where = (c: ReleaseCard) => [c.country, c.year].filter(Boolean).join(' · ')
 
 // Laid out like a record page: the cover, and beside it on wide screens (under it on phones)

@@ -34,16 +34,18 @@ export function PriceInput({
       className={`flex min-h-10 w-full min-w-0 cursor-text items-center justify-end gap-0.5 rounded-lg px-2 hover:bg-stone-100 focus-within:bg-stone-100 focus-within:ring-2 focus-within:ring-accent/60 dark:hover:bg-stone-800 dark:focus-within:bg-stone-800 ${className}`}
     >
       {!after && sign}
-      {/* the hidden copy of the text gives the input its width. A real text node rather than
-          attr(), which Safari doesn't always redraw as you type, leaving the number cut off. */}
-      <span className="inline-grid min-w-0">
-        <span aria-hidden className="invisible col-start-1 row-start-1 pr-0.5 font-medium whitespace-pre">
+      {/* the hidden copy of the text gives the input its width, up to the room there is, after which
+          the number scrolls inside it. A real text node rather than attr(), which Safari doesn't
+          always redraw as you type. */}
+      <span className="inline-grid min-w-0 grid-cols-[minmax(0,max-content)]">
+        <span aria-hidden className="invisible col-start-1 row-start-1 overflow-hidden pr-0.5 font-medium whitespace-pre">
           {shown || placeholder}
         </span>
         <input
           {...props}
           value={shown}
           inputMode="decimal"
+          maxLength={12}
           placeholder={placeholder}
           size={1}
           onChange={(e) => onChange(e.target.value)}

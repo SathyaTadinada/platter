@@ -135,7 +135,7 @@ function Tile({ label, value }: { label: string; value: number | string }) {
 
 function List({ rows, right }: { rows: Listening[]; right: (r: Listening) => string }) {
   return (
-    <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+    <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
       {rows.map((r) => (
         <li key={r.item.instanceId}>
           <RecordRow item={r.item}>

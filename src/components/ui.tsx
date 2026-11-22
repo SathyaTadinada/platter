@@ -205,7 +205,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
 // Grouped list, like iOS settings
 export function List({ children }: { children: ReactNode }) {
   return (
-    <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
+    <ul className="divide-y divide-stone-200 overflow-clip rounded-2xl bg-white ring-1 ring-stone-200 dark:divide-stone-800 dark:bg-stone-900 dark:ring-stone-800">
       {children}
     </ul>
   )

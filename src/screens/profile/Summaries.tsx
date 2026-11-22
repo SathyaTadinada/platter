@@ -38,7 +38,7 @@ function Tile({ label, value }: { label: string; value: number | string }) {
 
 function Records({ rows }: { rows: { item: ProfileBrief; right: string }[] }) {
   return (
-    <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+    <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
       {rows.map(({ item, right }) => (
         <li key={item.id}>
           <RecordRow item={row(item)} href={releaseOf(item)}>
@@ -191,7 +191,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
                 <Records rows={r.topRecords.map((t) => ({ item: t.item, right: plural(t.count, 'play') }))} />
               </Section>
               <Section title="Top artists">
-                <ol className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+                <ol className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
                   {r.topArtists.map((a, i) => (
                     <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
                       <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
@@ -227,7 +227,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
           )}
           {facts.length > 0 && (
             <Section title="Highlights">
-              <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+              <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
                 {facts.map(({ label, value, item }) =>
                   item ? (
                     <li key={label}>

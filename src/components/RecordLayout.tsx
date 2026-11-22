@@ -149,7 +149,7 @@ export function Tracklist({ release }: { release: Release }) {
   const tracks = release.tracklist ?? []
   if (!tracks.length) return <p className="text-sm text-stone-500">No tracklist on Discogs.</p>
   return (
-    <ol className="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+    <ol className="overflow-clip rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
       {tracks.map((t, i) =>
         t.type_ === 'heading' ? (
           <li key={i} className="bg-stone-50 px-4 py-2 text-xs font-semibold tracking-wide text-stone-500 uppercase dark:bg-stone-950/50">
@@ -182,7 +182,7 @@ export function YourCopies({
   if (!items.length) return null
   return (
     <Section title={title}>
-      <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+      <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
         {items.map((o) => (
           <li key={o.instanceId}>
             <RecordRow

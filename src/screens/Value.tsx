@@ -90,7 +90,7 @@ export function ValueStats() {
             : 'Cheapest copy for sale. Set up seller settings on Discogs for prices by condition.'
         }
       >
-        <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${card}`}>
+        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${card}`}>
           {valued.slice(0, TOP).map(({ item, value }) => (
             <li key={item.instanceId}>
               <RecordRow item={item}>

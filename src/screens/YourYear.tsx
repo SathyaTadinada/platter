@@ -161,7 +161,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     ),
     most: r.plays > 0 && (
       <Section title="Most played">
-        <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
           {r.topRecords.map(({ item, count }) => (
             <li key={item.instanceId}>
               <RecordRow item={item}>
@@ -174,7 +174,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     ),
     artists: r.plays > 0 && (
       <Section title="Top artists">
-        <ol className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+        <ol className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
           {r.topArtists.map((a, i) => (
             <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
               <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
@@ -195,7 +195,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     new: r.added.length > 0 && <NewRecords added={r.added} year={year} />,
     highlights: facts.length > 0 && (
       <Section title="Highlights">
-        <ul className={`divide-y divide-stone-200 overflow-hidden dark:divide-stone-800 ${statCard}`}>
+        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
           {facts.map(({ label, value, item }) =>
             item ? (
               <li key={label}>

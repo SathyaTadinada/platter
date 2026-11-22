@@ -89,7 +89,7 @@ export function Report() {
       </header>
 
       {/* phones get a list; the table needs a wider screen, or paper */}
-      <ul className={`divide-y divide-stone-200 overflow-hidden md:hidden print:hidden dark:divide-stone-800 ${statCard}`}>
+      <ul className={`divide-y divide-stone-200 overflow-clip md:hidden print:hidden dark:divide-stone-800 ${statCard}`}>
         {report.rows.map(({ item, media, sleeve, paid, value }) => (
           <li key={item.instanceId} className="flex gap-3 px-4 py-3 text-sm">
             <span className="min-w-0 flex-1">
