@@ -222,6 +222,25 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     },
     [shareNow, shareAbout],
   )
+  // A record added or removed shows on the profile a few seconds later, not at the next full pass.
+  // Which records there are, cheaply: how many, and their ids added up.
+  const shelf = useLiveQuery(async () => {
+    const ids = (await db.collection.toCollection().primaryKeys()) as number[]
+    return `${ids.length}:${ids.reduce((a, b) => a + b, 0)}`
+  })
+  const sentShelf = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (shelf === undefined || !api) return
+    // the first look is what the pass on opening sends
+    if (sentShelf.current === undefined) sentShelf.current = shelf
+    if (sentShelf.current === shelf) return
+    // a sync fills the collection a page at a time, so this waits for it to settle
+    const t = setTimeout(() => {
+      sentShelf.current = shelf
+      share()
+    }, PUSH_AFTER)
+    return () => clearTimeout(t)
+  }, [shelf, api, share])
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
   const run = useCallback(
