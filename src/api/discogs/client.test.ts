@@ -31,6 +31,23 @@ describe('RateLimiter', () => {
     await lim.take()
     expect(waits).toEqual([50_000])
   })
+
+  it('keeps part of the window free of background work', async () => {
+    const lim = new RateLimiter(10, 60_000, () => 0)
+    for (let i = 0; i < 6; i++) await lim.take(undefined, true)
+    expect(lim.delay(true)).toBe(60_000)
+    expect(lim.delay()).toBe(0)
+  })
+
+  it('quiets background work for a minute after Discogs turns one down', () => {
+    let t = 0
+    const lim = new RateLimiter(10, 60_000, () => t)
+    lim.backOff()
+    expect(lim.delay()).toBe(0)
+    expect(lim.delay(true)).toBe(60_000)
+    t = 60_000
+    expect(lim.delay(true)).toBe(0)
+  })
 })
 
 describe('buildUrl', () => {
@@ -133,11 +150,11 @@ describe('DiscogsClient', () => {
   it('backs off locally after a 429', async () => {
     const clock = fakeClock()
     const limiter = new RateLimiter(55, 60_000, clock.now, clock.sleep)
-    const fill = vi.spyOn(limiter, 'fill')
+    const backOff = vi.spyOn(limiter, 'backOff')
     let n = 0
     const fn = (async () => (n++ === 0 ? json({}, 429) : json(identity))) as typeof fetch
     await getIdentity(client(fn, clock, limiter))
-    expect(fill).toHaveBeenCalledOnce()
+    expect(backOff).toHaveBeenCalledOnce()
   })
 
   it('lets requests that never reach Discogs skip the limiter', async () => {

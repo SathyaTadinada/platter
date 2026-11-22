@@ -24,15 +24,18 @@ type Sleep = (ms: number) => Promise<void>
 const realSleep: Sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 // Sliding-window limiter. Discogs allows 60/min per IP and the browser can't
-// read their rate-limit headers, so we stay a little under that.
+// read their rate-limit headers, so we stay a little under that. Background work (prices,
+// album years) only gets part of the window, so whatever someone is doing never waits on it.
 export class RateLimiter {
   private stamps: number[] = []
+  private quietUntil = 0
 
   constructor(
     private limit = 55,
     private windowMs = 60_000,
     private now = () => Date.now(),
     private sleep: Sleep = realSleep,
+    private backgroundShare = 0.6,
   ) {}
 
   get perMinute(): number {
@@ -40,25 +43,27 @@ export class RateLimiter {
   }
 
   // ms until the next request is allowed
-  delay(): number {
+  delay(background = false): number {
     const t = this.now()
     this.stamps = this.stamps.filter((s) => t - s < this.windowMs)
-    if (this.stamps.length < this.limit) return 0
-    return this.windowMs - (t - this.stamps[0])
+    const room = background ? Math.ceil(this.limit * this.backgroundShare) : this.limit
+    const wait = this.stamps.length < room ? 0 : this.windowMs - (t - this.stamps[this.stamps.length - room])
+    return background ? Math.max(wait, this.quietUntil - t) : wait
   }
 
-  async take(onWait?: (ms: number) => void): Promise<void> {
-    for (let d = this.delay(); d > 0; d = this.delay()) {
+  async take(onWait?: (ms: number) => void, background = false): Promise<void> {
+    for (let d = this.delay(background); d > 0; d = this.delay(background)) {
       onWait?.(d)
       await this.sleep(d)
     }
     this.stamps.push(this.now())
   }
 
-  // after a 429 the server window is full, so treat ours as full too
-  fill(): void {
-    const t = this.now()
-    this.stamps = Array(this.limit).fill(t)
+  // Discogs turned a request down, so its count is over even if ours isn't (another tab or
+  // device on the same connection, say). Background work stops for a minute; what the user is
+  // waiting on retries sooner.
+  backOff(): void {
+    this.quietUntil = this.now() + this.windowMs
   }
 }
 
@@ -91,6 +96,7 @@ export class DiscogsClient {
     private now = () => Date.now(),
     // requests that never reach Discogs (the demo answers some itself) skip the limiter
     private local: (url: string) => boolean = () => false,
+    private isBackground = false,
   ) {}
 
   get requestsPerMinute(): number {
@@ -98,10 +104,11 @@ export class DiscogsClient {
   }
 
   // The same client for background work (prices, original years): it shares the rate limit,
-  // but its waits stay out of the status bar, since nobody is waiting on them
+  // leaving part of it free for everything else, and its waits stay out of the status bar,
+  // since nobody is waiting on them
   private bg?: DiscogsClient
   get background(): DiscogsClient {
-    return (this.bg ??= new DiscogsClient(this.auth, this.fetchFn, this.limiter, this.sleep, this.now, this.local))
+    return (this.bg ??= new DiscogsClient(this.auth, this.fetchFn, this.limiter, this.sleep, this.now, this.local, true))
   }
 
   get status(): ClientStatus {
@@ -149,7 +156,7 @@ export class DiscogsClient {
 
   private async send<T>(method: string, url: string, body: unknown): Promise<T> {
     for (let attempt = 0; ; attempt++) {
-      if (!this.local(url)) await this.limiter.take((ms) => this.setStatus({ waitUntil: this.now() + ms }))
+      if (!this.local(url)) await this.limiter.take((ms) => this.setStatus({ waitUntil: this.now() + ms }), this.isBackground)
       this.setStatus({ waitUntil: null })
 
       const headers: Record<string, string> = await this.auth.getAuthHeaders({ method, url })
@@ -162,6 +169,7 @@ export class DiscogsClient {
         // Discogs sends 429s without CORS headers, so a busy rate limit looks like a
         // network error. If the device thinks it's online, wait and try again.
         if (navigator.onLine !== false && attempt < RETRY_DELAYS.length - 1) {
+          this.limiter.backOff()
           const wait = RETRY_DELAYS[attempt]
           this.setStatus({ waitUntil: this.now() + wait })
           await this.sleep(wait)
@@ -172,7 +180,7 @@ export class DiscogsClient {
 
       const retryable = res.status === 429 || res.status >= 500
       if (retryable && attempt < RETRY_DELAYS.length) {
-        if (res.status === 429) this.limiter.fill()
+        if (res.status === 429) this.limiter.backOff()
         const wait = RETRY_DELAYS[attempt]
         this.setStatus({ waitUntil: this.now() + wait })
         await this.sleep(wait)

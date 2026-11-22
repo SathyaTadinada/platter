@@ -35,9 +35,11 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     const fresh = new Set((await db.prices.toArray()).filter((p) => isFresh(p, currency, now)).map((p) => p.releaseId))
     const todo = [...new Set(releaseIds)].filter((id) => !fresh.has(id))
     stopRequested = false
-    // anything else going on goes first, including the gaps between a bulk action's requests
+    // anything else going on goes first, including the gaps between a bulk action's requests.
+    // A hidden app waits too: a tab left open elsewhere would use up the limit Discogs gives the
+    // connection, and this device's, if it's on the same one.
     const wait = async () => {
-      while ((client.status.active > 0 || backgroundHeld()) && !stopRequested) await sleep(500)
+      while ((client.status.active > 0 || backgroundHeld() || document.visibilityState === 'hidden') && !stopRequested) await sleep(500)
       return !stopRequested
     }
     const bg = client.background

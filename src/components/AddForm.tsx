@@ -9,6 +9,7 @@ import { useFieldMatches, useFieldSuggestions } from '../hooks/useFields'
 import type { FieldKey } from '../lib/fields'
 import { itemFromRelease } from '../lib/library'
 import { copyable, type CopyDetails } from '../lib/profile'
+import { holdBackground } from '../lib/task'
 import { Field, inline, kindOf, Row } from './CopyDetails'
 import { CrateSelect } from './CrateSelect'
 import { useProfile } from './Profile'
@@ -105,6 +106,8 @@ export function AddForm({
     if (!folderId) return
     setBusy(true)
     setError(null)
+    // price checks wait between these, so the add isn't held up behind them
+    const resume = holdBackground()
     try {
       const { instance_id } = await addToFolder(client, username, folderId, release.id)
       const target = { folderId, releaseId: release.id, instanceId: instance_id }
@@ -137,6 +140,7 @@ export function AddForm({
     } catch (e) {
       setError((e as Error).message)
     } finally {
+      resume()
       setBusy(false)
     }
   }
