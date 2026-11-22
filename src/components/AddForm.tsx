@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { addToFolder, editInstance, getFolders, setFieldValue } from '../api/discogs/endpoints'
 import type { Folder, Release } from '../api/discogs/types'
 import { db, getSetting, setSetting } from '../db/db'
@@ -21,10 +21,6 @@ export type Added = { folder: string; instanceId: number; problems: string[] }
 // play fields start empty; they're filled in by logging plays
 // plays come from logging them, and a record being added isn't lent out yet
 const SKIP: FieldKey[] = ['playCount', 'lastPlayed', 'lentTo']
-// a stack bought together usually shares store, date, and shelf
-const CARRY: FieldKey[] = ['purchasedFrom', 'purchaseDate', 'location']
-const RECENT = 'recentFields'
-const RECENT_FOR = 12 * 60 * 60 * 1000
 
 export function pickDefaultFolder(folders: Folder[], last?: number): number | undefined {
   if (last && folders.some((f) => f.id === last)) return last
@@ -88,12 +84,6 @@ export function AddForm({
   const all = options.length > 0 && options.every((o) => picked.has(o.key))
   const fields = (meta.data?.fields ?? []).filter((f) => !SKIP.includes(keyOf(f.id)!))
 
-  useEffect(() => {
-    getSetting<{ values: Record<number, string>; at: number }>(RECENT).then((r) => {
-      if (r && Date.now() - r.at < RECENT_FOR) setValues((v) => ({ ...r.values, ...v }))
-    })
-  }, [])
-
   const folders = useAsync(async () => {
     const r = await getFolders(client, username)
     const list = r.folders.filter((f) => f.id !== 0) // "All" can't be added to
@@ -134,8 +124,6 @@ export function AddForm({
       }
       await db.collection.put({ ...itemFromRelease(release, instance_id, folderId), fields: saved, rating: rated })
       await setSetting('lastFolderId', folderId)
-      const carried = Object.fromEntries(Object.entries(saved).filter(([id]) => CARRY.includes(keyOf(Number(id))!)))
-      if (Object.keys(carried).length) await setSetting(RECENT, { values: carried, at: Date.now() })
       onAdded({ folder: folders.data?.find((f) => f.id === folderId)?.name ?? 'your collection', instanceId: instance_id, problems })
     } catch (e) {
       setError((e as Error).message)
