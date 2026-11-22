@@ -1,20 +1,26 @@
 import { useState, type InputHTMLAttributes } from 'react'
+import { formatPrice } from '../lib/metadata'
+import { parseMoney } from '../lib/value'
+import { inline } from './CopyDetails'
 import { useProfile } from './Profile'
 
-// "$" (or "€"…) for a currency, and whether it goes before or after the number
-function symbolOf(currency: string) {
-  try {
-    const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1)
-    const i = parts.findIndex((p) => p.type === 'currency')
-    return { symbol: parts[i]?.value ?? currency, after: i > parts.findIndex((p) => p.type === 'integer') }
-  } catch {
-    return { symbol: currency, after: false }
-  }
+// Up to 9 digits, then one decimal point (or comma) and two places after it at most. The first
+// point or comma typed is the decimal one, since nothing here is written with thousands separators.
+export function cleanPrice(s: string): string {
+  const m = s.replace(/[^\d.,]/g, '').match(/^(\d*)(?:([.,])(.*))?/)!
+  const whole = m[1].slice(0, 9)
+  return m[2] === undefined ? whole : `${whole}${m[2]}${m[3].replace(/[.,]/g, '').slice(0, 2)}`
 }
 
-// A price field that shows the currency symbol next to the number while there is one (or
-// while typing), and "Add" when empty. The input sizes itself to its text, so the symbol
-// sits right beside the number in a right-aligned row.
+// The number in a saved price ("$1,250.00" → "1250"), for editing
+export function plainPrice(value: string): string {
+  const n = parseMoney(value)
+  if (n === undefined) return cleanPrice(value)
+  return Number.isInteger(n) ? String(n) : n.toFixed(2)
+}
+
+// A price field like the others: the price as it reads ("$12.00", or "Add") until you tap it,
+// then just the number while you type.
 export function PriceInput({
   value,
   onChange,
@@ -23,44 +29,31 @@ export function PriceInput({
   ...props
 }: { value: string; onChange: (v: string) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   const currency = useProfile()?.curr_abbr ?? 'USD'
-  const { symbol, after } = symbolOf(currency)
-  const [focused, setFocused] = useState(false)
-  // saved values are formatted ("$12.00"); edit just the number
-  const shown = value.replace(symbol, '').trim()
-  const sign = (shown || focused) && <span className="shrink-0 font-medium text-stone-500">{symbol}</span>
-
+  const [text, setText] = useState<string | null>(null) // while editing
   return (
-    <label
-      className={`flex min-h-10 w-full min-w-0 cursor-text items-center justify-end gap-0.5 rounded-lg px-2 hover:bg-stone-100 focus-within:bg-stone-100 focus-within:ring-2 focus-within:ring-accent/60 dark:hover:bg-stone-800 dark:focus-within:bg-stone-800 ${className}`}
-    >
-      {!after && sign}
-      {/* the hidden copy of the text gives the input its width, up to the room there is, after which
-          the number scrolls inside it. A real text node rather than attr(), which Safari doesn't
-          always redraw as you type. */}
-      <span className="inline-grid min-w-0 grid-cols-[minmax(0,max-content)]">
-        <span aria-hidden className="invisible col-start-1 row-start-1 overflow-hidden pr-0.5 font-medium whitespace-pre">
-          {shown || placeholder}
-        </span>
-        <input
-          {...props}
-          value={shown}
-          inputMode="decimal"
-          maxLength={12}
-          placeholder={placeholder}
-          size={1}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={(e) => {
-            setFocused(true)
-            props.onFocus?.(e)
-          }}
-          onBlur={(e) => {
-            setFocused(false)
-            props.onBlur?.(e)
-          }}
-          className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-right font-medium placeholder:font-normal placeholder:text-stone-500 focus:outline-none"
-        />
-      </span>
-      {after && sign}
-    </label>
+    <input
+      {...props}
+      value={text ?? formatPrice(value, currency) ?? ''}
+      inputMode="decimal"
+      autoComplete="off"
+      placeholder={text === null ? placeholder : '0.00'}
+      onFocus={(e) => {
+        setText(plainPrice(value))
+        // swapping the text puts the caret at the start; typing goes on the end
+        const el = e.currentTarget
+        requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length))
+        props.onFocus?.(e)
+      }}
+      onChange={(e) => {
+        const next = cleanPrice(e.target.value)
+        setText(next)
+        onChange(next)
+      }}
+      onBlur={(e) => {
+        setText(null)
+        props.onBlur?.(e)
+      }}
+      className={`${inline} ${className}`}
+    />
   )
 }
