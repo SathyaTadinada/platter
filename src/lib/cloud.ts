@@ -27,7 +27,7 @@ import { applyTheme } from './theme'
 // sent in batches, and other devices' changes come back by number (the server's seq) so each pull
 // only carries what's new. The newest edit wins.
 
-export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', ...LAYOUTS.map((l) => l.pref)])
+export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', 'platter.prices', ...LAYOUTS.map((l) => l.pref)])
 
 // per device, so none of these sync
 // left: sync was turned off on this device, so it doesn't join the account again by itself

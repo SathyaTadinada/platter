@@ -31,6 +31,7 @@ import { useListening } from '../hooks/plays'
 import { libraryItems } from '../lib/masters'
 import { dayAgo } from '../lib/time'
 import { download, today } from '../lib/download'
+import { usePriceBasis } from '../hooks/priceBasis'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
 import {
   activeFilterCount,
@@ -118,17 +119,18 @@ export function Collection() {
   const listened = useListening()
   const locationField = matches ? fieldFor(matches, 'location')?.id : undefined
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
+  const basis = usePriceBasis()
   const sortCtx = useMemo<SortContext>(() => {
     const byInstance = new Map(listened?.rows.map((r) => [r.item.instanceId, r]))
     return {
-      value: prices ? (i) => valueOf(prices.get(i.releaseId), mediaField ? i.fields[mediaField] : undefined)?.amount : undefined,
+      value: prices ? (i) => valueOf(prices.get(i.releaseId), mediaField ? i.fields[mediaField] : undefined, basis)?.amount : undefined,
       money: currency ? (n) => formatMoney(n, currency, { whole: true }) : undefined,
       plays: (i) => byInstance.get(i.instanceId)?.count ?? 0,
       lastPlayed: (i) => byInstance.get(i.instanceId)?.last,
       location: locationField !== undefined ? (i) => i.fields[locationField] : undefined,
       paid: paidField !== undefined ? (i) => parseMoney(i.fields[paidField]) : undefined,
     }
-  }, [prices, currency, mediaField, listened, locationField, paidField])
+  }, [prices, currency, mediaField, listened, locationField, paidField, basis])
 
   // a short note under each record for sorts where it helps
   const noteOf = (i: LibraryItem) => {

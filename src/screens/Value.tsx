@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useSyncExternalStore, type ReactNode } from 'react'
 import { Card, Section, Spinner } from '../components/ui'
 import { db } from '../db/db'
+import { usePriceBasis } from '../hooks/priceBasis'
 import { useCurrency, useFreshPrices } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useAsync } from '../hooks/useAsync'
@@ -41,19 +42,19 @@ export function ValueStats() {
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
   const folders = useCollectionMeta().data?.folders ?? []
 
+  const basis = usePriceBasis()
   const valued = useMemo(() => {
     if (!items || !prices) return []
     return items
-      .map((item) => ({ item, value: valueOf(prices.get(item.releaseId), mediaField ? item.fields[mediaField] : undefined) }))
+      .map((item) => ({ item, value: valueOf(prices.get(item.releaseId), mediaField ? item.fields[mediaField] : undefined, basis) }))
       .filter((v): v is Valued => Boolean(v.value))
       .sort((a, b) => b.value.amount - a.value.amount)
-  }, [items, prices, mediaField])
+  }, [items, prices, mediaField, basis])
 
   if (!items || !currency || !prices) return <Spinner />
 
   const money: Money = (n, whole = false) => formatMoney(n, currency, { whole })
   const series = (history ?? []).filter((h) => h.currency === currency)
-  const anySuggested = valued.some((v) => v.value.basis === 'suggested')
 
   const sections: Record<ValueKey, ReactNode> = {
     overTime: (
@@ -85,9 +86,9 @@ export function ValueStats() {
       <Section
         title="Most valuable"
         info={
-          anySuggested
-            ? "Graded copies use Discogs' suggested price for that condition. The rest go by the cheapest copy for sale."
-            : 'Cheapest copy for sale. Set up seller settings on Discogs for prices by condition.'
+          basis === 'lowest'
+            ? "The cheapest copy for sale on Discogs. Settings can switch this to Discogs' suggested price for each copy's condition."
+            : "Discogs' suggested price for each copy's condition. Copies without a condition aren't counted."
         }
       >
         <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${card}`}>
@@ -95,10 +96,6 @@ export function ValueStats() {
             <li key={item.instanceId}>
               <RecordRow item={item}>
                 <span className="block text-sm font-semibold tabular-nums">{money(value.amount)}</span>
-                {/* only worth saying when the list mixes both kinds */}
-                {anySuggested && (
-                  <span className="block text-xs text-stone-500">{value.basis === 'suggested' ? 'suggested' : 'lowest listing'}</span>
-                )}
               </RecordRow>
             </li>
           ))}

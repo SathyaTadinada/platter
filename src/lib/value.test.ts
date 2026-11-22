@@ -39,19 +39,20 @@ describe('parseMoney', () => {
 const entry = (p: Partial<PriceEntry> = {}): PriceEntry => ({ releaseId: 1, at: 0, currency: 'USD', lowest: 12, forSale: 3, ...p })
 
 describe('valueOf', () => {
-  it('uses the suggestion for the copy grade', () => {
+  it('goes by the lowest listing', () => {
+    expect(valueOf(entry({ suggested: { 'Mint (M)': 50 } }), 'Mint (M)', 'lowest')).toEqual({ amount: 12, basis: 'lowest' })
+    expect(valueOf(entry({ lowest: null }), 'Mint (M)', 'lowest')).toBeUndefined()
+  })
+
+  it('or by the suggestion for the copy grade, with nothing for a copy without one', () => {
     const p = entry({ suggested: { 'Very Good Plus (VG+)': 30, 'Mint (M)': 50 } })
-    expect(valueOf(p, 'Very Good Plus (VG+)')).toEqual({ amount: 30, basis: 'suggested' })
+    expect(valueOf(p, 'Very Good Plus (VG+)', 'suggested')).toEqual({ amount: 30, basis: 'suggested' })
+    expect(valueOf(p, undefined, 'suggested')).toBeUndefined()
+    expect(valueOf(entry(), 'Mint (M)', 'suggested')).toBeUndefined()
   })
 
-  it('falls back to the lowest listing', () => {
-    expect(valueOf(entry(), 'Mint (M)')).toEqual({ amount: 12, basis: 'lowest' })
-    expect(valueOf(entry({ suggested: { 'Mint (M)': 50 } }))).toEqual({ amount: 12, basis: 'lowest' })
-  })
-
-  it('has nothing without listings or suggestions', () => {
-    expect(valueOf(entry({ lowest: null }))).toBeUndefined()
-    expect(valueOf(undefined)).toBeUndefined()
+  it('has nothing without a price', () => {
+    expect(valueOf(undefined, undefined, 'lowest')).toBeUndefined()
   })
 })
 

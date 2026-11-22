@@ -49,12 +49,17 @@ export function parseMoney(s: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
-// The suggested price for the copy's grade when there is one, otherwise the cheapest listing
-export function valueOf(p: PriceEntry | undefined, mediaCondition?: string): RecordValue | undefined {
+// Which price a record is worth: the cheapest listing (the default), or Discogs' suggested price for
+// the copy's grade. One choice for the whole app, so totals and lists never mix the two.
+export type PriceBasis = 'lowest' | 'suggested'
+
+export function valueOf(p: PriceEntry | undefined, mediaCondition: string | undefined, basis: PriceBasis): RecordValue | undefined {
   if (!p) return undefined
-  const s = mediaCondition ? p.suggested?.[mediaCondition] : undefined
-  if (s !== undefined) return { amount: s, basis: 'suggested' }
-  if (p.lowest !== null) return { amount: p.lowest, basis: 'lowest' }
+  if (basis === 'suggested') {
+    const s = mediaCondition ? p.suggested?.[mediaCondition] : undefined
+    return s === undefined ? undefined : { amount: s, basis }
+  }
+  if (p.lowest !== null) return { amount: p.lowest, basis }
 }
 
 export function formatMoney(n: number, currency: string, opts: { whole?: boolean; locale?: string } = {}): string {

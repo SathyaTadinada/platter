@@ -1,13 +1,13 @@
 import type { LibraryItem } from '../db/db'
-import { parseMoney, valueOf, type PriceEntry } from './value'
+import { parseMoney, valueOf, type PriceBasis, type PriceEntry } from './value'
 
-// Every record with what it's worth now, to print or keep as a PDF. Values follow the rest of the app: the
-// suggested price for the copy's grade when there is one, otherwise the cheapest listing.
+// Every record with what it's worth now, to print or keep as a PDF. Values follow the rest of the app (the
+// Prices setting).
 
 export type ReportRow = { item: LibraryItem; media?: string; sleeve?: string; paid?: number; value?: number }
 export type ReportFields = { media?: number; sleeve?: number; paid?: number }
 
-export function collectionReport(items: LibraryItem[], prices: Map<number, PriceEntry>, fields: ReportFields) {
+export function collectionReport(items: LibraryItem[], prices: Map<number, PriceEntry>, fields: ReportFields, basis: PriceBasis) {
   const get = (item: LibraryItem, id?: number) => (id !== undefined ? item.fields[id] || undefined : undefined)
   const rows: ReportRow[] = items
     .map((item) => {
@@ -17,7 +17,7 @@ export function collectionReport(items: LibraryItem[], prices: Map<number, Price
         media,
         sleeve: get(item, fields.sleeve),
         paid: parseMoney(get(item, fields.paid)),
-        value: valueOf(prices.get(item.releaseId), media)?.amount,
+        value: valueOf(prices.get(item.releaseId), media, basis)?.amount,
       }
     })
     .sort((a, b) => a.item.artist.localeCompare(b.item.artist) || a.item.title.localeCompare(b.item.title))

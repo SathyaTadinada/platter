@@ -16,6 +16,7 @@ import {
   LogOut,
   MonitorDown,
   RefreshCw,
+  Tag,
   Upload,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -26,6 +27,7 @@ import { ProfileLink } from '../components/Profile'
 import { Button, List, Notice, Row, Screen, Section, Segmented } from '../components/ui'
 import { db, getSetting, setSetting } from '../db/db'
 import { useCloud, useYourPage } from '../hooks/cloud'
+import { setPriceBasis, usePriceBasis } from '../hooks/priceBasis'
 import { useSignedIn } from '../hooks/session'
 import { useSignOut } from '../hooks/signOut'
 import { useSync } from '../hooks/sync'
@@ -49,6 +51,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 export function Settings() {
   const { session, client } = useSignedIn()
   const sync = useSync()
+  const basis = usePriceBasis()
   const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -240,6 +243,22 @@ export function Settings() {
                 label="Collection fields"
                 value={fields.data !== undefined ? `${fields.data} of ${FIELD_SPECS.filter((s) => !s.optional).length} set up` : undefined}
                 href="/setup"
+              />
+              <Row
+                icon={<Tag size={20} />}
+                label="Prices"
+                trailing={
+                  <Segmented
+                    label="Prices"
+                    size="sm"
+                    options={[
+                      { value: 'lowest', label: 'Lowest listing' },
+                      { value: 'suggested', label: 'Suggested' },
+                    ]}
+                    value={basis}
+                    onChange={setPriceBasis}
+                  />
+                }
               />
             </List>
             <List>

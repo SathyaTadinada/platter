@@ -24,12 +24,23 @@ describe('collectionReport', () => {
         [3, price(3, null)],
       ]),
       { media: 1, paid: 5 },
+      'suggested',
     )
     expect(r.rows.map((x) => [x.item.artist, x.value, x.paid])).toEqual([
-      ['Abba', 12, undefined],
+      ['Abba', undefined, undefined],
       ['Bowie', undefined, 5.5],
       ['Zappa', 25, 20],
     ])
-    expect(r).toMatchObject({ value: 37, paid: 25.5, unpriced: 1 })
+    expect(r).toMatchObject({ value: 25, paid: 25.5, unpriced: 2 })
+    const byListing = collectionReport(
+      [item(1, 'Zappa', { 1: 'Very Good (VG)' }), item(2, 'Abba', {})],
+      new Map([
+        [1, price(1, 30, { 'Very Good (VG)': 25 })],
+        [2, price(2, 12)],
+      ]),
+      { media: 1 },
+      'lowest',
+    )
+    expect(byListing).toMatchObject({ value: 42, unpriced: 0 })
   })
 })

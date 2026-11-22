@@ -14,12 +14,14 @@ import { collectionReport } from '../lib/report'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { formatMoney } from '../lib/value'
+import { usePriceBasis } from '../hooks/priceBasis'
 
 // A list of the whole collection with values, laid out to print or save as a PDF
 export function Report() {
   const { client, username } = useSignedIn()
   const currency = useCurrency()
   const prices = useFreshPrices(currency)
+  const basis = usePriceBasis()
   const matches = useFieldMatches()
   const items = useLiveQuery(libraryItems, [])
   const discogs = useAsync(
@@ -36,11 +38,16 @@ export function Report() {
   }
 
   const field = (key: Parameters<typeof fieldFor>[1]) => fieldFor(matches, key)?.id
-  const report = collectionReport(items, prices, {
-    media: field('mediaCondition'),
-    sleeve: field('sleeveCondition'),
-    paid: field('purchasePrice'),
-  })
+  const report = collectionReport(
+    items,
+    prices,
+    {
+      media: field('mediaCondition'),
+      sleeve: field('sleeveCondition'),
+      paid: field('purchasePrice'),
+    },
+    basis,
+  )
   const money = (n?: number) => (n === undefined ? '—' : formatMoney(n, currency))
   const priced = report.rows.length - report.unpriced
   // nothing priced is no total, not a total of zero
