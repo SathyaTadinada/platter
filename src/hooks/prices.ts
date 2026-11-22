@@ -6,6 +6,8 @@ import { db } from '../db/db'
 import { fetchMasterYear, staleMasters } from '../lib/masters'
 import { backgroundGapMs, fetchPrice } from '../lib/pricing'
 import { fetchLength, staleLengths } from '../lib/stylus'
+import { dueOf } from '../lib/due'
+import { DISCOGS_MAX_AGE } from '../db/cache'
 import { backgroundHeld } from '../lib/task'
 import { isFresh, type PriceEntry } from '../lib/value'
 import { useSignedIn } from './session'
@@ -19,6 +21,8 @@ let stopRequested = false
 // set before the first await, so a second call that arrives meanwhile (a sync and newly
 // added records, say) doesn't start its own loop
 let busy = false
+// a check asked for while one was running, done once that one ends (after Refresh from Discogs, say)
+let pending: [DiscogsClient, number[], string] | null = null
 const listeners = new Set<() => void>()
 const set = (patch: Partial<CheckState>) => {
   state = { ...state, ...patch }
@@ -28,12 +32,14 @@ const set = (patch: Partial<CheckState>) => {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export async function checkPrices(client: DiscogsClient, releaseIds: number[], currency: string) {
-  if (busy) return
+  if (busy) {
+    pending = [client, releaseIds, currency]
+    return
+  }
   busy = true
   try {
-    const now = Date.now()
-    const fresh = new Set((await db.prices.toArray()).filter((p) => isFresh(p, currency, now)).map((p) => p.releaseId))
-    const todo = [...new Set(releaseIds)].filter((id) => !fresh.has(id))
+    const priced = new Map((await db.prices.toArray()).filter((p) => p.currency === currency).map((p) => [p.releaseId, p.at]))
+    const todo = await dueOf(releaseIds, priced, DISCOGS_MAX_AGE)
     stopRequested = false
     // anything else going on goes first, including the gaps between a bulk action's requests.
     // A hidden app waits too: a tab left open elsewhere would use up the limit Discogs gives the
@@ -52,12 +58,13 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     if (masters.length) {
       set({ running: true, stage: 'years', done: 0, total: masters.length, error: null })
       try {
-        for (const [i, id] of masters.entries()) {
+        const ids = masters.map((m) => m.id)
+        for (const [i, { id, upkeep }] of masters.entries()) {
           if (!(await wait())) break
-          await ahead(i, (m) => [{ path: `/masters/${m}` }], masters)
+          await ahead(i, (m) => [{ path: `/masters/${m}` }], ids)
           await fetchMasterYear(bg, id)
           set({ done: state.done + 1 })
-          await sleep(backgroundGapMs(client))
+          await sleep(backgroundGapMs(client, upkeep))
         }
       } catch {
         // try again next time
@@ -69,12 +76,13 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     if (lengths.length) {
       set({ running: true, stage: 'lengths', done: 0, total: lengths.length, error: null })
       try {
-        for (const [i, id] of lengths.entries()) {
+        const ids = lengths.map((l) => l.id)
+        for (const [i, { id, upkeep }] of lengths.entries()) {
           if (!(await wait())) break
-          await ahead(i, (r) => [{ path: `/releases/${r}` }], lengths)
+          await ahead(i, (r) => [{ path: `/releases/${r}` }], ids)
           await fetchLength(bg, id)
           set({ done: state.done + 1 })
-          await sleep(backgroundGapMs(client))
+          await sleep(backgroundGapMs(client, upkeep))
         }
       } catch {
         // try again next time
@@ -83,16 +91,17 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     }
     if (todo.length && !stopRequested) {
       set({ running: true, stage: 'prices', done: 0, total: todo.length, error: null })
-      for (const [i, id] of todo.entries()) {
+      const ids = todo.map((t) => t.id)
+      for (const [i, { id, upkeep }] of todo.entries()) {
         if (!(await wait())) break
         await ahead(
           i,
           (r) => [{ path: `/marketplace/stats/${r}`, query: { curr_abbr: currency } }, { path: `/marketplace/price_suggestions/${r}` }],
-          todo,
+          ids,
         )
         const { requests } = await fetchPrice(bg, id, currency)
         set({ done: state.done + 1 })
-        await sleep(backgroundGapMs(client) * requests)
+        await sleep(backgroundGapMs(client, upkeep) * requests)
       }
       set({ running: false })
     }
@@ -100,11 +109,15 @@ export async function checkPrices(client: DiscogsClient, releaseIds: number[], c
     set({ running: false, error: stopRequested ? null : (e as Error).message })
   } finally {
     busy = false
+    const next = pending
+    pending = null
+    if (next) checkPrices(...next)
   }
 }
 
 export const stopPriceCheck = () => {
   stopRequested = true
+  pending = null
   set({ error: null })
 }
 

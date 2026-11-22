@@ -358,7 +358,7 @@ export function Collection() {
   const refresh = {
     label: sync.running ? 'Refreshing…' : 'Refresh from Discogs',
     icon: <RefreshCw size={18} />,
-    onSelect: () => sync.sync(true),
+    onSelect: () => sync.refresh(),
     disabled: sync.running,
   }
 
@@ -378,7 +378,7 @@ export function Collection() {
       <IconButton label="Select records" onClick={() => setSelected(new Set())} disabled={!filtered.length}>
         <SquareCheckBig size={20} />
       </IconButton>
-      <IconButton label="Refresh from Discogs" onClick={() => sync.sync(true)} disabled={sync.running} className="hidden lg:block">
+      <IconButton label="Refresh from Discogs" onClick={() => sync.refresh()} disabled={sync.running} className="hidden lg:block">
         <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
       </IconButton>
       <div className="lg:hidden">
@@ -406,7 +406,7 @@ export function Collection() {
         <Notice tone={sync.error ? 'error' : 'info'}>
           {sync.error ? `Couldn't update your collection: ${sync.error}` : 'Your collection is out of date.'}
         </Notice>
-        <Button onClick={() => sync.sync(true)}>Refresh now</Button>
+        <Button onClick={() => sync.refresh()}>Refresh now</Button>
       </div>
     )
   } else if (!items.length) {

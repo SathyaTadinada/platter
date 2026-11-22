@@ -14,10 +14,13 @@ async function suggestionsWorth(now: number) {
   return !s || s.available || now - s.at > RECHECK
 }
 
-// Background price checks use a bit over half the rate limit, leaving the rest
-// for whatever else is going on
+// Background work catching up (anything missing) uses a bit over half the rate limit, leaving the
+// rest for whatever else is going on. Upkeep (what has only gone stale) goes at 10 a minute, so a few
+// devices on the same connection fit, and so does everything for a while after Discogs turns one down.
 const BACKGROUND_SHARE = 0.6
-export const backgroundGapMs = (client: DiscogsClient) => 60_000 / (client.requestsPerMinute * BACKGROUND_SHARE)
+const UPKEEP_PER_MINUTE = 10
+export const backgroundGapMs = (client: DiscogsClient, upkeep = false) =>
+  60_000 / (upkeep || client.slowed ? UPKEEP_PER_MINUTE : client.requestsPerMinute * BACKGROUND_SHARE)
 
 export async function fetchPrice(
   client: DiscogsClient,

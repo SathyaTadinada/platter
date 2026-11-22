@@ -39,7 +39,7 @@ describe('RateLimiter', () => {
     expect(lim.delay()).toBe(0)
   })
 
-  it('quiets background work for a minute after Discogs turns one down', () => {
+  it('quiets background work for a minute and slows it for ten after Discogs turns one down', () => {
     let t = 0
     const lim = new RateLimiter(10, 60_000, () => t)
     lim.backOff()
@@ -47,6 +47,9 @@ describe('RateLimiter', () => {
     expect(lim.delay(true)).toBe(60_000)
     t = 60_000
     expect(lim.delay(true)).toBe(0)
+    expect(lim.slowed).toBe(true)
+    t = 600_000
+    expect(lim.slowed).toBe(false)
   })
 })
 
@@ -125,6 +128,21 @@ describe('DiscogsClient', () => {
     await getRelease(c, 10176645)
     await getRelease(c, 10176645)
     expect(calls).toHaveLength(1)
+  })
+
+  it('keeps a release a month, asking again for its photos after six hours', async () => {
+    const { fn, calls } = routeFetch([['/releases/', () => json(release)]])
+    const c = client(fn)
+    await getRelease(c, 10176645)
+    const [entry] = await db.cache.toArray()
+    await db.cache.put({ ...entry, fetchedAt: Date.now() - 7 * 60 * 60 * 1000 })
+    const kept = await getRelease(c, 10176645)
+    expect(kept.images).toBeUndefined()
+    expect(kept.imageCount).toBe(release.images.length)
+    expect(kept.tracklist).toEqual(release.tracklist)
+    expect(calls).toHaveLength(1)
+    expect((await getRelease(c, 10176645, { photos: true })).images).toHaveLength(release.images.length)
+    expect(calls).toHaveLength(2)
   })
 
   it('never caches writes', async () => {

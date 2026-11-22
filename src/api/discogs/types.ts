@@ -69,6 +69,7 @@ export type Release = {
   identifiers: Identifier[]
   images?: { type: string; uri: string; uri150: string; width?: number; height?: number }[]
   thumb?: string
+  imageCount?: number // in place of images on a copy kept longer than six hours
 }
 
 export type Folder = { id: number; name: string; count: number }

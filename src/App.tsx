@@ -55,6 +55,8 @@ type Ready = Extract<Boot, { state: 'ready' }>
 
 async function start(): Promise<Ready> {
   pruneCache().catch(() => {})
+  // hourly too, so photos and prices don't outstay six hours in an app left open
+  setInterval(() => pruneCache().catch(() => {}), 60 * 60 * 1000)
   // Discogs sends people back here after they approve Platter
   if (location.pathname === '/auth/callback') {
     try {

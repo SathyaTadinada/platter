@@ -2,16 +2,17 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { toast } from '../components/Toaster'
 import { getProfile } from '../api/discogs/endpoints'
 import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
-import { db } from '../db/db'
+import { forgetDiscogs } from '../db/cache'
+import { db, setSetting } from '../db/db'
 import { flushScrobbles } from '../lib/plays'
 import { recordCollectionValue, recordedToday } from '../lib/pricing'
-import { checkPrices } from './prices'
+import { checkPrices, stopPriceCheck } from './prices'
 import { recheckSession } from '../lib/signIn'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
 import { useSession } from './session'
 
 type SyncState = { running: boolean; label: string; done: number; total: number; error: string | null }
-type Ctx = SyncState & { sync: (force?: boolean) => Promise<void> }
+type Ctx = SyncState & { sync: (force?: boolean) => Promise<void>; refresh: () => Promise<void> }
 
 const SyncContext = createContext<Ctx | null>(null)
 const idle: SyncState = { running: false, label: '', done: 0, total: 0, error: null }
@@ -89,7 +90,16 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }
   }, [sync])
 
-  return <SyncContext.Provider value={{ ...state, sync }}>{children}</SyncContext.Provider>
+  // Refresh from Discogs: everything kept from Discogs is out of date, so records ask for their
+  // details again when opened, and album years, lengths, and prices are all checked again
+  const refresh = useCallback(async () => {
+    await setSetting('refreshedAt', Date.now())
+    await forgetDiscogs()
+    stopPriceCheck()
+    await sync(true)
+  }, [sync])
+
+  return <SyncContext.Provider value={{ ...state, sync, refresh }}>{children}</SyncContext.Provider>
 }
 
 export function useSync() {

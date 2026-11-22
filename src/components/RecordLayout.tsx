@@ -26,6 +26,7 @@ export function RecordLayout({
   loading,
   cover,
   own,
+  loadPhotos,
   title,
   artist,
   details,
@@ -41,6 +42,7 @@ export function RecordLayout({
   loading?: boolean // the release is on its way
   cover: Pick<LibraryItem, 'cover' | 'thumb'>
   own?: LibraryItem // your copy, whose cover can be picked from the photos
+  loadPhotos?: () => Promise<Release> // when release is a copy kept without them
   title: string
   artist: string
   details: (string | null | false | undefined)[]
@@ -55,7 +57,7 @@ export function RecordLayout({
   const [viewing, setViewing] = useState(false)
   // a genre can also be one of its styles ("Classical" is both), so each shows once
   const shownTags = tags.filter((t, i) => tags.findIndex((o) => o.label === t.label) === i)
-  const photos = release?.images?.length ?? 0
+  const photos = release?.images?.length ?? release?.imageCount ?? 0
 
   const tracklist = (
     <Section title="Tracklist">
@@ -140,7 +142,7 @@ export function RecordLayout({
           </div>
         </div>
       </div>
-      {viewing && release && <PhotosSheet release={release} own={own} onClose={() => setViewing(false)} />}
+      {viewing && release && <PhotosSheet release={release} own={own} load={loadPhotos} onClose={() => setViewing(false)} />}
     </>
   )
 }

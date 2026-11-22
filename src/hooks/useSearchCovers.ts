@@ -20,7 +20,7 @@ export function useSearchCovers(ids: number[], enabled: boolean): Map<number, st
         while (client.status.active > 0 && !stopped) await sleep(500)
         if (stopped) return
         try {
-          const r = await getRelease(client.background, id)
+          const r = await getRelease(client.background, id, { photos: true })
           const thumb = realImage(r.images?.[0]?.uri150 ?? r.thumb)
           if (thumb && !stopped) setCovers((m) => new Map(m).set(id, thumb))
         } catch {

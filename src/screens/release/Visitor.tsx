@@ -19,7 +19,7 @@ export function VisitorRelease({ id }: { id: string }) {
   const their = useTheirCopy(releaseId)
   const from = new URLSearchParams(useSearch()).get('from')
   const back = useBack(from ? `/u/${encodeURIComponent(from)}` : '/')
-  const release = useAsync(() => getRelease(visitorClient, releaseId), [releaseId])
+  const release = useAsync(() => getRelease(visitorClient, releaseId, { photos: true }), [releaseId])
   const r = release.data
 
   if (!r) {

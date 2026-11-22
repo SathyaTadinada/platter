@@ -2,7 +2,9 @@ import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
 import { getRelease } from '../api/discogs/endpoints'
 import { parseDuration } from '../api/listenbrainz'
 import type { Release, Track } from '../api/discogs/types'
+import { CATALOG_MAX_AGE } from '../db/cache'
 import { db, getSetting, setSetting } from '../db/db'
+import { dueOf, type Due } from './due'
 import type { Play } from './plays'
 
 // Hours on the stylus, from plays logged in Platter and each record's running time. A play
@@ -14,7 +16,6 @@ export type StylusSettings = { since?: number; lifespan: number } // lifespan in
 
 export const DEFAULT_LIFESPAN = 1000
 const KEY = 'stylus'
-const RECHECK = 30 * 24 * 60 * 60 * 1000
 const FALLBACK = 40 * 60 // a typical LP, for a record with no tracklist at all
 const TRACK = 4.5 * 60 // a typical track, when there's a tracklist without lengths
 
@@ -53,10 +54,10 @@ export async function stylusSettings(): Promise<StylusSettings> {
 export const saveStylusSettings = (s: StylusSettings) => setSetting(KEY, s)
 
 // Played records without a length from the last month
-export async function staleLengths(now = Date.now()): Promise<number[]> {
-  const fresh = new Set((await db.lengths.toArray()).filter((l) => now - l.at < RECHECK).map((l) => l.releaseId))
-  const played = new Set((await db.plays.toArray()).map((p) => p.releaseId))
-  return [...played].filter((id) => !fresh.has(id))
+export async function staleLengths(now = Date.now()): Promise<Due[]> {
+  const at = new Map((await db.lengths.toArray()).map((l) => [l.releaseId, l.at]))
+  const played = (await db.plays.toArray()).map((p) => p.releaseId)
+  return dueOf(played, at, CATALOG_MAX_AGE, now)
 }
 
 export async function rememberLength(r: Pick<Release, 'id' | 'tracklist'>, now = Date.now()) {

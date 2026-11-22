@@ -143,7 +143,7 @@ function Playing({ barcode }: { barcode: string }) {
     setAdding(r.id)
     setError(null)
     try {
-      const release = await getRelease(client, r.id)
+      const release = await getRelease(client, r.id, { photos: true })
       const { instance_id } = await addToFolder(client, username, folderId, r.id)
       const added = itemFromRelease(release, instance_id, folderId)
       await db.collection.put(added)

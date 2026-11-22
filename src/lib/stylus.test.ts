@@ -58,6 +58,6 @@ describe('staleLengths', () => {
       { releaseId: 1, seconds: 100, estimated: false, at: now },
       { releaseId: 2, seconds: 100, estimated: false, at: now - 40 * 24 * 60 * 60 * 1000 },
     ])
-    expect((await staleLengths(now)).sort()).toEqual([2, 3])
+    expect((await staleLengths(now)).map((d) => d.id).sort()).toEqual([2, 3])
   })
 })

@@ -1,10 +1,11 @@
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
+import { useAsync } from '../hooks/useAsync'
 import type { Release } from '../api/discogs/types'
 import type { LibraryItem } from '../db/db'
 import { chooseCover, resetCover } from '../lib/covers'
 import { Sheet } from './Sheet'
-import { Button } from './ui'
+import { Button, Spinner } from './ui'
 import { ZoomImage } from './ZoomImage'
 
 const round = 'rounded-full bg-stone-100 p-2 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700'
@@ -12,9 +13,21 @@ const round = 'rounded-full bg-stone-100 p-2 hover:bg-stone-200 dark:bg-stone-80
 // Every photo Discogs has for a release: a grid, and one at a time at full size once you tap it, to
 // zoom into (labels and runouts are hard to read small). On your own copy, any of them can be its
 // cover.
-export function PhotosSheet({ release, own, onClose }: { release: Release; own?: LibraryItem; onClose: () => void }) {
+export function PhotosSheet({
+  release,
+  own,
+  load,
+  onClose,
+}: {
+  release: Release
+  own?: LibraryItem
+  load?: () => Promise<Release> // the release with its photos, when this copy no longer has them
+  onClose: () => void
+}) {
   const [open, setOpen] = useState<number | null>(null)
-  const images = release.images ?? []
+  // photos can't be kept past six hours, so an older copy asks Discogs for them now
+  const fetched = useAsync(async () => (release.images || !load ? release : load()), [release])
+  const images = release.images ?? fetched.data?.images ?? []
   const current = open !== null ? images[open] : undefined
   const step = (by: number) => setOpen((i) => (i === null ? i : (i + by + images.length) % images.length))
   const isCover = (uri: string) => own?.cover === uri
@@ -50,7 +63,11 @@ export function PhotosSheet({ release, own, onClose }: { release: Release; own?:
       }
       bodyClassName="p-4 pb-[max(env(safe-area-inset-bottom),1rem)]"
     >
-      {current ? (
+      {!release.images && fetched.loading ? (
+        <Spinner label="Loading photos" />
+      ) : !images.length ? (
+        <p className="py-10 text-center text-sm text-stone-500">Photos aren't available right now.</p>
+      ) : current ? (
         <div>
           <div className="flex justify-center">
             {/* a new photo starts unzoomed */}

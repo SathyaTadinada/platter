@@ -22,7 +22,7 @@ describe('staleMasters', () => {
       { masterId: 20, year: 2015, at: now - 60_000 },
       { masterId: 30, year: 1973, at: now - 31 * 24 * 60 * 60 * 1000 },
     ])
-    expect((await staleMasters(now)).sort()).toEqual([10, 30])
+    expect((await staleMasters(now)).map((d) => d.id).sort()).toEqual([10, 30])
   })
 })
 

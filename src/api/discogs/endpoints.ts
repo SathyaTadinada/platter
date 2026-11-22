@@ -26,7 +26,10 @@ export const getProfile = (c: DiscogsClient, username: string) => c.get<UserProf
 export const searchReleases = (c: DiscogsClient, params: SearchParams, page = 1) =>
   c.get<SearchResponse>('/database/search', { ...params, type: 'release', per_page: 50, page }, DISCOGS_MAX_AGE)
 
-export const getRelease = (c: DiscogsClient, id: number) => c.get<Release>(`/releases/${id}`, undefined, DISCOGS_MAX_AGE)
+// Kept a month without its photos (see readCatalog). photos: when they're needed, as on a page that
+// shows them or for a record's cover.
+export const getRelease = (c: DiscogsClient, id: number, { photos = false } = {}) =>
+  c.request<Release>('GET', `/releases/${id}`, { catalog: photos ? 'whole' : 'trimmed' })
 
 export const getMaster = (c: DiscogsClient, id: number) => c.get<{ id: number; year?: number }>(`/masters/${id}`)
 

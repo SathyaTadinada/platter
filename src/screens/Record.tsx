@@ -154,6 +154,7 @@ export function Record({ id }: { id: string }) {
         releaseId={item.releaseId}
         release={r}
         loading={release.loading}
+        loadPhotos={() => getRelease(client, item.releaseId, { photos: true })}
         cover={item}
         own={item}
         title={item.title}

@@ -1,5 +1,5 @@
 import type { Auth } from '../../auth/types'
-import { DISCOGS_MAX_AGE, readCache, writeCache } from '../../db/cache'
+import { DISCOGS_MAX_AGE, readCache, readCatalog, writeCache } from '../../db/cache'
 
 const API_BASE = 'https://api.discogs.com'
 
@@ -29,6 +29,7 @@ const realSleep: Sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 export class RateLimiter {
   private stamps: number[] = []
   private quietUntil = 0
+  private slowUntil = 0
 
   constructor(
     private limit = 55,
@@ -60,10 +61,15 @@ export class RateLimiter {
   }
 
   // Discogs turned a request down, so its count is over even if ours isn't (another tab or
-  // device on the same connection, say). Background work stops for a minute; what the user is
-  // waiting on retries sooner.
+  // device on the same connection, say). Background work stops for a minute and then goes slowly
+  // for ten; what the user is waiting on retries sooner.
   backOff(): void {
     this.quietUntil = this.now() + this.windowMs
+    this.slowUntil = this.now() + 10 * this.windowMs
+  }
+
+  get slowed(): boolean {
+    return this.now() < this.slowUntil
   }
 }
 
@@ -73,7 +79,8 @@ export type ClientStatus = {
 }
 
 type Query = Record<string, string | number | undefined>
-type RequestOpts = { query?: Query; body?: unknown; cacheMaxAge?: number }
+// catalog: kept a month (see readCatalog); 'whole' when the photos and prices are needed too
+type RequestOpts = { query?: Query; body?: unknown; cacheMaxAge?: number; catalog?: 'trimmed' | 'whole' }
 
 export function buildUrl(path: string, query?: Query): string {
   const parts = Object.entries(query ?? {})
@@ -101,6 +108,11 @@ export class DiscogsClient {
 
   get requestsPerMinute(): number {
     return this.limiter.perMinute
+  }
+
+  // Discogs turned something down in the last few minutes
+  get slowed(): boolean {
+    return this.limiter.slowed
   }
 
   // The same client for background work (prices, original years): it shares the rate limit,
@@ -138,16 +150,21 @@ export class DiscogsClient {
 
   async request<T>(method: string, path: string, opts: RequestOpts = {}): Promise<T> {
     const url = buildUrl(path, opts.query)
-    const cacheKey = `discogs:${url}`
-    if (method === 'GET' && opts.cacheMaxAge) {
-      const hit = await readCache<T>(cacheKey, Math.min(opts.cacheMaxAge, DISCOGS_MAX_AGE))
+    const catalog = method === 'GET' && opts.catalog
+    const cached = method === 'GET' && (catalog || opts.cacheMaxAge)
+    const cacheKey = `${catalog ? 'catalog' : 'discogs'}:${url}`
+    if (catalog) {
+      const hit = await readCatalog<T>(cacheKey, catalog === 'whole')
+      if (hit !== undefined) return hit
+    } else if (cached) {
+      const hit = await readCache<T>(cacheKey, Math.min(opts.cacheMaxAge!, DISCOGS_MAX_AGE))
       if (hit !== undefined) return hit
     }
 
     this.setStatus({ active: this._status.active + 1 })
     try {
       const data = await this.send<T>(method, url, opts.body)
-      if (method === 'GET' && opts.cacheMaxAge) await writeCache(cacheKey, data)
+      if (cached) await writeCache(cacheKey, data)
       return data
     } finally {
       this.setStatus({ active: this._status.active - 1 })

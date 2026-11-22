@@ -22,7 +22,7 @@ export function Release({ id }: { id: string }) {
   const releaseId = Number(id)
   const { client, username } = useSignedIn()
   const back = useBack('/search')
-  const release = useAsync(() => getRelease(client, releaseId), [client, releaseId])
+  const release = useAsync(() => getRelease(client, releaseId, { photos: true }), [client, releaseId])
   const [wantBusy, setWantBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const their = useTheirCopy(Number(id))

@@ -227,7 +227,7 @@ export function Settings() {
                     type="button"
                     aria-label="Update now"
                     disabled={sync.running}
-                    onClick={() => sync.sync(true)}
+                    onClick={() => sync.refresh()}
                     className="rounded-full p-2 text-stone-600 hover:bg-stone-100 disabled:opacity-40 dark:text-stone-300 dark:hover:bg-stone-800"
                   >
                     <RefreshCw size={20} className={sync.running ? 'animate-spin' : ''} />
