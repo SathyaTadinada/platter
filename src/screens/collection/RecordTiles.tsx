@@ -20,7 +20,8 @@ function Tap({
       {children}
     </button>
   ) : (
-    <Link href={`/collection/${item.instanceId}`} className={className}>
+    // a record is a place to go, not a link to drag out (Safari starts a drag on press-and-move)
+    <Link href={`/collection/${item.instanceId}`} draggable={false} className={className}>
       {children}
     </Link>
   )
@@ -108,12 +109,13 @@ export function GridTile({ item, note, lentTo, onPlay, playing, selected, onSele
 export function ListRow({ item, note, noteDetail, lentTo, onPlay, playing, selected, onSelect }: TileProps) {
   const meta = [item.year || null, item.format].filter(Boolean).join(' · ')
   return (
-    <li className="group/tile flex items-center">
+    // the whole row lights up on hover, the play button with it, so it reads as part of the row
+    <li className="group/tile flex items-center hover:bg-stone-50 dark:hover:bg-stone-800/50">
       <Tap
         item={item}
         selected={selected}
         onSelect={onSelect}
-        className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
+        className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 active:bg-stone-100 dark:active:bg-stone-800 ${selected ? 'bg-accent-50 dark:bg-accent/10' : ''}`}
       >
         {onSelect && <Tick on={selected} />}
         <Cover item={item} small className="size-14 shrink-0 rounded-lg" />
@@ -141,7 +143,7 @@ export function ListRow({ item, note, noteDetail, lentTo, onPlay, playing, selec
           title={item.title}
           onPlay={onPlay}
           playing={playing}
-          className="mr-2 size-9 shrink-0 text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          className="mr-2 size-9 shrink-0 text-stone-500 hover:bg-stone-200 hover:text-stone-900 dark:hover:bg-stone-700 dark:hover:text-stone-100"
         />
       )}
     </li>
