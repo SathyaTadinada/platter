@@ -11,6 +11,7 @@ import { useCloud } from '../../hooks/cloud'
 import { CloudError, type About, type Pinned, type SetupSlot } from '../../lib/cloud'
 import { BIO_MAX, hasLink, SETUP_LABELS, SETUP_MAX, type ProfileBrief } from '../../lib/profile'
 import { PinSheet } from './PinSheet'
+import { useRecordHref } from './recordHref'
 
 export const SLOT_ICONS: Record<SetupSlot, LucideIcon> = {
   turntable: Disc3,
@@ -44,6 +45,7 @@ const noFill = {
 
 // A record on the profile (pinned, or the last one played), opening its page
 export function RecordLine({ item, note, link = true }: { item: ProfileBrief | Pinned; note: ReactNode; link?: boolean }) {
+  const hrefOf = useRecordHref()
   const inside = (
     <>
       <Cover item={{ cover: item.thumb, thumb: item.thumb }} small className="size-12 shrink-0 rounded-lg" />
@@ -56,7 +58,7 @@ export function RecordLine({ item, note, link = true }: { item: ProfileBrief | P
   )
   return link ? (
     <Link
-      href={`/release/${item.id}`}
+      href={hrefOf(item.id)}
       className="-mx-2 flex min-w-0 items-center gap-3 rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50"
     >
       {inside}

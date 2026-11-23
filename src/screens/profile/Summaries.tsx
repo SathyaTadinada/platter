@@ -8,6 +8,7 @@ import type { ProfileBrief, ProfileStats, ProfileYear } from '../../lib/profile'
 import { dayAgo, formatDay } from '../../lib/time'
 import { localDate, type MonthTotal } from '../../lib/value'
 import { BarList } from '../value/Breakdowns'
+import { useRecordHref } from './recordHref'
 
 // Someone else's Stats and Your year, drawn from what their devices published. The same pieces as
 // the Listening view and the Your year page, with nothing about prices.
@@ -16,9 +17,7 @@ const DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Frid
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
 const columns = 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8'
 
-// Their records open the release here, which says whether you have it too
 const row = (b: ProfileBrief) => ({ instanceId: b.id, title: b.title, artist: b.artist, thumb: b.thumb })
-const releaseOf = (b: ProfileBrief) => `/release/${b.id}`
 
 // Month names in the visitor's language, not the owner's
 const relabel = (months: MonthTotal[]) =>
@@ -37,11 +36,12 @@ function Tile({ label, value }: { label: string; value: number | string }) {
 }
 
 function Records({ rows }: { rows: { item: ProfileBrief; right: string }[] }) {
+  const hrefOf = useRecordHref()
   return (
     <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
       {rows.map(({ item, right }) => (
         <li key={item.id}>
-          <RecordRow item={row(item)} href={releaseOf(item)}>
+          <RecordRow item={row(item)} href={hrefOf(item.id)}>
             <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{right}</span>
           </RecordRow>
         </li>
@@ -142,6 +142,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
   const newestFirst = [...years].sort((a, b) => b.year - a.year)
   const [at, setAt] = useState(0)
   const r = newestFirst[Math.min(at, newestFirst.length - 1)]
+  const hrefOf = useRecordHref()
   const thisYear = new Date().getFullYear()
   const hours = r.hours < 10 ? r.hours.toFixed(1) : Math.round(r.hours).toLocaleString()
   const day = (iso: string) => formatDay(localDate(Date.parse(iso)))
@@ -218,7 +219,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
             <Section title={`New in ${r.year}`}>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {r.newest.map((b) => (
-                  <Link key={b.id} href={releaseOf(b)} title={`${b.title} · ${b.artist}`}>
+                  <Link key={b.id} href={hrefOf(b.id)} title={`${b.title} · ${b.artist}`}>
                     <Cover item={b} small className="aspect-square w-full rounded-lg" />
                   </Link>
                 ))}
@@ -231,7 +232,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
                 {facts.map(({ label, value, item }) =>
                   item ? (
                     <li key={label}>
-                      <RecordRow item={row(item)} href={releaseOf(item)}>
+                      <RecordRow item={row(item)} href={hrefOf(item.id)}>
                         <span className="block text-xs text-stone-500">{label}</span>
                         <span className="block text-sm font-medium tabular-nums">{value}</span>
                       </RecordRow>

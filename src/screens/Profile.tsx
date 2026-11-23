@@ -30,6 +30,7 @@ import { Tick } from './collection/RecordTiles'
 import { AddSheet } from './profile/AddSheet'
 import { discogsUser, ProfileHeader } from './profile/Header'
 import { StatsView, YearView } from './profile/Summaries'
+import { OwnRecords } from './profile/recordHref'
 
 const LABELS: Record<ProfileSection, string> = { collection: 'Collection', wantlist: 'Wantlist', stats: 'Stats', year: 'Your year' }
 // search and sort only show once a list is longer than a screen or so
@@ -253,7 +254,7 @@ export function Profile({ username }: { username: string }) {
     </>
   )
 
-  return (
+  const page = (
     <Screen
       title={picking ? (chosen ? `${chosen} selected` : 'Select records') : 'Profile'}
       // someone opening a shared link without Platter has nowhere to go back to
@@ -469,4 +470,6 @@ export function Profile({ username }: { username: string }) {
       )}
     </Screen>
   )
+  // your own records open as yours
+  return mine ? <OwnRecords>{page}</OwnRecords> : page
 }

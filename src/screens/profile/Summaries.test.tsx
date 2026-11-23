@@ -1,8 +1,10 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
+import { db } from '../../db/db'
 import type { ProfileStats, ProfileYear } from '../../lib/profile'
 import { byMonth } from '../../lib/value'
+import { OwnRecords } from './recordHref'
 import { StatsView, YearView } from './Summaries'
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
@@ -42,6 +44,26 @@ describe('StatsView', () => {
     // their records open the release, not a record in the visitor's own collection
     expect(host.querySelector('a[href="/release/2"]')).not.toBeNull()
     expect(host.querySelector('a[href^="/collection/"]')).toBeNull()
+  })
+
+  it('opens your own copy on your own profile, or the release when you have two', async () => {
+    await db.collection.clear()
+    await db.collection.bulkPut([
+      { instanceId: 20, releaseId: 2, masterId: 0, folderId: 1 },
+      { instanceId: 10, releaseId: 1, masterId: 0, folderId: 1 },
+      { instanceId: 11, releaseId: 1, masterId: 0, folderId: 1 },
+    ] as never)
+    await act(() =>
+      root.render(
+        <OwnRecords>
+          <StatsView stats={stats} />
+        </OwnRecords>,
+      ),
+    )
+    await act(() => new Promise((r) => setTimeout(r, 50)))
+    expect(host.querySelector('a[href="/collection/20"]')).not.toBeNull()
+    expect(host.querySelector('a[href="/release/1"]')).not.toBeNull()
+    await db.collection.clear()
   })
 
   it('leaves out the listening parts for someone who hasn’t played anything', async () => {
