@@ -83,14 +83,7 @@ export function ValueStats() {
       </Section>
     ),
     top: valued.length > 0 && (
-      <Section
-        title="Most valuable"
-        info={
-          basis === 'lowest'
-            ? "The cheapest copy for sale on Discogs. Settings can switch this to Discogs' suggested price for each copy's condition."
-            : "Discogs' suggested price for each copy's condition. Copies without a condition aren't counted."
-        }
-      >
+      <Section title="Most valuable">
         <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${card}`}>
           {valued.slice(0, TOP).map(({ item, value }) => (
             <li key={item.instanceId}>
