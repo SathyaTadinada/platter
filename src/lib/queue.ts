@@ -63,7 +63,6 @@ export async function enqueueCsv(rows: ImportRow[], plan: ImportPlan, now = Date
   return items.length
 }
 
-// Years that came with the file, for albums Platter doesn't have one for yet
 // What a file can add to copies already in the collection: values for fields that are empty on the
 // copy, and a rating where it has none. With replace, values that differ from the copy's are taken
 // too, and the copy's are kept in `was` to show what changes. A file's rows pair up with copies of the
@@ -127,8 +126,6 @@ export function planFills(
   return fills
 }
 
-// Records already waiting in the batch, so importing the same file twice doesn't queue them twice:
-// releases waiting to be added, and copies waiting to be filled in
 // Records picked from someone's profile, as Batch items: like an import, the release is known, but
 // there are no details to copy, since a profile doesn't share them. Ones already waiting in the batch
 // are left out, and ones already in the collection unless another copy is wanted. Returns how many
@@ -154,6 +151,7 @@ export async function enqueueFromProfile(
   for (const r of picked) {
     if (waiting.releases.has(r.id) || seen.has(r.id) || (!copies && owned.has(r.id))) continue
     seen.add(r.id)
+    const theirs = details?.(r.id)
     items.push({
       createdAt: now + items.length,
       source: 'csv',
@@ -168,14 +166,16 @@ export async function enqueueFromProfile(
         format: r.format,
         thumb: r.thumb,
       },
-      fields: details?.(r.id).fields ?? {},
-      rating: details?.(r.id).rating || undefined,
+      fields: theirs?.fields ?? {},
+      rating: theirs?.rating || undefined,
     })
   }
   await db.queue.bulkAdd(items)
   return items.length
 }
 
+// Records already waiting in the batch, so importing the same file twice doesn't queue them twice:
+// releases waiting to be added, and copies waiting to be filled in
 export async function waitingInBatch(): Promise<{ releases: Set<number>; copies: Set<number> }> {
   const waiting = (await db.queue.toArray()).filter((i) => i.status !== 'added')
   return {
@@ -184,6 +184,7 @@ export async function waitingInBatch(): Promise<{ releases: Set<number>; copies:
   }
 }
 
+// Years that came with the file, for albums Platter doesn't have one for yet
 async function seedMasterYears(rows: ImportRow[], now: number) {
   const known = new Set((await db.masters.toArray()).map((m) => m.masterId))
   const seeds = new Map<number, number>()
@@ -217,6 +218,12 @@ export async function takeOver(id: number) {
   await db.queue.update(id, { status: 'ready', addingBy: undefined })
 }
 
+// what MusicBrainz says a barcode is, when Discogs didn't find it or found it through MusicBrainz
+function guessFrom(r: LookupResult): string | undefined {
+  const mb = r.kind === 'musicbrainz' ? r.mb : r.kind === 'none' ? r.mb[0] : undefined
+  return mb && `${mb.artist} – ${mb.title}`
+}
+
 const byAge = (status: QueueItem['status']) => db.queue.where('status').equals(status).sortBy('createdAt')
 
 // left: for adds, how many Discogs requests the records still to go will take
@@ -238,12 +245,7 @@ export async function lookupPending(lookup: (barcode: string) => Promise<LookupR
     try {
       const r = await lookup(item.barcode ?? '')
       const results = r.kind === 'none' ? [] : r.results
-      const guess =
-        r.kind === 'musicbrainz'
-          ? `${r.mb.artist} – ${r.mb.title}`
-          : r.kind === 'none' && r.mb[0]
-            ? `${r.mb[0].artist} – ${r.mb[0].title}`
-            : undefined
+      const guess = guessFrom(r)
       const via = r.kind === 'none' ? undefined : r.kind
       if (results.length === 1) {
         await db.queue.update(item.id!, {

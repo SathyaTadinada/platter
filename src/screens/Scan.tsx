@@ -22,6 +22,30 @@ type Still = { url: string; status: 'reading' | 'failed' }
 
 type Mode = 'single' | 'batch' | 'play' | 'shop'
 
+// what each mode is called, and its typed-barcode button on phones and on wider screens
+const MODES: { value: Mode; label: string; button: string; wideButton: string }[] = [
+  { value: 'single', label: 'Lookup', button: 'Look up', wideButton: 'Look it up' },
+  { value: 'batch', label: 'Batch', button: 'Add', wideButton: 'Add to batch' },
+  { value: 'play', label: 'Play', button: 'Find', wideButton: 'Find my copy' },
+  { value: 'shop', label: 'Shop', button: 'Check', wideButton: 'Check it' },
+]
+const modeOf = (m: Mode) => MODES.find((o) => o.value === m)!
+
+// on phones the camera takes whatever height is left in the scrolling area (100cqh) after what's
+// under it, which differs by mode, so the page fits without scrolling
+const CAMERA_HEIGHT: Record<Mode, string> = {
+  single: 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]',
+  batch: 'max-h-[calc(100cqh-21.5rem-var(--header-inset,env(safe-area-inset-top)))]',
+  play: 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]',
+  shop: 'max-h-[calc(100cqh-24rem-var(--header-inset,env(safe-area-inset-top)))]',
+}
+
+const BLOCKED: Record<'denied' | 'unavailable' | 'error', string> = {
+  denied: 'Camera access is blocked. Allow it in your browser settings, or use a photo or type the barcode.',
+  error: 'The scanner stopped. Reload the page or type the barcode.',
+  unavailable: 'No camera found. Use a photo or type the barcode.',
+}
+
 // Tailwind's lg breakpoint, where the page splits into two columns
 const wideQuery = '(min-width: 64rem)'
 const subscribeWide = (onChange: () => void) => {
@@ -33,9 +57,15 @@ const useWide = () => useSyncExternalStore(subscribeWide, () => matchMedia(wideQ
 const MODE_KEY = 'platter.scanMode'
 
 function loadMode(): Mode {
-  const asked = new URLSearchParams(location.search).get('mode')
-  if (asked === 'play' || asked === 'batch' || asked === 'single' || asked === 'shop') return asked
-  return readChoice<Mode>(MODE_KEY, ['single', 'batch', 'play', 'shop'], 'single')
+  const asked = MODES.find((m) => m.value === new URLSearchParams(location.search).get('mode'))
+  return (
+    asked?.value ??
+    readChoice<Mode>(
+      MODE_KEY,
+      MODES.map((m) => m.value),
+      'single',
+    )
+  )
 }
 
 export function Scan() {
@@ -128,20 +158,7 @@ export function Scan() {
     />
   )
 
-  const modeSwitch = (
-    <Segmented
-      label="Scan mode"
-      className="lg:max-w-[30rem]"
-      value={mode}
-      onChange={switchMode}
-      options={[
-        { value: 'single', label: 'Lookup' },
-        { value: 'batch', label: 'Batch' },
-        { value: 'play', label: 'Play' },
-        { value: 'shop', label: 'Shop' },
-      ]}
-    />
-  )
+  const modeSwitch = <Segmented label="Scan mode" className="lg:max-w-[30rem]" value={mode} onChange={switchMode} options={MODES} />
 
   return (
     <Screen title="Scan" width="wide" toolbar={modeSwitch}>
@@ -161,14 +178,9 @@ export function Scan() {
         <div>
           {/* dark while there's a picture in it; otherwise it follows the theme */}
           <div
-            // on phones it takes whatever height is left in the scrolling area (100cqh), so the page fits without scrolling
-            className={`relative mx-auto aspect-[4/5] min-h-40 w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${
-              mode === 'shop'
-                ? 'max-h-[calc(100cqh-24rem-var(--header-inset,env(safe-area-inset-top)))]'
-                : mode === 'batch'
-                  ? 'max-h-[calc(100cqh-21.5rem-var(--header-inset,env(safe-area-inset-top)))]'
-                  : 'max-h-[calc(100cqh-17.5rem-var(--header-inset,env(safe-area-inset-top)))]'
-            } ${on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'}`}
+            className={`relative mx-auto aspect-[4/5] min-h-40 w-full overflow-hidden rounded-3xl lg:aspect-[3/4] lg:max-h-none ${CAMERA_HEIGHT[mode]} ${
+              on || still ? 'bg-stone-900' : 'bg-stone-200 dark:bg-stone-900'
+            }`}
           >
             <video ref={videoRef} playsInline muted autoPlay className={`size-full object-cover ${on ? '' : 'hidden'}`} />
 
@@ -276,13 +288,7 @@ export function Scan() {
 
             {blocked && !still && (
               <div className="absolute inset-0 flex items-center p-4">
-                <Notice tone="warn">
-                  {state === 'denied'
-                    ? 'Camera access is blocked. Allow it in your browser settings, or use a photo or type the barcode.'
-                    : state === 'error'
-                      ? 'The scanner stopped. Reload the page or type the barcode.'
-                      : 'No camera found. Use a photo or type the barcode.'}
-                </Notice>
+                <Notice tone="warn">{BLOCKED[state]}</Notice>
               </div>
             )}
           </div>
@@ -295,22 +301,13 @@ export function Scan() {
           {mode === 'shop' && !wide && shopPanel}
 
           <div className="mt-4 lg:hidden">
-            <ManualBarcode
-              label="Or type a barcode"
-              button={mode === 'play' ? 'Find' : mode === 'batch' ? 'Add' : mode === 'shop' ? 'Check' : 'Look up'}
-              onSubmit={(c) => onCode(c, 'typed')}
-              inline
-            />
+            <ManualBarcode label="Or type a barcode" button={modeOf(mode).button} onSubmit={(c) => onCode(c, 'typed')} inline />
           </div>
         </div>
 
         <div className="mt-6 space-y-4 lg:mt-0">
           <div className="hidden space-y-4 lg:block">
-            <ManualBarcode
-              label="Or type the barcode number"
-              button={mode === 'batch' ? 'Add to batch' : mode === 'play' ? 'Find my copy' : mode === 'shop' ? 'Check it' : 'Look it up'}
-              onSubmit={(c) => onCode(c, 'typed')}
-            />
+            <ManualBarcode label="Or type the barcode number" button={modeOf(mode).wideButton} onSubmit={(c) => onCode(c, 'typed')} />
             {chooseButton}
           </div>
           {mode === 'shop' && wide && shopPanel}

@@ -23,7 +23,7 @@ import { Row } from './batch/BatchRow'
 import { DetailsSheet } from './batch/DetailsSheet'
 
 // "A", "A and B", "A, B, and C"
-const list = (names: string[]) => (names.length > 2 ? `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}` : names.join(' and '))
+const andList = (names: string[]) => (names.length > 2 ? `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}` : names.join(' and '))
 
 const needsYou = (i: QueueItem) => i.status === 'choose' || i.status === 'notfound' || i.status === 'failed'
 const inFlight = (i: QueueItem) => i.status === 'pending' || i.status === 'looking'
@@ -119,12 +119,21 @@ export function Batch() {
       .filter((id) => !(id in was))
       .map(name)
     if (i.rating && !i.was?.rating) added.push('rating')
-    const lines = added.length ? [`Adds ${list(added)}`] : []
+    const lines = added.length ? [`Adds ${andList(added)}`] : []
     for (const [id, old] of Object.entries(was)) {
       lines.push(`Changes ${name(Number(id))} from ${value(Number(id), old)} to ${value(Number(id), i.fields![Number(id)])}`)
     }
     if (i.rating && i.was?.rating) lines.push(`Changes rating from ${i.was.rating} to ${i.rating} stars`)
     return lines
+  }
+
+  const coverOf = (i: QueueItem) => i.release && owned?.covers.get(i.release.id)
+  const addLabel = () => {
+    if (adding) return `${addable ? 'Adding' : 'Updating'} ${Math.min(run.done + 1, run.total)} of ${run.total}…`
+    if (!online) return 'Offline'
+    if (!fillable) return `Add ${addable} to collection`
+    if (!addable) return `Update ${plural(fillable, 'record')}`
+    return `Add ${addable}, update ${fillable}`
   }
 
   async function remove(id: number) {
@@ -185,9 +194,7 @@ export function Batch() {
 
       {!online && groups.waiting.length > 0 && (
         <div className="mb-4">
-          <Notice tone="info">
-            Offline. {groups.waiting.length} scan{groups.waiting.length === 1 ? '' : 's'} will be looked up when you reconnect.
-          </Notice>
+          <Notice tone="info">Offline. {plural(groups.waiting.length, 'scan')} will be looked up when you reconnect.</Notice>
         </div>
       )}
 
@@ -239,7 +246,7 @@ export function Batch() {
                       i.release?.masterId && owned?.masters.has(i.release.masterId) && !owned?.releases.has(i.release.id),
                     )}
                     wanted={Boolean(i.release && wants?.has(i.release.id))}
-                    cover={i.release && owned?.covers.get(i.release.id)}
+                    cover={coverOf(i)}
                     onTakeOver={() => takeOver(i.id!)}
                     onResolve={i.candidates && i.candidates.length > 1 ? () => setResolving(i) : undefined}
                     onRemove={adding ? undefined : () => remove(i.id!)}
@@ -263,7 +270,7 @@ export function Batch() {
                 key={i.id}
                 item={i}
                 fills={fills(i)}
-                cover={i.release && owned?.covers.get(i.release.id)}
+                cover={coverOf(i)}
                 onTakeOver={() => takeOver(i.id!)}
                 onRemove={adding ? undefined : () => remove(i.id!)}
               />
@@ -282,7 +289,7 @@ export function Batch() {
         <Section title={`${groups.added.some((i) => i.fill) ? 'Done' : 'Added'} (${groups.added.length})`}>
           <List>
             {groups.added.map((i) => (
-              <Row key={i.id} item={i} cover={i.release && owned?.covers.get(i.release.id)} onRemove={() => remove(i.id!)} />
+              <Row key={i.id} item={i} cover={coverOf(i)} onRemove={() => remove(i.id!)} />
             ))}
           </List>
         </Section>
@@ -330,15 +337,7 @@ export function Batch() {
                 startAdding({ folderId, removeFromWantlist: dropWants })
               }}
             >
-              {adding
-                ? `${addable ? 'Adding' : 'Updating'} ${Math.min(run.done + 1, run.total)} of ${run.total}…`
-                : !online
-                  ? 'Offline'
-                  : !fillable
-                    ? `Add ${addable} to collection`
-                    : !addable
-                      ? `Update ${plural(fillable, 'record')}`
-                      : `Add ${addable}, update ${fillable}`}
+              {addLabel()}
             </Button>
           </div>
         </div>
