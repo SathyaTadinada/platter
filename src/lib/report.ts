@@ -4,7 +4,7 @@ import { parseMoney, valueOf, type PriceBasis, type PriceEntry } from './value'
 // Every record with what it's worth now, to print or keep as a PDF. Values follow the rest of the app (the
 // Prices setting).
 
-export type ReportRow = { item: LibraryItem; media?: string; sleeve?: string; paid?: number; value?: number }
+type ReportRow = { item: LibraryItem; media?: string; sleeve?: string; paid?: number; value?: number }
 export type ReportFields = { media?: number; sleeve?: number; paid?: number }
 
 export function collectionReport(items: LibraryItem[], prices: Map<number, PriceEntry>, fields: ReportFields, basis: PriceBasis) {

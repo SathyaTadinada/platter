@@ -59,14 +59,14 @@ export function similarity(input: string, identifier: string): number {
   return Math.max(score(a, b), score(loosen(a), loosen(b)) * 0.96)
 }
 
-export type SideMatch = { input: string; identifier: Identifier; score: number }
+type SideMatch = { input: string; identifier: Identifier; score: number }
 
 export type RunoutResult =
   | { kind: 'pending' } // the release's details haven't come back from Discogs yet
   | { kind: 'nodata' } // Discogs has no runout info for this release
   | { kind: 'scored'; score: number; matches: SideMatch[] }
 
-export const isRunout = (i: Identifier) => i.type === 'Matrix / Runout'
+const isRunout = (i: Identifier) => i.type === 'Matrix / Runout'
 
 // Each thing the user typed is matched to its best identifier on the release;
 // the release's score is the average over everything typed.

@@ -31,7 +31,7 @@ export function parseLogin(x: unknown): Login {
   return { token: l.token, tokenSecret: l.tokenSecret }
 }
 
-export async function authorization(login: Login, consumerKey: string, consumerSecret: string): Promise<string> {
+async function authorization(login: Login, consumerKey: string, consumerSecret: string): Promise<string> {
   if (login.tokenSecret === undefined) return `Discogs token=${login.token}`
   return header(
     await signParams({ method: 'GET', url: IDENTITY, consumerKey, consumerSecret, token: login.token, tokenSecret: login.tokenSecret }),

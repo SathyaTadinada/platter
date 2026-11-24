@@ -31,7 +31,7 @@ function Badges({ own }: { own?: Ownership }) {
   )
 }
 
-export function ReleaseSummary({ card }: { card: ReleaseCard }) {
+function ReleaseSummary({ card }: { card: ReleaseCard }) {
   const line = [card.label, card.catno].filter(Boolean).join(' · ')
   const where = [card.country, card.year].filter(Boolean).join(' · ')
   return (

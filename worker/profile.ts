@@ -11,31 +11,31 @@ import { approveWaiting, blockedEither, relation, statusOf, type Person, type Re
 import { MAX_PUSH, SyncError, type DB } from './sync'
 import { handleFrom, LINK_NAMES, LINK_SERVICES, validHandle, type Links, type LinkService } from './links'
 
-export const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
+const SECTIONS = ['collection', 'wantlist', 'stats', 'year'] as const
 export type Section = (typeof SECTIONS)[number]
 
 // Whether a section is one of the parts the profile shows. Who gets to see the profile at all is
 // one setting for the whole thing (Who below), not something each section decides.
-export const VISIBILITY = ['off', 'public'] as const
-export type Visibility = (typeof VISIBILITY)[number]
+const VISIBILITY = ['off', 'public'] as const
+type Visibility = (typeof VISIBILITY)[number]
 
 // private: there's no profile, and the link doesn't work. unlisted: anyone with the link. public:
 // that, and they turn up when people search. Anything but private shows at least the name and
 // picture, with whichever sections are on under them. A new account starts private.
-export const WHO = ['private', 'followers', 'unlisted', 'public'] as const
+const WHO = ['private', 'followers', 'unlisted', 'public'] as const
 export type Who = (typeof WHO)[number]
 
 export type Sections = Partial<Record<Section, Visibility>>
 
 // The rows each section covers. A section that's off has none of them.
-export const KINDS = { collection: 'item', wantlist: 'want', stats: 'stats', year: 'year' } as const
+const KINDS = { collection: 'item', wantlist: 'want', stats: 'stats', year: 'year' } as const
 // Their Discogs picture, which belongs to no section: it goes up while any of them is on
-export const ABOUT = 'about'
-export type ProfileKind = (typeof KINDS)[Section] | typeof ABOUT
+const ABOUT = 'about'
+type ProfileKind = (typeof KINDS)[Section] | typeof ABOUT
 
 const SECTION_OF = Object.fromEntries(Object.entries(KINDS).map(([s, k]) => [k, s])) as Record<string, Section>
 
-export const MAX_ROWS = 100 // one page of a profile's records
+const MAX_ROWS = 100 // one page of a profile's records
 const MAX_VALUE = 20_000 // a Stats summary or a year, with a few records' covers in it
 
 export type ProfileRow = { kind: ProfileKind; key: string; value: string; updatedAt: number }
@@ -63,7 +63,7 @@ export type ProfileHead = {
 
 // ---- reading what the owner chose ----
 
-export function parseSections(x: unknown): Sections {
+function parseSections(x: unknown): Sections {
   if (!x || typeof x !== 'object') throw new SyncError(400, 'Bad sections')
   const out: Sections = {}
   for (const [key, value] of Object.entries(x as Record<string, unknown>)) {
@@ -125,9 +125,9 @@ export async function settings(
 
 // Plain text the owner writes, shown to whoever can see the profile. Kept short, and without links,
 // which is most of what would make it worth spamming.
-export const BIO_MAX = 160
-export const SETUP_MAX = 60
-export const SETUP_SLOTS = ['turntable', 'cartridge', 'preamp', 'amp', 'speakers'] as const
+const BIO_MAX = 160
+const SETUP_MAX = 60
+const SETUP_SLOTS = ['turntable', 'cartridge', 'preamp', 'amp', 'speakers'] as const
 export type SetupSlot = (typeof SETUP_SLOTS)[number]
 export type Setup = Partial<Record<SetupSlot, string>>
 
@@ -146,7 +146,7 @@ function cleanText(x: unknown, max: number, lines: boolean): string {
   return text
 }
 
-export function parseSetup(x: unknown): Setup {
+function parseSetup(x: unknown): Setup {
   if (!x || typeof x !== 'object' || Array.isArray(x)) throw new SyncError(400, 'Bad setup')
   const out: Setup = {}
   for (const [key, value] of Object.entries(x as Record<string, unknown>)) {
@@ -176,10 +176,10 @@ export type About = {
   pinned: Pinned | null
   playing: boolean // the record they last played goes up with their picture
 }
-export const LOCATION_MAX = 40
-export const PRONOUNS_MAX = 20
+const LOCATION_MAX = 40
+const PRONOUNS_MAX = 20
 
-export function parseLinks(x: unknown): Links {
+function parseLinks(x: unknown): Links {
   if (!x || typeof x !== 'object' || Array.isArray(x)) throw new SyncError(400, 'Bad links')
   const out: Links = {}
   for (const [key, value] of Object.entries(x as Record<string, unknown>)) {
@@ -264,7 +264,7 @@ export async function setAbout(db: DB, account: string, input: unknown, now = Da
 // collection; the server only keeps the choice, so every device sends the same.
 const MAX_DETAILS = 40
 
-export function parseDetails(x: unknown): string[] {
+function parseDetails(x: unknown): string[] {
   if (!Array.isArray(x) || x.length > MAX_DETAILS) throw new SyncError(400, 'Bad details')
   if (!x.every((d) => typeof d === 'string' && (d === 'rating' || /^\d{1,9}$/.test(d)))) throw new SyncError(400, 'Bad details')
   return [...new Set(x as string[])]
@@ -441,7 +441,7 @@ const pictureOnly = (about: string | null) => {
 
 export type Found = { username: string; about: string | null; publishedAt: number | null; following?: 'none' | Status }
 
-export const MAX_FOUND = 20
+const MAX_FOUND = 20
 // Part of a username finds them, among Public profiles and Followers ones (so people can ask to
 // follow). Anyone the viewer has blocked, or who blocked them, isn't found. A signed-in viewer also
 // gets whether they follow each one.

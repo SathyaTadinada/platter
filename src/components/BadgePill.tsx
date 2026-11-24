@@ -16,7 +16,7 @@ export const BADGE_ICON: Record<BadgeIcon, LucideIcon> = {
 }
 
 // a light tint with dark text, and the other way round in dark mode, so every color reads in both
-export const BADGE_TINT: Record<BadgeColor, string> = {
+const BADGE_TINT: Record<BadgeColor, string> = {
   gray: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
   amber: 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200',
   blue: 'bg-sky-100 text-sky-900 dark:bg-sky-950/70 dark:text-sky-200',

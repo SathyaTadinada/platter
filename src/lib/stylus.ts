@@ -14,7 +14,7 @@ import type { Play } from './plays'
 export type RecordLength = { releaseId: number; seconds: number; estimated: boolean; at: number }
 export type StylusSettings = { since?: number; lifespan: number } // lifespan in hours
 
-export const DEFAULT_LIFESPAN = 1000
+const DEFAULT_LIFESPAN = 1000
 const KEY = 'stylus'
 const FALLBACK = 40 * 60 // a typical LP, for a record with no tracklist at all
 const TRACK = 4.5 * 60 // a typical track, when there's a tracklist without lengths

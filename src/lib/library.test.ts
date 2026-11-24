@@ -5,7 +5,6 @@ import search from '../../tests/fixtures/search-barcode.json'
 import type { CollectionField, CollectionPage, SearchResponse } from '../api/discogs/types'
 import {
   activeFilterCount,
-  emptyQuery,
   facets,
   filterItems,
   groupItems,
@@ -33,7 +32,13 @@ const folders = [
   { id: 1, name: 'Uncategorized', count: 0 },
   { id: 2, name: 'Shelf', count: 0 },
 ]
-const q = (patch: Partial<LibraryQuery> = {}): LibraryQuery => ({ ...emptyQuery(), ...patch })
+const q = (patch: Partial<LibraryQuery> = {}): LibraryQuery => ({
+  q: '',
+  sort: 'added',
+  reversed: false,
+  filters: { fields: {} },
+  ...patch,
+})
 
 describe('toLibraryItem', () => {
   it('flattens a collection item', () => {

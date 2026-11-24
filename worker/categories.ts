@@ -1,7 +1,7 @@
 // What syncs, grouped the way the Sync page lists it. Shared by the Worker and the app, so they agree
 // on which rows a switched-off category covers.
 
-export const CATEGORIES = ['plays', 'value', 'covers', 'batch', 'settings', 'listenbrainz', 'catalog'] as const
+const CATEGORIES = ['plays', 'value', 'covers', 'batch', 'settings', 'listenbrainz', 'catalog'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export function categoryOf(kind: string, key: string): Category {

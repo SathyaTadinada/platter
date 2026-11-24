@@ -147,7 +147,7 @@ export function RecordLayout({
   )
 }
 
-export function Tracklist({ release }: { release: Release }) {
+function Tracklist({ release }: { release: Release }) {
   const tracks = release.tracklist ?? []
   if (!tracks.length) return <p className="text-sm text-stone-500">No tracklist on Discogs.</p>
   return (

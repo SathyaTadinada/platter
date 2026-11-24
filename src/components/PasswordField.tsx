@@ -52,7 +52,7 @@ export function PasswordInput({
   )
 }
 
-export const MIN_PASSWORD = 8
+const MIN_PASSWORD = 8
 
 // 0 too short, 1 weak, 2 good, 3 strong: length counts most, mixing kinds of characters helps
 export function strength(pw: string): 0 | 1 | 2 | 3 {

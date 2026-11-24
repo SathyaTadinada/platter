@@ -8,7 +8,7 @@ const ACCESS_TOKEN = `${API}/oauth/access_token`
 const PENDING_KEY = 'platter.oauthPending'
 const PENDING_MAX_AGE = 15 * 60 * 1000
 
-export class SignInError extends Error {}
+class SignInError extends Error {}
 
 const pct = (s: string) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase())
 const query = (params: Record<string, string>) =>

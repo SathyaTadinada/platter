@@ -74,7 +74,7 @@ export type ReleaseSummary = {
   format?: string
 }
 
-export type QueueStatus =
+type QueueStatus =
   | 'pending' // waiting to be looked up
   | 'looking'
   | 'ready' // one release chosen, waiting to be added

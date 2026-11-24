@@ -24,7 +24,7 @@ function start(id: number) {
   t.handle = setTimeout(() => dismiss(id), t.left)
 }
 
-export function hold(id: number, why: 'hover' | 'focus', on: boolean) {
+function hold(id: number, why: 'hover' | 'focus', on: boolean) {
   const t = timers.get(id)
   if (!t || t[why] === on) return
   const wasHeld = t.hover || t.focus
@@ -35,7 +35,7 @@ export function hold(id: number, why: 'hover' | 'focus', on: boolean) {
   } else if (!on) start(id)
 }
 
-export function dismiss(id: number) {
+function dismiss(id: number) {
   clearTimeout(timers.get(id)?.handle)
   timers.delete(id)
   toasts = toasts.filter((t) => t.id !== id)

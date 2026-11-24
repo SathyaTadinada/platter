@@ -12,7 +12,7 @@ export const VALUE_SECTIONS = [
   ['breakdown', 'Breakdown'],
 ] as const
 
-export const LISTENING_SECTIONS = [
+const LISTENING_SECTIONS = [
   ['totals', 'Totals'],
   ['month', 'Plays by month'],
   ['most', 'Most played'],
@@ -21,7 +21,7 @@ export const LISTENING_SECTIONS = [
   ['dusty', 'Not played in a year'],
 ] as const
 
-export const YEAR_SECTIONS = [
+const YEAR_SECTIONS = [
   ['month', 'Plays by month'],
   ['most', 'Most played'],
   ['artists', 'Top artists'],
@@ -72,8 +72,6 @@ export const toggle = <K extends string>(l: Layout<K>, key: K): Layout<K> => ({
   ...l,
   hidden: l.hidden.includes(key) ? l.hidden.filter((k) => k !== key) : [...l.hidden, key],
 })
-
-export const sideOf = <K extends string>(l: Layout<K>, key: K): Side => (l.left.includes(key) ? 'left' : 'right')
 
 // The sections shown in one column, in order
 export const shown = <K extends string>(l: Layout<K>, side: Side): K[] => l[side].filter((k) => !l.hidden.includes(k))

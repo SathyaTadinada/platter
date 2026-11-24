@@ -1,7 +1,7 @@
 import { Check, Copy, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent, type ReactNode } from 'react'
 
-export const CODE_LENGTH = 6
+const CODE_LENGTH = 6
 // pairing codes leave out 0/O and 1/I, so a code read off a screen is typed right
 const clean = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
 

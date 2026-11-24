@@ -3,7 +3,7 @@ import { capture } from '../lib/cloud'
 import { clearPrefs } from '../lib/prefs'
 import type { Auth, Identity, SignableRequest } from './types'
 
-export class AuthError extends Error {}
+class AuthError extends Error {}
 
 // Album years and record lengths are public catalog data with nothing about the account, and
 // looking them all up again is what made signing back in slow, so they stay unless asked.

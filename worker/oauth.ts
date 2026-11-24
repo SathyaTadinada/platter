@@ -5,7 +5,7 @@ export function pct(s: string): string {
   return encodeURIComponent(s).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase())
 }
 
-export function nonce(): string {
+function nonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16))
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
 }

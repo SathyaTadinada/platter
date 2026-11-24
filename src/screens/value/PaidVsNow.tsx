@@ -153,7 +153,7 @@ function PaidBar({ paid, now, money }: { paid: number; now: number; money: Money
   )
 }
 
-export function Movers({ title, rows, money }: { title: string; rows: (Valued & { paid: number; diff: number })[]; money: Money }) {
+function Movers({ title, rows, money }: { title: string; rows: (Valued & { paid: number; diff: number })[]; money: Money }) {
   return (
     <div className={`overflow-hidden ${card}`}>
       <p className="px-4 pt-3 pb-1 text-xs font-semibold text-stone-500">{title}</p>

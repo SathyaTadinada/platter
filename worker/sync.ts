@@ -26,14 +26,14 @@ export type SyncEnv = {
 export type InRow = { kind: string; key: string; value: string | null; updatedAt: number; deleted?: boolean; ifSeq?: number }
 export type OutRow = { kind: string; key: string; value: string | null; updatedAt: number; deleted: boolean; seq: number }
 
-export const KINDS = new Set(['play', 'value', 'cover', 'year', 'length', 'barcode', 'batch', 'setting', 'pref'])
+const KINDS = new Set(['play', 'value', 'cover', 'year', 'length', 'barcode', 'batch', 'setting', 'pref'])
 // encrypted at rest; the key is a Worker secret, not in the database
 const SECRET = new Set(['setting:listenbrainz'])
 
 export const MAX_PUSH = 200
-export const MAX_PULL = 1000
+const MAX_PULL = 1000
 const MAX_VALUE = 100_000
-export const PAIRING_TTL = 10 * 60 * 1000
+const PAIRING_TTL = 10 * 60 * 1000
 
 export class SyncError extends Error {
   constructor(
@@ -74,7 +74,7 @@ export function parseDeviceName(x: unknown): string | null {
   return typeof x === 'string' && x.trim() ? x.trim().slice(0, 60) : null
 }
 
-export const KINDS_OF_DEVICE = ['phone', 'tablet', 'computer'] as const
+const KINDS_OF_DEVICE = ['phone', 'tablet', 'computer'] as const
 export type DeviceKind = (typeof KINDS_OF_DEVICE)[number]
 
 export function parseDeviceKind(x: unknown): DeviceKind | null {

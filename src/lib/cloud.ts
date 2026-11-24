@@ -1,7 +1,7 @@
 import type { Badge, BadgeColor, BadgeIcon, BadgeLook } from '../../worker/badges'
 import { categoryOf, type Category } from '../../worker/categories'
 import type { About, Pinned, Sections, Section, Setup, Who } from '../../worker/profile'
-export type { About, Pinned, Setup, SetupSlot } from '../../worker/profile'
+export type { About, Pinned, SetupSlot } from '../../worker/profile'
 import type { Links } from '../../worker/links'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
@@ -27,7 +27,7 @@ import { applyTheme } from './theme'
 // sent in batches, and other devices' changes come back by number (the server's seq) so each pull
 // only carries what's new. The newest edit wins.
 
-export const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', 'platter.prices', ...LAYOUTS.map((l) => l.pref)])
+const SYNCED_PREFS = new Set(['platter.accent', 'platter.theme', 'platter.prices', ...LAYOUTS.map((l) => l.pref)])
 
 // per device, so none of these sync
 // left: sync was turned off on this device, so it doesn't join the account again by itself
@@ -52,7 +52,7 @@ export class CloudError extends Error {
 const KEY = 'platter.sync'
 export type Device = { name: string; device: string }
 
-export function savedDevice(): Device | null {
+function savedDevice(): Device | null {
   try {
     const d = JSON.parse(readPref(KEY) ?? 'null') as Device | null
     return d && typeof d.name === 'string' && typeof d.device === 'string' ? d : null
@@ -68,7 +68,7 @@ export const deviceFor = (username: string) => {
 
 // The password, stretched here so the server never sees it and guessing it is slow. The name is the
 // salt, so the same password makes a different proof for every account.
-export async function proofFor(name: string, password: string, iterations = 310_000): Promise<string> {
+async function proofFor(name: string, password: string, iterations = 310_000): Promise<string> {
   const enc = new TextEncoder()
   const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits'])
   const bits = await crypto.subtle.deriveBits(
@@ -139,12 +139,12 @@ export type Member = {
   about: boolean // has written a bio or setup
 }
 type Challenge<T> = { id: string; options: T }
-export type { Badge, BadgeLook } from '../../worker/badges'
+export type { Badge } from '../../worker/badges'
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
 // following: whether you follow them, when you're signed in
 export type Found = { username: string; about: string | null; publishedAt: number | null; following?: 'none' | 'pending' | 'accepted' }
-export type Relation = { following: 'none' | 'pending' | 'accepted'; followsYou: boolean; blocked: boolean }
+type Relation = { following: 'none' | 'pending' | 'accepted'; followsYou: boolean; blocked: boolean }
 export type ProfileHead = {
   locked: boolean // a Followers profile the viewer isn't approved for
   relation?: Relation
@@ -363,7 +363,7 @@ function batchValue(q: QueueItem) {
   return rest
 }
 
-export async function localValue(kind: Kind, key: string): Promise<unknown | undefined> {
+async function localValue(kind: Kind, key: string): Promise<unknown | undefined> {
   switch (kind) {
     case 'play': {
       const p = await db.plays.where('uid').equals(key).first()
@@ -486,7 +486,7 @@ function applyPref(r: Row) {
 const TABLES = [...Object.keys(SPECS), 'collection', 'outbox']
 
 // Another device's changes. One not yet sent from here that's newer stays.
-export async function applyRows(rows: Row[]) {
+async function applyRows(rows: Row[]) {
   const prefs: Row[] = []
   await db.transaction('rw', TABLES, async (tx) => {
     quiet.add(tx.idbtrans)
@@ -503,7 +503,7 @@ export async function applyRows(rows: Row[]) {
 
 // ---- push and pull ----
 
-export async function pushAll(api: CloudApi) {
+async function pushAll(api: CloudApi) {
   for (;;) {
     const entries = await db.outbox.orderBy('at').limit(200).toArray()
     if (!entries.length) return
@@ -528,7 +528,7 @@ export async function pushAll(api: CloudApi) {
 
 // Brings in what other devices changed, and follows the account's "What syncs" switches: a category
 // switched back on gets everything here sent up again
-export async function pullAll(api: CloudApi) {
+async function pullAll(api: CloudApi) {
   let since = (await getSetting<number>(CLOUD.cursor)) ?? 0
   for (;;) {
     const r = await api.pull(since)

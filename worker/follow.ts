@@ -156,7 +156,7 @@ export async function lists(
 
 // ---- what the people you follow added ----
 
-export const FEED_PAGE = 50
+const FEED_PAGE = 50
 
 // Newest first across everyone you follow whose Collection you can see. Item keys count down by date
 // added, so ordering by key is already newest first, whoever's they are.

@@ -7,7 +7,7 @@ import { Avatar } from './Profile'
 import { toast } from './Toaster'
 import { Button } from './ui'
 
-export const profilePath = (username: string) => `/u/${encodeURIComponent(username)}`
+const profilePath = (username: string) => `/u/${encodeURIComponent(username)}`
 
 const readAbout = (about: string | null): ProfileAbout => {
   try {

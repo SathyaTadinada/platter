@@ -1,6 +1,6 @@
 // Only the fields Platter reads. Shapes checked against tests/fixtures.
 
-export type Pagination = {
+type Pagination = {
   page: number
   pages: number
   per_page: number
@@ -81,7 +81,7 @@ export type CollectionField =
 
 export type FieldsResponse = { fields: CollectionField[] }
 
-export type BasicInformation = {
+type BasicInformation = {
   id: number
   master_id: number
   title: string

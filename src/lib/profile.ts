@@ -43,7 +43,7 @@ export type ProfileItem = {
 // Each field goes with its name and, where Platter knows what it's for (condition, price, notes…),
 // that role, so someone else's fields can be matched to theirs whatever they're called
 export type CopyDetails = { rating?: number; fields?: CopyField[] }
-export type CopyField = [name: string, value: string, role?: FieldKey]
+type CopyField = [name: string, value: string, role?: FieldKey]
 
 // Which details go up: 'rating' and field ids, with each field's name and any role
 export type CopyChoice = { details: string[]; names: Record<number, string>; roles?: Record<number, FieldKey> }
@@ -67,7 +67,7 @@ export type ProfileAbout = { avatar?: string; records?: number; playing?: { item
 
 // A record in a list on a profile: just enough to show it and open it
 export type ProfileBrief = Pick<ProfileItem, 'id' | 'title' | 'artist' | 'thumb'>
-export type ProfileCount = { label: string; count: number }
+type ProfileCount = { label: string; count: number }
 
 // The Stats section: the Listening view, and the collection by count, since prices aren't shared
 export type ProfileStats = {

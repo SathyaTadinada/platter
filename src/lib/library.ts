@@ -175,8 +175,6 @@ export type Filters = {
 
 export type LibraryQuery = { q: string; sort: SortKey; reversed: boolean; filters: Filters }
 
-export const emptyQuery = (): LibraryQuery => ({ q: '', sort: 'added', reversed: false, filters: { fields: {} } })
-
 // A sort as one string, for the URL and the saved choice: "artist", or "artist-rev" reversed.
 // "added-old" and "year-old" are how the reversed ones were saved before.
 export const sortParam = (sort: SortKey, reversed: boolean) => (reversed ? `${sort}-rev` : sort)

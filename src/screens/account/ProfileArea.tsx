@@ -50,7 +50,7 @@ const hover = 'hover:bg-stone-50 dark:hover:bg-stone-800/60'
 const profileLink = (username: string) => `/u/${encodeURIComponent(username)}`
 
 // Whether your profile can be opened at all: not Private, and not hidden
-export function useProfileOpen() {
+function useProfileOpen() {
   const cloud = useCloud()
   return { open: cloud.who !== 'private' && !cloud.hidden }
 }
