@@ -318,13 +318,14 @@ export type SortContext = {
 }
 
 export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}, reversed = false): LibraryItem[] {
-  const tie = (a: LibraryItem, b: LibraryItem) =>
-    byText(sortName(a.artist), sortName(b.artist)) || byText(sortName(a.title), sortName(b.title))
+  const byArtist = (a: LibraryItem, b: LibraryItem) => byText(sortName(a.artist), sortName(b.artist))
+  // ties always run A to Z, so reversing the artist sort still lists each artist's records A to Z
+  const tie = (a: LibraryItem, b: LibraryItem) => byArtist(a, b) || byText(sortName(a.title), sortName(b.title)) || yearOf(a) - yearOf(b)
   const num = (f: (i: LibraryItem) => number | undefined) => (a: LibraryItem, b: LibraryItem) => (f(a) ?? 0) - (f(b) ?? 0)
   // low to high, or A to Z
   const ascending: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
     added: (a, b) => a.dateAdded.localeCompare(b.dateAdded),
-    artist: (a, b) => tie(a, b) || yearOf(a) - yearOf(b),
+    artist: byArtist,
     title: (a, b) => byText(sortName(a.title), sortName(b.title)),
     year: num(yearOf),
     rating: num((i) => i.rating),

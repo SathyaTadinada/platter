@@ -424,12 +424,14 @@ export function arrangeShelf(rows: ShelfRow[], q: string, sort: SortKey, reverse
       })
     : rows
   const newest = (a: ShelfRow, b: ShelfRow) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
-  const names = (a: ShelfRow, b: ShelfRow) =>
-    byText(sortName(a.item.artist), sortName(b.item.artist)) || byText(sortName(a.item.title), sortName(b.item.title))
+  const byArtist = (a: ShelfRow, b: ShelfRow) => byText(sortName(a.item.artist), sortName(b.item.artist))
+  // ties always run A to Z, so reversing the artist sort still lists each artist's records A to Z
+  const tie = (a: ShelfRow, b: ShelfRow) =>
+    byArtist(a, b) || byText(sortName(a.item.title), sortName(b.item.title)) || (a.item.year ?? 0) - (b.item.year ?? 0)
   // low to high, or A to Z
   const ascending = {
     added: (a: ShelfRow, b: ShelfRow) => newest(b, a),
-    artist: (a: ShelfRow, b: ShelfRow) => names(a, b) || (a.item.year ?? 0) - (b.item.year ?? 0),
+    artist: byArtist,
     title: (a: ShelfRow, b: ShelfRow) => byText(sortName(a.item.title), sortName(b.item.title)),
     year: (a: ShelfRow, b: ShelfRow) => (a.item.year ?? 0) - (b.item.year ?? 0),
   }[sort as 'added' | 'artist' | 'title' | 'year']
@@ -437,7 +439,7 @@ export function arrangeShelf(rows: ShelfRow[], q: string, sort: SortKey, reverse
   const dir = DESCENDING[sort] !== reversed ? -1 : 1
   // records without a year go last, whichever way it runs
   const yearless = (r: ShelfRow) => Number(sort === 'year' && !r.item.year)
-  return [...found].sort((a, b) => yearless(a) - yearless(b) || dir * ascending(a, b) || names(a, b) || newest(a, b))
+  return [...found].sort((a, b) => yearless(a) - yearless(b) || dir * ascending(a, b) || tie(a, b) || newest(a, b))
 }
 
 export const instanceOf = (key: string) => Number(key.split(':')[1])

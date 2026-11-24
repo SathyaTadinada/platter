@@ -393,6 +393,11 @@ describe('searching and sorting someone’s records', () => {
     expect(titles('', 'artist')).toEqual(['Selected Ambient Works', 'Abbey Road', 'Debut'])
   })
 
+  it('keeps titles A to Z within an artist when the artist sort is reversed', () => {
+    const shelf = [row('1', 'Björk', 'Homogenic'), row('2', 'Aphex Twin', 'Syro'), row('3', 'Björk', 'Debut')]
+    expect(arrangeShelf(shelf, '', 'artist', true).map((r) => r.item.title)).toEqual(['Debut', 'Homogenic', 'Syro'])
+  })
+
   it('puts records without a year last either way', () => {
     expect(titles('', 'year')).toEqual(['Debut', 'Abbey Road', 'Selected Ambient Works'])
     expect(titles('', 'year', true)).toEqual(['Abbey Road', 'Debut', 'Selected Ambient Works'])

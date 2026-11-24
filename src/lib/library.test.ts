@@ -114,6 +114,15 @@ describe('sortItems', () => {
     expect(sorted.indexOf('The Beatles')).toBeLessThan(sorted.indexOf('Björk'))
   })
 
+  it('keeps titles A to Z within an artist when the artist sort is reversed', () => {
+    const [x] = items
+    const rec = (instanceId: number, artist: string, title: string) => ({ ...x, instanceId, artist, title })
+    const list = [rec(1, 'Björk', 'Debut'), rec(2, 'Aphex Twin', 'Syro'), rec(3, 'Björk', 'Homogenic'), rec(4, 'Aphex Twin', 'Drukqs')]
+    const order = (reversed: boolean) => sortItems(list, 'artist', {}, reversed).map((i) => i.title)
+    expect(order(false)).toEqual(['Drukqs', 'Syro', 'Debut', 'Homogenic'])
+    expect(order(true)).toEqual(['Debut', 'Homogenic', 'Drukqs', 'Syro'])
+  })
+
   it('sorts by date added, newest first by default', () => {
     const s = sortItems(items, 'added')
     expect(s[0].dateAdded >= s.at(-1)!.dateAdded).toBe(true)
