@@ -1,5 +1,5 @@
-import { localDate } from './value'
 import { plural } from './format'
+import { localDate } from './time'
 
 // A record lent out lives in an optional "Lent To" field on Discogs, so it shows on every
 // device and on Discogs itself, e.g. "Alex (since 2026-10-24)". A value typed by hand

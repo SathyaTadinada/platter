@@ -5,8 +5,8 @@ import { Highlights, MonthBars, RecordList, Tile, TopArtists, YearStepper, type 
 import { Card, Section } from '../../components/ui'
 import type { ProfileBrief, ProfileStats, ProfileYear } from '../../lib/profile'
 import { hoursText, plural } from '../../lib/format'
-import { DAYS, dayAgo, formatDay } from '../../lib/time'
-import { localDate, type MonthTotal } from '../../lib/value'
+import { dayAgo, DAYS, formatDay, localDate } from '../../lib/time'
+import { type MonthTotal } from '../../lib/value'
 import { BarList } from '../value/Breakdowns'
 import { useRecordHref } from './recordHref'
 

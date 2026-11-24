@@ -88,11 +88,6 @@ export function valueBracket(amount: number | undefined, money: (n: number) => s
   return `Under ${money(10)}`
 }
 
-export const localDate = (t: number) => {
-  const d = new Date(t)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
 // Total of what was typed into the purchase price field
 export function paidTotal(items: { fields: Record<number, string> }[], fieldId: number | undefined) {
   let total = 0

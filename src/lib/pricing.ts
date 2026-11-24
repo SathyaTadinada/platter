@@ -1,7 +1,8 @@
 import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
 import { getCollectionValue, getMarketplaceStats, getPriceSuggestions } from '../api/discogs/endpoints'
 import { db, getSetting, setSetting } from '../db/db'
-import { localDate, parseMoney, type PriceEntry, type ValueSnapshot } from './value'
+import { parseMoney, type PriceEntry, type ValueSnapshot } from './value'
+import { localDate } from './time'
 
 // Price suggestions only work once seller settings are filled in. When they
 // aren't, don't ask again for a day, or until Refresh from Discogs.

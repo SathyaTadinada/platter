@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo, useSyncExternalStore, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Card, Section, Spinner } from '../components/ui'
 import { db } from '../db/db'
 import { usePriceBasis } from '../hooks/priceBasis'
@@ -11,9 +11,9 @@ import { useFieldState } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
 import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
-import { shown, valueLayout, type ValueKey } from '../lib/statsLayout'
+import { valueLayout, type ValueKey } from '../lib/statsLayout'
 import { change, formatMoney, valueOf } from '../lib/value'
-import { RecordRow, statCard, statList } from '../components/stats'
+import { ChartColumns, RecordRow, statCard, statList } from '../components/stats'
 import { PriceCoverage } from '../components/PriceCoverage'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { shortDate, type Money, type Valued } from './value/shared'
@@ -36,7 +36,6 @@ export function ValueStats() {
     [client, username, currency, items?.length],
   )
 
-  const layout = useSyncExternalStore(valueLayout.subscribe, valueLayout.get)
   const paidField = matches ? fieldFor(matches, 'purchasePrice')?.id : undefined
   const mediaField = matches ? fieldFor(matches, 'mediaCondition')?.id : undefined
   const dateField = matches ? fieldFor(matches, 'purchaseDate')?.id : undefined
@@ -141,15 +140,7 @@ export function ValueStats() {
   return (
     <>
       <PriceCoverage items={items} prices={prices} currency={currency} />
-      {/* the columns picked in "Choose charts": side by side on wide screens, left then right on phones */}
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-        {(['left', 'right'] as const).map((side) => (
-          <div key={side}>
-            {side === 'left' && first}
-            {shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}
-          </div>
-        ))}
-      </div>
+      <ChartColumns store={valueLayout} sections={sections} first={first} />
       <footer className="mt-2 text-sm">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </footer>

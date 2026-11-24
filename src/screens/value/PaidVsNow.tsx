@@ -8,6 +8,7 @@ import { RecordRow } from '../../components/stats'
 import { statCard } from '../../components/stats'
 import { down, up, type Money, type Valued } from './shared'
 import { Delta } from './ValueChart'
+import { plural } from '../../lib/format'
 
 // Collection, by what was paid, as a list with the amounts
 const EACH = '/?sort=paid&view=list'
@@ -108,9 +109,7 @@ export function PaidVsNow({
           <>
             <Link href={EACH} className="-m-2 block rounded-xl p-2 hover:bg-stone-50 dark:hover:bg-stone-800/50">
               <p className="text-2xl font-bold tabular-nums">{money(paid.total)}</p>
-              <p className="text-sm text-stone-500">
-                paid for {paid.count} record{paid.count === 1 ? '' : 's'}
-              </p>
+              <p className="text-sm text-stone-500">paid for {plural(paid.count, 'record')}</p>
             </Link>
           </>
         )}

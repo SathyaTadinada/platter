@@ -1,4 +1,4 @@
-import { localDate } from './value'
+import { localDate } from './time'
 
 // Hand a generated file to the browser to save
 export function download(name: string, text: string, type: string) {

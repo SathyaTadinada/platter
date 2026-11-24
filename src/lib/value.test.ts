@@ -6,7 +6,6 @@ import {
   distribution,
   totalsBy,
   isFresh,
-  localDate,
   paidTotal,
   parseMoney,
   valueBracket,
@@ -14,6 +13,7 @@ import {
   type PriceEntry,
   type ValueSnapshot,
 } from './value'
+import { localDate } from './time'
 
 describe('parseMoney', () => {
   it.each([

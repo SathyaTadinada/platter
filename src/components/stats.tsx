@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import type { LibraryItem } from '../db/db'
+import { shown, type LayoutStore } from '../lib/statsLayout'
 import type { MonthTotal } from '../lib/value'
 import { Cover } from './Cover'
 
@@ -186,5 +187,32 @@ function YearButton({ label, onClick, children }: { label: string; onClick?: () 
     >
       {children}
     </button>
+  )
+}
+
+// The sections picked in "Choose charts": side by side on wide screens, left then right on phones.
+// first goes at the top of the left column; children go under both.
+export function ChartColumns<K extends string>({
+  store,
+  sections,
+  first,
+  children,
+}: {
+  store: LayoutStore<K>
+  sections: Record<K, ReactNode>
+  first?: ReactNode
+  children?: ReactNode
+}) {
+  const layout = useSyncExternalStore(store.subscribe, store.get)
+  return (
+    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+      {(['left', 'right'] as const).map((side) => (
+        <div key={side}>
+          {side === 'left' && first}
+          {shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}
+        </div>
+      ))}
+      {children}
+    </div>
   )
 }

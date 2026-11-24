@@ -2,9 +2,10 @@ import { saveSession } from '../auth/auth'
 import { db, setSetting, type Session } from '../db/db'
 import { resetDemoAccent } from '../lib/accent'
 import { toLibraryItem, wantFromApi } from '../lib/library'
-import { localDate, type ValueSnapshot } from '../lib/value'
+import { type ValueSnapshot } from '../lib/value'
 import { createDemoFetch, currentDemoCollection, currentDemoPlays, currentDemoValue, DEMO_USER, resetDemo } from './backend'
 import { setDemoFetch } from './registry'
+import { localDate } from '../lib/time'
 
 setDemoFetch(createDemoFetch())
 

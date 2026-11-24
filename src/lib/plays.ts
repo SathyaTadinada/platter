@@ -5,7 +5,7 @@ import { db, getSetting, type LibraryItem } from '../db/db'
 import { deviceId } from './device'
 import { fieldFor, type FieldMatch } from './fields'
 import { rememberLength } from './stylus'
-import { localDate } from './value'
+import { localDate } from './time'
 
 // One logged spin, kept on the device
 export type Play = {

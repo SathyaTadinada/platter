@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { inline, Row } from '../../components/CopyDetails'
 import { DateInput } from '../../components/DateInput'
-import { formatDay } from '../../lib/time'
+import { formatDay, localDate } from '../../lib/time'
 import { Sheet } from '../../components/Sheet'
 import { statCard } from '../../components/stats'
 import { toast } from '../../components/Toaster'
@@ -11,7 +11,7 @@ import { db } from '../../db/db'
 import { checkPrices, useCurrency, usePriceCheck } from '../../hooks/prices'
 import { useSignedIn } from '../../hooks/session'
 import { saveStylusSettings, staleLengths, stylusSettings, stylusUse, type StylusSettings } from '../../lib/stylus'
-import { localDate } from '../../lib/value'
+import { plural } from '../../lib/format'
 
 const hours = (h: number) => (h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString())
 const dayStart = (iso: string) => new Date(`${iso}T00:00`).getTime()
@@ -88,9 +88,7 @@ export function Stylus() {
               ? `Past ${settings.lifespan.toLocaleString()} hours`
               : `${Math.round(settings.lifespan - use.hours).toLocaleString()} of ${settings.lifespan.toLocaleString()} hours left`}
           </p>
-          <p className="tabular-nums">
-            {use.plays.toLocaleString()} play{use.plays === 1 ? '' : 's'}
-          </p>
+          <p className="tabular-nums">{plural(use.plays, 'play')}</p>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={fitted}>

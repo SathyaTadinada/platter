@@ -1,18 +1,18 @@
 import { Dices } from 'lucide-react'
-import { useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { MonthBars, RecordList, Tile } from '../components/stats'
+import { ChartColumns, MonthBars, RecordList, Tile } from '../components/stats'
 import { buttonClass, Card, Notice, Section, Spinner } from '../components/ui'
 import { useListening, usePlayFields } from '../hooks/plays'
 import { useSignedIn } from '../hooks/session'
 import { plural } from '../lib/format'
 import { listeningStats } from '../lib/plays'
-import { dayAgo } from '../lib/time'
-import { byMonth, localDate } from '../lib/value'
+import { dayAgo, localDate } from '../lib/time'
+import { byMonth } from '../lib/value'
 import { PlayPicker } from './collection/PlayPicker'
 import { Stylus } from './listening/Stylus'
-import { listeningLayout, shown, type ListeningKey } from '../lib/statsLayout'
+import { listeningLayout, type ListeningKey } from '../lib/statsLayout'
 
 const TOP = 8
 
@@ -22,7 +22,6 @@ export function ListeningStats() {
   const { username } = useSignedIn()
   const ids = usePlayFields()
   const [picking, setPicking] = useState(false)
-  const layout = useSyncExternalStore(listeningLayout.subscribe, listeningLayout.get)
   if (!data) return <Spinner />
 
   const { rows, plays } = data
@@ -101,7 +100,7 @@ export function ListeningStats() {
         {picking && (
           <PlayPicker
             items={forgotten.map((r) => r.item)}
-            scope={`${forgotten.length} records not played in a year`}
+            scope={`${plural(forgotten.length, 'record')} not played in a year`}
             onClose={() => setPicking(false)}
           />
         )}
@@ -109,18 +108,11 @@ export function ListeningStats() {
     ),
   }
 
-  // the columns picked in "Choose charts": side by side on wide screens, left then right on phones
   return (
-    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-      {(['left', 'right'] as const).map((side) => (
-        <div key={side}>
-          {side === 'left' && nudge && <div className="mb-4">{nudge}</div>}
-          {shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}
-        </div>
-      ))}
+    <ChartColumns store={listeningLayout} sections={sections} first={nudge && <div className="mb-4">{nudge}</div>}>
       <p className="lg:col-span-2">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </p>
-    </div>
+    </ChartColumns>
   )
 }

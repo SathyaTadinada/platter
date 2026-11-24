@@ -2,8 +2,9 @@ import type { LibraryItem } from '../db/db'
 import type { Play } from './plays'
 import type { ShareCard } from './shareCard'
 import { stylusUse, type RecordLength } from './stylus'
-import { byMonth, localDate, parseMoney, type MonthTotal } from './value'
+import { byMonth, parseMoney, type MonthTotal } from './value'
 import { plural } from './format'
+import { localDate } from './time'
 
 // A year of the collection: what came in, what got played, and for how long. Plays come from
 // the log on this device; the Discogs fields only hold a total and the last date.

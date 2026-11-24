@@ -1,5 +1,11 @@
 import { plural } from './format'
 
+// YYYY-MM-DD in local time
+export const localDate = (t: number) => {
+  const d = new Date(t)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function timeAgo(ts: number, now = Date.now()): string {
   const s = Math.round((now - ts) / 1000)
   if (s < 60) return 'just now'

@@ -1,11 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Share, SlidersHorizontal } from 'lucide-react'
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { ChartsSheet } from '../components/ChartsSheet'
 import { Cover } from '../components/Cover'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { Highlights, MonthBars, RecordList, Tile, TopArtists, YearStepper, type Highlight } from '../components/stats'
+import { ChartColumns, Highlights, MonthBars, RecordList, Tile, TopArtists, YearStepper, type Highlight } from '../components/stats'
 import { ShareSheet } from '../components/ShareSheet'
 import { Card, IconButton, Screen, Section, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
@@ -16,9 +16,9 @@ import { fieldFor } from '../lib/fields'
 import { hoursText, plural } from '../lib/format'
 import { libraryItems } from '../lib/masters'
 import { replaceAddress } from '../lib/nav'
-import { DAYS, formatDay } from '../lib/time'
-import { formatMoney, localDate } from '../lib/value'
-import { shown, yearLayout, type YearKey } from '../lib/statsLayout'
+import { DAYS, formatDay, localDate } from '../lib/time'
+import { formatMoney } from '../lib/value'
+import { yearLayout, type YearKey } from '../lib/statsLayout'
 import { reviewYears, yearCard, yearReview, type YearReview } from '../lib/yearReview'
 
 const COVERS = 6
@@ -94,7 +94,6 @@ export function YourYear({ year: asked }: { year?: string }) {
 
 function Review({ r, currency, username }: { r: YearReview; currency: string; username: string }) {
   const { year } = r
-  const layout = useSyncExternalStore(yearLayout.subscribe, yearLayout.get)
   if (!r.added.length && !r.plays) {
     return (
       <Card className="max-w-xl">
@@ -166,12 +165,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
         </div>
       </Section>
 
-      {/* the columns picked in "Choose charts": side by side on wide screens, left then right on phones */}
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-        {(['left', 'right'] as const).map((side) => (
-          <div key={side}>{shown(layout, side).map((k) => sections[k] && <div key={k}>{sections[k]}</div>)}</div>
-        ))}
-      </div>
+      <ChartColumns store={yearLayout} sections={sections} />
       <p className="mt-2">
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </p>

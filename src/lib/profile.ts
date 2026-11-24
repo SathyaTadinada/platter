@@ -6,8 +6,9 @@ import type { CloudApi, ProfileRow, SetupSlot } from './cloud'
 import { byArtist, byTitle, decadeOf, DESCENDING, fold, SORTS, wordsOf, yearOf, type SortKey } from './library'
 import { libraryItems } from './masters'
 import { knownPlayFields, listening, listeningStats, type Play } from './plays'
-import { byMonth, localDate, type MonthTotal } from './value'
+import { byMonth, type MonthTotal } from './value'
 import { reviewYears, yearReview } from './yearReview'
+import { localDate } from './time'
 
 // Publishing a profile: the owner's devices send what each switched-on section shows, and nothing
 // else. Release details are Discogs' catalog data, which can be kept; the owner's own ratings and
