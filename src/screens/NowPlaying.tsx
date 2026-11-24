@@ -11,7 +11,7 @@ import { Cover } from '../components/Cover'
 import { CrateSelect } from '../components/CrateSelect'
 import { PlaySummary } from '../components/PlayButton'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { RecordRow, statCard } from '../components/stats'
+import { RecordRow, statList } from '../components/stats'
 import { Button, buttonClass, List, Notice, Screen, Section, Spinner } from '../components/ui'
 import { db, getSetting, setSetting, type LibraryItem } from '../db/db'
 import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollectionMeta'
@@ -26,7 +26,6 @@ import { toCard, type ReleaseCard } from '../lib/format'
 import { itemFromRelease } from '../lib/library'
 import { lookupBarcode } from '../lib/lookup'
 
-const rows = `divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`
 const where = (c: ReleaseCard) => [c.country, c.year].filter(Boolean).join(' · ')
 
 // Laid out like a record page: the cover, and beside it on wide screens (under it on phones)
@@ -217,7 +216,7 @@ function Playing({ barcode }: { barcode: string }) {
       <Layout cover={copies[0]} title={copies[0].title} artist={copies[0].artist} status="You have more than one copy">
         <div className="mt-6">
           <Section title="Which one's on?">
-            <ul className={rows}>
+            <ul className={statList}>
               {copies.map((c) => (
                 <li key={c.instanceId}>
                   <RecordRow item={c} detail={[c.format, c.year || null].filter(Boolean).join(' · ')} onClick={() => play(c)} />
@@ -246,7 +245,7 @@ function Playing({ barcode }: { barcode: string }) {
         <div className="mt-6 space-y-6">
           {pressings.length > 0 && (
             <Section title="In your collection">
-              <ul className={rows}>
+              <ul className={statList}>
                 {pressings.map((p) => (
                   <li key={p.instanceId}>
                     <RecordRow item={p} detail={[p.format, p.year || null].filter(Boolean).join(' · ')} onClick={() => play(p)}>
@@ -274,7 +273,7 @@ function Playing({ barcode }: { barcode: string }) {
               {several ? (
                 <>
                   <p className="px-1 text-sm text-stone-500">Which pressing is it? Tap yours to add it and log the play.</p>
-                  <ul className={rows}>
+                  <ul className={statList}>
                     {cards.map((c, i) => (
                       <li key={c.id}>
                         <RecordRow

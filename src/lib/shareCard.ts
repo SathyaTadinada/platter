@@ -1,6 +1,7 @@
 import type { LibraryItem } from '../db/db'
 import { yearOf } from './library'
 import type { Listening } from './plays'
+import { plural } from './format'
 
 // The pictures behind "Share" on the Stats tab and on Your year: a big number and a few facts,
 // drawn on a canvas so they can be saved or sent anywhere.
@@ -44,8 +45,6 @@ export function cardFacts(user: string, items: LibraryItem[], rows: Listening[],
     addedThisYear: items.filter((i) => i.dateAdded.startsWith(year)).length,
   }
 }
-
-const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
 
 // label, main line, and an optional smaller line under it
 export function cardRows(f: CardFacts): [string, string, string?][] {

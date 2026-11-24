@@ -3,7 +3,7 @@ import { Heart } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { addWant, removeWant } from '../api/discogs/endpoints'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { RecordRow, statCard } from '../components/stats'
+import { RecordRow, statList } from '../components/stats'
 import { toast } from '../components/Toaster'
 import { Notice, Screen, Spinner, useBack } from '../components/ui'
 import { db, type WantItem } from '../db/db'
@@ -86,7 +86,7 @@ export function Wantlist() {
           <p className="mt-1 text-sm text-stone-500">Tap the heart on a record to add it here.</p>
         </div>
       ) : (
-        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
+        <ul className={statList}>
           {sorted.map((w) => {
             const price = prices?.get(w.releaseId)
             return (

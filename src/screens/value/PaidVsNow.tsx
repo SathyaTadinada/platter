@@ -5,7 +5,8 @@ import { Card, Section } from '../../components/ui'
 import type { LibraryItem } from '../../db/db'
 import { change, paidTotal, parseMoney } from '../../lib/value'
 import { RecordRow } from '../../components/stats'
-import { card, down, up, type Money, type Valued } from './shared'
+import { statCard } from '../../components/stats'
+import { down, up, type Money, type Valued } from './shared'
 import { Delta } from './ValueChart'
 
 // Collection, by what was paid, as a list with the amounts
@@ -155,7 +156,7 @@ function PaidBar({ paid, now, money }: { paid: number; now: number; money: Money
 
 function Movers({ title, rows, money }: { title: string; rows: (Valued & { paid: number; diff: number })[]; money: Money }) {
   return (
-    <div className={`overflow-hidden ${card}`}>
+    <div className={`overflow-hidden ${statCard}`}>
       <p className="px-4 pt-3 pb-1 text-xs font-semibold text-stone-500">{title}</p>
       <ul className="divide-y divide-stone-200 dark:divide-stone-800">
         {rows.map((r) => (

@@ -303,7 +303,9 @@ export function filterItems(items: LibraryItem[], q: LibraryQuery): LibraryItem[
 // "The Beatles" sorts under B
 export const sortName = (s: string) => fold(s).replace(/^(the|a|an)\s+/, '')
 
-export const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+export const byArtist = (a: { artist: string }, b: { artist: string }) => byText(sortName(a.artist), sortName(b.artist))
+export const byTitle = (a: { title: string }, b: { title: string }) => byText(sortName(a.title), sortName(b.title))
 
 // Some sorts need data that lives outside the library: prices, plays, the location field
 export type SortContext = {
@@ -316,15 +318,14 @@ export type SortContext = {
 }
 
 export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext = {}, reversed = false): LibraryItem[] {
-  const byArtist = (a: LibraryItem, b: LibraryItem) => byText(sortName(a.artist), sortName(b.artist))
   // ties always run A to Z, so reversing the artist sort still lists each artist's records A to Z
-  const tie = (a: LibraryItem, b: LibraryItem) => byArtist(a, b) || byText(sortName(a.title), sortName(b.title)) || yearOf(a) - yearOf(b)
+  const tie = (a: LibraryItem, b: LibraryItem) => byArtist(a, b) || byTitle(a, b) || yearOf(a) - yearOf(b)
   const num = (f: (i: LibraryItem) => number | undefined) => (a: LibraryItem, b: LibraryItem) => (f(a) ?? 0) - (f(b) ?? 0)
   // low to high, or A to Z
   const ascending: Record<SortKey, (a: LibraryItem, b: LibraryItem) => number> = {
     added: (a, b) => a.dateAdded.localeCompare(b.dateAdded),
     artist: byArtist,
-    title: (a, b) => byText(sortName(a.title), sortName(b.title)),
+    title: byTitle,
     year: num(yearOf),
     rating: num((i) => i.rating),
     value: num((i) => ctx.value?.(i)),

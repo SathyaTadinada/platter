@@ -9,6 +9,9 @@ export function timeAgo(ts: number, now = Date.now()): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
+// for "Busiest day: Fridays", by Date.getDay()
+export const DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays']
+
 // "Oct 14, 2026" from "2026-10-14"
 export const formatDay = (iso: string) =>
   new Date(`${iso}T12:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })

@@ -1,12 +1,15 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'wouter'
 import type { LibraryItem } from '../db/db'
 import type { MonthTotal } from '../lib/value'
 import { Cover } from './Cover'
 
-// Bits shared by the Value and Listening views
+// Bits shared by Stats, Your year, and the same on someone's profile
 
 export const statCard = 'rounded-2xl bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800'
+// a card of rows with lines between them
+export const statList = `divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`
 export const pct = (n: number, of: number) => `${of > 0 ? Math.max(2, (n / of) * 100) : 0}%`
 
 type RowItem = Pick<LibraryItem, 'instanceId' | 'title' | 'artist' | 'cover' | 'thumb'>
@@ -88,5 +91,100 @@ export function MonthBars({
         </div>
       </div>
     </>
+  )
+}
+
+export function Tile({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className={`${statCard} p-3`}>
+      <p className="truncate text-2xl font-bold tabular-nums">{value}</p>
+      <p className="text-xs text-stone-500">{label}</p>
+    </div>
+  )
+}
+
+// Records with a figure on the right, like "12 plays"
+export function RecordList({ rows }: { rows: { item: RowItem; href?: string; right: string }[] }) {
+  return (
+    <ul className={statList}>
+      {rows.map(({ item, href, right }) => (
+        <li key={item.instanceId}>
+          <RecordRow item={item} href={href}>
+            <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{right}</span>
+          </RecordRow>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function TopArtists({ artists, text }: { artists: { name: string; count: number }[]; text: (n: number) => string }) {
+  return (
+    <ol className={statList}>
+      {artists.map((a, i) => (
+        <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
+          <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
+          <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
+          <span className="shrink-0 font-medium text-stone-600 tabular-nums dark:text-stone-300">{text(a.count)}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+export type Highlight = { label: string; value: string; record?: { item: RowItem; href?: string } }
+
+// Your year's highlights: plain facts, and ones about a record that open it
+export function Highlights({ facts }: { facts: Highlight[] }) {
+  return (
+    <ul className={statList}>
+      {facts.map(({ label, value, record }) =>
+        record ? (
+          <li key={label}>
+            <RecordRow item={record.item} href={record.href}>
+              <span className="block text-xs text-stone-500">{label}</span>
+              <span className="block text-sm font-medium tabular-nums">{value}</span>
+            </RecordRow>
+          </li>
+        ) : (
+          <li key={label} className="flex min-h-14 items-center justify-between gap-3 px-4 text-sm">
+            <span className="text-stone-500">{label}</span>
+            <span className="font-medium">{value}</span>
+          </li>
+        ),
+      )}
+    </ul>
+  )
+}
+
+// ‹ 2026 so far ›, with an arrow turned off when there's no year that way
+export function YearStepper({ year, onEarlier, onLater }: { year: number; onEarlier?: () => void; onLater?: () => void }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800">
+      <YearButton label="Earlier year" onClick={onEarlier}>
+        <ChevronLeft size={18} />
+      </YearButton>
+      <span className="text-sm font-semibold tabular-nums">
+        {year}
+        {year === new Date().getFullYear() && <span className="font-normal text-stone-500"> so far</span>}
+      </span>
+      <YearButton label="Later year" onClick={onLater}>
+        <ChevronRight size={18} />
+      </YearButton>
+    </div>
+  )
+}
+
+function YearButton({ label, onClick, children }: { label: string; onClick?: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={!onClick}
+      onClick={onClick}
+      className="flex min-h-9 min-w-11 items-center justify-center rounded-lg hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-stone-950"
+    >
+      {children}
+    </button>
   )
 }

@@ -13,10 +13,10 @@ import { libraryItems } from '../lib/masters'
 import { recordCollectionValue } from '../lib/pricing'
 import { shown, valueLayout, type ValueKey } from '../lib/statsLayout'
 import { change, formatMoney, valueOf } from '../lib/value'
-import { RecordRow } from '../components/stats'
+import { RecordRow, statCard, statList } from '../components/stats'
 import { PriceCoverage } from '../components/PriceCoverage'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { card, shortDate, type Money, type Valued } from './value/shared'
+import { shortDate, type Money, type Valued } from './value/shared'
 import { Delta, Chart } from './value/ValueChart'
 import { PaidVsNow } from './value/PaidVsNow'
 import { Breakdown, GroupTotals } from './value/Breakdowns'
@@ -84,7 +84,7 @@ export function ValueStats() {
     ),
     top: valued.length > 0 && (
       <Section title="Most valuable">
-        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${card}`}>
+        <ul className={statList}>
           {valued.slice(0, TOP).map(({ item, value }) => (
             <li key={item.instanceId}>
               <RecordRow item={item}>
@@ -109,7 +109,7 @@ export function ValueStats() {
 
   const first = (
     <Section>
-      <div className={`${card} p-4`}>
+      <div className={`${statCard} p-4`}>
         <p className="text-sm text-stone-500">Estimated value</p>
         {current.data ? (
           <>

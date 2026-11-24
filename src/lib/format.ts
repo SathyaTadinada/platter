@@ -81,3 +81,9 @@ export const shortGrade = <T extends string | undefined>(condition: T): T =>
 
 // Messages as sentences, for listing after one of our own: "Value too long" -> "Value too long."
 export const sentences = (messages: string[]) => messages.map((m) => (/[.!?]$/.test(m.trim()) ? m.trim() : `${m.trim()}.`)).join(' ')
+
+// "1 record", "1,204 records"
+export const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
+
+// "2.5" under 10 hours, "14" or "1,032" above
+export const hoursText = (h: number) => (h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString())

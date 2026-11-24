@@ -1,12 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight, Share, SlidersHorizontal } from 'lucide-react'
+import { Share, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { ChartsSheet } from '../components/ChartsSheet'
 import { Cover } from '../components/Cover'
-import { formatDay } from '../lib/time'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { MonthBars, RecordRow, statCard } from '../components/stats'
+import { Highlights, MonthBars, RecordList, Tile, TopArtists, YearStepper, type Highlight } from '../components/stats'
 import { ShareSheet } from '../components/ShareSheet'
 import { Card, IconButton, Screen, Section, Spinner } from '../components/ui'
 import { db, type LibraryItem } from '../db/db'
@@ -14,15 +13,15 @@ import { useCurrency } from '../hooks/prices'
 import { useSignedIn } from '../hooks/session'
 import { useFieldMatches } from '../hooks/useFields'
 import { fieldFor } from '../lib/fields'
+import { hoursText, plural } from '../lib/format'
 import { libraryItems } from '../lib/masters'
 import { replaceAddress } from '../lib/nav'
+import { DAYS, formatDay } from '../lib/time'
 import { formatMoney, localDate } from '../lib/value'
 import { shown, yearLayout, type YearKey } from '../lib/statsLayout'
 import { reviewYears, yearCard, yearReview, type YearReview } from '../lib/yearReview'
 
 const COVERS = 6
-const DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays']
-const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
 
 export function YourYear({ year: asked }: { year?: string }) {
   const thisYear = new Date().getFullYear()
@@ -60,18 +59,11 @@ export function YourYear({ year: asked }: { year?: string }) {
   }
 
   const toolbar = (
-    <div className="flex items-center justify-between rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800">
-      <YearButton label="Earlier year" disabled={!data || at < 0 || at >= years.length - 1} onClick={() => go(years[at + 1])}>
-        <ChevronLeft size={18} />
-      </YearButton>
-      <span className="text-sm font-semibold tabular-nums">
-        {year}
-        {year === thisYear && <span className="font-normal text-stone-500"> so far</span>}
-      </span>
-      <YearButton label="Later year" disabled={!data || at <= 0} onClick={() => go(years[at - 1])}>
-        <ChevronRight size={18} />
-      </YearButton>
-    </div>
+    <YearStepper
+      year={year}
+      onEarlier={data && at >= 0 && at < years.length - 1 ? () => go(years[at + 1]) : undefined}
+      onLater={data && at > 0 ? () => go(years[at - 1]) : undefined}
+    />
   )
 
   return (
@@ -100,30 +92,6 @@ export function YourYear({ year: asked }: { year?: string }) {
   )
 }
 
-function YearButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string
-  disabled: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex min-h-9 min-w-11 items-center justify-center rounded-lg hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-stone-950"
-    >
-      {children}
-    </button>
-  )
-}
-
 function Review({ r, currency, username }: { r: YearReview; currency: string; username: string }) {
   const { year } = r
   const layout = useSyncExternalStore(yearLayout.subscribe, yearLayout.get)
@@ -136,7 +104,6 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     )
   }
 
-  const hours = r.hours < 10 ? r.hours.toFixed(1) : Math.round(r.hours).toLocaleString()
   const first = r.added[0]
   const latest = r.added.at(-1)
   const day = (iso: string) => formatDay(localDate(Date.parse(iso)))
@@ -145,11 +112,11 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     r.decade !== undefined && { label: 'Mostly from', value: `the ${r.decade}s` },
     r.genres[0] && { label: 'Top genre added', value: r.genres[0].name },
     r.busiestDay !== undefined && { label: 'Busiest day', value: DAYS[r.busiestDay] },
-    first && { label: 'First in', item: first, value: day(first.dateAdded) },
-    latest && latest !== first && { label: 'Latest', item: latest, value: day(latest.dateAdded) },
-    r.biggestBuy && { label: 'Biggest buy', item: r.biggestBuy.item, value: formatMoney(r.biggestBuy.amount, currency) },
-    r.oldest && r.added.length > 1 && { label: 'Oldest album added', item: r.oldest.item, value: String(r.oldest.year) },
-  ].filter(Boolean) as { label: string; value: string; item?: LibraryItem }[]
+    first && { label: 'First in', record: { item: first }, value: day(first.dateAdded) },
+    latest && latest !== first && { label: 'Latest', record: { item: latest }, value: day(latest.dateAdded) },
+    r.biggestBuy && { label: 'Biggest buy', record: { item: r.biggestBuy.item }, value: formatMoney(r.biggestBuy.amount, currency) },
+    r.oldest && r.added.length > 1 && { label: 'Oldest album added', record: { item: r.oldest.item }, value: String(r.oldest.year) },
+  ].filter(Boolean) as Highlight[]
 
   const sections: Record<YearKey, ReactNode> = {
     month: r.plays > 0 && (
@@ -161,28 +128,12 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     ),
     most: r.plays > 0 && (
       <Section title="Most played">
-        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-          {r.topRecords.map(({ item, count }) => (
-            <li key={item.instanceId}>
-              <RecordRow item={item}>
-                <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(count, 'play')}</span>
-              </RecordRow>
-            </li>
-          ))}
-        </ul>
+        <RecordList rows={r.topRecords.map(({ item, count }) => ({ item, right: plural(count, 'play') }))} />
       </Section>
     ),
     artists: r.plays > 0 && (
       <Section title="Top artists">
-        <ol className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-          {r.topArtists.map((a, i) => (
-            <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
-              <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
-              <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
-              <span className="shrink-0 font-medium text-stone-600 tabular-nums dark:text-stone-300">{plural(a.count, 'play')}</span>
-            </li>
-          ))}
-        </ol>
+        <TopArtists artists={r.topArtists} text={(n) => plural(n, 'play')} />
       </Section>
     ),
     added: r.added.length > 0 && (
@@ -195,23 +146,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
     new: r.added.length > 0 && <NewRecords added={r.added} year={year} />,
     highlights: facts.length > 0 && (
       <Section title="Highlights">
-        <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-          {facts.map(({ label, value, item }) =>
-            item ? (
-              <li key={label}>
-                <RecordRow item={item}>
-                  <span className="block text-xs text-stone-500">{label}</span>
-                  <span className="block text-sm font-medium tabular-nums">{value}</span>
-                </RecordRow>
-              </li>
-            ) : (
-              <li key={label} className="flex min-h-14 items-center justify-between gap-3 px-4 text-sm">
-                <span className="text-stone-500">{label}</span>
-                <span className="font-medium">{value}</span>
-              </li>
-            ),
-          )}
-        </ul>
+        <Highlights facts={facts} />
       </Section>
     ),
   }
@@ -222,7 +157,7 @@ function Review({ r, currency, username }: { r: YearReview; currency: string; us
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Tile label={r.added.length === 1 ? 'record added' : 'records added'} value={r.added.length.toLocaleString()} />
           <Tile label={r.plays === 1 ? 'play' : 'plays'} value={r.plays.toLocaleString()} />
-          <Tile label="hours listened" value={hours} />
+          <Tile label="hours listened" value={hoursText(r.hours)} />
           {r.spent && r.spent.count > 0 ? (
             <Tile label={`spent on ${plural(r.spent.count, 'record')}`} value={formatMoney(r.spent.total, currency, { whole: true })} />
           ) : (
@@ -268,14 +203,5 @@ function NewRecords({ added, year }: { added: LibraryItem[]; year: number }) {
         </button>
       )}
     </Section>
-  )
-}
-
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={`${statCard} p-3`}>
-      <p className="truncate text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-stone-500">{label}</p>
-    </div>
   )
 }

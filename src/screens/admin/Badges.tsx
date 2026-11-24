@@ -7,8 +7,8 @@ import { Menu } from '../../components/Menu'
 import { Sheet } from '../../components/Sheet'
 import { Button, IconButton, List, Notice } from '../../components/ui'
 import { CloudError, type Badge, type Member } from '../../lib/cloud'
+import { plural } from '../../lib/format'
 
-const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
 const field = 'min-h-10 w-full min-w-0 rounded-lg border border-stone-300 bg-transparent px-3 dark:border-stone-700'
 
 const COLOR_NAMES: Record<BadgeLook['color'], string> = {

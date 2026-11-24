@@ -3,7 +3,7 @@ import { db, type LibraryItem, type WantItem } from '../db/db'
 import type { CollectionField } from '../api/discogs/types'
 import { fieldFor, type FieldKey, type FieldMatch } from './fields'
 import type { CloudApi, ProfileRow, SetupSlot } from './cloud'
-import { byText, decadeOf, DESCENDING, fold, SORTS, sortName, wordsOf, yearOf, type SortKey } from './library'
+import { byArtist, byTitle, decadeOf, DESCENDING, fold, SORTS, wordsOf, yearOf, type SortKey } from './library'
 import { libraryItems } from './masters'
 import { knownPlayFields, listening, listeningStats, type Play } from './plays'
 import { byMonth, localDate, type MonthTotal } from './value'
@@ -424,15 +424,13 @@ export function arrangeShelf(rows: ShelfRow[], q: string, sort: SortKey, reverse
       })
     : rows
   const newest = (a: ShelfRow, b: ShelfRow) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
-  const byArtist = (a: ShelfRow, b: ShelfRow) => byText(sortName(a.item.artist), sortName(b.item.artist))
   // ties always run A to Z, so reversing the artist sort still lists each artist's records A to Z
-  const tie = (a: ShelfRow, b: ShelfRow) =>
-    byArtist(a, b) || byText(sortName(a.item.title), sortName(b.item.title)) || (a.item.year ?? 0) - (b.item.year ?? 0)
+  const tie = (a: ShelfRow, b: ShelfRow) => byArtist(a.item, b.item) || byTitle(a.item, b.item) || (a.item.year ?? 0) - (b.item.year ?? 0)
   // low to high, or A to Z
   const ascending = {
     added: (a: ShelfRow, b: ShelfRow) => newest(b, a),
-    artist: byArtist,
-    title: (a: ShelfRow, b: ShelfRow) => byText(sortName(a.item.title), sortName(b.item.title)),
+    artist: (a: ShelfRow, b: ShelfRow) => byArtist(a.item, b.item),
+    title: (a: ShelfRow, b: ShelfRow) => byTitle(a.item, b.item),
     year: (a: ShelfRow, b: ShelfRow) => (a.item.year ?? 0) - (b.item.year ?? 0),
   }[sort as 'added' | 'artist' | 'title' | 'year']
   if (!ascending) return found

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Redirect } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { RecordRow, statCard } from '../components/stats'
+import { RecordRow, statList } from '../components/stats'
 import { Button, Notice, Screen, Section, Spinner, useBack } from '../components/ui'
 import { useCloud } from '../hooks/cloud'
 import { addedAt, recordFrom, type ProfileItem } from '../lib/profile'
@@ -51,7 +51,7 @@ export function Following() {
         <Notice>Nothing yet.</Notice>
       ) : (
         <Section>
-          <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
+          <ul className={statList}>
             {added.map(({ username, key, item }) => (
               <li key={`${username}:${key}`}>
                 <RecordRow

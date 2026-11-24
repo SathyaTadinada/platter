@@ -8,7 +8,7 @@ import { Identifiers } from './Identifiers'
 import { ListenLinks } from './ListenLinks'
 import { PhotosSheet } from './PhotosSheet'
 import { DiscogsCredit } from './ReleaseCardView'
-import { RecordRow, statCard } from './stats'
+import { RecordRow, statList } from './stats'
 import { Notice, Section, Spinner } from './ui'
 
 export type Tag = { label: string; href?: string }
@@ -184,7 +184,7 @@ export function YourCopies({
   if (!items.length) return null
   return (
     <Section title={title}>
-      <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
+      <ul className={statList}>
         {items.map((o) => (
           <li key={o.instanceId}>
             <RecordRow

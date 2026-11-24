@@ -2,11 +2,12 @@ import { Dices } from 'lucide-react'
 import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'wouter'
 import { DiscogsCredit } from '../components/ReleaseCardView'
-import { MonthBars, RecordRow, statCard } from '../components/stats'
+import { MonthBars, RecordList, Tile } from '../components/stats'
 import { buttonClass, Card, Notice, Section, Spinner } from '../components/ui'
 import { useListening, usePlayFields } from '../hooks/plays'
 import { useSignedIn } from '../hooks/session'
-import { listeningStats, type Listening } from '../lib/plays'
+import { plural } from '../lib/format'
+import { listeningStats } from '../lib/plays'
 import { dayAgo } from '../lib/time'
 import { byMonth, localDate } from '../lib/value'
 import { PlayPicker } from './collection/PlayPicker'
@@ -78,18 +79,18 @@ export function ListeningStats() {
     ),
     most: (
       <Section title="Most played">
-        <List rows={stats.mostPlayed.slice(0, TOP)} right={(r) => `${r.count} ${r.count === 1 ? 'play' : 'plays'}`} />
+        <RecordList rows={stats.mostPlayed.slice(0, TOP).map((r) => ({ item: r.item, right: plural(r.count, 'play') }))} />
       </Section>
     ),
     stylus: <Stylus />,
     recent: (
       <Section title="Recently played">
-        <List rows={stats.recent.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />
+        <RecordList rows={stats.recent.slice(0, TOP).map((r) => ({ item: r.item, right: dayAgo(r.last!) }))} />
       </Section>
     ),
     dusty: forgotten.length > 0 && (
       <Section title="Not played in a year">
-        {stats.dusty.length > 0 && <List rows={stats.dusty.slice(0, TOP)} right={(r) => dayAgo(r.last!)} />}
+        {stats.dusty.length > 0 && <RecordList rows={stats.dusty.slice(0, TOP).map((r) => ({ item: r.item, right: dayAgo(r.last!) }))} />}
         <div className="flex items-center justify-between gap-3 px-1">
           <p className="text-sm text-stone-500">{stats.never.length > 0 && `${stats.never.length} never played`}</p>
           <button type="button" onClick={() => setPicking(true)} className={buttonClass('secondary', 'min-h-9 shrink-0 px-3 text-sm')}>
@@ -121,28 +122,5 @@ export function ListeningStats() {
         <DiscogsCredit url={`https://www.discogs.com/user/${encodeURIComponent(username)}/collection`} />
       </p>
     </div>
-  )
-}
-
-function Tile({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className={`${statCard} p-3`}>
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-stone-500">{label}</p>
-    </div>
-  )
-}
-
-function List({ rows, right }: { rows: Listening[]; right: (r: Listening) => string }) {
-  return (
-    <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-      {rows.map((r) => (
-        <li key={r.item.instanceId}>
-          <RecordRow item={r.item}>
-            <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{right(r)}</span>
-          </RecordRow>
-        </li>
-      ))}
-    </ul>
   )
 }

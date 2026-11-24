@@ -7,6 +7,7 @@ import { useSignedIn } from '../hooks/session'
 import { useCollectionMeta } from '../hooks/useCollectionMeta'
 import { parseDiscogsExport, planImport, type ImportPlan, type ParsedImport } from '../lib/csv'
 import { enqueueCsv, planFills, waitingInBatch } from '../lib/queue'
+import { plural } from '../lib/format'
 
 type Loaded = {
   name: string
@@ -21,8 +22,6 @@ type Loaded = {
 
 // What to do with records the collection already has
 type Owned = 'skip' | 'fill' | 'copy'
-
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
 
 export function Import() {
   const [, navigate] = useLocation()

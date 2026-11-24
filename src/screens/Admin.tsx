@@ -9,9 +9,9 @@ import { useCloud } from '../hooks/cloud'
 import type { Badge, Member } from '../lib/cloud'
 import { timeAgo } from '../lib/time'
 import { BadgeCell, BadgesSheet } from './admin/Badges'
+import { plural } from '../lib/format'
 
 const joined = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
 
 function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'warn' }) {
   const tones = {

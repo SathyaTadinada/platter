@@ -42,11 +42,10 @@ import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
 import { toCsv } from '../lib/library'
 import { libraryItems } from '../lib/masters'
 import { timeAgo } from '../lib/time'
+import { plural } from '../lib/format'
 
 const BACKED_UP_KEY = 'backedUpAt'
 const shortDay = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 export function Settings() {
   const { session, client } = useSignedIn()

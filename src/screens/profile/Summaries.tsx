@@ -1,11 +1,11 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link } from 'wouter'
 import { Cover } from '../../components/Cover'
-import { MonthBars, RecordRow, statCard } from '../../components/stats'
+import { Highlights, MonthBars, RecordList, Tile, TopArtists, YearStepper, type Highlight } from '../../components/stats'
 import { Card, Section } from '../../components/ui'
 import type { ProfileBrief, ProfileStats, ProfileYear } from '../../lib/profile'
-import { dayAgo, formatDay } from '../../lib/time'
+import { hoursText, plural } from '../../lib/format'
+import { DAYS, dayAgo, formatDay } from '../../lib/time'
 import { localDate, type MonthTotal } from '../../lib/value'
 import { BarList } from '../value/Breakdowns'
 import { useRecordHref } from './recordHref'
@@ -13,8 +13,6 @@ import { useRecordHref } from './recordHref'
 // Someone else's Stats and Your year, drawn from what their devices published. The same pieces as
 // the Listening view and the Your year page, with nothing about prices.
 
-const DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays']
-const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`
 const columns = 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8'
 
 const row = (b: ProfileBrief) => ({ instanceId: b.id, title: b.title, artist: b.artist, thumb: b.thumb })
@@ -26,28 +24,9 @@ const relabel = (months: MonthTotal[]) =>
     return { ...m, label: new Date(y, mo - 1, 1).toLocaleDateString(undefined, { month: 'short' }) }
   })
 
-function Tile({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className={`${statCard} p-3`}>
-      <p className="truncate text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-stone-500">{label}</p>
-    </div>
-  )
-}
-
 function Records({ rows }: { rows: { item: ProfileBrief; right: string }[] }) {
   const hrefOf = useRecordHref()
-  return (
-    <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-      {rows.map(({ item, right }) => (
-        <li key={item.id}>
-          <RecordRow item={row(item)} href={hrefOf(item.id)}>
-            <span className="text-sm font-medium text-stone-600 tabular-nums dark:text-stone-300">{right}</span>
-          </RecordRow>
-        </li>
-      ))}
-    </ul>
-  )
+  return <RecordList rows={rows.map(({ item, right }) => ({ item: row(item), href: hrefOf(item.id), right }))} />
 }
 
 export function StatsView({ stats }: { stats: ProfileStats }) {
@@ -113,69 +92,37 @@ export function StatsView({ stats }: { stats: ProfileStats }) {
   )
 }
 
-function YearButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string
-  disabled: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex min-h-9 min-w-11 items-center justify-center rounded-lg hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-stone-950"
-    >
-      {children}
-    </button>
-  )
-}
-
 // One year at a time, newest first, stepped through like the Your year page
 export function YearView({ years }: { years: ProfileYear[] }) {
   const newestFirst = [...years].sort((a, b) => b.year - a.year)
   const [at, setAt] = useState(0)
   const r = newestFirst[Math.min(at, newestFirst.length - 1)]
   const hrefOf = useRecordHref()
-  const thisYear = new Date().getFullYear()
-  const hours = r.hours < 10 ? r.hours.toFixed(1) : Math.round(r.hours).toLocaleString()
   const day = (iso: string) => formatDay(localDate(Date.parse(iso)))
+  const open = (b: ProfileBrief) => ({ item: row(b), href: hrefOf(b.id) })
   const facts = [
     r.decade !== undefined && { label: 'Mostly from', value: `the ${r.decade}s` },
     r.genre && { label: 'Top genre added', value: r.genre },
     r.busiestDay !== undefined && { label: 'Busiest day', value: DAYS[r.busiestDay] },
-    r.first && { label: 'First in', item: r.first.item, value: day(r.first.date) },
-    r.latest && { label: 'Latest', item: r.latest.item, value: day(r.latest.date) },
-    r.oldest && { label: 'Oldest album added', item: r.oldest.item, value: String(r.oldest.year) },
-  ].filter(Boolean) as { label: string; value: string; item?: ProfileBrief }[]
+    r.first && { label: 'First in', record: open(r.first.item), value: day(r.first.date) },
+    r.latest && { label: 'Latest', record: open(r.latest.item), value: day(r.latest.date) },
+    r.oldest && { label: 'Oldest album added', record: open(r.oldest.item), value: String(r.oldest.year) },
+  ].filter(Boolean) as Highlight[]
 
   return (
     <div>
       <Section>
-        <div className="flex items-center justify-between rounded-xl bg-stone-200 p-1 lg:max-w-[26rem] dark:bg-stone-800">
-          <YearButton label="Earlier year" disabled={at >= newestFirst.length - 1} onClick={() => setAt(at + 1)}>
-            <ChevronLeft size={18} />
-          </YearButton>
-          <span className="text-sm font-semibold tabular-nums">
-            {r.year}
-            {r.year === thisYear && <span className="font-normal text-stone-500"> so far</span>}
-          </span>
-          <YearButton label="Later year" disabled={at <= 0} onClick={() => setAt(at - 1)}>
-            <ChevronRight size={18} />
-          </YearButton>
-        </div>
+        <YearStepper
+          year={r.year}
+          onEarlier={at < newestFirst.length - 1 ? () => setAt(at + 1) : undefined}
+          onLater={at > 0 ? () => setAt(at - 1) : undefined}
+        />
       </Section>
       <Section>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Tile label={r.added === 1 ? 'record added' : 'records added'} value={r.added.toLocaleString()} />
           <Tile label={r.plays === 1 ? 'play' : 'plays'} value={r.plays.toLocaleString()} />
-          <Tile label="hours listened" value={hours} />
+          <Tile label="hours listened" value={hoursText(r.hours)} />
           <Tile label={r.played === 1 ? 'record played' : 'different records played'} value={r.played.toLocaleString()} />
         </div>
       </Section>
@@ -192,17 +139,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
                 <Records rows={r.topRecords.map((t) => ({ item: t.item, right: plural(t.count, 'play') }))} />
               </Section>
               <Section title="Top artists">
-                <ol className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-                  {r.topArtists.map((a, i) => (
-                    <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
-                      <span className="w-4 text-stone-500 tabular-nums">{i + 1}</span>
-                      <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
-                      <span className="shrink-0 font-medium text-stone-600 tabular-nums dark:text-stone-300">
-                        {plural(a.count, 'play')}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
+                <TopArtists artists={r.topArtists} text={(n) => plural(n, 'play')} />
               </Section>
             </>
           )}
@@ -228,23 +165,7 @@ export function YearView({ years }: { years: ProfileYear[] }) {
           )}
           {facts.length > 0 && (
             <Section title="Highlights">
-              <ul className={`divide-y divide-stone-200 overflow-clip dark:divide-stone-800 ${statCard}`}>
-                {facts.map(({ label, value, item }) =>
-                  item ? (
-                    <li key={label}>
-                      <RecordRow item={row(item)} href={hrefOf(item.id)}>
-                        <span className="block text-xs text-stone-500">{label}</span>
-                        <span className="block text-sm font-medium tabular-nums">{value}</span>
-                      </RecordRow>
-                    </li>
-                  ) : (
-                    <li key={label} className="flex min-h-14 items-center justify-between gap-3 px-4 text-sm">
-                      <span className="text-stone-500">{label}</span>
-                      <span className="font-medium">{value}</span>
-                    </li>
-                  ),
-                )}
-              </ul>
+              <Highlights facts={facts} />
             </Section>
           )}
         </div>
