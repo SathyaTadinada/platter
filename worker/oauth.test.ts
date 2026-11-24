@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { baseString, header, hmacSha1, pct, signParams } from './oauth'
+import { allowedOrigin } from './index'
 
 // Known-good example from Twitter's OAuth 1.0a signing docs
 const example = {
@@ -31,5 +32,22 @@ describe('oauth', () => {
 
   it('computes HMAC-SHA1', async () => {
     expect(await hmacSha1('key', 'The quick brown fox jumps over the lazy dog')).toBe('3nybhbi3iqa8ino29wqQcBydtNk=')
+  })
+})
+
+describe('who can use the signer', () => {
+  const from = (url: string, origin?: string) =>
+    allowedOrigin(new Request(url, { method: 'POST', headers: origin ? { Origin: origin } : {} }))
+
+  it('takes the app’s own pages wherever they’re served, and the dev server', () => {
+    expect(from('https://platter.tadinada.com/api/sign', 'https://platter.tadinada.com')).toBe(true)
+    expect(from('https://x-platter.tadinada.workers.dev/api/sign', 'https://x-platter.tadinada.workers.dev')).toBe(true)
+    expect(from('http://localhost:8787/api/sign', 'http://localhost:5173')).toBe(true)
+  })
+
+  it('turns down other sites and requests without an origin', () => {
+    expect(from('https://platter.tadinada.com/api/sign', 'https://evil.example')).toBe(false)
+    expect(from('https://platter.tadinada.com/api/sign', 'https://platter.tadinada.com.evil.example')).toBe(false)
+    expect(from('https://platter.tadinada.com/api/sign')).toBe(false)
   })
 })

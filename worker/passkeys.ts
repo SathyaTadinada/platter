@@ -13,19 +13,15 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import { accountByDiscogs, accountById } from './account'
 import { newDevice, newId, SyncError, UNSAID, type About, type DB } from './sync'
 
-// Passkeys belong to a domain, so they only work on the real site and in local testing. Preview
-// links and 127.0.0.1 (an IP can't have passkeys) use the other ways in.
-const RELYING_PARTIES: Record<string, string> = {
-  'https://platter.tadinada.com': 'platter.tadinada.com',
-  'http://localhost:5173': 'localhost',
-}
-
+// Passkeys belong to a domain, so they only work on the site (SITE in wrangler.jsonc) and in local
+// testing. Preview links and 127.0.0.1 (an IP can't have passkeys) use the other ways in.
 export type RelyingParty = { id: string; origin: string }
 
-export function relyingParty(origin: string | null): RelyingParty {
-  const id = origin ? RELYING_PARTIES[origin] : undefined
-  if (!id) throw new SyncError(400, "Passkeys don't work on this address")
-  return { id, origin: origin! }
+export function relyingParty(origin: string | null, site: string | undefined): RelyingParty {
+  if (origin === 'http://localhost:5173') return { id: 'localhost', origin }
+  const url = site ? new URL(site) : null
+  if (!origin || !url || origin !== url.origin) throw new SyncError(400, "Passkeys don't work on this address")
+  return { id: url.hostname, origin }
 }
 
 export const CHALLENGE_TTL = 5 * 60 * 1000

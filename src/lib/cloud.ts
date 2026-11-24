@@ -629,9 +629,8 @@ export async function addPasskey(api: CloudApi): Promise<PasskeyInfo> {
   return api.registerPasskey(id, response, deviceName())
 }
 
-// Passkeys belong to the real site's address (and localhost for testing)
-export const passkeysHere = () =>
-  browserSupportsWebAuthn() && (location.hostname === 'platter.tadinada.com' || location.hostname === 'localhost')
+// Passkeys belong to the site's address (SITE in wrangler.jsonc) and localhost for testing
+export const passkeysHere = () => browserSupportsWebAuthn() && (location.origin === __SITE__ || location.hostname === 'localhost')
 
 // With a code from a device that's already in. The code has to be for the Discogs account signed in here.
 export async function joinWithCode(username: string, code: string, entry = cloudEntry()) {

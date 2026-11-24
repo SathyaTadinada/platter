@@ -45,7 +45,7 @@ import { lookupBarcode } from '../lib/lookup'
 import { useSession } from './session'
 
 type Ctx = {
-  available: boolean // signed in with Discogs (not the demo)
+  available: boolean // signed in with Discogs (not the demo), on a copy with Platter accounts
   username: string
   enabled: boolean
   running: boolean
@@ -323,7 +323,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   // once, with the other ways in a tap away.
   const joining = useRef(false)
   useEffect(() => {
-    if (!username || device || joining.current || !session || session.kind === 'demo' || session.expired) return
+    if (!__ACCOUNTS__ || !username || device || joining.current || !session || session.kind === 'demo' || session.expired) return
     joining.current = true
     ;(async () => {
       if (await getSetting<boolean>(CLOUD.left)) return
@@ -404,7 +404,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       const legacy = await entry.exists(username)
       return { exists: legacy, password: legacy, passkeys: false, legacy }
     },
-    available: Boolean(username),
+    available: __ACCOUNTS__ && Boolean(username),
     username,
     enabled,
     running,

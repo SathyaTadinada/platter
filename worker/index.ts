@@ -85,6 +85,7 @@ interface Env {
   BROWSER?: unknown
   DB?: DB
   SYNC_KEY?: string
+  SITE?: string
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -105,12 +106,11 @@ async function userKey(token: string): Promise<string> {
 const tooMany = () => new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
 
 const API = 'https://api.discogs.com'
-const ALLOWED_ORIGINS = ['https://platter.tadinada.com', 'http://localhost:5173', 'http://127.0.0.1:5173']
-// preview builds (wrangler versions upload --preview-alias), which only this Cloudflare account can make
-const PREVIEW = /^https:\/\/[a-z0-9-]+-platter\.tadinada\.workers\.dev$/
-const allowedOrigin = (req: Request) => {
-  const origin = req.headers.get('Origin') ?? ''
-  return ALLOWED_ORIGINS.includes(origin) || PREVIEW.test(origin)
+// The app's own pages, wherever this Worker serves them (its domain, a preview link), and the dev server
+const LOCAL = ['http://localhost:5173', 'http://127.0.0.1:5173']
+export const allowedOrigin = (req: Request) => {
+  const origin = req.headers.get('Origin')
+  return origin !== null && (origin === new URL(req.url).origin || LOCAL.includes(origin))
 }
 const MAX_BATCH = 60
 
@@ -312,10 +312,12 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
           return ok(await signIn(db, { name, discogsId }, parseProof(input.proof), Date.now(), about))
         }
         case 'passkey-signin-options':
-          return ok(await signInOptions(db, relyingParty(req.headers.get('Origin')), parseDiscogsId(input.discogsId)))
+          return ok(await signInOptions(db, relyingParty(req.headers.get('Origin'), env.SITE), parseDiscogsId(input.discogsId)))
         case 'passkey-signin': {
           if (!(await allowed(env.LOGIN_LIMITER, `discogs:${parseDiscogsId(input.discogsId)}`))) return tooMany()
-          return ok(await signInWithPasskey(db, relyingParty(req.headers.get('Origin')), input.id, input.response, Date.now(), about))
+          return ok(
+            await signInWithPasskey(db, relyingParty(req.headers.get('Origin'), env.SITE), input.id, input.response, Date.now(), about),
+          )
         }
       }
     }
@@ -368,10 +370,17 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
         await removeDevice(db, account, input.id)
         return ok({ ok: true })
       case 'passkey-options':
-        return ok(await registerOptions(db, account, relyingParty(req.headers.get('Origin'))))
+        return ok(await registerOptions(db, account, relyingParty(req.headers.get('Origin'), env.SITE)))
       case 'passkey-register':
         return ok(
-          await register(db, account, relyingParty(req.headers.get('Origin')), input.id, input.response, parsePasskeyName(input.name)),
+          await register(
+            db,
+            account,
+            relyingParty(req.headers.get('Origin'), env.SITE),
+            input.id,
+            input.response,
+            parsePasskeyName(input.name),
+          ),
         )
       case 'passkeys':
         return ok({ passkeys: await listPasskeys(db, account) })

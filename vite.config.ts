@@ -3,11 +3,23 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
+
+// wrangler.jsonc, without its comments and trailing commas
+const wrangler = JSON.parse(
+  readFileSync('wrangler.jsonc', 'utf8')
+    .replace(/("(?:\\.|[^"\\])*")|\/\/[^\n]*|\/\*[\s\S]*?\*\//g, (_, text) => text ?? '')
+    .replace(/,(\s*[}\]])/g, '$1'),
+)
+const SITE = wrangler.vars?.SITE ? new URL(wrangler.vars.SITE).origin : ''
+const ACCOUNTS = Boolean(wrangler.d1_databases?.length)
 
 export default defineConfig({
+  define: { __SITE__: JSON.stringify(SITE), __ACCOUNTS__: JSON.stringify(ACCOUNTS) },
   plugins: [
     react(),
     tailwindcss(),
+    { name: 'site', transformIndexHtml: { order: 'pre', handler: (html) => html.replaceAll('%SITE%', SITE) } },
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,

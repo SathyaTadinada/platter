@@ -191,7 +191,8 @@ describe('devices', () => {
 })
 
 describe('passkeys', () => {
-  const rp = relyingParty('https://platter.tadinada.com')
+  const SITE = 'https://platter.tadinada.com'
+  const rp = relyingParty(SITE, SITE)
 
   async function withPasskey(db: ReturnType<typeof testDB>, who = ME) {
     const acc = await account(db, who)
@@ -201,10 +202,13 @@ describe('passkeys', () => {
     return { ...acc, key }
   }
 
-  it('only work on the real site and localhost', () => {
-    expect(relyingParty('http://localhost:5173').id).toBe('localhost')
-    expect(() => relyingParty('https://x-platter.tadinada.workers.dev')).toThrow()
-    expect(() => relyingParty('http://127.0.0.1:5173')).toThrow()
+  it('only work on the site and localhost', () => {
+    expect(rp.id).toBe('platter.tadinada.com')
+    expect(relyingParty('https://records.example.com', 'https://records.example.com/').id).toBe('records.example.com')
+    expect(relyingParty('http://localhost:5173', SITE).id).toBe('localhost')
+    expect(() => relyingParty('https://x-platter.tadinada.workers.dev', SITE)).toThrow()
+    expect(() => relyingParty('http://127.0.0.1:5173', SITE)).toThrow()
+    expect(() => relyingParty(SITE, undefined)).toThrow()
   })
 
   it('adds one, then signs a new device in with it', async () => {
@@ -242,7 +246,7 @@ describe('passkeys', () => {
   it('turns away a response made for another site or a forged signature', async () => {
     const db = testDB()
     const { key } = await withPasskey(db)
-    const local = relyingParty('http://localhost:5173')
+    const local = relyingParty('http://localhost:5173', SITE)
     const ch = await signInOptions(db, rp, ME.id)
     await expect(signInWithPasskey(db, local, ch.id, key.signIn(ch.options))).rejects.toMatchObject({ status: 401 })
 

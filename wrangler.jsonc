@@ -9,7 +9,9 @@
     // assets too, so a missing file 404s instead of getting index.html (see worker)
     "run_worker_first": ["/api/*"],
   },
+  // the site's address: SITE is read by the app's build too (link previews, passkeys)
   "routes": [{ "pattern": "platter.tadinada.com", "custom_domain": true }],
+  "vars": { "SITE": "https://platter.tadinada.com" },
   // per-IP limits; one sign call covers up to 60 Discogs requests
   "ratelimits": [
     { "name": "SIGN_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
@@ -22,7 +24,7 @@
   ],
   // a headless browser that can reach Discogs when the Worker can't (worker/confirm.ts)
   "browser": { "binding": "BROWSER" },
-  // cloud sync
+  // Platter accounts: sync, profiles, and following. Without a database the app leaves them out.
   "d1_databases": [
     { "binding": "DB", "database_name": "platter", "database_id": "925a7706-80d0-4657-86d7-91fc13c4afc5", "migrations_dir": "migrations" },
   ],
