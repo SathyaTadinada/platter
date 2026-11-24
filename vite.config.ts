@@ -49,13 +49,14 @@ export default defineConfig({
           { urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'), handler: 'CacheFirst', options: { cacheName: 'ocr' } },
           // Pages come from the network first, so opening the app gets the current version
           // (iOS takes the status bar style from the page it launches with). Offline, the
-          // last page fetched, or the precached one, is used for every route.
+          // last page fetched, or the precached one, is used for every route. On a weak signal it
+          // waits a second and a half for the network, then opens from what's saved.
           {
             urlPattern: ({ request, url }) => request.mode === 'navigate' && !url.pathname.startsWith('/api/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'pages',
-              networkTimeoutSeconds: 3,
+              networkTimeoutSeconds: 1.5,
               plugins: [
                 { cacheKeyWillBeUsed: async () => '/' },
                 { handlerDidError: async () => caches.match('/index.html', { ignoreSearch: true }) },
