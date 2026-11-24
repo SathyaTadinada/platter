@@ -73,7 +73,7 @@ export function ListeningStats() {
     month: (
       <Section title="Plays by month">
         <Card>
-          <MonthBars months={months} text={(n) => `${n} play${n === 1 ? '' : 's'}`} short={String} now />
+          <MonthBars months={months} text={(n) => plural(n, 'play')} short={String} now />
         </Card>
       </Section>
     ),

@@ -21,6 +21,7 @@ import { refreshReleases } from '../lib/sync'
 import { useCloud } from './cloud'
 import { useSession } from './session'
 import { useSync } from './sync'
+import { plural } from '../lib/format'
 
 type Run = { kind: 'lookup' | 'add'; done: number; total: number; left?: number } | null
 type AddJob = { folderId: number; removeFromWantlist: boolean }
@@ -103,9 +104,8 @@ export function QueueProvider({ children }: { children: ReactNode }) {
           return // keep the job so it resumes
         }
         await setSetting(JOB_KEY, null)
-        const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
-        if (r.failed) toast(`Added ${n(r.added)}. ${r.failed} didn't go through. Check the batch.`, { tone: 'error' })
-        else if (r.added) toast(`Added ${n(r.added)} to your collection`, { tone: 'success' })
+        if (r.failed) toast(`Added ${plural(r.added, 'record')}. ${r.failed} didn't go through. Check the batch.`, { tone: 'error' })
+        else if (r.added) toast(`Added ${plural(r.added, 'record')} to your collection`, { tone: 'success' })
         if (r.missing.length) {
           // just those records when that's quicker, else the whole collection
           const done = await refreshReleases(client, u, r.missing).catch(() => false)

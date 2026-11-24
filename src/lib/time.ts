@@ -1,3 +1,5 @@
+import { plural } from './format'
+
 export function timeAgo(ts: number, now = Date.now()): string {
   const s = Math.round((now - ts) / 1000)
   if (s < 60) return 'just now'
@@ -6,7 +8,7 @@ export function timeAgo(ts: number, now = Date.now()): string {
   const h = Math.round(m / 60)
   if (h < 24) return `${h} hr ago`
   const d = Math.round(h / 24)
-  return `${d} day${d === 1 ? '' : 's'} ago`
+  return `${plural(d, 'day')} ago`
 }
 
 // for "Busiest day: Fridays", by Date.getDay()

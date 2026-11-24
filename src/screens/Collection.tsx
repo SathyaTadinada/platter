@@ -26,8 +26,7 @@ import { invalidateCollectionMeta, useCollectionMeta } from '../hooks/useCollect
 import { useSignedIn } from '../hooks/session'
 import { useSync } from '../hooks/sync'
 import { useFieldMatches } from '../hooks/useFields'
-import { useLogPlay } from '../hooks/plays'
-import { useListening } from '../hooks/plays'
+import { useListening, useLogPlay } from '../hooks/plays'
 import { libraryItems } from '../lib/masters'
 import { dayAgo } from '../lib/time'
 import { download, today } from '../lib/download'
@@ -50,6 +49,7 @@ import {
   type SortKey,
 } from '../lib/library'
 import { fieldFor } from '../lib/fields'
+import { plural } from '../lib/format'
 import { parseLoan } from '../lib/loans'
 import { formatMoney, parseMoney, valueOf } from '../lib/value'
 import { applyFields, runBulk } from '../lib/bulk'
@@ -68,6 +68,8 @@ const VIEW_KEY = 'platter.libraryView'
 const PAGE = 120 // items rendered at a time; more load as you scroll
 
 const loadView = () => readChoice<View>(VIEW_KEY, ['grid', 'list'], 'grid')
+// which copy Discogs should change
+const instanceOf = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
 
 export function Collection() {
   const { client, username, session } = useSignedIn()
@@ -134,17 +136,13 @@ export function Collection() {
 
   // a short note under each record for sorts where it helps
   const noteOf = (i: LibraryItem) => {
-    if (query.sort === 'paid') {
-      const v = sortCtx.paid?.(i)
-      return v === undefined || !currency ? undefined : formatMoney(v, currency)
-    }
-    if (query.sort === 'value') {
-      const v = sortCtx.value?.(i)
+    if (query.sort === 'paid' || query.sort === 'value') {
+      const v = sortCtx[query.sort]?.(i)
       return v === undefined || !currency ? undefined : formatMoney(v, currency)
     }
     if (query.sort === 'plays') {
       const n = sortCtx.plays?.(i) ?? 0
-      return n ? `${n} play${n === 1 ? '' : 's'}` : undefined
+      return n ? plural(n, 'play') : undefined
     }
     if (query.sort === 'played') {
       const t = sortCtx.lastPlayed?.(i)
@@ -163,13 +161,10 @@ export function Collection() {
     const pick = query.sort === 'paid' ? sortCtx.paid : query.sort === 'value' ? sortCtx.value : undefined
     if (!pick || !currency) return undefined
     const amounts = list.map(pick).filter((n): n is number => n !== undefined)
-    const records = `${list.length} record${list.length === 1 ? '' : 's'}`
+    const records = plural(list.length, 'record')
     if (!amounts.length) return records
-    return `${formatMoney(
-      amounts.reduce((a, b) => a + b, 0),
-      currency,
-      { whole: true },
-    )} · ${records}`
+    const total = amounts.reduce((a, b) => a + b, 0)
+    return `${formatMoney(total, currency, { whole: true })} · ${records}`
   }
 
   const filtered = useMemo(
@@ -198,6 +193,7 @@ export function Collection() {
   const nFilters = activeFilterCount(query.filters)
   const searching = Boolean(query.q) || nFilters > 0
   const onlyCrate = !query.q && nFilters === 1 && query.filters.folder !== undefined
+  const crateName = onlyCrate ? facets?.folder.find((o) => o.value === String(query.filters.folder))?.label : undefined
 
   function toggleView() {
     const next = view === 'grid' ? 'list' : 'grid'
@@ -215,11 +211,7 @@ export function Collection() {
   }
   const shuffle = () => filtered.length && setPicking(true)
   // what the picker is choosing from, when it's not the whole collection
-  const pickScope = onlyCrate
-    ? facets?.folder.find((o) => o.value === String(query.filters.folder))?.label
-    : searching
-      ? `${filtered.length} record${filtered.length === 1 ? '' : 's'}`
-      : undefined
+  const pickScope = onlyCrate ? crateName : searching ? plural(filtered.length, 'record') : undefined
 
   function exportCsv(items = filtered) {
     download(`${username}-collection-${today()}.csv`, toCsv(items, folders, fields), 'text/csv')
@@ -287,51 +279,47 @@ export function Collection() {
     })
 
   // only what's still in the collection, so the count drops as records are removed
-  const chosenCount = selected ? filtered.filter((i) => selected.has(i.instanceId)).length : 0
+  const chosen = selected ? filtered.filter((i) => selected.has(i.instanceId)) : []
+  const chosenCount = chosen.length
 
   async function bulk(kind: 'remove' | 'move', folderId?: number, onProgress?: (d: number, t: number) => void) {
-    const chosen = filtered.filter((i) => selected?.has(i.instanceId))
-    const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
     const r = await runBulk(
       chosen,
       async (i) => {
         if (kind === 'remove') {
-          await deleteInstance(client, username, target(i))
+          await deleteInstance(client, username, instanceOf(i))
           await db.collection.delete(i.instanceId)
         } else {
-          await editInstance(client, username, target(i), { folder_id: folderId })
+          await editInstance(client, username, instanceOf(i), { folder_id: folderId })
           await db.collection.update(i.instanceId, { folderId })
         }
       },
       onProgress,
     )
     invalidateCollectionMeta()
-    const verb = kind === 'remove' ? 'Removed' : 'Moved'
-    const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
-    if (r.failed.length) toast(`${verb} ${n(r.done.length)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
-    else toast(`${verb} ${n(r.done.length)}`, { tone: 'success' })
+    const done = `${kind === 'remove' ? 'Removed' : 'Moved'} ${plural(r.done.length, 'record')}`
+    if (r.failed.length) toast(`${done}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
+    else toast(done, { tone: 'success' })
     setSelected(null)
   }
 
   async function editFields(changes: Record<number, string>, onProgress: (d: number, t: number) => void) {
-    const chosen = filtered.filter((i) => selected?.has(i.instanceId))
-    const target = (i: LibraryItem) => ({ folderId: i.folderId, releaseId: i.releaseId, instanceId: i.instanceId })
     let changed = 0
     const r = await runBulk(
       chosen,
       async (i) => {
-        const fields = await applyFields(i.fields, changes, (id, v) => setFieldValue(client, username, target(i), id, v))
+        const fields = await applyFields(i.fields, changes, (id, v) => setFieldValue(client, username, instanceOf(i), id, v))
         if (!fields) return
         await db.collection.update(i.instanceId, { fields })
         changed++
       },
       onProgress,
     )
-    const n = (k: number) => `${k} record${k === 1 ? '' : 's'}`
     const same = r.done.length - changed
-    if (r.failed.length) toast(`Updated ${n(changed)}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
+    const updated = `Updated ${plural(changed, 'record')}`
+    if (r.failed.length) toast(`${updated}. ${r.failed.length} failed: ${r.failed[0].error}`, { tone: 'error' })
     else if (!changed) toast(`Nothing to change. ${same === 1 ? 'It' : 'They'} already had those values.`, { tone: 'success' })
-    else toast(`Updated ${n(changed)}${same ? `. ${same} already matched.` : ''}`, { tone: 'success' })
+    else toast(`${updated}${same ? `. ${same} already matched.` : ''}`, { tone: 'success' })
     setSelected(null)
   }
 
@@ -431,9 +419,7 @@ export function Collection() {
     body = (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         {onlyCrate ? (
-          <p className="text-lg font-semibold">
-            Nothing in {facets?.folder.find((o) => o.value === String(query.filters.folder))?.label ?? 'this crate'}
-          </p>
+          <p className="text-lg font-semibold">Nothing in {crateName ?? 'this crate'}</p>
         ) : (
           <>
             <p className="text-lg font-semibold">No matches</p>
@@ -520,7 +506,7 @@ export function Collection() {
           folders={folders}
           onRun={bulk}
           onEdit={editFields}
-          onExport={() => exportCsv(filtered.filter((i) => selected.has(i.instanceId)))}
+          onExport={() => exportCsv(chosen)}
           fields={fields}
           matches={matches}
           currency={currency ?? 'USD'}

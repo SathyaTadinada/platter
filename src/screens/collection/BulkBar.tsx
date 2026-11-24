@@ -6,6 +6,7 @@ import { Button, buttonClass } from '../../components/ui'
 import type { FieldMatch } from '../../lib/fields'
 import { setTask } from '../../lib/task'
 import { BulkEditSheet } from './BulkEditSheet'
+import { plural } from '../../lib/format'
 
 // Pinned to the bottom while records are selected
 export function BulkBar({
@@ -30,7 +31,7 @@ export function BulkBar({
   const [confirm, setConfirm] = useState(false)
   const [editing, setEditing] = useState(false)
   const [running, setRunning] = useState(false)
-  const records = `${count} record${count === 1 ? '' : 's'}`
+  const records = plural(count, 'record')
   // on phones the four share the row, each at least as wide as its label. The padding
   // needs ! to win over buttonClass's own px-4.
   const compact = 'flex-auto px-2.5! max-[379px]:px-2! max-[359px]:text-sm sm:flex-none sm:min-h-10 sm:px-3.5! sm:text-sm'

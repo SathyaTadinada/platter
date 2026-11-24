@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { FacetOption, Facets, Filters } from '../lib/library'
 import { Sheet } from './Sheet'
 import { Button } from './ui'
+import { plural } from '../lib/format'
 
 type Props = { facets: Facets; filters: Filters; count: number; onChange: (f: Filters) => void; onClose: () => void }
 
@@ -141,7 +142,7 @@ function RatingPicker({ options, value, onPick }: { options: FacetOption[]; valu
           <button
             key={n}
             type="button"
-            aria-label={`${n} star${n === 1 ? '' : 's'} and up`}
+            aria-label={`${plural(n, 'star')} and up`}
             aria-pressed={value === n}
             disabled={value !== n && !count(n)}
             onPointerEnter={() => setHover(n)}

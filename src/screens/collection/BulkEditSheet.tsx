@@ -9,6 +9,7 @@ import { useFieldSuggestions } from '../../hooks/useFields'
 import type { FieldKey, FieldMatch } from '../../lib/fields'
 import { formatLoan } from '../../lib/loans'
 import { formatPrice } from '../../lib/metadata'
+import { plural } from '../../lib/format'
 
 const KEEP = 'keep'
 const KEEP_LABEL = 'Leave as is'
@@ -59,7 +60,7 @@ export function BulkEditSheet({
   }
 
   const n = Object.keys(changes).length
-  const records = `${count} record${count === 1 ? '' : 's'}`
+  const records = plural(count, 'record')
 
   return (
     <Sheet

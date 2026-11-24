@@ -9,6 +9,10 @@ import { readPref, writePref } from './prefs'
 
 // what the Format filter offers; "All Media" isn't a format (see format.ts)
 const formatNames = (formats: { name: string }[] = []) => [...new Set(formats.map((f) => f.name))].filter((n) => n !== ALL_MEDIA)
+// "LP", "Album", "Reissue", and so on, for the Format details filter
+const formatTags = (formats: { descriptions?: string[] }[] = []) => [...new Set(formats.flatMap((f) => f.descriptions ?? []))]
+// Discogs writes "none" for a release without one
+const catnoOf = (catno?: string) => (catno && catno !== 'none' ? catno : undefined)
 
 // ---- building items ----
 
@@ -37,10 +41,10 @@ export function toLibraryItem(x: CollectionItem): LibraryItem {
     thumb: realImage(b.thumb),
     cover: realImage(b.cover_image),
     label: b.labels[0] && cleanLabel(b.labels[0].name),
-    catno: b.labels[0]?.catno && b.labels[0].catno !== 'none' ? b.labels[0].catno : undefined,
+    catno: catnoOf(b.labels[0]?.catno),
     format: describeFormats(b.formats) ?? '',
     formatNames: formatNames(b.formats),
-    formatTags: [...new Set(b.formats.flatMap((f) => f.descriptions ?? []))],
+    formatTags: formatTags(b.formats),
     genres: b.genres ?? [],
     styles: b.styles ?? [],
     dateAdded: x.date_added,
@@ -90,10 +94,10 @@ export function itemFromRelease(r: Release, instanceId: number, folderId: number
     thumb: realImage(r.images?.[0]?.uri150 ?? r.thumb),
     cover: realImage(r.images?.[0]?.uri),
     label: label && cleanLabel(label.name),
-    catno: label?.catno && label.catno !== 'none' ? label.catno : undefined,
+    catno: catnoOf(label?.catno),
     format: describeFormats(r.formats) ?? '',
     formatNames: formatNames(r.formats),
-    formatTags: [...new Set((r.formats ?? []).flatMap((f) => f.descriptions ?? []))],
+    formatTags: formatTags(r.formats),
     genres: r.genres ?? [],
     styles: r.styles ?? [],
     dateAdded: now.toISOString(),
@@ -117,10 +121,10 @@ export function itemFromSearch(r: SearchResult, instanceId: number, folderId: nu
     thumb: realImage(r.thumb),
     cover: realImage(r.cover_image),
     label: r.label?.[0] && cleanLabel(r.label[0]),
-    catno: r.catno && r.catno !== 'none' ? r.catno : undefined,
+    catno: catnoOf(r.catno),
     format: describeFormats(formats, r.format) ?? '',
     formatNames: formatNames(formats),
-    formatTags: [...new Set(formats.flatMap((f) => f.descriptions ?? []))],
+    formatTags: formatTags(formats),
     genres: (r as { genre?: string[] }).genre ?? [],
     styles: (r as { style?: string[] }).style ?? [],
     dateAdded: now.toISOString(),
@@ -175,6 +179,9 @@ export type Filters = {
 
 export type LibraryQuery = { q: string; sort: SortKey; reversed: boolean; filters: Filters }
 
+// the filters with one value each, as opposed to custom fields
+const FILTER_KEYS = ['folder', 'format', 'tag', 'genre', 'style', 'decade', 'rating'] as const
+
 // A sort as one string, for the URL and the saved choice: "artist", or "artist-rev" reversed.
 // "added-old" and "year-old" are how the reversed ones were saved before.
 export const sortParam = (sort: SortKey, reversed: boolean) => (reversed ? `${sort}-rev` : sort)
@@ -221,16 +228,12 @@ export function serializeQuery(q: LibraryQuery): string {
   const saved = savedSort()
   if (q.sort !== saved.sort || q.reversed !== saved.reversed) p.set('sort', sortParam(q.sort, q.reversed))
   const f = q.filters
-  for (const k of ['folder', 'format', 'tag', 'genre', 'style', 'decade', 'rating'] as const) {
-    if (f[k] !== undefined && f[k] !== '') p.set(k, String(f[k]))
-  }
+  for (const k of FILTER_KEYS) if (f[k] !== undefined && f[k] !== '') p.set(k, String(f[k]))
   for (const [id, v] of Object.entries(f.fields)) p.set(`f.${id}`, v)
   return p.toString()
 }
 
-export const activeFilterCount = (f: Filters) =>
-  (['folder', 'format', 'tag', 'genre', 'style', 'decade', 'rating'] as const).filter((k) => f[k] !== undefined).length +
-  Object.keys(f.fields).length
+export const activeFilterCount = (f: Filters) => FILTER_KEYS.filter((k) => f[k] !== undefined).length + Object.keys(f.fields).length
 
 // ---- filtering ----
 
@@ -350,6 +353,15 @@ export function sortItems(items: LibraryItem[], sort: SortKey, ctx: SortContext 
 
 export type Group = { key: string; label: string; items: LibraryItem[] }
 
+const monthOf = (d: Date) => d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+
+function playsBand(n: number) {
+  if (n >= 10) return 'Played 10+ times'
+  if (n >= 5) return 'Played 5 to 9 times'
+  if (n >= 2) return 'Played 2 to 4 times'
+  return n === 1 ? 'Played once' : 'Never played'
+}
+
 const letter = (s: string) => {
   const c = sortName(s).charAt(0).toUpperCase()
   return /[A-Z]/.test(c) ? c : '#'
@@ -359,7 +371,7 @@ function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
   switch (sort) {
     case 'added': {
       const d = new Date(i.dateAdded)
-      return Number.isNaN(d.getTime()) ? 'Unknown' : d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+      return Number.isNaN(d.getTime()) ? 'Unknown' : monthOf(d)
     }
     case 'artist':
       return letter(i.artist)
@@ -375,21 +387,11 @@ function groupLabel(i: LibraryItem, sort: SortKey, ctx: SortContext): string {
       const n = ctx.paid?.(i)
       return n === undefined ? 'No price paid' : ctx.money ? valueBracket(n, ctx.money) : ''
     }
-    case 'plays': {
-      const n = ctx.plays?.(i) ?? 0
-      return n >= 10
-        ? 'Played 10+ times'
-        : n >= 5
-          ? 'Played 5 to 9 times'
-          : n >= 2
-            ? 'Played 2 to 4 times'
-            : n === 1
-              ? 'Played once'
-              : 'Never played'
-    }
+    case 'plays':
+      return playsBand(ctx.plays?.(i) ?? 0)
     case 'played': {
       const t = ctx.lastPlayed?.(i)
-      return t ? new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Never played'
+      return t ? monthOf(new Date(t)) : 'Never played'
     }
     case 'location':
       return ctx.location?.(i)?.trim() || 'No location'
@@ -491,15 +493,14 @@ export function facets(
     count: without('rating').filter((i) => i.rating >= n).length,
   }))
 
+  // every crate, even empty ones, so any of them can be picked
+  const inCrate = new Map(count(without('folder').map((i) => [String(i.folderId)])).map((o) => [o.value, o.count]))
+  const folder = [...new Set([...folders.map((f) => String(f.id)), ...inCrate.keys()])]
+    .map((id) => ({ value: id, label: folderName.get(id) ?? 'Crate', count: inCrate.get(id) ?? 0 }))
+    .sort((a, b) => b.count - a.count || byText(a.label, b.label))
+
   return {
-    // every crate, even empty ones, so any of them can be picked
-    folder: (() => {
-      const counted = new Map(count(without('folder').map((i) => [String(i.folderId)])).map((o) => [o.value, o.count]))
-      const ids = new Set([...folders.map((f) => String(f.id)), ...counted.keys()])
-      return [...ids]
-        .map((id) => ({ value: id, label: folderName.get(id) ?? 'Crate', count: counted.get(id) ?? 0 }))
-        .sort((a, b) => b.count - a.count || byText(a.label, b.label))
-    })(),
+    folder,
     format: count(without('format').map((i) => i.formatNames)),
     tag: count(without('tag').map((i) => i.formatTags)),
     genre: count(without('genre').map((i) => i.genres)),

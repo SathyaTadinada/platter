@@ -1,4 +1,5 @@
 import { localDate } from './value'
+import { plural } from './format'
 
 // A record lent out lives in an optional "Lent To" field on Discogs, so it shows on every
 // device and on Discogs itself, e.g. "Alex (since 2026-10-24)". A value typed by hand
@@ -24,7 +25,7 @@ export const loanName = (value: string) => (PATTERN.test(value.trim()) ? parseLo
 export function lentFor(since: string, now = Date.now()): string {
   const days = Math.floor((now - Date.parse(`${since}T00:00`)) / 86_400_000)
   if (days < 1) return 'lent today'
-  if (days < 14) return `for ${days} day${days === 1 ? '' : 's'}`
+  if (days < 14) return `for ${plural(days, 'day')}`
   if (days < 60) return `for ${Math.round(days / 7)} weeks`
   if (days < 365) return `for ${Math.round(days / 30)} months`
   return 'for over a year'

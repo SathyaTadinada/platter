@@ -17,7 +17,7 @@ import { useSignedIn } from '../hooks/session'
 import { SHARED_KEY, useQueue } from '../hooks/queue'
 import { useFieldMatches } from '../hooks/useFields'
 import type { Metadata } from '../lib/metadata'
-import { shortGrade } from '../lib/format'
+import { plural, shortGrade } from '../lib/format'
 import { addingElsewhere, chooseRelease, retryFailed, takeOver } from '../lib/queue'
 import { Row } from './batch/BatchRow'
 import { DetailsSheet } from './batch/DetailsSheet'
@@ -337,7 +337,7 @@ export function Batch() {
                   : !fillable
                     ? `Add ${addable} to collection`
                     : !addable
-                      ? `Update ${fillable} ${fillable === 1 ? 'record' : 'records'}`
+                      ? `Update ${plural(fillable, 'record')}`
                       : `Add ${addable}, update ${fillable}`}
             </Button>
           </div>

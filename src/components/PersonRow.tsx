@@ -6,6 +6,7 @@ import type { ProfileAbout } from '../lib/profile'
 import { Avatar } from './Profile'
 import { toast } from './Toaster'
 import { Button } from './ui'
+import { plural } from '../lib/format'
 
 const profilePath = (username: string) => `/u/${encodeURIComponent(username)}`
 
@@ -63,7 +64,7 @@ export function PersonRow({
 
 export const recordCount = (about: string | null) => {
   const n = readAbout(about).records
-  return n === undefined ? undefined : `${n.toLocaleString()} ${n === 1 ? 'record' : 'records'}`
+  return n === undefined ? undefined : plural(n, 'record')
 }
 
 export type FollowState = 'none' | 'pending' | 'accepted'
