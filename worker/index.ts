@@ -185,23 +185,24 @@ const SYNC_ACTIONS = [
   'discogs',
   'passkey-signin-options',
   'passkey-signin',
-  // from a device that's in
-  'pull',
-  'push',
-  'pair',
-  'password',
-  'password-remove',
-  'off',
-  'leave',
-  'forget',
-  'account',
-  'link',
   // a profile anyone with the link can read
   'profile',
   'profile-rows',
   'profile-search',
   'profile-item',
   'profile-people',
+  // from a device that's in: sync
+  'pull',
+  'push',
+  'off',
+  // the account and its ways in
+  'account',
+  'link',
+  'pair',
+  'password',
+  'password-remove',
+  'leave',
+  'forget',
   'devices',
   'device-rename',
   'device-remove',
@@ -210,11 +211,16 @@ const SYNC_ACTIONS = [
   'passkeys',
   'passkey-rename',
   'passkey-remove',
+  // your own profile
   'profile-settings',
   'profile-sections',
+  'profile-who',
+  'profile-details',
+  'profile-about',
   'profile-publish',
   'profile-sweep',
   'profile-unpublish',
+  // following
   'follow',
   'unfollow',
   'follow-respond',
@@ -223,9 +229,6 @@ const SYNC_ACTIONS = [
   'unblock',
   'follows',
   'feed',
-  'profile-who',
-  'profile-details',
-  'profile-about',
   // admin only
   'admin-members',
   'admin-badge',
@@ -250,6 +253,12 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
   const db = env.DB
   if (!db) return Response.json({ error: "Sync isn't set up" }, { status: 503 })
   const ok = (body: unknown) => Response.json(body, { headers: { 'Cache-Control': 'no-store' } })
+  // for actions with nothing to send back
+  const done = async (work: Promise<unknown>) => {
+    await work
+    return ok({ ok: true })
+  }
+  const rp = () => relyingParty(req.headers.get('Origin'), env.SITE)
 
   // Asks Discogs, through Browser Run, whose login this is. Browser time is scarce on the free plan,
   // so each address gets only a few a minute.
@@ -312,12 +321,10 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
           return ok(await signIn(db, { name, discogsId }, parseProof(input.proof), Date.now(), about))
         }
         case 'passkey-signin-options':
-          return ok(await signInOptions(db, relyingParty(req.headers.get('Origin'), env.SITE), parseDiscogsId(input.discogsId)))
+          return ok(await signInOptions(db, rp(), parseDiscogsId(input.discogsId)))
         case 'passkey-signin': {
           if (!(await allowed(env.LOGIN_LIMITER, `discogs:${parseDiscogsId(input.discogsId)}`))) return tooMany()
-          return ok(
-            await signInWithPasskey(db, relyingParty(req.headers.get('Origin'), env.SITE), input.id, input.response, Date.now(), about),
-          )
+          return ok(await signInWithPasskey(db, rp(), input.id, input.response, Date.now(), about))
         }
       }
     }
@@ -337,124 +344,99 @@ async function sync(req: Request, env: Env, action: SyncAction): Promise<Respons
       }
       case 'push':
         return ok(await push(db, syncEnv, account, parseRows(input.rows)))
-      case 'pair':
-        return ok(await newPairing(db, account))
-      case 'password':
-        await setPassword(db, account, parseProof(input.proof))
-        return ok({ ok: true })
-      case 'password-remove':
-        await removePassword(db, account)
-        return ok({ ok: true })
       case 'off':
         return ok({ off: await setOff(db, account, input.off) })
-      case 'leave':
-        await leave(db, input.device)
-        return ok({ ok: true })
-      case 'forget':
-        await forget(db, account)
-        return ok({ ok: true })
+
       case 'account': {
         await nameDevice(db, input.device, about)
         const { id: _id, ...rest } = (await accountById(db, account))!
         return ok({ ...rest, requests: await waitingFollows(db, account) })
       }
       case 'link':
-        await link(db, account, await confirmed(input.login))
-        return ok({ ok: true })
+        return done(link(db, account, await confirmed(input.login)))
+      case 'pair':
+        return ok(await newPairing(db, account))
+      case 'password':
+        return done(setPassword(db, account, parseProof(input.proof)))
+      case 'password-remove':
+        return done(removePassword(db, account))
+      case 'leave':
+        return done(leave(db, input.device))
+      case 'forget':
+        return done(forget(db, account))
       case 'devices':
         return ok({ devices: await listDevices(db, account, await sha256(input.device)) })
       case 'device-rename':
-        await renameDevice(db, account, input.id, input.name)
-        return ok({ ok: true })
+        return done(renameDevice(db, account, input.id, input.name))
       case 'device-remove':
-        await removeDevice(db, account, input.id)
-        return ok({ ok: true })
+        return done(removeDevice(db, account, input.id))
       case 'passkey-options':
-        return ok(await registerOptions(db, account, relyingParty(req.headers.get('Origin'), env.SITE)))
+        return ok(await registerOptions(db, account, rp()))
       case 'passkey-register':
-        return ok(
-          await register(
-            db,
-            account,
-            relyingParty(req.headers.get('Origin'), env.SITE),
-            input.id,
-            input.response,
-            parsePasskeyName(input.name),
-          ),
-        )
+        return ok(await register(db, account, rp(), input.id, input.response, parsePasskeyName(input.name)))
       case 'passkeys':
         return ok({ passkeys: await listPasskeys(db, account) })
       case 'passkey-rename':
-        await renamePasskey(db, account, input.id, input.name)
-        return ok({ ok: true })
+        return done(renamePasskey(db, account, input.id, input.name))
       case 'passkey-remove':
-        await removePasskey(db, account, input.id)
-        return ok({ ok: true })
+        return done(removePasskey(db, account, input.id))
+
       case 'profile-settings':
         return ok(await profileSettings(db, account))
       case 'profile-sections':
         return ok({ sections: await setSections(db, account, input.sections) })
-      case 'profile-publish':
-        return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
-      case 'follow':
-        return ok(await follow(db, account, input.username))
-      case 'unfollow':
-        await unfollow(db, account, input.username)
-        return ok({ ok: true })
-      case 'follow-respond':
-        await respond(db, account, input.username, input.approve === true)
-        return ok({ ok: true })
-      case 'follower-remove':
-        await removeFollower(db, account, input.username)
-        return ok({ ok: true })
-      case 'block':
-        await block(db, account, input.username)
-        return ok({ ok: true })
-      case 'unblock':
-        await unblock(db, account, input.username)
-        return ok({ ok: true })
-      case 'follows':
-        return ok(await followLists(db, account))
-      case 'feed':
-        return ok(await feed(db, account, input.after))
-      case 'profile-sweep':
-        return ok(await sweepProfile(db, account, input.section, input.before))
-      case 'profile-unpublish':
-        return ok(await unpublishProfile(db, account, input.section, input.keys))
+      case 'profile-who':
+        return ok({ who: await setWho(db, account, input.who) })
       case 'profile-details':
         return ok({ details: await setProfileDetails(db, account, input.details) })
       case 'profile-about':
         return ok(await setProfileAbout(db, account, input.about))
-      case 'profile-who':
-        return ok({ who: await setWho(db, account, input.who) })
+      case 'profile-publish':
+        return ok(await publishProfile(db, account, parseProfileRows(input.rows)))
+      case 'profile-sweep':
+        return ok(await sweepProfile(db, account, input.section, input.before))
+      case 'profile-unpublish':
+        return ok(await unpublishProfile(db, account, input.section, input.keys))
+
+      case 'follow':
+        return ok(await follow(db, account, input.username))
+      case 'unfollow':
+        return done(unfollow(db, account, input.username))
+      case 'follow-respond':
+        return done(respond(db, account, input.username, input.approve === true))
+      case 'follower-remove':
+        return done(removeFollower(db, account, input.username))
+      case 'block':
+        return done(block(db, account, input.username))
+      case 'unblock':
+        return done(unblock(db, account, input.username))
+      case 'follows':
+        return ok(await followLists(db, account))
+      case 'feed':
+        return ok(await feed(db, account, input.after))
+
       case 'admin-members':
         return ok({ members: await members(db) })
       case 'admin-badge':
         return ok({ badges: await setBadge(db, input.member, input.badge, input.on === true) })
+      case 'admin-clear':
+        return done(clearWaysIn(db, input.member))
+      case 'admin-clear-about':
+        return done(clearAbout(db, input.member))
+      case 'admin-hide':
+        return ok({ hidden: await setHidden(db, input.member, input.on) })
       case 'admin-badges':
         return ok({ badges: await listBadges(db) })
       case 'admin-badge-create':
         return ok(await createBadge(db, input.label, input.color, input.icon))
       case 'admin-badge-rename':
-        await editBadge(db, input.id, { label: input.label, color: input.color, icon: input.icon })
-        return ok({ ok: true })
-      case 'admin-badge-move':
-        await moveBadge(db, input.id, input.by)
-        return ok({ ok: true })
+        return done(editBadge(db, input.id, { label: input.label, color: input.color, icon: input.icon }))
       case 'admin-badge-delete':
-        await deleteBadge(db, input.id)
-        return ok({ ok: true })
-      case 'admin-hide':
-        return ok({ hidden: await setHidden(db, input.member, input.on) })
-      case 'admin-clear':
-        await clearWaysIn(db, input.member)
-        return ok({ ok: true })
-      case 'admin-clear-about':
-        await clearAbout(db, input.member)
-        return ok({ ok: true })
+        return done(deleteBadge(db, input.id))
+      case 'admin-badge-move':
+        return done(moveBadge(db, input.id, input.by))
       case 'admin-delete':
-        await deleteMember(db, input.member)
-        return ok({ ok: true })
+        return done(deleteMember(db, input.member))
     }
     throw new SyncError(404, 'Not found')
   } catch (e) {
