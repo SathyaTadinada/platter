@@ -1,5 +1,5 @@
 import { Disc3 } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { buttonClass, Spinner } from './components/ui'
 import { Link, Redirect, Route, Switch, useLocation, useSearch } from 'wouter'
 import { loadSession } from './auth/auth'
@@ -21,32 +21,35 @@ import { setPlayFields } from './lib/plays'
 import { useNewRecordPrices } from './hooks/prices'
 import { rememberScroll, savedScroll, trackLocation } from './lib/nav'
 import { signInWithOAuth } from './lib/signIn'
-import { About } from './screens/About'
 import { Batch } from './screens/Batch'
-import { Crates } from './screens/Crates'
-import { Import } from './screens/Import'
 import { Results } from './screens/Results'
-import { Account } from './screens/Account'
-import { Admin } from './screens/Admin'
-import { Following } from './screens/Following'
-import { Profile } from './screens/Profile'
-import { ProfilePeople } from './screens/profile/People'
-import { VisitorRelease } from './screens/release/Visitor'
 import { Collection } from './screens/Collection'
 import { Record } from './screens/Record'
 import { Release } from './screens/Release'
 import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
-import { Setup } from './screens/Setup'
-import { ListenBrainz } from './screens/ListenBrainz'
-import { NowPlaying } from './screens/NowPlaying'
-import { Stats } from './screens/Stats'
-import { Report } from './screens/Report'
-import { YourYear } from './screens/YourYear'
-import { Wantlist } from './screens/Wantlist'
 import { Welcome } from './screens/Welcome'
-import { Connections } from './screens/account/Connections'
+
+// Pages most visits don't open load the first time they're needed, so opening the app reads less code.
+// The service worker keeps them all, so they still open offline.
+const About = lazy(() => import('./screens/About').then((m) => ({ default: m.About })))
+const Crates = lazy(() => import('./screens/Crates').then((m) => ({ default: m.Crates })))
+const Import = lazy(() => import('./screens/Import').then((m) => ({ default: m.Import })))
+const Account = lazy(() => import('./screens/Account').then((m) => ({ default: m.Account })))
+const Admin = lazy(() => import('./screens/Admin').then((m) => ({ default: m.Admin })))
+const Following = lazy(() => import('./screens/Following').then((m) => ({ default: m.Following })))
+const Profile = lazy(() => import('./screens/Profile').then((m) => ({ default: m.Profile })))
+const ProfilePeople = lazy(() => import('./screens/profile/People').then((m) => ({ default: m.ProfilePeople })))
+const VisitorRelease = lazy(() => import('./screens/release/Visitor').then((m) => ({ default: m.VisitorRelease })))
+const Setup = lazy(() => import('./screens/Setup').then((m) => ({ default: m.Setup })))
+const ListenBrainz = lazy(() => import('./screens/ListenBrainz').then((m) => ({ default: m.ListenBrainz })))
+const NowPlaying = lazy(() => import('./screens/NowPlaying').then((m) => ({ default: m.NowPlaying })))
+const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Stats })))
+const Report = lazy(() => import('./screens/Report').then((m) => ({ default: m.Report })))
+const YourYear = lazy(() => import('./screens/YourYear').then((m) => ({ default: m.YourYear })))
+const Wantlist = lazy(() => import('./screens/Wantlist').then((m) => ({ default: m.Wantlist })))
+const Connections = lazy(() => import('./screens/account/Connections').then((m) => ({ default: m.Connections })))
 
 type Boot = { state: 'loading' } | { state: 'ready'; session: Session | null; error?: string }
 
@@ -111,41 +114,43 @@ function Routes({ error }: { error?: string }) {
 
   if (!session) {
     return (
-      <Switch>
-        <Route path="/about" component={About} />
-        {/* a profile is for anyone with the link, signed in or not */}
-        {/* a record opened from someone's profile, read-only */}
-        <Route path="/release/:id">
-          {(p) => (
-            <CloudProvider>
-              <Visitor>
-                <VisitorRelease id={p.id!} />
-              </Visitor>
-            </CloudProvider>
-          )}
-        </Route>
-        <Route path="/u/:username/people">
-          {(p) => (
-            <CloudProvider>
-              <Visitor>
-                <ProfilePeople username={p.username!} />
-              </Visitor>
-            </CloudProvider>
-          )}
-        </Route>
-        <Route path="/u/:username">
-          {(p) => (
-            <CloudProvider>
-              <Visitor>
-                <Profile username={p.username!} />
-              </Visitor>
-            </CloudProvider>
-          )}
-        </Route>
-        <Route>
-          <Welcome error={error} />
-        </Route>
-      </Switch>
+      <Suspense fallback={<Spinner />}>
+        <Switch>
+          <Route path="/about" component={About} />
+          {/* a profile is for anyone with the link, signed in or not */}
+          {/* a record opened from someone's profile, read-only */}
+          <Route path="/release/:id">
+            {(p) => (
+              <CloudProvider>
+                <Visitor>
+                  <VisitorRelease id={p.id!} />
+                </Visitor>
+              </CloudProvider>
+            )}
+          </Route>
+          <Route path="/u/:username/people">
+            {(p) => (
+              <CloudProvider>
+                <Visitor>
+                  <ProfilePeople username={p.username!} />
+                </Visitor>
+              </CloudProvider>
+            )}
+          </Route>
+          <Route path="/u/:username">
+            {(p) => (
+              <CloudProvider>
+                <Visitor>
+                  <Profile username={p.username!} />
+                </Visitor>
+              </CloudProvider>
+            )}
+          </Route>
+          <Route>
+            <Welcome error={error} />
+          </Route>
+        </Switch>
+      </Suspense>
     )
   }
 
@@ -154,43 +159,45 @@ function Routes({ error }: { error?: string }) {
       <CloudProvider>
         <QueueProvider>
           <Shell>
-            <Switch>
-              <Route path="/" component={Collection} />
-              <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
-              <Route path="/release/:id">{(p) => <Release id={p.id} />}</Route>
-              <Route path="/scan" component={Scan} />
-              <Route path="/batch" component={Batch} />
-              <Route path="/import" component={Import} />
-              <Route path="/search" component={Search} />
-              <Route path="/results" component={Results} />
-              <Route path="/setup" component={Setup} />
-              <Route path="/settings" component={Settings} />
-              <Route path="/crates" component={Crates} />
-              <Route path="/wantlist" component={Wantlist} />
-              <Route path="/report" component={Report} />
-              <Route path="/stats" component={Stats} />
-              <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
-              <Route path="/play" component={NowPlaying} />
-              <Route path="/listenbrainz" component={ListenBrainz} />
-              <Route path="/account" component={Account} />
-              <Route path="/account/people" component={Connections} />
-              <Route path="/account/profile">
-                <Redirect to="/account" replace />
-              </Route>
-              <Route path="/sync">
-                <Redirect to="/account" replace />
-              </Route>
-              <Route path="/admin" component={Admin} />
-              <Route path="/following" component={Following} />
-              <Route path="/u/:username/people">{(p) => <ProfilePeople username={p.username!} />}</Route>
-              <Route path="/u/:username">{(p) => <Profile username={p.username!} />}</Route>
-              <Route path="/value" component={Stats} />
-              <Route path="/about" component={About} />
-              {/* an address that isn't a page goes home, so the bar doesn't keep saying it */}
-              <Route>
-                <Redirect to="/" replace />
-              </Route>
-            </Switch>
+            <Suspense fallback={<Spinner />}>
+              <Switch>
+                <Route path="/" component={Collection} />
+                <Route path="/collection/:id">{(p) => <Record id={p.id} />}</Route>
+                <Route path="/release/:id">{(p) => <Release id={p.id} />}</Route>
+                <Route path="/scan" component={Scan} />
+                <Route path="/batch" component={Batch} />
+                <Route path="/import" component={Import} />
+                <Route path="/search" component={Search} />
+                <Route path="/results" component={Results} />
+                <Route path="/setup" component={Setup} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/crates" component={Crates} />
+                <Route path="/wantlist" component={Wantlist} />
+                <Route path="/report" component={Report} />
+                <Route path="/stats" component={Stats} />
+                <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
+                <Route path="/play" component={NowPlaying} />
+                <Route path="/listenbrainz" component={ListenBrainz} />
+                <Route path="/account" component={Account} />
+                <Route path="/account/people" component={Connections} />
+                <Route path="/account/profile">
+                  <Redirect to="/account" replace />
+                </Route>
+                <Route path="/sync">
+                  <Redirect to="/account" replace />
+                </Route>
+                <Route path="/admin" component={Admin} />
+                <Route path="/following" component={Following} />
+                <Route path="/u/:username/people">{(p) => <ProfilePeople username={p.username!} />}</Route>
+                <Route path="/u/:username">{(p) => <Profile username={p.username!} />}</Route>
+                <Route path="/value" component={Stats} />
+                <Route path="/about" component={About} />
+                {/* an address that isn't a page goes home, so the bar doesn't keep saying it */}
+                <Route>
+                  <Redirect to="/" replace />
+                </Route>
+              </Switch>
+            </Suspense>
           </Shell>
         </QueueProvider>
       </CloudProvider>
