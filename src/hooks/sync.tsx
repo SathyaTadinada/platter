@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
 import { toast } from '../components/Toaster'
 import { getProfile } from '../api/discogs/endpoints'
 import { DiscogsError, type DiscogsClient } from '../api/discogs/client'
@@ -9,6 +9,7 @@ import { recordCollectionValue, recordedToday } from '../lib/pricing'
 import { checkPrices, stopPriceCheck } from './prices'
 import { recheckSession } from '../lib/signIn'
 import { isStale, syncCollection, syncWants } from '../lib/sync'
+import { RETRY_AFTER, useOnReturn } from './onReturn'
 import { useSession } from './session'
 
 type SyncState = { running: boolean; label: string; done: number; total: number; error: string | null }
@@ -16,8 +17,6 @@ type Ctx = SyncState & { sync: (force?: boolean) => Promise<void>; refresh: () =
 
 const SyncContext = createContext<Ctx | null>(null)
 const idle: SyncState = { running: false, label: '', done: 0, total: 0, error: null }
-// after a failed sync, how long until it tries again on its own
-const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
 
 // Keeps the local collection and wantlist index fresh in the background.
 export function SyncProvider({ children }: { children: ReactNode }) {
@@ -75,20 +74,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     [client, session],
   )
 
-  // check on open, whenever the app comes back to the foreground, and when the network returns
   syncRef.current = sync
-  useEffect(() => {
-    sync()
-    const onVisible = () => document.visibilityState === 'visible' && sync()
-    const onOnline = () => sync()
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('online', onOnline)
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('online', onOnline)
-      clearTimeout(retry.current)
-    }
-  }, [sync])
+  const stopRetry = useCallback(() => clearTimeout(retry.current), [])
+  useOnReturn(sync, stopRetry)
 
   // Refresh from Discogs: everything kept from Discogs is out of date, so records ask for their
   // details again when opened, and album years, lengths, and prices are all checked again

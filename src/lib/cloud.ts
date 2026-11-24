@@ -1,7 +1,6 @@
 import type { Badge, BadgeColor, BadgeIcon, BadgeLook } from '../../worker/badges'
 import { categoryOf, type Category } from '../../worker/categories'
 import type { About, Pinned, Sections, Section, Setup, Who } from '../../worker/profile'
-export type { About, Pinned, SetupSlot } from '../../worker/profile'
 import type { Links } from '../../worker/links'
 import { quiet, setCapture, SPECS, SYNCED_SETTINGS, type Kind } from '../db/capture'
 import { db, getSetting, setSetting, type OutboxEntry, type QueueItem } from '../db/db'
@@ -19,6 +18,9 @@ import { deviceKind, deviceName, type DeviceKind } from './deviceName'
 import { prefListeners, readPref, removePref, writePref } from './prefs'
 import { LAYOUTS } from './statsLayout'
 import { applyTheme } from './theme'
+
+export type { About, Pinned, SetupSlot } from '../../worker/profile'
+export type { Badge } from '../../worker/badges'
 
 // Cloud sync: what you save in Platter follows you to every device. It's the first thing the Platter
 // account does, which belongs to your Discogs user: the server confirms a Discogs login itself, and a
@@ -139,7 +141,6 @@ export type Member = {
   about: boolean // has written a bio or setup
 }
 type Challenge<T> = { id: string; options: T }
-export type { Badge } from '../../worker/badges'
 
 export type ProfileRow = { kind: string; key: string; value: string; updatedAt: number }
 // following: whether you follow them, when you're signed in
@@ -179,45 +180,38 @@ export type ProfileReader = {
   profilePeople(username: string, list: 'followers' | 'following'): Promise<{ people: Person[]; more: number }>
 }
 
-// Getting in, before there's a device key
-export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => ({
-  // by name: accounts made before Discogs logins were confirmed
-  exists: (name: string) => call<{ exists: boolean }>(fetchFn, 'exists', { name }).then((r) => r.exists),
-  waysIn: (discogsId: number) => call<WaysIn>(fetchFn, 'exists', { discogsId }),
-  discogs: (login: Login, create: boolean) =>
-    call<{ device: string | null; created: boolean; name: string; discogsId: number }>(fetchFn, 'discogs', {
-      login,
-      create,
-      deviceName: deviceName(),
-      deviceKind: deviceKind(),
-    }),
-  signIn: (name: string, proof: string, discogsId?: number) =>
-    call<{ device: string }>(fetchFn, 'signin', { name, proof, discogsId, deviceName: deviceName(), deviceKind: deviceKind() }),
-  join: (code: string) =>
-    call<{ device: string; name: string }>(fetchFn, 'join', { code, deviceName: deviceName(), deviceKind: deviceKind() }),
-  passkeyOptions: (discogsId: number) =>
-    call<Challenge<PublicKeyCredentialRequestOptionsJSON>>(fetchFn, 'passkey-signin-options', { discogsId }),
-  // a profile is read by anyone with the link, so it goes through the same door as signing in
-  profile: (username: string) => call<ProfileHead>(fetchFn, 'profile', { username }),
-  searchProfiles: (q: string) => call<{ found: Found[] }>(fetchFn, 'profile-search', { q }),
-  profileRows: (username: string, section: Section, after?: string) =>
-    call<{ rows: { key: string; value: string; updatedAt: number }[]; more: boolean }>(fetchFn, 'profile-rows', {
-      username,
-      section,
-      after,
-    }),
-  profileItem: (username: string, key: string) => call<{ key: string; value: string }>(fetchFn, 'profile-item', { username, key }),
-  profilePeople: (username: string, list: 'followers' | 'following') =>
-    call<{ people: Person[]; more: number }>(fetchFn, 'profile-people', { username, list }),
-  passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
-    call<{ device: string; name: string }>(fetchFn, 'passkey-signin', {
-      discogsId,
-      id,
-      response,
-      deviceName: deviceName(),
-      deviceKind: deviceKind(),
-    }),
+// this browser, as the account's device list shows it
+const thisDevice = () => ({ deviceName: deviceName(), deviceKind: deviceKind() })
+
+type Call = <T>(path: string, body: object) => Promise<T>
+
+// A profile is read by anyone with the link, so signed out it goes through the same door as signing in
+const readerFor = (c: Call): ProfileReader => ({
+  profile: (username) => c('profile', { username }),
+  profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
+  profileItem: (username, key) => c('profile-item', { username, key }),
+  searchProfiles: (q) => c('profile-search', { q }),
+  profilePeople: (username, list) => c('profile-people', { username, list }),
 })
+
+// Getting in, before there's a device key
+export const cloudEntry = (fetchFn: typeof fetch = (...a) => fetch(...a)) => {
+  const c: Call = (path, body) => call(fetchFn, path, body)
+  return {
+    ...readerFor(c),
+    // by name: accounts made before Discogs logins were confirmed
+    exists: (name: string) => c<{ exists: boolean }>('exists', { name }).then((r) => r.exists),
+    waysIn: (discogsId: number) => c<WaysIn>('exists', { discogsId }),
+    discogs: (login: Login, create: boolean) =>
+      c<{ device: string | null; created: boolean; name: string; discogsId: number }>('discogs', { login, create, ...thisDevice() }),
+    signIn: (name: string, proof: string, discogsId?: number) =>
+      c<{ device: string }>('signin', { name, proof, discogsId, ...thisDevice() }),
+    join: (code: string) => c<{ device: string; name: string }>('join', { code, ...thisDevice() }),
+    passkeyOptions: (discogsId: number) => c<Challenge<PublicKeyCredentialRequestOptionsJSON>>('passkey-signin-options', { discogsId }),
+    passkeySignIn: (discogsId: number, id: string, response: AuthenticationResponseJSON) =>
+      c<{ device: string; name: string }>('passkey-signin', { discogsId, id, response, ...thisDevice() }),
+  }
+}
 
 export type CloudApi = ProfileReader & {
   pull(since: number): Promise<PullResult>
@@ -277,6 +271,7 @@ export type CloudApi = ProfileReader & {
 export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch(...a)): CloudApi {
   const c = <T>(path: string, body: object = {}) => call<T>(fetchFn, path, { device, ...body })
   return {
+    ...readerFor(c),
     pull: (since) => c('pull', { since }),
     push: (rows) => c('push', { rows }),
     pair: () => c('pair'),
@@ -284,7 +279,7 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     setOff: (off) => c('off', { off }),
     leave: () => c('leave'),
     forget: () => c('forget'),
-    account: () => c('account', { deviceName: deviceName(), deviceKind: deviceKind() }),
+    account: () => c('account', thisDevice()),
     link: (login) => c('link', { login }),
     devices: () => c('devices'),
     renameDevice: (id, name) => c('device-rename', { id, name }),
@@ -302,11 +297,6 @@ export function cloudApi(device: string, fetchFn: typeof fetch = (...a) => fetch
     publishProfile: (rows) => c('profile-publish', { rows }),
     sweepProfile: (section, before) => c('profile-sweep', { section, before }),
     unpublishProfile: (section, keys) => c('profile-unpublish', { section, keys }),
-    profile: (username) => c('profile', { username }),
-    profileRows: (username, section, after) => c('profile-rows', { username, section, after }),
-    profileItem: (username, key) => c('profile-item', { username, key }),
-    searchProfiles: (q) => c('profile-search', { q }),
-    profilePeople: (username, list) => c('profile-people', { username, list }),
     follow: (username) => c('follow', { username }),
     unfollow: (username) => c('unfollow', { username }),
     respondFollow: (username, approve) => c('follow-respond', { username, approve }),

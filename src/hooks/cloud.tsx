@@ -7,8 +7,7 @@ import { searchReleases } from '../api/discogs/endpoints'
 import { searchMbBarcode } from '../api/musicbrainz'
 import { toast } from '../components/Toaster'
 import { quiet } from '../db/capture'
-import { db, getSetting, type QueueItem } from '../db/db'
-import type { Session } from '../db/db'
+import { db, getSetting, type QueueItem, type Session } from '../db/db'
 import {
   capture,
   changePassword as savePassword,
@@ -28,23 +27,20 @@ import {
   signOutOfSync,
   syncNow,
   takeNeedCandidates,
+  type About,
   type CloudApi,
   type Login,
   type ProfileReader,
   type WaysIn,
-  type About,
 } from '../lib/cloud'
-import { DEMO_ABOUT, demoCloudApi, demoReader } from '../lib/demoCloud'
 import { deviceId } from '../lib/device'
-import { forgetSent, lastPlayed, publishAbout, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
-
-const EMPTY_ABOUT: About = { bio: '', setup: {}, links: {}, location: '', pronouns: '', pinned: null, playing: false }
-import { getFields, getProfile } from '../api/discogs/endpoints'
-import { matchFields, type FieldKey, type FieldMap } from '../lib/fields'
 import { lookupBarcode } from '../lib/lookup'
+import { useDemoCloud } from './demoCloud'
+import { RETRY_AFTER, useOnReturn } from './onReturn'
+import { useProfileSharing } from './profileSharing'
 import { useSession } from './session'
 
-type Ctx = {
+export type CloudCtx = {
   available: boolean // signed in with Discogs (not the demo), on a copy with Platter accounts
   username: string
   enabled: boolean
@@ -87,13 +83,10 @@ type Ctx = {
   claim?: (item: QueueItem, startedAt: number) => Promise<boolean>
 }
 
-const CloudContext = createContext<Ctx | null>(null)
-const RETRY_AFTER = [30_000, 60_000, 120_000, 300_000]
+const CloudContext = createContext<CloudCtx | null>(null)
 // Changes go up a few seconds after the last one, and automatic syncs are at least half a minute
 // apart: background work (album years, record lengths) saves something every couple of seconds
 const PUSH_AFTER = 5000
-const AVATAR_WAIT = 4000
-const SHARE_EVERY = 10 * 60_000
 const MIN_GAP = 30_000
 
 const loginOf = (s: Session): Login => (s.kind === 'oauth' ? { token: s.token, tokenSecret: s.secret ?? '' } : { token: s.token })
@@ -114,15 +107,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [sections, setSections] = useState<Sections | null>(null)
-  const [details, setDetailsState] = useState<string[]>([])
-  const [about, setAboutState] = useState<About>(EMPTY_ABOUT)
-  const playing = useRef(false) // the record last played goes up with the picture
-  const chosen = useRef<string[]>([])
-  const [who, setWho] = useState<Who>('private')
-  const [hidden, setHidden] = useState(false)
-  const shared = useRef<Sections>({})
-  const open = useRef(false) // there's a profile: it isn't Private
+  const { share, ...profile } = useProfileSharing(api)
   const busy = useRef(false)
   const again = useRef(false)
   const failures = useRef(0)
@@ -147,100 +132,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       })
     }
   }, [client])
-
-  // What the profile shows goes up after a sync, and only when something in it changed
-  const sharing = useRef<Promise<void>>(Promise.resolve())
-  const avatar = useRef<string | undefined>(undefined) // from the last full pass, for the ones between
-  const showing = () => open.current || Object.values(shared.current).some((v) => v === 'public')
-  const aboutNow = useCallback(async () => {
-    // how many records they have is part of their collection, so it only goes with that section
-    const about: ProfileAbout = shared.current.collection === 'public' ? { records: await db.collection.count() } : {}
-    if (playing.current) {
-      const last = await lastPlayed()
-      if (last) about.playing = last
-    }
-    if (avatar.current) about.avatar = avatar.current
-    return about
-  }, [])
-  const shareNow = useCallback(async () => {
-    if (!api || !showing()) return
-    const about = await aboutNow()
-    if (client && session && session.kind !== 'demo') {
-      // Their Discogs picture is worth having but not worth waiting on: the client keeps retrying a
-      // request Discogs turns down, and the profile shouldn't sit unpublished while it does. Without
-      // it the profile goes up with the one from last time, and the next pass picks the new one up.
-      const picture = await Promise.race([
-        getProfile(client, session.username)
-          .then((p) => p.avatar_url)
-          .catch(() => undefined),
-        new Promise<undefined>((r) => setTimeout(r, AVATAR_WAIT)),
-      ])
-      if (picture) about.avatar = avatar.current = picture
-    }
-    // the names of the fields whose values go up with each record, when some do. Without them this
-    // pass waits for the next, rather than sending records without the details they had.
-    let choice: CopyChoice | undefined
-    if (chosen.current.length && shared.current.collection === 'public') {
-      const fieldIds = chosen.current.filter((d) => d !== 'rating')
-      let names: Record<number, string> = {}
-      let roles: Record<number, FieldKey> = {}
-      if (fieldIds.length) {
-        if (!client || !session || session.kind === 'demo') return
-        const fields = await Promise.race([
-          getFields(client, session.username)
-            .then((r) => r.fields)
-            .catch(() => null),
-          new Promise<null>((r) => setTimeout(() => r(null), AVATAR_WAIT)),
-        ])
-        if (!fields) return
-        names = Object.fromEntries([...fields].sort((a, b) => a.position - b.position).map((f) => [f.id, f.name]))
-        // what each field is for, as Collection fields matched them, so others can match it to theirs
-        const matches = matchFields(fields, (await getSetting<FieldMap>('fieldMap')) ?? {})
-        roles = Object.fromEntries(matches.filter((m) => m.field).map((m) => [m.field!.id, m.spec.key]))
-      }
-      choice = { details: chosen.current, names, roles }
-    }
-    await publishProfile(api, shared.current, about, Date.now(), choice, open.current)
-  }, [api, client, session, aboutNow])
-  // Between full passes only the small row goes: the picture, record count, and record last played
-  const shareAbout = useCallback(async () => {
-    if (!api || !showing()) return
-    await publishAbout(api, shared.current, await aboutNow(), Date.now(), open.current)
-  }, [api, aboutNow])
-  // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
-  // a sync it waits SHARE_EVERY since the last one, so a busy session doesn't rework the whole
-  // collection every half minute, and sends only the small row in between; changing the profile's
-  // settings sends straight away.
-  const lastShared = useRef(0)
-  const share = useCallback(
-    (now = true) => {
-      const full = now || Date.now() - lastShared.current >= SHARE_EVERY
-      if (full) lastShared.current = Date.now()
-      const next = sharing.current.then(full ? shareNow : shareAbout)
-      sharing.current = next.catch(() => {})
-      return next
-    },
-    [shareNow, shareAbout],
-  )
-  // A record added or removed shows on the profile a few seconds later, not at the next full pass.
-  // Which records there are, cheaply: how many, and their ids added up.
-  const shelf = useLiveQuery(async () => {
-    const ids = (await db.collection.toCollection().primaryKeys()) as number[]
-    return `${ids.length}:${ids.reduce((a, b) => a + b, 0)}`
-  })
-  const sentShelf = useRef<string | undefined>(undefined)
-  useEffect(() => {
-    if (shelf === undefined || !api) return
-    // the first look is what the pass on opening sends
-    if (sentShelf.current === undefined) sentShelf.current = shelf
-    if (sentShelf.current === shelf) return
-    // a sync fills the collection a page at a time, so this waits for it to settle
-    const t = setTimeout(() => {
-      sentShelf.current = shelf
-      share()
-    }, PUSH_AFTER)
-    return () => clearTimeout(t)
-  }, [shelf, api, share])
 
   // shown: someone asked (Sync now), so the page says it's syncing; automatic ones stay quiet
   const run = useCallback(
@@ -274,7 +165,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [api, refill],
+    [api, refill, share],
   )
   runRef.current = run
 
@@ -291,20 +182,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [enabled])
 
   // on open, back in front, and back online
-  useEffect(() => {
-    if (!api) return
-    run()
-    const onVisible = () => document.visibilityState === 'visible' && run()
-    const onOnline = () => run()
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('online', onOnline)
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('online', onOnline)
-      clearTimeout(retry.current)
-      clearTimeout(soon.current)
-    }
-  }, [api, run])
+  const stopTimers = useCallback(() => {
+    clearTimeout(retry.current)
+    clearTimeout(soon.current)
+  }, [])
+  useOnReturn(api ? run : undefined, stopTimers)
 
   // getting in or out: the saved key changes, so read it again either way
   const entered = useCallback(async (go: () => Promise<void>) => {
@@ -352,49 +234,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     })()
   }, [api, session])
 
-  useEffect(() => {
-    if (!api) {
-      setSections(null)
-      shared.current = {}
-      return
-    }
-    // tried again until it loads (it may start offline), since the profile screens wait on it
-    let timer: ReturnType<typeof setTimeout> | undefined
-    let stopped = false
-    const load = () => {
-      clearTimeout(timer)
-      api
-        .profileSettings()
-        .then(({ sections: saved, who: found, hidden: down, details: picked = [], ...rest }) => {
-          if (stopped) return
-          const loaded = { ...EMPTY_ABOUT, ...rest }
-          playing.current = loaded.playing
-          setAboutState(loaded)
-          shared.current = saved
-          open.current = found !== 'private'
-          chosen.current = picked
-          setDetailsState(picked)
-          setSections(saved)
-          setWho(found)
-          setHidden(down)
-          window.removeEventListener('online', load)
-        })
-        .catch(() => {
-          if (!stopped) timer = setTimeout(load, 30_000)
-        })
-    }
-    load()
-    window.addEventListener('online', load)
-    return () => {
-      stopped = true
-      clearTimeout(timer)
-      window.removeEventListener('online', load)
-    }
-  }, [api])
-
   const anonymous = useMemo(() => cloudEntry(), [])
   const demoValue = useDemoCloud()
-  const value: Ctx = {
+  const value: CloudCtx = {
     api,
     reader: api ?? anonymous,
     waysIn: async () => {
@@ -411,44 +253,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     error,
     syncedAt: saved?.syncedAt ?? null,
     off: saved?.off ?? [],
-    sections,
-    setSections: async (next) => {
-      if (!api) return
-      const { sections: saved } = await api.setSections(next)
-      shared.current = saved
-      setSections(saved)
-      await forgetSent(saved)
-      await share()
-    },
-    who,
-    hidden,
-    setWho: async (next) => {
-      if (!api) return
-      const { who: saved } = await api.setWho(next)
-      setWho(saved)
-      // opening it sends the picture that goes with it
-      const opening = !open.current && saved !== 'private'
-      open.current = saved !== 'private'
-      if (opening) await share()
-    },
-    details,
-    setDetails: async (next) => {
-      if (!api) return
-      const { details: saved } = await api.setDetails(next)
-      chosen.current = saved
-      setDetailsState(saved)
-      await share()
-    },
-    about,
-    setAbout: async (next) => {
-      if (!api) return { published: Promise.resolve() }
-      const saved = await api.setAbout(next)
-      setAboutState(saved)
-      // showing or hiding the record last played goes up straight away, without holding up the save
-      if (saved.playing === playing.current) return { published: Promise.resolve() }
-      playing.current = saved.playing
-      return { published: share().catch(() => {}) }
-    },
+    ...profile,
     syncNow: () => run(true),
     signInWithDiscogs: async (create) => {
       let joined = false
@@ -483,108 +288,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
 
   return <CloudContext.Provider value={session?.kind === 'demo' ? demoValue : value}>{children}</CloudContext.Provider>
-}
-
-// The demo shows sync as if it were on, with nothing behind it: switches flip, codes count down,
-// and nothing leaves the browser
-function useDemoCloud(): Ctx {
-  const [enabled, setEnabled] = useState(true)
-  const [exists, setExists] = useState(true)
-  const [off, setOff] = useState<Category[]>([])
-  // everything on, so the sample profile shows what a profile can have
-  const [demoSections, setDemoSections] = useState<Sections>({ collection: 'public', wantlist: 'public', stats: 'public', year: 'public' })
-  const [demoWho, setDemoWho] = useState<Who>('public')
-  // the rating and both conditions (the demo's fields 1 and 2)
-  const [demoDetails, setDemoDetails] = useState<string[]>(['rating', '1', '2'])
-  const [demoAbout, setDemoAbout] = useState<About>(DEMO_ABOUT)
-  // a record from the sample collection pinned to the sample profile
-  useEffect(() => {
-    db.collection
-      .orderBy('dateAdded')
-      .first()
-      .then(
-        (r) =>
-          r &&
-          setDemoAbout((a) => (a.pinned ? a : { ...a, pinned: { id: r.releaseId, title: r.title, artist: r.artist, thumb: r.thumb } })),
-      )
-  }, [])
-  const [syncedAt, setSyncedAt] = useState(() => Date.now() - 2 * 60_000)
-  const [running, setRunning] = useState(false)
-  const api = useMemo(() => demoCloudApi(), [])
-  const anonymous = useMemo(() => cloudEntry(), [])
-  // read by the demo's own profile when it's opened, so it shows the settings as they are then
-  const settings = useRef({ sections: demoSections, who: demoWho, details: demoDetails, about: demoAbout })
-  settings.current = { sections: demoSections, who: demoWho, details: demoDetails, about: demoAbout }
-  const reader = useMemo(() => demoReader(anonymous, () => settings.current), [anonymous])
-  const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
-  const signIn = async () => {
-    await pause(600)
-    setEnabled(true)
-    setExists(true)
-    setSyncedAt(Date.now())
-  }
-  return {
-    available: true,
-    username: 'demo',
-    enabled,
-    running,
-    error: null,
-    syncedAt,
-    off,
-    api: enabled ? api : null,
-    // its own profile is made here; anyone else's comes from the real server, read anonymously
-    reader,
-    sections: demoSections,
-    setSections: async (next) => {
-      await pause(300)
-      setDemoSections((s) => ({ ...s, ...next }))
-    },
-    who: demoWho,
-    hidden: false,
-    setWho: async (next) => {
-      await pause(300)
-      setDemoWho(next)
-    },
-    details: demoDetails,
-    setDetails: async (next) => {
-      await pause(300)
-      setDemoDetails(next)
-    },
-    about: demoAbout,
-    setAbout: async (next) => {
-      await pause(300)
-      setDemoAbout(next)
-      return { published: Promise.resolve() }
-    },
-    waysIn: async () => ({ exists, password: false, passkeys: exists, legacy: false }),
-    signInWithDiscogs: async () => {
-      await signIn()
-      return true
-    },
-    signInWithPasskey: signIn,
-    syncNow: async () => {
-      setRunning(true)
-      await pause(800)
-      setSyncedAt(Date.now())
-      setRunning(false)
-    },
-    signIn,
-    join: signIn,
-    pair: async () => {
-      await pause(300)
-      const pick = () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]
-      const code = Array.from({ length: 6 }, pick).join('')
-      return { code: `${code.slice(0, 3)}-${code.slice(3)}`, expiresAt: Date.now() + 10 * 60_000 }
-    },
-    changePassword: () => pause(500),
-    setOff: async (next) => setOff(next),
-    leave: async () => setEnabled(false),
-    forget: async () => {
-      setEnabled(false)
-      setExists(false)
-    },
-    beforeSignOut: async () => {},
-  }
 }
 
 export function useCloud() {
