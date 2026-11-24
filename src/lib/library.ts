@@ -306,7 +306,10 @@ export function filterItems(items: LibraryItem[], q: LibraryQuery): LibraryItem[
 // "The Beatles" sorts under B
 export const sortName = (s: string) => fold(s).replace(/^(the|a|an)\s+/, '')
 
-const byText = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+// one comparer for every sort: localeCompare with options sets up a new one on each call, which made
+// sorting a big collection several times slower
+const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
+const byText = collator.compare
 export const byArtist = (a: { artist: string }, b: { artist: string }) => byText(sortName(a.artist), sortName(b.artist))
 export const byTitle = (a: { title: string }, b: { title: string }) => byText(sortName(a.title), sortName(b.title))
 
