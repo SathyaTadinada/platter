@@ -27,12 +27,29 @@ No Discogs account? [The demo](https://platter.tadinada.com/?demo) has a sample 
 - **Value:** Discogs prices per record, value over time, paid vs. now, and charts you can rearrange.
 - **Listening:** log plays, see what you play most and what you haven't touched in a year, and optionally scrobble to ListenBrainz.
 - **Import and export:** Discogs CSVs in and out, plus a backup of everything Platter keeps locally.
+- **Platter account:** optional. Syncs your plays and settings between devices, and gives you a profile you can share and people to follow.
 
 ## How it works
 
-Platter stores its data in the browser and calls `api.discogs.com` directly. The optional Platter account adds a small database for sync, profiles, and following. "Log in with Discogs" uses OAuth, and a small Cloudflare Worker (`worker/`) signs requests with the app secret. To sign, it gets your OAuth token and token secret and the URL being requested; it doesn't store or log them, and Discogs' responses go straight to your browser. Personal access tokens skip the Worker entirely.
+Without a Platter account, everything stays in your browser and the app calls `api.discogs.com` directly. "Log in with Discogs" uses OAuth, which needs the app secret, so a small Cloudflare Worker (`worker/`) signs each request. To sign, it gets your OAuth token and token secret and the URL being requested. It doesn't store or log them, and Discogs' responses go straight to your browser. Personal access tokens don't need signing.
 
-Platter also uses [MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org) for barcodes Discogs doesn't know, Apple's search to find albums for the streaming links, and [ListenBrainz](https://listenbrainz.org) if you connect it. Photos of runouts and spines are read on the device with [Tesseract](https://github.com/naptha/tesseract.js).
+### What a Platter account keeps on the server
+
+The account lives in a Cloudflare D1 database:
+
+- **Sign-in:** your Discogs username and user ID, a hash of your password's proof (the password is stretched in the browser and never sent), passkeys' public keys, and each device's name, type, and when it was last seen. Device keys and pairing codes are stored as hashes.
+- **Synced data:** plays, value history, covers you picked, the Batch queue, settings, and album years, record lengths, and barcodes. ListenBrainz tokens are encrypted. Switching a category off deletes it from the server.
+- **Profile:** private until you change it. It holds what you choose to show (collection, wantlist, stats, bio, setup, links, location, pronouns), plus who you follow and block. Ratings and other fields of your copies only show if you pick them.
+
+To confirm a new account or device belongs to your Discogs account, the Worker asks Discogs who you are through [Browser Run](https://developers.cloudflare.com/browser-rendering/), since Discogs blocks Cloudflare's own servers. That's the only time a personal access token reaches the server, and nothing from the check is kept but your username and user ID.
+
+Deleting your account removes all of it. Cloudflare keeps point-in-time restores of the database for 7 days on the free plan (30 on paid), so deleted data is gone for good after that.
+
+Whoever runs a copy can read its database (apart from the encrypted tokens). In the app, admins see each member's name, sign-in methods, devices, and last visit, and can hide a profile, reset someone's sign-in, or delete an account.
+
+### Other services
+
+Platter also uses [MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org) for barcodes Discogs doesn't know, Apple's search to find albums for the streaming links, and [ListenBrainz](https://listenbrainz.org) if you connect it. Photos of barcodes, runouts, and spines are read on the device with [ZXing](https://github.com/zxing-cpp/zxing-cpp) and [Tesseract](https://github.com/naptha/tesseract.js), and never uploaded.
 
 ## Development
 
@@ -43,6 +60,8 @@ npm test
 ```
 
 Locally, sign in with a personal access token or open `/?demo`. To re-record test fixtures, put a token in `.env` (see `.env.example`) and run `npm run fixtures`.
+
+For Platter accounts, put a `SYNC_KEY` in `.dev.vars`, run `npx wrangler d1 migrations apply platter --local`, then `npx wrangler dev --port 8787` next to `npm run dev`. Vite sends `/api` to it.
 
 ## Self-hosting
 
