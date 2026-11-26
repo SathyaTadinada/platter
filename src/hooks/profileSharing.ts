@@ -14,6 +14,7 @@ const DISCOGS_WAIT = 4000
 const SHARE_EVERY = 10 * 60_000
 // a sync fills the collection a page at a time, so a record added or removed waits for it to settle
 const SETTLE = 5000
+const PLAYED_WAIT = 1000
 
 // what p gives, or undefined if it fails or takes longer than ms
 const within = <T>(ms: number, p: Promise<T>) => Promise.race([p.catch(() => undefined), new Promise<undefined>((r) => setTimeout(r, ms))])
@@ -35,6 +36,7 @@ export function useProfileSharing(api: CloudApi | null) {
 
   const sharing = useRef<Promise<void>>(Promise.resolve())
   const avatar = useRef<string | undefined>(undefined) // from the last full pass, for the ones between
+  const lastShared = useRef(0) // when the last full pass started
   const showing = () => open.current || Object.values(shared.current).some((v) => v === 'public')
   const aboutNow = useCallback(async () => {
     // how many records they have is part of their collection, so it only goes with that section
@@ -67,12 +69,18 @@ export function useProfileSharing(api: CloudApi | null) {
       let names: Record<number, string> = {}
       let roles: Record<number, FieldKey> = {}
       if (fieldIds.length) {
-        if (!discogs) return
-        const fields = await within(
-          DISCOGS_WAIT,
-          getFields(discogs.client, discogs.username).then((r) => r.fields),
-        )
-        if (!fields) return
+        const fields =
+          discogs &&
+          (await within(
+            DISCOGS_WAIT,
+            getFields(discogs.client, discogs.username).then((r) => r.fields),
+          ))
+        // the small row still goes now, and the next sync tries the rest again
+        if (!fields) {
+          lastShared.current = 0
+          await publishAbout(api, shared.current, about, Date.now(), open.current)
+          return
+        }
         names = Object.fromEntries([...fields].sort((a, b) => a.position - b.position).map((f) => [f.id, f.name]))
         // what each field is for, as Collection fields matched them, so others can match it to theirs
         const matches = matchFields(fields, (await getSetting<FieldMap>('fieldMap')) ?? {})
@@ -90,17 +98,36 @@ export function useProfileSharing(api: CloudApi | null) {
   // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
   // a sync (now false) it waits SHARE_EVERY since the last one, so a busy session doesn't rework the
   // whole collection every half minute, and sends only the small row in between.
-  const lastShared = useRef(0)
+  const queue = useCallback((pass: () => Promise<void>) => {
+    const next = sharing.current.then(pass)
+    sharing.current = next.catch(() => {})
+    return next
+  }, [])
   const share = useCallback(
     (now = true) => {
       const full = now || Date.now() - lastShared.current >= SHARE_EVERY
       if (full) lastShared.current = Date.now()
-      const next = sharing.current.then(full ? shareNow : shareAbout)
-      sharing.current = next.catch(() => {})
-      return next
+      return queue(full ? shareNow : shareAbout)
     },
-    [shareNow, shareAbout],
+    [queue, shareNow, shareAbout],
   )
+
+  // A play logged (or undone) here or on another device goes up straight away, whatever sync is doing
+  const latest = useLiveQuery(async () => {
+    const play = await db.plays.orderBy('at').last()
+    return play ? `${play.uid ?? play.id}:${play.at}` : ''
+  })
+  const sentLatest = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (latest === undefined || !api) return
+    if (sentLatest.current === undefined) sentLatest.current = latest
+    if (sentLatest.current === latest) return
+    const t = setTimeout(() => {
+      sentLatest.current = latest
+      queue(shareAbout).catch(() => {})
+    }, PLAYED_WAIT)
+    return () => clearTimeout(t)
+  }, [latest, api, queue, shareAbout])
 
   // A record added or removed shows on the profile a few seconds later, not at the next full pass.
   // Which records there are, cheaply: how many, and their ids added up.
