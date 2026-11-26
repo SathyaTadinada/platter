@@ -147,7 +147,7 @@ export function Search() {
                         autoComplete="off"
                         value={catno}
                         onChange={(e) => setCatno(e.target.value)}
-                        placeholder="e.g. PB 41447, or the runout"
+                        placeholder="e.g. PB 41447"
                       />
                       {/* spines are usually printed sideways, so try both ways round */}
                       <ReadPhotoButton
