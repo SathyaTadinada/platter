@@ -12,15 +12,17 @@ const EMPTY_ABOUT: About = { bio: '', setup: {}, links: {}, location: '', pronou
 // Discogs extras (the picture, field names) aren't worth holding the profile up for
 const DISCOGS_WAIT = 4000
 const SHARE_EVERY = 10 * 60_000
-// a sync fills the collection a page at a time, so a record added or removed waits for it to settle
+// records added one at a time (a batch, a CSV) settle before everything goes again
 const SETTLE = 5000
-const PLAYED_WAIT = 1000
+// the small row goes about this soon after what's in it changes
+const SUMMARY_WAIT = 1000
 
 // what p gives, or undefined if it fails or takes longer than ms
 const within = <T>(ms: number, p: Promise<T>) => Promise.race([p.catch(() => undefined), new Promise<undefined>((r) => setTimeout(r, ms))])
 
-// The profile's settings, and publishing what it shows. share() runs after each sync and whenever a
-// setting changes.
+// The profile's settings, and publishing what it shows. Two rules: the small row (picture, record count,
+// record last played) goes whenever what's in it changes, and everything goes when a setting changes,
+// when records are added or removed, and at most every SHARE_EVERY after a sync.
 export function useProfileSharing(api: CloudApi | null) {
   const { session, client } = useSession()
   const [sections, setSectionsState] = useState<Sections | null>(null)
@@ -35,7 +37,7 @@ export function useProfileSharing(api: CloudApi | null) {
   const playing = useRef(false) // the record last played goes up with the picture
 
   const sharing = useRef<Promise<void>>(Promise.resolve())
-  const avatar = useRef<string | undefined>(undefined) // from the last full pass, for the ones between
+  const avatar = useRef<string | undefined>(undefined) // from the last full pass
   const lastShared = useRef(0) // when the last full pass started
   const showing = () => open.current || Object.values(shared.current).some((v) => v === 'public')
   const aboutNow = useCallback(async () => {
@@ -90,46 +92,44 @@ export function useProfileSharing(api: CloudApi | null) {
     }
     await publishProfile(api, shared.current, about, Date.now(), choice, open.current)
   }, [api, client, session, aboutNow])
-  // Between full passes only the small row goes: the picture, record count, and record last played
   const shareAbout = useCallback(async () => {
     if (!api || !showing()) return
     await publishAbout(api, shared.current, await aboutNow(), Date.now(), open.current)
   }, [api, aboutNow])
-  // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. After
-  // a sync (now false) it waits SHARE_EVERY since the last one, so a busy session doesn't rework the
-  // whole collection every half minute, and sends only the small row in between.
+  // One pass at a time: two switches flipped in a row shouldn't send everything twice at once
   const queue = useCallback((pass: () => Promise<void>) => {
     const next = sharing.current.then(pass)
     sharing.current = next.catch(() => {})
     return next
   }, [])
+  // After a sync (now false) it waits SHARE_EVERY since the last one, so a busy session doesn't
+  // rework the whole collection every half minute
   const share = useCallback(
     (now = true) => {
-      const full = now || Date.now() - lastShared.current >= SHARE_EVERY
-      if (full) lastShared.current = Date.now()
-      return queue(full ? shareNow : shareAbout)
+      if (!now && Date.now() - lastShared.current < SHARE_EVERY) return Promise.resolve()
+      lastShared.current = Date.now()
+      return queue(shareNow)
     },
-    [queue, shareNow, shareAbout],
+    [queue, shareNow],
   )
 
-  // A play logged (or undone) here or on another device goes up straight away, whatever sync is doing
-  const latest = useLiveQuery(async () => {
-    const play = await db.plays.orderBy('at').last()
-    return play ? `${play.uid ?? play.id}:${play.at}` : ''
-  })
-  const sentLatest = useRef<string | undefined>(undefined)
+  // What the small row is made of, from here or synced in from another device. The picture only
+  // changes on a full pass, which sends it.
+  const summary = useLiveQuery(async () => JSON.stringify([await db.collection.count(), await lastPlayed()]))
+  const sentSummary = useRef<string | undefined>(undefined)
   useEffect(() => {
-    if (latest === undefined || !api) return
-    if (sentLatest.current === undefined) sentLatest.current = latest
-    if (sentLatest.current === latest) return
+    if (summary === undefined || !api) return
+    // the first look is what the pass on opening sends
+    if (sentSummary.current === undefined) sentSummary.current = summary
+    if (sentSummary.current === summary) return
     const t = setTimeout(() => {
-      sentLatest.current = latest
+      sentSummary.current = summary
       queue(shareAbout).catch(() => {})
-    }, PLAYED_WAIT)
+    }, SUMMARY_WAIT)
     return () => clearTimeout(t)
-  }, [latest, api, queue, shareAbout])
+  }, [summary, api, queue, shareAbout])
 
-  // A record added or removed shows on the profile a few seconds later, not at the next full pass.
+  // A record added or removed sends everything a few seconds later, not at the next full pass.
   // Which records there are, cheaply: how many, and their ids added up.
   const shelf = useLiveQuery(async () => {
     const ids = (await db.collection.toCollection().primaryKeys()) as number[]
