@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '../db/db'
 import type { CloudApi } from '../lib/cloud'
+import { setPlayFields } from '../lib/plays'
 import { publishProfile } from '../lib/profile'
 import { useProfileSharing } from './profileSharing'
 
@@ -12,8 +13,9 @@ vi.mock('../lib/profile', async (original) => ({
   publishProfile: vi.fn(async () => []),
 }))
 
+let sections: Record<string, string> = { collection: 'public' }
 const api = {
-  profileSettings: async () => ({ sections: { collection: 'public' }, who: 'public', hidden: false, details: [] }),
+  profileSettings: async () => ({ sections, who: 'public', hidden: false, details: [] }),
 } as unknown as CloudApi
 
 function Harness() {
@@ -38,6 +40,8 @@ describe('useProfileSharing', () => {
   afterEach(() => {
     act(() => root.unmount())
     vi.useRealTimers()
+    sections = { collection: 'public' }
+    setPlayFields(null)
   })
 
   it('sends a few seconds after opening, then a few seconds after a play', async () => {
@@ -69,6 +73,22 @@ describe('useProfileSharing', () => {
     await act(async () => void (await db.masters.put({ masterId: 9, year: 1980, at: Date.now() })))
     await act(async () => void (await db.plays.add({ instanceId: 2, releaseId: 2, at: Date.now(), before: {} })))
     await act(() => vi.advanceTimersByTimeAsync(3500))
+    expect(passes()).toBe(before + 1)
+  })
+
+  it('tries Stats again a minute later while the play count fields are unknown', async () => {
+    act(() => root.unmount())
+    sections = { stats: 'public' }
+    root = createRoot(document.createElement('div'))
+    await act(async () => root.render(<Harness />))
+    await settle()
+    await act(() => vi.advanceTimersByTimeAsync(3000 + 4000))
+    const before = passes()
+    expect(before).toBeGreaterThan(0)
+    setPlayFields({ count: 1, last: 2 })
+    await act(() => vi.advanceTimersByTimeAsync(60_000))
+    expect(passes()).toBe(before + 1)
+    await act(() => vi.advanceTimersByTimeAsync(120_000))
     expect(passes()).toBe(before + 1)
   })
 })

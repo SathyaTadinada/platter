@@ -5,6 +5,7 @@ import { onTableChange } from '../db/changes'
 import { db, getSetting } from '../db/db'
 import type { About, CloudApi } from '../lib/cloud'
 import { matchFields, type FieldKey, type FieldMap } from '../lib/fields'
+import { awaitPlayFields } from '../lib/plays'
 import { forgetSent, lastPlayed, publishAbout, publishProfile, type CopyChoice, type ProfileAbout } from '../lib/profile'
 import { useSession } from './session'
 
@@ -104,8 +105,11 @@ export function useProfileSharing(api: CloudApi | null) {
       }
       choice = { details: chosen.current, names, roles }
     }
+    // Stats waits for the play count fields (Shell hands them over once they load), so without them
+    // it goes on the next try
+    const stats = shared.current.stats !== 'public' || Boolean(await awaitPlayFields(DISCOGS_WAIT))
     await publishProfile(api, shared.current, about, Date.now(), choice, open.current)
-    return true
+    return stats
   }, [api, picture, fieldList])
 
   // One pass at a time: two switches flipped in a row shouldn't send everything twice at once. A pass
