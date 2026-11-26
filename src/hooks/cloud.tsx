@@ -107,7 +107,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const { share, ...profile } = useProfileSharing(api)
+  const profile = useProfileSharing(api)
   const busy = useRef(false)
   const again = useRef(false)
   const failures = useRef(0)
@@ -151,7 +151,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         failures.current = 0
         setError(null)
         await refill()
-        await share(false)
       } catch (e) {
         setError((e as Error).message)
         const wait = RETRY_AFTER[Math.min(failures.current++, RETRY_AFTER.length - 1)]
@@ -165,7 +164,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [api, refill, share],
+    [api, refill],
   )
   runRef.current = run
 

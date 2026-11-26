@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie'
 import { captureMiddleware, newUid, type Kind } from './capture'
+import { changesMiddleware } from './changes'
 import type { SearchResult } from '../api/discogs/types'
 import type { Metadata } from '../lib/metadata'
 import type { Play } from '../lib/plays'
@@ -170,6 +171,7 @@ export class PlatterDB extends Dexie {
           .modify((q) => void (q.uid ??= newUid()))
       })
     this.use(captureMiddleware)
+    this.use(changesMiddleware)
   }
 }
 
