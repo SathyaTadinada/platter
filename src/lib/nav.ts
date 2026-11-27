@@ -158,8 +158,9 @@ export function trackLocation(path: string, search: string) {
         from = stack[i].from
         stack = stack.slice(0, i)
       }
-    } else if (stack.at(-1)?.url === url) {
-      stack = stack.slice(0, -1) // the same page again
+    } else if (stack.at(-1)?.url === url || (!here && stack.at(-1) && pathOf(stack.at(-1)!.url) === path)) {
+      // the same page again, or back from another site that sent it here (Last.fm's sign-in, say)
+      stack = stack.slice(0, -1)
     }
     stacks[section] = [...stack, { url, key, index, title, from }]
     replace({ ...s, [KEY]: key, [SECTION]: section, [INDEX]: index }, '')

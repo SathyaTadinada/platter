@@ -45,7 +45,6 @@ export function ListenBrainz() {
                 onChange={(on) => setSetting(LISTENBRAINZ_KEY, { ...saved, enabled: on })}
               />
             </label>
-            <p className="text-sm text-stone-500">Each play is sent as the album's tracks, ending when you logged it.</p>
             <Button variant="secondary" className="w-full" onClick={() => db.settings.delete(LISTENBRAINZ_KEY)}>
               Disconnect
             </Button>
@@ -55,8 +54,7 @@ export function ListenBrainz() {
         <Section>
           <form onSubmit={connect} className="space-y-3">
             <p className="text-sm text-stone-600 dark:text-stone-300">
-              Copy your user token from <ExternalLink href="https://listenbrainz.org/settings/">ListenBrainz settings</ExternalLink> and
-              paste it here. It stays on this device, and on Platter's server, encrypted, if you sync across devices.
+              Paste your user token from <ExternalLink href="https://listenbrainz.org/settings/">ListenBrainz settings</ExternalLink>.
             </p>
             <input
               type="password"

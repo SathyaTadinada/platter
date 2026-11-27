@@ -278,12 +278,6 @@ export function Settings() {
           {!demo && (
             <Section title="Listening">
               <List>
-                <Row
-                  icon={<Radio size={20} />}
-                  label="ListenBrainz"
-                  value={lb ? (lb.enabled ? lb.user : 'Paused') : 'Off'}
-                  href="/listenbrainz"
-                />
                 {LASTFM_KEY && (
                   <Row
                     icon={<AudioLines size={20} />}
@@ -292,6 +286,12 @@ export function Settings() {
                     href="/lastfm"
                   />
                 )}
+                <Row
+                  icon={<Radio size={20} />}
+                  label="ListenBrainz"
+                  value={lb ? (lb.enabled ? lb.user : 'Paused') : 'Off'}
+                  href="/listenbrainz"
+                />
               </List>
             </Section>
           )}

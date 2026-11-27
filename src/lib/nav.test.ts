@@ -69,6 +69,22 @@ describe('back navigation', () => {
     expect(nav.backTarget()).toMatchObject({ to: '/search' })
   })
 
+  it('takes back a page the app left for another site, when that site sends it back', async () => {
+    let nav = await fresh()
+    track(nav)
+    tab(nav, 'settings')
+    nav.rememberTitle('Settings')
+    go(nav, '/lastfm')
+    nav.rememberTitle('Last.fm')
+    // off to Last.fm, which loads the app again at the same page with a token
+    nav = await fresh()
+    history.pushState(null, '', '/lastfm?token=abc')
+    track(nav)
+    nav.replaceAddress('/lastfm')
+    expect(nav.backLabel()).toBe('Settings')
+    expect(nav.backTarget()).toMatchObject({ to: '/settings' })
+  })
+
   it('keeps a page in the tab it was opened from', async () => {
     const nav = await fresh()
     track(nav)

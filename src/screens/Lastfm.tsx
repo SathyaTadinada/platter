@@ -1,15 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useSearch } from 'wouter'
+import { useSearch } from 'wouter'
 import { authUrl, getSession } from '../api/lastfm'
 import { Button, Card, ExternalLink, Notice, Screen, Section, Switch } from '../components/ui'
 import { db, setSetting } from '../db/db'
+import { replaceAddress } from '../lib/nav'
 import { LASTFM_SETTING, type LastfmSettings } from '../lib/plays'
 
 export function Lastfm() {
   const saved = useLiveQuery(async () => ((await db.settings.get(LASTFM_SETTING))?.value as LastfmSettings | undefined) ?? null)
   const token = new URLSearchParams(useSearch()).get('token')
-  const [, navigate] = useLocation()
   const [busy, setBusy] = useState(Boolean(token))
   const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
@@ -23,9 +23,9 @@ export function Lastfm() {
       .catch((e) => setError((e as Error).message))
       .finally(() => {
         setBusy(false)
-        navigate('/lastfm', { replace: true })
+        replaceAddress('/lastfm')
       })
-  }, [token, navigate])
+  }, [token])
 
   const connect = () => {
     setBusy(true)
@@ -45,7 +45,7 @@ export function Lastfm() {
             </p>
             {saved.expired ? (
               <>
-                <Notice tone="error">Last.fm stopped taking plays from Platter.</Notice>
+                <Notice tone="error">Last.fm disconnected Platter.</Notice>
                 <Button className="w-full" onClick={connect}>
                   Connect again
                 </Button>
@@ -68,10 +68,7 @@ export function Lastfm() {
       ) : (
         <Section>
           <div className="space-y-3">
-            <p className="text-sm text-stone-600 dark:text-stone-300">
-              Last.fm asks you to allow Platter, then each play you log is scrobbled. The connection stays on this device, and on
-              Platter&rsquo;s server, encrypted, if you sync across devices.
-            </p>
+            <p className="text-sm text-stone-600 dark:text-stone-300">Send the plays you log to your Last.fm profile.</p>
             {error && <Notice tone="error">{error}</Notice>}
             <Button className="w-full" disabled={busy} onClick={connect}>
               {busy ? 'Connecting…' : 'Connect Last.fm'}
