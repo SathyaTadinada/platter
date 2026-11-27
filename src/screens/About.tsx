@@ -34,7 +34,7 @@ const PRIVACY: { icon: ReactNode; title: string; text: ReactNode }[] = [
   {
     icon: <Plug size={20} />,
     title: 'Other services',
-    text: 'When Discogs doesn’t recognize a barcode, Platter can check MusicBrainz and the Cover Art Archive. Apple and ListenBrainz are used only when you choose to use them.',
+    text: 'When Discogs doesn’t recognize a barcode, Platter can check MusicBrainz and the Cover Art Archive. Apple, ListenBrainz, and Last.fm are used only when you choose to use them.',
   },
   {
     icon: <LogOut size={20} />,

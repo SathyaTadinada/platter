@@ -44,6 +44,7 @@ const ProfilePeople = lazy(() => import('./screens/profile/People').then((m) => 
 const VisitorRelease = lazy(() => import('./screens/release/Visitor').then((m) => ({ default: m.VisitorRelease })))
 const Setup = lazy(() => import('./screens/Setup').then((m) => ({ default: m.Setup })))
 const ListenBrainz = lazy(() => import('./screens/ListenBrainz').then((m) => ({ default: m.ListenBrainz })))
+const Lastfm = lazy(() => import('./screens/Lastfm').then((m) => ({ default: m.Lastfm })))
 const NowPlaying = lazy(() => import('./screens/NowPlaying').then((m) => ({ default: m.NowPlaying })))
 const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Stats })))
 const Report = lazy(() => import('./screens/Report').then((m) => ({ default: m.Report })))
@@ -178,6 +179,7 @@ function Routes({ error }: { error?: string }) {
                 <Route path="/stats/year/:year?">{(p) => <YourYear year={p.year} />}</Route>
                 <Route path="/play" component={NowPlaying} />
                 <Route path="/listenbrainz" component={ListenBrainz} />
+                <Route path="/lastfm" component={Lastfm} />
                 <Route path="/account" component={Account} />
                 <Route path="/account/people" component={Connections} />
                 <Route path="/account/profile">

@@ -38,7 +38,7 @@ const CATEGORIES: { id: Category; label: string; icon: ReactNode }[] = [
   { id: 'covers', label: 'Cover picks', icon: <Image size={20} /> },
   { id: 'batch', label: 'Batch', icon: <Layers size={20} /> },
   { id: 'settings', label: 'Settings and appearance', icon: <SlidersHorizontal size={20} /> },
-  { id: 'listenbrainz', label: 'ListenBrainz connection', icon: <Radio size={20} /> },
+  { id: 'listenbrainz', label: 'Scrobbling connections', icon: <Radio size={20} /> },
 ]
 
 export function Account() {

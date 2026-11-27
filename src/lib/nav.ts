@@ -24,7 +24,7 @@ export function sectionOf(path: string): Section {
   // profiles are found in Search, so one opened from a link lands there too
   if (/^\/(search|results|release|u|following)(\/|$)/.test(path)) return 'search'
   if (/^\/(stats|value)(\/|$)/.test(path)) return 'stats'
-  if (/^\/(settings|import|setup|crates|listenbrainz|sync|account|admin|about)(\/|$)/.test(path)) return 'settings'
+  if (/^\/(settings|import|setup|crates|listenbrainz|lastfm|sync|account|admin|about)(\/|$)/.test(path)) return 'settings'
   return 'collection'
 }
 

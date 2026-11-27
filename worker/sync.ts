@@ -20,7 +20,7 @@ export type DB = {
 
 export type SyncEnv = {
   DB: DB
-  SYNC_KEY?: string // base64, 32 bytes; encrypts secrets like the ListenBrainz token
+  SYNC_KEY?: string // base64, 32 bytes; encrypts secrets like the ListenBrainz token and Last.fm session
 }
 
 export type InRow = { kind: string; key: string; value: string | null; updatedAt: number; deleted?: boolean; ifSeq?: number }
@@ -28,7 +28,7 @@ export type OutRow = { kind: string; key: string; value: string | null; updatedA
 
 const KINDS = new Set(['play', 'value', 'cover', 'year', 'length', 'barcode', 'batch', 'setting', 'pref'])
 // encrypted at rest; the key is a Worker secret, not in the database
-const SECRET = new Set(['setting:listenbrainz'])
+const SECRET = new Set(['setting:listenbrainz', 'setting:lastfm'])
 
 export const MAX_PUSH = 200
 const MAX_PULL = 1000
@@ -228,11 +228,11 @@ function rowsOf(c: Category): string {
     case 'batch':
       return "(kind = 'batch' OR (kind = 'setting' AND key = 'batchShared'))"
     case 'listenbrainz':
-      return "(kind = 'setting' AND key = 'listenbrainz')"
+      return "(kind = 'setting' AND key IN ('listenbrainz', 'lastfm'))"
     case 'catalog':
       return "kind IN ('year', 'length', 'barcode')"
     case 'settings':
-      return "(kind = 'pref' OR (kind = 'setting' AND key NOT IN ('listenbrainz', 'batchShared')))"
+      return "(kind = 'pref' OR (kind = 'setting' AND key NOT IN ('listenbrainz', 'lastfm', 'batchShared')))"
   }
 }
 

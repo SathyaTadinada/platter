@@ -1,7 +1,8 @@
 import type { DiscogsClient } from '../api/discogs/client'
 import { getRelease, setFieldValue } from '../api/discogs/endpoints'
+import { INVALID_SESSION, LastfmError, scrobble as scrobbleLastfm } from '../api/lastfm'
 import { listensFor, submitListens } from '../api/listenbrainz'
-import { db, getSetting, type LibraryItem } from '../db/db'
+import { db, getSetting, setSetting, type LibraryItem } from '../db/db'
 import { deviceId } from './device'
 import { fieldFor, type FieldMatch } from './fields'
 import { rememberLength } from './stylus'
@@ -15,7 +16,8 @@ export type Play = {
   at: number
   // field values before this play, so it can be undone
   before: { count?: string; last?: string }
-  scrobble?: 'pending' | 'done'
+  scrobble?: 'pending' | 'done' // ListenBrainz
+  lastfm?: 'pending' | 'done'
   uid?: string // the same play on every device
   device?: string // where it was logged; only that device scrobbles it
   noticed?: true // logged outside Platter, and found when the play count went up (see noticedPlays)
@@ -170,6 +172,10 @@ export function listeningStats(rows: Listening[], now = Date.now()) {
 
 export type ListenBrainzSettings = { token: string; user: string; enabled: boolean }
 export const LISTENBRAINZ_KEY = 'listenbrainz'
+// expired: Last.fm stopped taking the session, so it needs connecting again
+export type LastfmSettings = { session: string; user: string; enabled: boolean; expired?: boolean }
+export const LASTFM_SETTING = 'lastfm'
+const sendsTo = (s: { enabled: boolean; expired?: boolean } | undefined) => Boolean(s?.enabled && !s.expired)
 
 async function writeFields(client: DiscogsClient, username: string, item: LibraryItem, values: Record<number, string>) {
   const target = { folderId: item.folderId, releaseId: item.releaseId, instanceId: item.instanceId }
@@ -186,7 +192,7 @@ export async function logPlay(
   sides?: PlayedSides,
 ) {
   const values = nextPlayValues(item, ids, now)
-  const lb = await getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY)
+  const [lb, fm] = await Promise.all([getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY), getSetting<LastfmSettings>(LASTFM_SETTING)])
   const play: Play = {
     instanceId: item.instanceId,
     releaseId: item.releaseId,
@@ -195,7 +201,8 @@ export async function logPlay(
       count: ids.count !== undefined ? item.fields[ids.count] : undefined,
       last: ids.last !== undefined ? item.fields[ids.last] : undefined,
     },
-    scrobble: lb?.enabled ? 'pending' : undefined,
+    scrobble: sendsTo(lb) ? 'pending' : undefined,
+    lastfm: sendsTo(fm) ? 'pending' : undefined,
     device: deviceId(),
     ...sides,
   }
@@ -252,20 +259,42 @@ export async function undoPlay(client: DiscogsClient, username: string, play: Pl
   if (play.id !== undefined) await db.plays.delete(play.id)
 }
 
-// Sends plays waiting for ListenBrainz. Recent ones wait a little, in case they get undone.
+// Sends plays waiting for ListenBrainz and Last.fm. Recent ones wait a little, in case they get
+// undone. A service that fails is left for next time, without holding up the other.
 const SETTLE = 20_000
 export async function flushScrobbles(client: DiscogsClient, now = Date.now()) {
-  const lb = await getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY)
-  if (!lb?.enabled) return
+  const [lb, fm] = await Promise.all([getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY), getSetting<LastfmSettings>(LASTFM_SETTING)])
+  let toLb = sendsTo(lb)
+  let toFm = sendsTo(fm)
   // with cloud sync, plays from other devices are theirs to send
   const pending = (await db.plays.toArray()).filter(
-    (p) => p.scrobble === 'pending' && now - p.at >= SETTLE && (!p.device || p.device === deviceId()),
+    (p) =>
+      ((toLb && p.scrobble === 'pending') || (toFm && p.lastfm === 'pending')) &&
+      now - p.at >= SETTLE &&
+      (!p.device || p.device === deviceId()),
   )
   for (const p of pending) {
+    if (!toLb && !toFm) break
     const release = await getRelease(client, p.releaseId)
     rememberLength(release)
-    await submitListens(lb.token, listensFor(release, p.at, p.sides))
-    await db.plays.update(p.id!, { scrobble: 'done' })
+    const listens = listensFor(release, p.at, p.sides)
+    if (toLb && p.scrobble === 'pending') {
+      try {
+        await submitListens(lb!.token, listens)
+        await db.plays.update(p.id!, { scrobble: 'done' })
+      } catch {
+        toLb = false
+      }
+    }
+    if (toFm && p.lastfm === 'pending') {
+      try {
+        await scrobbleLastfm(fm!.session, listens)
+        await db.plays.update(p.id!, { lastfm: 'done' })
+      } catch (e) {
+        toFm = false
+        if (e instanceof LastfmError && e.code === INVALID_SESSION) await setSetting(LASTFM_SETTING, { ...fm!, expired: true })
+      }
+    }
   }
 }
 

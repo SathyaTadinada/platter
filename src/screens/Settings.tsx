@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
+  AudioLines,
   Boxes,
   Check,
   MonitorSmartphone,
@@ -38,7 +39,8 @@ import { exportLocalData, importLocalData } from '../lib/exportData'
 import { FIELD_SPECS, matchFields, type FieldMap } from '../lib/fields'
 import { ACCENTS, getAccent, setAccent, type AccentId } from '../lib/accent'
 import { getTheme, setTheme, type Theme } from '../lib/theme'
-import { LISTENBRAINZ_KEY, type ListenBrainzSettings } from '../lib/plays'
+import { LASTFM_KEY } from '../api/lastfm'
+import { LASTFM_SETTING, LISTENBRAINZ_KEY, type LastfmSettings, type ListenBrainzSettings } from '../lib/plays'
 import { toCsv } from '../lib/library'
 import { libraryItems } from '../lib/masters'
 import { timeAgo } from '../lib/time'
@@ -61,6 +63,7 @@ export function Settings() {
   const meta = useCollectionMeta().data
   const crates = meta?.folders.length
   const lb = useLiveQuery(async () => (await db.settings.get(LISTENBRAINZ_KEY))?.value as ListenBrainzSettings | undefined)
+  const fm = useLiveQuery(async () => (await db.settings.get(LASTFM_SETTING))?.value as LastfmSettings | undefined)
 
   const stats = useLiveQuery(async () => ({
     records: await db.collection.count(),
@@ -281,6 +284,14 @@ export function Settings() {
                   value={lb ? (lb.enabled ? lb.user : 'Paused') : 'Off'}
                   href="/listenbrainz"
                 />
+                {LASTFM_KEY && (
+                  <Row
+                    icon={<AudioLines size={20} />}
+                    label="Last.fm"
+                    value={fm ? (fm.expired ? 'Connect again' : fm.enabled ? fm.user : 'Paused') : 'Off'}
+                    href="/lastfm"
+                  />
+                )}
               </List>
             </Section>
           )}

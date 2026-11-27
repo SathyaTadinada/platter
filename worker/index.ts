@@ -19,6 +19,7 @@ import { clearAbout, clearWaysIn, deleteMember, members, requireAdmin, setBadge,
 import { createBadge, deleteBadge, editBadge, listBadges, moveBadge } from './badges'
 import { browserRun, confirm, parseLogin } from './confirm'
 import { block, feed, follow, lists as followLists, removeFollower, respond, unblock, unfollow, waiting as waitingFollows } from './follow'
+import { lastfmSig, validLastfmParams } from './lastfm'
 import { header, signParams } from './oauth'
 import {
   head as profileHead,
@@ -86,6 +87,8 @@ interface Env {
   DB?: DB
   SYNC_KEY?: string
   SITE?: string
+  LASTFM_KEY?: string // the app's Last.fm API key (public); scrobbling is off without it
+  LASTFM_SECRET?: string
 }
 
 async function allowed(limiter: RateLimiter | undefined, key: string): Promise<boolean> {
@@ -175,6 +178,28 @@ async function sign(req: Request, env: Env): Promise<Response> {
   // headers for normal API calls; params for the sign-in steps, which have
   // to go in the query string (Discogs fails the CORS preflight on those)
   return Response.json({ headers: params.map(header), params }, { headers: { 'Cache-Control': 'no-store' } })
+}
+
+// Signs a Last.fm call: the app's key goes in, and the signature comes back with it
+async function signLastfm(req: Request, env: Env): Promise<Response> {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  if (!allowedOrigin(req)) return new Response('Forbidden', { status: 403 })
+  if (!env.LASTFM_KEY || !env.LASTFM_SECRET) return new Response('Last.fm is off', { status: 503 })
+  let params: unknown
+  try {
+    params = ((await req.json()) as { params?: unknown }).params
+  } catch {
+    return new Response('Bad JSON', { status: 400 })
+  }
+  if (!validLastfmParams(params)) return new Response('Bad request', { status: 400 })
+  // scrobbles per person, the sign-in step per network, like Discogs sign-ins
+  const ok = params.sk ? await allowed(env.SIGN_LIMITER, await userKey(params.sk)) : await allowed(env.AUTH_LIMITER, ipKey(req))
+  if (!ok) return tooMany()
+  const signed = { ...params, api_key: env.LASTFM_KEY }
+  return Response.json(
+    { api_key: env.LASTFM_KEY, api_sig: lastfmSig(signed, env.LASTFM_SECRET) },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
 }
 
 const SYNC_ACTIONS = [
@@ -474,11 +499,14 @@ export default {
     switch (pathname) {
       case '/api/sign':
         return sign(req, env)
+      case '/api/lastfm-sign':
+        return signLastfm(req, env)
       case '/api/health':
         return Response.json({
           ok: true,
           consumerKey: Boolean(env.DISCOGS_CONSUMER_KEY),
           consumerSecret: Boolean(env.DISCOGS_CONSUMER_SECRET),
+          lastfm: Boolean(env.LASTFM_KEY && env.LASTFM_SECRET),
         })
       default:
         return pathname.startsWith('/api/') ? new Response('Not found', { status: 404 }) : page(req, env, pathname)

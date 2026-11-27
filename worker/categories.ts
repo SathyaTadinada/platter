@@ -19,8 +19,9 @@ export function categoryOf(kind: string, key: string): Category {
     case 'barcode':
       return 'catalog'
     default:
-      // settings and preferences, apart from two that belong elsewhere
-      if (kind === 'setting' && key === 'listenbrainz') return 'listenbrainz'
+      // settings and preferences, apart from a few that belong elsewhere. 'listenbrainz' is the
+      // scrobbling connections, Last.fm's too (the name is older than that).
+      if (kind === 'setting' && (key === 'listenbrainz' || key === 'lastfm')) return 'listenbrainz'
       if (kind === 'setting' && key === 'batchShared') return 'batch'
       return 'settings'
   }

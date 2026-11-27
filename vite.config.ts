@@ -13,9 +13,10 @@ const wrangler = JSON.parse(
 )
 const SITE = wrangler.vars?.SITE ? new URL(wrangler.vars.SITE).origin : ''
 const ACCOUNTS = Boolean(wrangler.d1_databases?.length)
+const LASTFM = wrangler.vars?.LASTFM_KEY ?? ''
 
 export default defineConfig({
-  define: { __SITE__: JSON.stringify(SITE), __ACCOUNTS__: JSON.stringify(ACCOUNTS) },
+  define: { __SITE__: JSON.stringify(SITE), __ACCOUNTS__: JSON.stringify(ACCOUNTS), __LASTFM__: JSON.stringify(LASTFM) },
   plugins: [
     react(),
     tailwindcss(),

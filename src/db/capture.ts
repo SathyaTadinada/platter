@@ -20,7 +20,7 @@ export const SPECS: Record<string, Spec> = {
 }
 
 // Settings worth having on every device. The rest (sync times, the add in progress…) are per device.
-export const SYNCED_SETTINGS = new Set(['stylus', 'fieldMap', 'recentSearches', 'lastFolderId', 'batchShared', 'listenbrainz'])
+export const SYNCED_SETTINGS = new Set(['stylus', 'fieldMap', 'recentSearches', 'lastFolderId', 'batchShared', 'listenbrainz', 'lastfm'])
 
 export const newUid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`)
 
