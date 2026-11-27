@@ -1,6 +1,7 @@
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
-import { change, chartPaths, type ValueSnapshot } from '../../lib/value'
+import { Segmented } from '../../components/ui'
+import { change, chartPaths, chartRanges, inRange, type ChartRange, type ValueSnapshot } from '../../lib/value'
 import { down, shortDate, up } from './shared'
 
 export function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: number; money: (n: number) => string; suffix?: string }) {
@@ -23,7 +24,30 @@ export function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: n
   )
 }
 
-export function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: number) => string }) {
+// The chart with a choice of how far back it goes, from the ranges the history covers
+export function OverTime({ series, money }: { series: ValueSnapshot[]; money: (n: number) => string }) {
+  const ranges = chartRanges(series)
+  const [picked, setPicked] = useState<ChartRange>('All')
+  const range = ranges.includes(picked) ? picked : 'All'
+  return (
+    <>
+      {ranges.length > 1 && (
+        <Segmented
+          label="Show"
+          size="sm"
+          className="mb-4"
+          options={ranges.map((r) => ({ value: r, label: r }))}
+          value={range}
+          onChange={setPicked}
+        />
+      )}
+      {/* a new range starts without a point picked */}
+      <Chart key={range} series={inRange(series, range)} money={money} />
+    </>
+  )
+}
+
+function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: number) => string }) {
   const W = 320
   const H = 140
   const paths = chartPaths(series, W, H)!
@@ -48,13 +72,14 @@ export function Chart({ series, money }: { series: ValueSnapshot[]; money: (n: n
 
   return (
     <figure>
-      <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span>
+      <figcaption className="mb-3 flex items-center justify-between gap-x-3">
+        <span className="whitespace-nowrap">
           <span className="text-xl font-bold tabular-nums">{money(shown.median)}</span>{' '}
           <span className="text-sm text-stone-500">{hover === null ? 'today' : shortDate(shown)}</span>
         </span>
-        {/* the card above already shows the overall change, and there's nothing to say when it hasn't moved */}
-        {hover !== null && moved.abs !== 0 && <Delta {...moved} money={money} suffix={`since ${shortDate(first)}`} />}
+        {/* since the chart's first day, which its axis names. The card above already shows the overall
+            change, and there's nothing to say when it hasn't moved. */}
+        {hover !== null && moved.abs !== 0 && <Delta {...moved} money={money} />}
       </figcaption>
       <div className="relative touch-pan-y" onPointerMove={scrub} onPointerDown={scrub} onPointerLeave={() => setHover(null)}>
         <svg

@@ -3,6 +3,8 @@ import {
   byMonth,
   change,
   chartPaths,
+  chartRanges,
+  inRange,
   distribution,
   totalsBy,
   isFresh,
@@ -170,5 +172,42 @@ describe('byMonth', () => {
       ['2026-09', 0],
       ['2026-10', 25],
     ])
+  })
+})
+
+describe('chart ranges', () => {
+  // a reading every day from the given date, for `days` days
+  const daily = (from: string, days: number) =>
+    Array.from({ length: days }, (_, i) => {
+      const d = new Date(`${from}T12:00`)
+      d.setDate(d.getDate() + i)
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return { date, at: 0, currency: 'USD', min: 0, median: 100 + i, max: 0, count: 1 }
+    })
+
+  it('offers only ranges shorter than the history', () => {
+    expect(chartRanges(daily('2026-10-17', 42))).toEqual(['1W', '1M', 'All'])
+    expect(chartRanges(daily('2025-06-01', 500))).toEqual(['1W', '1M', '3M', '1Y', 'All'])
+    expect(chartRanges(daily('2026-11-20', 5))).toEqual(['All'])
+  })
+
+  it('needs two readings in a range to draw it', () => {
+    const sparse = [...daily('2026-09-01', 1), ...daily('2026-11-27', 1)]
+    expect(chartRanges(sparse)).toEqual(['All'])
+  })
+
+  it('counts back from the latest reading', () => {
+    const shown = inRange(daily('2026-10-17', 42), '1W')
+    expect(shown.map((s) => s.date)).toEqual([
+      '2026-11-20',
+      '2026-11-21',
+      '2026-11-22',
+      '2026-11-23',
+      '2026-11-24',
+      '2026-11-25',
+      '2026-11-26',
+      '2026-11-27',
+    ])
+    expect(inRange(daily('2026-10-17', 42), 'All')).toHaveLength(42)
   })
 })

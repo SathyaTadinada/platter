@@ -17,7 +17,7 @@ import { ChartColumns, RecordRow, statCard, statList } from '../components/stats
 import { PriceCoverage } from '../components/PriceCoverage'
 import { DiscogsCredit } from '../components/ReleaseCardView'
 import { shortDate, type Money, type Valued } from './value/shared'
-import { Delta, Chart } from './value/ValueChart'
+import { Delta, OverTime } from './value/ValueChart'
 import { PaidVsNow } from './value/PaidVsNow'
 import { Breakdown, GroupTotals } from './value/Breakdowns'
 import { Monthly } from './value/Monthly'
@@ -60,7 +60,7 @@ export function ValueStats() {
       <Section title="Over time">
         <Card>
           {series.length >= 2 ? (
-            <Chart series={series} money={(n) => money(n, true)} />
+            <OverTime series={series} money={(n) => money(n, true)} />
           ) : (
             <p className="text-sm text-stone-500">Platter saves the value each day you open it, so this fills in after a couple of days.</p>
           )}

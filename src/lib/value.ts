@@ -123,6 +123,33 @@ export function chartPaths(history: ValueSnapshot[], w: number, h: number, pad =
   return { line, area, points }
 }
 
+// How far back the value chart goes. A range is only offered when the history is longer than it,
+// since otherwise it shows the same line as All.
+export type ChartRange = '1W' | '1M' | '3M' | '1Y' | 'All'
+const RANGE_DAYS: Record<Exclude<ChartRange, 'All'>, number> = { '1W': 7, '1M': 30, '3M': 91, '1Y': 365 }
+
+// The first day in a range, counted back from the latest reading (YYYY-MM-DD, like the readings)
+function rangeStart(last: string, days: number): string {
+  const d = new Date(`${last}T12:00`)
+  d.setDate(d.getDate() - days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export function inRange(history: ValueSnapshot[], range: ChartRange): ValueSnapshot[] {
+  if (range === 'All' || !history.length) return history
+  const from = rangeStart(history.at(-1)!.date, RANGE_DAYS[range])
+  return history.filter((s) => s.date >= from)
+}
+
+export function chartRanges(history: ValueSnapshot[]): ChartRange[] {
+  if (history.length < 2) return ['All']
+  const shorter = (Object.keys(RANGE_DAYS) as (keyof typeof RANGE_DAYS)[]).filter((r) => {
+    const shown = inRange(history, r)
+    return shown.length >= 2 && shown.length < history.length && history[0].date < rangeStart(history.at(-1)!.date, RANGE_DAYS[r])
+  })
+  return [...shorter, 'All']
+}
+
 // Change between two amounts; pct is undefined when starting from zero
 export function change(from: number, to: number) {
   const abs = to - from
