@@ -6,9 +6,10 @@ import { CATALOG_MAX_AGE } from '../db/cache'
 import { db, getSetting, setSetting } from '../db/db'
 import { dueOf, type Due } from './due'
 import type { Play } from './plays'
+import { isTrack, sideOf } from './sides'
 
 // Hours on the stylus, from plays logged in Platter and each record's running time. A play
-// counts the whole record. Track lengths are CC0 under the Discogs API terms, so they're kept
+// counts the whole record, unless it was logged as some of its sides. Track lengths are CC0 under the Discogs API terms, so they're kept
 // and checked monthly, like album years.
 
 export type RecordLength = { releaseId: number; seconds: number; estimated: boolean; at: number }
@@ -19,19 +20,22 @@ const KEY = 'stylus'
 const FALLBACK = 40 * 60 // a typical LP, for a record with no tracklist at all
 const TRACK = 4.5 * 60 // a typical track, when there's a tracklist without lengths
 
-// The record's running time. Tracks without a length get the average of the rest, or a
-// typical length when none have one (common on vinyl releases).
-export function recordSeconds(tracklist: Track[] = []): { seconds: number; estimated: boolean } {
-  const tracks = tracklist.filter((t) => !t.type_ || t.type_ === 'track' || t.type_ === 'index')
+// The record's running time, or just the sides given. Tracks without a length get the average of
+// the rest, or a typical length when none have one (common on vinyl releases).
+export function recordSeconds(tracklist: Track[] = [], sides?: string[]): { seconds: number; estimated: boolean } {
+  const tracks = tracklist.filter(isTrack)
   const known = tracks.map((t) => parseDuration(t.duration)).filter((n): n is number => n !== undefined)
-  if (!known.length) return { seconds: tracks.length ? tracks.length * TRACK : FALLBACK, estimated: true }
-  const total = known.reduce((a, b) => a + b, 0)
-  const missing = tracks.length - known.length
-  return { seconds: Math.round(total + (missing * total) / known.length), estimated: missing > 0 }
+  if (!tracks.length) return { seconds: FALLBACK, estimated: true }
+  const average = known.length ? known.reduce((a, b) => a + b, 0) / known.length : TRACK
+  const lengths = tracks.filter((t) => !sides || sides.includes(sideOf(t.position) ?? '')).map((t) => parseDuration(t.duration))
+  return {
+    seconds: Math.round(lengths.reduce<number>((a, b) => a + (b ?? average), 0)),
+    estimated: lengths.some((l) => l === undefined),
+  }
 }
 
 export function stylusUse(
-  plays: Pick<Play, 'releaseId' | 'at'>[],
+  plays: Pick<Play, 'releaseId' | 'at' | 'seconds'>[],
   lengths: Map<number, Pick<RecordLength, 'seconds' | 'estimated'>>,
   since = 0,
 ) {
@@ -41,8 +45,8 @@ export function stylusUse(
   for (const p of plays) {
     if (p.at < since) continue
     const l = lengths.get(p.releaseId)
-    seconds += l?.seconds ?? FALLBACK
-    estimated ||= !l || l.estimated
+    seconds += p.seconds ?? l?.seconds ?? FALLBACK
+    estimated ||= p.seconds === undefined && (!l || l.estimated)
     count++
   }
   return { hours: seconds / 3600, plays: count, estimated }

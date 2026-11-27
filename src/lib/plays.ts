@@ -19,7 +19,12 @@ export type Play = {
   uid?: string // the same play on every device
   device?: string // where it was logged; only that device scrobbles it
   noticed?: true // logged outside Platter, and found when the play count went up (see noticedPlays)
+  // only some sides were played: which, and how long they run (for the stylus)
+  sides?: string[]
+  seconds?: number
 }
+
+export type PlayedSides = Required<Pick<Play, 'sides' | 'seconds'>>
 
 export type PlayFields = { count?: number; last?: number } // field ids
 
@@ -172,7 +177,14 @@ async function writeFields(client: DiscogsClient, username: string, item: Librar
 }
 
 // Logs a play locally and bumps the Discogs fields. If Discogs says no, nothing is kept.
-export async function logPlay(client: DiscogsClient, username: string, item: LibraryItem, ids: PlayFields, now = Date.now()) {
+export async function logPlay(
+  client: DiscogsClient,
+  username: string,
+  item: LibraryItem,
+  ids: PlayFields,
+  now = Date.now(),
+  sides?: PlayedSides,
+) {
   const values = nextPlayValues(item, ids, now)
   const lb = await getSetting<ListenBrainzSettings>(LISTENBRAINZ_KEY)
   const play: Play = {
@@ -185,6 +197,7 @@ export async function logPlay(client: DiscogsClient, username: string, item: Lib
     },
     scrobble: lb?.enabled ? 'pending' : undefined,
     device: deviceId(),
+    ...sides,
   }
   await writeFields(client, username, item, values)
   await db.collection.update(item.instanceId, { fields: { ...item.fields, ...values } })
@@ -251,7 +264,7 @@ export async function flushScrobbles(client: DiscogsClient, now = Date.now()) {
   for (const p of pending) {
     const release = await getRelease(client, p.releaseId)
     rememberLength(release)
-    await submitListens(lb.token, listensFor(release, p.at))
+    await submitListens(lb.token, listensFor(release, p.at, p.sides))
     await db.plays.update(p.id!, { scrobble: 'done' })
   }
 }
