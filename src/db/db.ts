@@ -50,6 +50,7 @@ export type WantItem = {
   title?: string
   artist?: string
   thumb?: string
+  cover?: string // missing on wants synced before profiles showed covers
   year?: number
   format?: string
   dateAdded?: string

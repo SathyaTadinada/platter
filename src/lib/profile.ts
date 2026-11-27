@@ -124,6 +124,7 @@ const want = (w: WantItem): ProfileItem => ({
   year: w.year || undefined,
   format: w.format,
   thumb: w.thumb,
+  cover: w.cover,
 })
 
 // The server pages through a section in key order, and a profile shows the newest first, so the key

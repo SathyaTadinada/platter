@@ -21,6 +21,7 @@ import {
   toCsv,
   toLibraryItem,
   type LibraryQuery,
+  wantFromApi,
 } from './library'
 
 const items = (demo as unknown as CollectionPage).releases.map(toLibraryItem)
@@ -300,5 +301,14 @@ describe('toCsv', () => {
   it("adds the album's original year after Discogs' columns", () => {
     const row = toCsv([{ ...items[0], masterId: 10362, originalYear: 1973 }], folders, []).split('\n')[1]
     expect(row.endsWith(',10362,1973')).toBe(true)
+  })
+})
+
+describe('wantFromApi', () => {
+  it('keeps the large cover as well as the thumb, for profiles', () => {
+    const r = (demo as unknown as CollectionPage).releases[0]
+    const want = wantFromApi({ id: r.id, date_added: r.date_added, basic_information: r.basic_information })
+    expect(want.cover).toBe(r.basic_information.cover_image)
+    expect(want.thumb).toBe(r.basic_information.thumb)
   })
 })
