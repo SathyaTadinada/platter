@@ -11,7 +11,7 @@
   },
   // the site's address: SITE is read by the app's build too (link previews, passkeys)
   "routes": [{ "pattern": "platter.tadinada.com", "custom_domain": true }],
-  "vars": { "SITE": "https://platter.tadinada.com" },
+  "vars": { "SITE": "https://platter.tadinada.com", "LASTFM_KEY": "ef7b56f2f88ced07f29a5755684b543d" },
   // per-IP limits; one sign call covers up to 60 Discogs requests
   "ratelimits": [
     { "name": "SIGN_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
