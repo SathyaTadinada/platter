@@ -91,9 +91,28 @@ export function buildUrl(path: string, query?: Query): string {
 
 const RETRY_DELAYS = [5_000, 10_000, 20_000, 40_000, 60_000]
 
+// A GET with no headers of its own goes without the browser's CORS preflight, which Discogs counts
+// against the rate limit like any other request, so it'd cost two. Discogs takes the sign-in in the
+// query string as well. Returns null for a sign-in it can't move.
+export function signedUrl(url: string, authorization: string | undefined): string | null {
+  if (!authorization) return url
+  const join = url.includes('?') ? '&' : '?'
+  const token = /^Discogs token=(.+)$/.exec(authorization)
+  if (token) return `${url}${join}token=${encodeURIComponent(token[1])}`
+  if (!authorization.startsWith('OAuth ')) return null
+  // the header's values are already encoded for a URL
+  const params = [...authorization.matchAll(/([\w%.~-]+)="([^"]*)"/g)].map(([, k, v]) => `${k}=${v}`)
+  return params.length ? url + join + params.join('&') : null
+}
+
 export class DiscogsClient {
   private listeners = new Set<() => void>()
   private _status: ClientStatus = { active: 0, waitUntil: null }
+  // when each request waiting now will try again, so one finishing doesn't hide another's wait
+  private waits = new Map<object, number>()
+  // shared with the background client. Off once Discogs turns down an OAuth sign-in in the URL
+  // that it takes in a header.
+  private shared = { oauthInUrl: true }
 
   constructor(
     public auth: Auth,
@@ -120,7 +139,11 @@ export class DiscogsClient {
   // since nobody is waiting on them
   private bg?: DiscogsClient
   get background(): DiscogsClient {
-    return (this.bg ??= new DiscogsClient(this.auth, this.fetchFn, this.limiter, this.sleep, this.now, this.local, true))
+    if (!this.bg) {
+      this.bg = new DiscogsClient(this.auth, this.fetchFn, this.limiter, this.sleep, this.now, this.local, true)
+      this.bg.shared = this.shared
+    }
+    return this.bg
   }
 
   get status(): ClientStatus {
@@ -135,6 +158,12 @@ export class DiscogsClient {
   private setStatus(patch: Partial<ClientStatus>) {
     this._status = { ...this._status, ...patch }
     this.listeners.forEach((fn) => fn())
+  }
+
+  private setWait(request: object, ms: number | null) {
+    if (ms === null) this.waits.delete(request)
+    else this.waits.set(request, this.now() + ms)
+    this.setStatus({ waitUntil: this.waits.size ? Math.max(...this.waits.values()) : null })
   }
 
   // Requests about to be made, signed ahead in one go (see oauthAuth). Best effort: anything not
@@ -172,45 +201,64 @@ export class DiscogsClient {
   }
 
   private async send<T>(method: string, url: string, body: unknown): Promise<T> {
-    for (let attempt = 0; ; attempt++) {
-      if (!this.local(url)) await this.limiter.take((ms) => this.setStatus({ waitUntil: this.now() + ms }), this.isBackground)
-      this.setStatus({ waitUntil: null })
+    const me = {}
+    try {
+      for (let attempt = 0; ; attempt++) {
+        if (!this.local(url)) await this.limiter.take((ms) => this.setWait(me, ms), this.isBackground)
+        this.setWait(me, null)
 
-      const headers: Record<string, string> = await this.auth.getAuthHeaders({ method, url })
-      if (body !== undefined) headers['Content-Type'] = 'application/json'
+        const headers: Record<string, string> = await this.auth.getAuthHeaders({ method, url })
+        const { Authorization: authorization, ...rest } = headers
+        const oauth = authorization?.startsWith('OAuth ') ?? false
+        const inUrl = method === 'GET' && (!oauth || this.shared.oauthInUrl) ? signedUrl(url, authorization) : null
+        const sendHeaders = inUrl === null ? headers : rest
+        if (body !== undefined) sendHeaders['Content-Type'] = 'application/json'
 
-      let res: Response
-      try {
-        res = await this.fetchFn(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
-      } catch {
-        // Discogs sends 429s without CORS headers, so a busy rate limit looks like a
-        // network error. If the device thinks it's online, wait and try again.
-        if (navigator.onLine !== false && attempt < RETRY_DELAYS.length - 1) {
-          this.limiter.backOff()
+        let res: Response
+        try {
+          res = await this.fetchFn(inUrl ?? url, {
+            method,
+            headers: sendHeaders,
+            body: body === undefined ? undefined : JSON.stringify(body),
+          })
+        } catch {
+          // Discogs sends 429s without CORS headers, so a busy rate limit looks like a
+          // network error. If the device thinks it's online, wait and try again.
+          if (navigator.onLine !== false && attempt < RETRY_DELAYS.length - 1) {
+            this.limiter.backOff()
+            const wait = RETRY_DELAYS[attempt]
+            this.setWait(me, wait)
+            await this.sleep(wait)
+            continue
+          }
+          throw new OfflineError()
+        }
+
+        // an OAuth sign-in in the URL turned down goes back to the header, for this one and the rest
+        if (res.status === 401 && oauth && inUrl !== null && this.shared.oauthInUrl) {
+          this.shared.oauthInUrl = false
+          continue
+        }
+
+        const retryable = res.status === 429 || res.status >= 500
+        if (retryable && attempt < RETRY_DELAYS.length) {
+          if (res.status === 429) this.limiter.backOff()
           const wait = RETRY_DELAYS[attempt]
-          this.setStatus({ waitUntil: this.now() + wait })
+          this.setWait(me, wait)
           await this.sleep(wait)
           continue
         }
-        throw new OfflineError()
-      }
 
-      const retryable = res.status === 429 || res.status >= 500
-      if (retryable && attempt < RETRY_DELAYS.length) {
-        if (res.status === 429) this.limiter.backOff()
-        const wait = RETRY_DELAYS[attempt]
-        this.setStatus({ waitUntil: this.now() + wait })
-        await this.sleep(wait)
-        continue
+        const text = await res.text()
+        const data = text ? safeJson(text) : null
+        if (!res.ok) {
+          const msg = (data as { message?: string } | null)?.message ?? `Discogs returned ${res.status}`
+          throw new DiscogsError(res.status, msg)
+        }
+        return data as T
       }
-
-      const text = await res.text()
-      const data = text ? safeJson(text) : null
-      if (!res.ok) {
-        const msg = (data as { message?: string } | null)?.message ?? `Discogs returned ${res.status}`
-        throw new DiscogsError(res.status, msg)
-      }
-      return data as T
+    } finally {
+      this.setWait(me, null)
     }
   }
 }

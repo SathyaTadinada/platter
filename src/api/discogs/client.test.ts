@@ -3,7 +3,8 @@ import identity from '../../../tests/fixtures/identity.json'
 import release from '../../../tests/fixtures/release-cd.json'
 import { fakeAuth, fakeClock, json, routeFetch } from '../../../tests/helpers'
 import { db } from '../../db/db'
-import { buildUrl, DiscogsClient, DiscogsError, OfflineError, RateLimiter } from './client'
+import type { Auth } from '../../auth/types'
+import { buildUrl, DiscogsClient, DiscogsError, OfflineError, RateLimiter, signedUrl } from './client'
 import { getIdentity, getRelease, searchReleases, setFieldValue } from './endpoints'
 
 function client(fetchFn: typeof fetch, clock = fakeClock(), limiter = new RateLimiter(55, 60_000, clock.now, clock.sleep)) {
@@ -61,11 +62,72 @@ describe('buildUrl', () => {
   })
 })
 
+describe('signedUrl', () => {
+  it('puts a token in the query', () => {
+    expect(signedUrl('https://api.discogs.com/releases/1', 'Discogs token=a b')).toBe('https://api.discogs.com/releases/1?token=a%20b')
+    expect(signedUrl('https://api.discogs.com/x?page=2', 'Discogs token=t')).toBe('https://api.discogs.com/x?page=2&token=t')
+  })
+
+  it('puts OAuth params in the query as they were encoded', () => {
+    const header = 'OAuth oauth_consumer_key="k", oauth_nonce="n", oauth_signature="a%2Bb%3D", oauth_token="t"'
+    expect(signedUrl('https://api.discogs.com/x?page=2', header)).toBe(
+      'https://api.discogs.com/x?page=2&oauth_consumer_key=k&oauth_nonce=n&oauth_signature=a%2Bb%3D&oauth_token=t',
+    )
+  })
+
+  it('leaves a signed-out request alone and gives up on anything else', () => {
+    expect(signedUrl('https://api.discogs.com/x', undefined)).toBe('https://api.discogs.com/x')
+    expect(signedUrl('https://api.discogs.com/x', 'Bearer abc')).toBeNull()
+  })
+})
+
+const oauthAuth: Auth = {
+  ...fakeAuth,
+  kind: 'oauth',
+  getAuthHeaders: async () => ({ Authorization: 'OAuth oauth_token="t", oauth_signature="s"' }),
+}
+
 describe('DiscogsClient', () => {
-  it('sends auth and parses JSON', async () => {
+  it('signs GETs in the URL, with no headers, and parses JSON', async () => {
     const { fn, calls } = routeFetch([['/oauth/identity', () => json(identity)]])
     expect((await getIdentity(client(fn))).username).toBe('platter-test')
+    expect(calls[0].url).toBe('https://api.discogs.com/oauth/identity?token=test')
+    expect(calls[0].init?.headers).toEqual({})
+  })
+
+  it('keeps the header for writes, which have a preflight anyway', async () => {
+    const { fn, calls } = routeFetch([['/fields/', () => json(null, 204)]])
+    await setFieldValue(client(fn), 'platter-test', { folderId: 1, releaseId: 2, instanceId: 3 }, 3, 'hi')
+    expect(calls[0].url).not.toContain('token=')
     expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe('Discogs token=test')
+  })
+
+  it('goes back to the header for OAuth if Discogs turns it down in the URL', async () => {
+    const { fn, calls } = routeFetch([['/oauth/identity', () => (calls.at(-1)!.url.includes('oauth_') ? json({}, 401) : json(identity))]])
+    const clock = fakeClock()
+    const c = new DiscogsClient(oauthAuth, fn, new RateLimiter(55, 60_000, clock.now, clock.sleep), clock.sleep, clock.now)
+    expect((await getIdentity(c)).username).toBe('platter-test')
+    expect(calls.map((x) => x.url.includes('oauth_signature'))).toEqual([true, false])
+    await getIdentity(c.background) // and the background work with it
+    expect(calls[2].url).toBe('https://api.discogs.com/oauth/identity')
+    expect((calls[2].init?.headers as Record<string, string>).Authorization).toContain('OAuth ')
+  })
+
+  it("shows the longest wait of all, so one request finishing doesn't hide another's", async () => {
+    const clock = fakeClock()
+    const sleeps: (() => void)[] = []
+    const slowSleep = (ms: number) => new Promise<void>((r) => sleeps.push(() => (clock.sleep(ms), r())))
+    let n = 0
+    const fn = (async () => (n++ === 0 ? json({}, 429) : json(identity))) as typeof fetch
+    const c = new DiscogsClient(fakeAuth, fn, new RateLimiter(55, 60_000, clock.now, clock.sleep), slowSleep, clock.now)
+    const first = getIdentity(c) // turned down, so it waits 5 s
+    await vi.waitFor(() => expect(sleeps).toHaveLength(1))
+    expect(c.status.waitUntil).toBe(clock.now() + 5_000)
+    await getIdentity(c) // goes straight through
+    expect(c.status.waitUntil).toBe(clock.now() + 5_000)
+    sleeps[0]()
+    await first
+    expect(c.status.waitUntil).toBeNull()
   })
 
   it('keeps background waits out of its status, while sharing the rate limit', async () => {
