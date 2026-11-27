@@ -32,7 +32,8 @@ export async function fetchPrice(
   const stats = await getMarketplaceStats(client, releaseId, currency)
   let requests = 1
   let suggested: Record<string, number> | undefined
-  if (await suggestionsWorth(now())) {
+  // Discogs only gives suggestions to a signed-in seller, so the demo (signed out) never asks
+  if (client.auth.kind !== 'demo' && (await suggestionsWorth(now()))) {
     requests++
     try {
       const s = await getPriceSuggestions(client, releaseId)

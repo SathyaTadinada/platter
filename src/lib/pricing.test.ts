@@ -31,6 +31,19 @@ describe('fetchPrice', () => {
     expect(await db.prices.get(7)).toEqual(price)
   })
 
+  it('never asks for suggestions signed out, since Discogs only gives them to a seller', async () => {
+    const { fn, calls } = routeFetch([
+      ['/marketplace/stats/', () => json(stats)],
+      ['/price_suggestions/', () => json({}, 401)],
+    ])
+    const k = fakeClock(Date.now())
+    const demo = new DiscogsClient({ ...fakeAuth, kind: 'demo' }, fn, new RateLimiter(55, 60_000, k.now, k.sleep), k.sleep, k.now)
+    const { price, requests } = await fetchPrice(demo, 7, 'USD')
+    expect(price.suggested).toBeUndefined()
+    expect(requests).toBe(1)
+    expect(calls.map((x) => x.url).some((u) => u.includes('price_suggestions'))).toBe(false)
+  })
+
   it('stops asking for suggestions for a day once Discogs says seller settings are missing', async () => {
     const { fn, calls } = routeFetch([
       ['/marketplace/stats/', () => json(stats)],
