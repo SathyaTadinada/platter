@@ -1,7 +1,8 @@
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { Segmented } from '../../components/ui'
-import { change, chartPaths, chartRanges, inRange, type ChartRange, type ValueSnapshot } from '../../lib/value'
+import { readChoice, writePref } from '../../lib/prefs'
+import { CHART_RANGES, change, chartPaths, chartRanges, inRange, type ChartRange, type ValueSnapshot } from '../../lib/value'
 import { down, shortDate, up } from './shared'
 
 export function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: number; money: (n: number) => string; suffix?: string }) {
@@ -24,11 +25,18 @@ export function Delta({ abs, pct: ratio, money, suffix }: { abs: number; pct?: n
   )
 }
 
-// The chart with a choice of how far back it goes, from the ranges the history covers
+const RANGE_PREF = 'platter.valueRange'
+
+// The chart with a choice of how far back it goes, from the ranges the history covers. The choice is
+// kept on this device, like the collection's sort, and waits as All until the history covers it.
 export function OverTime({ series, money }: { series: ValueSnapshot[]; money: (n: number) => string }) {
   const ranges = chartRanges(series)
-  const [picked, setPicked] = useState<ChartRange>('All')
+  const [picked, setPicked] = useState<ChartRange>(() => readChoice(RANGE_PREF, CHART_RANGES, 'All'))
   const range = ranges.includes(picked) ? picked : 'All'
+  const pick = (r: ChartRange) => {
+    setPicked(r)
+    writePref(RANGE_PREF, r)
+  }
   return (
     <>
       {ranges.length > 1 && (
@@ -38,7 +46,7 @@ export function OverTime({ series, money }: { series: ValueSnapshot[]; money: (n
           className="mb-4"
           options={ranges.map((r) => ({ value: r, label: r }))}
           value={range}
-          onChange={setPicked}
+          onChange={pick}
         />
       )}
       {/* a new range starts without a point picked */}

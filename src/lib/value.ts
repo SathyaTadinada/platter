@@ -125,7 +125,8 @@ export function chartPaths(history: ValueSnapshot[], w: number, h: number, pad =
 
 // How far back the value chart goes. A range is only offered when the history is longer than it,
 // since otherwise it shows the same line as All.
-export type ChartRange = '1W' | '1M' | '3M' | '1Y' | 'All'
+export const CHART_RANGES = ['1W', '1M', '3M', '1Y', 'All'] as const
+export type ChartRange = (typeof CHART_RANGES)[number]
 const RANGE_DAYS: Record<Exclude<ChartRange, 'All'>, number> = { '1W': 7, '1M': 30, '3M': 91, '1Y': 365 }
 
 // The first day in a range, counted back from the latest reading (YYYY-MM-DD, like the readings)
