@@ -167,7 +167,7 @@ export function Record({ id }: { id: string }) {
         extra={
           <>
             <Stars value={item.rating} onChange={setRating} />
-            <PlayButton item={item} />
+            <PlayButton item={item} tracklist={r?.tracklist} />
           </>
         }
         error={error}

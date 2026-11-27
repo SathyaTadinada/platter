@@ -1,5 +1,6 @@
 import type { Release } from './discogs/types'
 import { joinArtists } from '../lib/library'
+import { sideOf } from '../lib/sides'
 
 const API = 'https://api.listenbrainz.org/1'
 
@@ -50,9 +51,11 @@ export function parseDuration(d?: string): number | undefined {
 
 const GUESS = 210 // seconds, for tracks without a listed length
 
-// One listen per track, timed so the last track ends at `endedAt` (ms)
-export function listensFor(release: Release, endedAt: number): Listen[] {
-  const tracks = (release.tracklist ?? []).filter((t) => (t.type_ ?? 'track') === 'track' && t.title)
+// One listen per track (on the sides given, if any), timed so the last track ends at `endedAt` (ms)
+export function listensFor(release: Release, endedAt: number, sides?: string[]): Listen[] {
+  const tracks = (release.tracklist ?? []).filter(
+    (t) => (t.type_ ?? 'track') === 'track' && t.title && (!sides || sides.includes(sideOf(t.position) ?? '')),
+  )
   const albumArtist = joinArtists(release.artists)
   let t = Math.floor(endedAt / 1000)
   const out: Listen[] = []

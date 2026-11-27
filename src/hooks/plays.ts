@@ -2,7 +2,19 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from '../components/Toaster'
 import { db, getSetting, type LibraryItem } from '../db/db'
-import { latch, listening, logPlay, playFields, scheduleScrobbles, trimPlays, undoPlay, type Play, type PlayFields } from '../lib/plays'
+import {
+  latch,
+  listening,
+  logPlay,
+  playFields,
+  scheduleScrobbles,
+  trimPlays,
+  undoPlay,
+  type Play,
+  type PlayedSides,
+  type PlayFields,
+} from '../lib/plays'
+import { sidesLabel } from '../lib/sides'
 import { useSignedIn } from './session'
 import { useFieldMatches, useFieldState } from './useFields'
 
@@ -41,14 +53,14 @@ export function useLogPlay() {
   }, [ids, error, fields])
 
   const log = useCallback(
-    async (item: LibraryItem): Promise<Play | null> => {
+    async (item: LibraryItem, sides?: PlayedSides): Promise<Play | null> => {
       setBusy(true)
       try {
         const known = await fields.get()
         if (known instanceof Error) throw known
-        const play = await logPlay(client, username, item, known)
+        const play = await logPlay(client, username, item, known, Date.now(), sides)
         scheduleScrobbles(client)
-        toast(`Logged a play of ${item.title}`, {
+        toast(sides ? `Logged ${sidesLabel(sides.sides)} of ${item.title}` : `Logged a play of ${item.title}`, {
           tone: 'success',
           action: {
             label: 'Undo',
