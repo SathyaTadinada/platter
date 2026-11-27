@@ -177,7 +177,21 @@ export class DiscogsClient {
     return this.request<T>('GET', path, { query, cacheMaxAge })
   }
 
-  async request<T>(method: string, path: string, opts: RequestOpts = {}): Promise<T> {
+  // Screens opening together often ask for the same thing (the collection's fields, say), so a GET
+  // already on its way is shared rather than sent again. Each one after the first gets its own copy.
+  private inflight = new Map<string, Promise<unknown>>()
+
+  request<T>(method: string, path: string, opts: RequestOpts = {}): Promise<T> {
+    if (method !== 'GET') return this.load<T>(method, path, opts)
+    const key = `${opts.catalog ?? ''} ${opts.cacheMaxAge ?? ''} ${buildUrl(path, opts.query)}`
+    const going = this.inflight.get(key)
+    if (going) return going.then((data) => structuredClone(data) as T)
+    const load = this.load<T>(method, path, opts).finally(() => this.inflight.delete(key))
+    this.inflight.set(key, load)
+    return load
+  }
+
+  private async load<T>(method: string, path: string, opts: RequestOpts): Promise<T> {
     const url = buildUrl(path, opts.query)
     const catalog = method === 'GET' && opts.catalog
     const cached = method === 'GET' && (catalog || opts.cacheMaxAge)

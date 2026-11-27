@@ -88,6 +88,26 @@ const oauthAuth: Auth = {
 }
 
 describe('DiscogsClient', () => {
+  it('shares a GET already on its way instead of sending it again', async () => {
+    const { fn, calls } = routeFetch([
+      ['/collection/fields', () => json({ fields: [{ id: 1 }] })],
+      ['/fields/', () => json(null, 204)],
+    ])
+    const c = client(fn)
+    const [a, b] = await Promise.all([
+      c.get<{ fields: unknown[] }>('/users/x/collection/fields'),
+      c.get<{ fields: unknown[] }>('/users/x/collection/fields'),
+    ])
+    expect(calls).toHaveLength(1)
+    expect(b).toEqual(a)
+    expect(b).not.toBe(a) // a copy, so one changing it doesn't change the other
+    await c.get('/users/x/collection/fields') // once it's back, the next one goes again
+    expect(calls).toHaveLength(2)
+    const target = { folderId: 1, releaseId: 2, instanceId: 3 }
+    await Promise.all([setFieldValue(c, 'x', target, 3, 'hi'), setFieldValue(c, 'x', target, 3, 'hi')]) // writes always go
+    expect(calls).toHaveLength(4)
+  })
+
   it('signs GETs in the URL, with no headers, and parses JSON', async () => {
     const { fn, calls } = routeFetch([['/oauth/identity', () => json(identity)]])
     expect((await getIdentity(client(fn))).username).toBe('platter-test')
@@ -118,12 +138,12 @@ describe('DiscogsClient', () => {
     const sleeps: (() => void)[] = []
     const slowSleep = (ms: number) => new Promise<void>((r) => sleeps.push(() => (clock.sleep(ms), r())))
     let n = 0
-    const fn = (async () => (n++ === 0 ? json({}, 429) : json(identity))) as typeof fetch
+    const fn = (async (url: string) => (n++ === 0 ? json({}, 429) : json(url.includes('/releases/') ? release : identity))) as typeof fetch
     const c = new DiscogsClient(fakeAuth, fn, new RateLimiter(55, 60_000, clock.now, clock.sleep), slowSleep, clock.now)
     const first = getIdentity(c) // turned down, so it waits 5 s
     await vi.waitFor(() => expect(sleeps).toHaveLength(1))
     expect(c.status.waitUntil).toBe(clock.now() + 5_000)
-    await getIdentity(c) // goes straight through
+    await getRelease(c, 1) // goes straight through
     expect(c.status.waitUntil).toBe(clock.now() + 5_000)
     sleeps[0]()
     await first
